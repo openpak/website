@@ -105,8 +105,8 @@ a { color: var(--accent); text-underline-offset: 2px; }
   color: var(--ink); text-decoration: none;
 }
 .brand::before {
-  content: ""; width: 16px; height: 16px; flex: none;
-  background: var(--ink); border-radius: 4px 4px 4px 1px;
+  content: ""; width: 20px; height: 20px; flex: none;
+  background: url("/static/icon.svg") center / contain no-repeat;
 }
 .nav-link {
   color: var(--ink-2); text-decoration: none; font-size: 0.92rem;
