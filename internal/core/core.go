@@ -74,6 +74,7 @@ type Event struct {
 // (WEB-01): registration, verification, login, logout, recovery, sessions.
 type HTTP interface {
 	Register(ctx context.Context, email, password, displayName string) error
+	RegisterWithProfile(ctx context.Context, email, password, displayName, country, birthday string) error
 	VerifyEmail(ctx context.Context, token string) error
 	Login(ctx context.Context, email, password string) (coreSessionID string, err error)
 	Logout(ctx context.Context, coreSessionID string) error

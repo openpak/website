@@ -13,12 +13,14 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
@@ -237,6 +239,13 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /features", s.handleFeatures)
 	mux.HandleFunc("GET /downloads", s.handleDownloads)
 	mux.HandleFunc("GET /status", s.handleStatus)
+	// Console linking: the page itself lives in the Switch adapter, but a phone must reach it
+	// under a name with a certificate it trusts — a QR pointing at a bare IP means a warning
+	// page, and one pointing at accounts.nintendo.com only resolves on the console.
+	if adapter := os.Getenv("ADAPTER_LINK_URL"); adapter != "" {
+		mux.Handle("/link", adapterProxy(adapter))
+		mux.Handle("/link/", adapterProxy(adapter))
+	}
 }
 
 func (s *Server) handleLanding(w http.ResponseWriter, r *http.Request) {
@@ -275,9 +284,12 @@ func (s *Server) handleRegisterForm(w http.ResponseWriter, r *http.Request) {
 	d := s.data(r, nil, "Create account")
 	type reg struct {
 		baseData
-		Closed bool
+		Closed      bool
+		Countries   []country
+		MaxBirthday string
 	}
-	s.render(w, http.StatusOK, "register.html", reg{d, !d.RegOpen})
+	// No date in the future, and no JavaScript to enforce it.
+	s.render(w, http.StatusOK, "register.html", reg{d, !d.RegOpen, countries, time.Now().Format("2006-01-02")})
 }
 
 func (s *Server) handleRegisterSubmit(w http.ResponseWriter, r *http.Request) {
@@ -300,9 +312,11 @@ func (s *Server) handleRegisterSubmit(w http.ResponseWriter, r *http.Request) {
 	email := normalizeEmail(r.PostFormValue("email"))
 	password := r.PostFormValue("password")
 	display := strings.TrimSpace(r.PostFormValue("display_name"))
+	country := strings.TrimSpace(r.PostFormValue("country"))
+	birthday := strings.TrimSpace(r.PostFormValue("birthday"))
 	// Enumeration resistance is enforced by the core: taken-but-unverified
 	// emails resend, and the response shape is identical.
-	if err := s.Core.Register(r.Context(), email, password, display); err != nil {
+	if err := s.Core.RegisterWithProfile(r.Context(), email, password, display, country, birthday); err != nil {
 		s.log.Info("register rejected", "err", err)
 	}
 	s.render(w, http.StatusOK, "message.html", struct {
@@ -506,3 +520,37 @@ var assetVersion = sync.OnceValue(func() string {
 	})
 	return hex.EncodeToString(h.Sum(nil))[:10]
 })
+
+// adapterProxy forwards the console-link pages to the Switch adapter, so they are served under
+// openpak.org's certificate. Only /link is proxied: nothing else of the adapter is exposed.
+func adapterProxy(target string) http.Handler {
+	u, err := url.Parse(target)
+	if err != nil {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, "link service is not configured", http.StatusServiceUnavailable)
+		})
+	}
+	proxy := httputil.NewSingleHostReverseProxy(u)
+	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+		http.Error(w, "the link service is unavailable", http.StatusBadGateway)
+	}
+	return proxy
+}
+
+// country is one option in the registration list. The console sends a two-letter code with
+// every account it links, so the list is codes first and names second.
+type country struct {
+	Code string
+	Name string
+}
+
+// A short list rather than all 249: these are the places this network is actually used, and a
+// wrong pick is editable later. ponytail: extend when someone asks.
+var countries = []country{
+	{"GB", "United Kingdom"}, {"IE", "Ireland"}, {"US", "United States"}, {"CA", "Canada"},
+	{"AU", "Australia"}, {"NZ", "New Zealand"}, {"FR", "France"}, {"DE", "Germany"},
+	{"ES", "Spain"}, {"IT", "Italy"}, {"PT", "Portugal"}, {"NL", "Netherlands"},
+	{"BE", "Belgium"}, {"SE", "Sweden"}, {"NO", "Norway"}, {"DK", "Denmark"},
+	{"FI", "Finland"}, {"PL", "Poland"}, {"BR", "Brazil"}, {"MX", "Mexico"},
+	{"JP", "Japan"}, {"KR", "South Korea"},
+}

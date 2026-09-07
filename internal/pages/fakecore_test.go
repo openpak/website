@@ -79,6 +79,12 @@ func (f *fakeCore) RevokeSession(_ context.Context, sid, id string) error {
 	return nil
 }
 
+// Registration with a profile goes through the same fake path; the profile itself is the
+// core's business, not this package's.
+func (f *fakeCore) RegisterWithProfile(ctx context.Context, email, password, displayName, _, _ string) error {
+	return f.Register(ctx, email, password, displayName)
+}
+
 // The core checks the current password; the fake mirrors that so the handler's failure path
 // is exercised too.
 func (f *fakeCore) ChangePassword(_ context.Context, _, current, next string) error {

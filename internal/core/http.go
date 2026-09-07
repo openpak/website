@@ -83,9 +83,16 @@ func (c *HTTPClient) call(ctx context.Context, method, path string, body any, co
 // Register proxies POST /v1/register. Enumeration-resistant: both fresh
 // success and "email taken" are reported as success (the core emails the
 // verification link either way).
+// Register creates an account. Country and birthday are part of registration because the
+// console's user object requires both and rejects it outright when either is missing.
 func (c *HTTPClient) Register(ctx context.Context, email, password, displayName string) error {
+	return c.RegisterWithProfile(ctx, email, password, displayName, "", "")
+}
+
+func (c *HTTPClient) RegisterWithProfile(ctx context.Context, email, password, displayName, country, birthday string) error {
 	code, _, _, err := c.call(ctx, http.MethodPost, "v1/register", map[string]string{
 		"email": email, "password": password, "display_name": displayName,
+		"country": country, "birthday": birthday,
 	}, "")
 	if err != nil {
 		return err

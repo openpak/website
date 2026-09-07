@@ -11,6 +11,13 @@
     <input id="email" name="email" type="email" required autocomplete="email">
     <label for="password">{{t .Lang "auth.password"}}</label>
     <input id="password" name="password" type="password" required minlength="8" autocomplete="new-password">
+    <label for="country">{{t .Lang "auth.country"}}</label>
+    <select id="country" name="country" required autocomplete="country">
+      {{range .Countries}}<option value="{{.Code}}">{{.Name}}</option>{{end}}
+    </select>
+    <label for="birthday">{{t .Lang "auth.birthday"}}</label>
+    <input id="birthday" name="birthday" type="date" required max="{{.MaxBirthday}}" autocomplete="bday">
+    <p class="hint">{{t .Lang "auth.profile.why"}}</p>
     <p class="hint">{{t .Lang "auth.remember"}}</p>
     <button type="submit" class="primary">{{t .Lang "nav.register"}}</button>
   </form>
