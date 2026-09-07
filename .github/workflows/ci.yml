@@ -9,14 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # The website consumes the account core's versioned contracts (proto
-      # stubs) via a pinned sibling checkout; see README "Building".
-      - name: Checkout account core (pinned)
-        uses: actions/checkout@v4
-        with:
-          repository: Openpak/account
-          ref: d0ca7301403bd7b32fb2513e02cb9f111d10c791 # latest account main at website bootstrap
-          path: account
+      # The account-core contracts are vendored in internal/accountpb, so no
+      # sibling checkout is needed (and a private cross-repo checkout would need
+      # a PAT anyway). See internal/accountpb/README.md.
       - uses: actions/setup-go@v5
         with:
           go-version: "1.26.x"
