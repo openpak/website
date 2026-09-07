@@ -1,0 +1,9 @@
+{{template "header" .}}
+<h1>{{t .Lang "auth.reset.title"}}</h1>
+<form method="post" action="/reset-password" class="stack">
+  <input type="hidden" name="token" value="{{.Token}}">
+  <label for="password">{{t .Lang "auth.password"}}</label>
+  <input id="password" name="password" type="password" required minlength="8" autocomplete="new-password">
+  <button type="submit">{{t .Lang "auth.reset.title"}}</button>
+</form>
+{{template "footer" .}}

@@ -1,0 +1,48 @@
+{{template "header" .}}
+<h1>{{t .Lang "account.title"}}</h1>
+<dl class="kv">
+  <dt>{{t .Lang "account.displayname"}}</dt><dd>{{.User.DisplayName}}</dd>
+  <dt>{{t .Lang "account.email"}}</dt><dd>{{.User.Email}}</dd>
+  <dt>{{t .Lang "account.friendcode"}}</dt>
+  <dd>{{if .HasFriendCode}}<code class="code">{{.FriendCode}}</code>{{else}}{{t .Lang "account.friendcode.none"}}{{end}}</dd>
+</dl>
+
+<section aria-labelledby="links-h">
+  <h2 id="links-h">{{t .Lang "account.links"}}</h2>
+  {{if .Links}}
+  <ul class="list">
+    {{range .Links}}<li>{{.Namespace}} — <code>{{.Subject}}</code>
+      <form method="post" action="/account/link/revoke" class="inline">
+        <input type="hidden" name="csrf" value="{{$.CSRF}}">
+        <input type="hidden" name="link_id" value="{{.LinkID}}">
+        <button type="submit">{{t $.Lang "account.links.revoke"}}</button>
+      </form></li>{{end}}
+  </ul>
+  {{else}}<p>{{t .Lang "account.links.none"}}</p>{{end}}
+</section>
+
+<section aria-labelledby="avatar-h">
+  <h2 id="avatar-h">{{t .Lang "account.avatar"}}</h2>
+  {{if .AvatarURL}}<img src="{{.AvatarURL}}" alt="" width="96" height="96">{{end}}
+  {{if .AvatarPending}}<p>{{t .Lang "account.avatar.pending"}}</p>{{end}}
+  <form method="post" action="/account/avatar" enctype="multipart/form-data" class="stack">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <label for="avatar">{{t .Lang "account.avatar.upload"}}</label>
+    <input id="avatar" name="avatar" type="file" accept="image/png,image/jpeg" required>
+    <button type="submit">{{t .Lang "account.avatar.upload"}}</button>
+  </form>
+</section>
+
+<section aria-labelledby="sessions-h">
+  <h2 id="sessions-h">{{t .Lang "account.sessions"}}</h2>
+  <ul class="list">
+    {{range .Sessions}}<li><code>{{printf "%.12s" .ID}}</code>…
+      {{if eq .ID $.CurrentSession}}({{t $.Lang "account.sessions.current"}}){{end}}
+      <form method="post" action="/account/sessions/revoke" class="inline">
+        <input type="hidden" name="csrf" value="{{$.CSRF}}">
+        <input type="hidden" name="id" value="{{.ID}}">
+        <button type="submit">{{t $.Lang "account.sessions.revoke"}}</button>
+      </form></li>{{end}}
+  </ul>
+</section>
+{{template "footer" .}}

@@ -1,0 +1,269 @@
+openapi: 3.1.0
+info:
+  title: OpenPak Mobile API
+  version: 1.0.0
+  summary: Companion-app API served by the OpenPak website.
+  description: |
+    Versioned surface under `/api/v1` (PRD WEB-08). Bearer tokens are minted
+    from a core web session: the server establishes the session through the
+    account core's public HTTP contract and binds a random bearer to it.
+    Revoking the underlying session (logout, ban, password reset) ends
+    bearer validity within the core's revocation window. Rate limits: 10
+    token mints per minute per client, 120 calls per minute per token.
+  license:
+    name: AGPL-3.0-only
+    identifier: AGPL-3.0-only
+servers:
+  - url: https://openpak.org/api/v1
+    description: Production
+  - url: http://localhost:8080/api/v1
+    description: Development
+security:
+  - bearerAuth: []
+paths:
+  /token:
+    post:
+      summary: Mint a bearer token from account credentials
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+      responses:
+        "201":
+          description: Token minted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    delete:
+      summary: Revoke the presented token (ends the core session too)
+      responses:
+        "200":
+          description: Token revoked
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Message" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /me:
+    get:
+      summary: Account projection with friend code and linked platforms
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Account" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/sessions:
+    get:
+      summary: List live core web sessions (devices)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    type: array
+                    items: { $ref: "#/components/schemas/Session" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/sessions/{id}:
+    delete:
+      summary: Revoke one session (pass the token's own id to sign out)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Session revoked }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /me/friends:
+    get:
+      summary: Accepted friends
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  friends:
+                    type: array
+                    items: { $ref: "#/components/schemas/Friend" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/friends/requests:
+    get:
+      summary: Pending incoming and outgoing friend requests
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  incoming:
+                    type: array
+                    items: { $ref: "#/components/schemas/Friend" }
+                  outgoing:
+                    type: array
+                    items: { $ref: "#/components/schemas/Friend" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    post:
+      summary: Send a friend request by friend code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [friend_code]
+              properties:
+                friend_code:
+                  type: string
+                  description: Display form (SW-xxxx-xxxx-xxxx) or bare subject.
+                  examples: ["SW-0123-4567-89ab"]
+      responses:
+        "201":
+          description: Request sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  account_id: { type: string }
+        "400": { description: Cannot befriend yourself }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { description: No account for that friend code }
+        "409": { description: Conflicting relationship state }
+  /me/friends/requests/accept:
+    post:
+      summary: Accept a pending incoming request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccountIDBody"
+      responses:
+        "200": { description: Friend added }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "409": { description: No pending request }
+  /me/friends/remove:
+    post:
+      summary: Remove a friendship or decline a pending request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AccountIDBody" }
+      responses:
+        "200": { description: Removed }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/friends/block:
+    post:
+      summary: Block an account (durable, directional)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AccountIDBody" }
+      responses:
+        "200": { description: Blocked }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/friends/unblock:
+    post:
+      summary: Remove a block
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AccountIDBody" }
+      responses:
+        "200": { description: Unblocked }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Token from POST /token.
+  responses:
+    Unauthorized:
+      description: Missing, invalid, or expired bearer token
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    RateLimited:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+  schemas:
+    TokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Opaque bearer value; store securely, never log it.
+        token_type: { type: string, const: Bearer }
+        expires_at: { type: string, format: date-time }
+    Message:
+      type: object
+      properties:
+        message: { type: string }
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+    Account:
+      type: object
+      properties:
+        account_id: { type: string }
+        display_name: { type: string }
+        friend_code:
+          type: [string, "null"]
+          description: Present only when a console link exists (CR-3 projection).
+        linked_platforms:
+          type: array
+          items:
+            type: object
+            properties:
+              namespace: { type: string }
+              link_id: { type: string }
+    Session:
+      type: object
+      properties:
+        id: { type: string }
+        created_at: { type: string, format: date-time }
+        expires_at: { type: string, format: date-time }
+    Friend:
+      type: object
+      properties:
+        account_id: { type: string }
+        display_name: { type: string }
+    AccountIDBody:
+      type: object
+      required: [account_id]
+      properties:
+        account_id: { type: string }

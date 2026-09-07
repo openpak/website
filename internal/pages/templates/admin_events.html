@@ -1,0 +1,17 @@
+{{template "header" .}}
+<h1>{{t .Lang "admin.events"}}</h1>
+<h2>Core events</h2>
+{{if .CoreEvents}}
+<table>
+  <thead><tr><th scope="col">Version</th><th scope="col">Type</th><th scope="col">Account</th><th scope="col">Time</th></tr></thead>
+  <tbody>{{range .CoreEvents}}<tr><td>{{.Version}}</td><td>{{.Type}}</td><td><code>{{.AccountID}}</code></td><td>{{.CreatedAt.UTC.Format "2006-01-02 15:04:05"}}</td></tr>{{end}}</tbody>
+</table>
+{{else}}<p>No events.</p>{{end}}
+<h2>Website audit</h2>
+{{if .SiteAudit}}
+<table>
+  <thead><tr><th scope="col">Actor</th><th scope="col">Action</th><th scope="col">Detail</th><th scope="col">Time</th></tr></thead>
+  <tbody>{{range .SiteAudit}}<tr><td><code>{{.ActorID}}</code></td><td>{{.Action}}</td><td>{{.Detail}}</td><td>{{.CreatedAt.UTC.Format "2006-01-02 15:04:05"}}</td></tr>{{end}}</tbody>
+</table>
+{{else}}<p>No website audit entries.</p>{{end}}
+{{template "footer" .}}

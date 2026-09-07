@@ -1,0 +1,8 @@
+{{template "header" .}}
+<h1>{{t .Lang "auth.forgot.title"}}</h1>
+<form method="post" action="/forgot-password" class="stack">
+  <label for="email">{{t .Lang "auth.email"}}</label>
+  <input id="email" name="email" type="email" required autocomplete="email">
+  <button type="submit">{{t .Lang "auth.forgot.title"}}</button>
+</form>
+{{template "footer" .}}

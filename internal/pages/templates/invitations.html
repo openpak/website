@@ -1,0 +1,11 @@
+{{template "header" .}}
+<h1>{{t .Lang "invitations.title"}}</h1>
+{{if .ContractWait}}
+<p class="notice" role="status">{{t .Lang "invitations.pending.contract"}}</p>
+{{else if .Invites}}
+<ul class="list">
+  {{range .Invites}}<li><strong>{{.FromName}}</strong> — title <code>{{.TitleID}}</code>
+    <time datetime="{{.ExpiresAt.Format "2006-01-02T15:04:05Z07:00"}}">{{.ExpiresAt.UTC.Format "2006-01-02 15:04 UTC"}}</time></li>{{end}}
+</ul>
+{{else}}<p>{{t .Lang "invitations.none"}}</p>{{end}}
+{{template "footer" .}}

@@ -1,0 +1,12 @@
+# Build/test artifacts
+/website
+/storage/
+*.test
+*.out
+
+# Environment — example.env only, never real .env
+.env
+*.local.env
+
+# Local media storage
+/storage

@@ -1,0 +1,11 @@
+{{template "header" .}}
+<h1>{{t .Lang "auth.login.title"}}</h1>
+<form method="post" action="/login" class="stack">
+  <label for="email">{{t .Lang "auth.email"}}</label>
+  <input id="email" name="email" type="email" required autocomplete="email">
+  <label for="password">{{t .Lang "auth.password"}}</label>
+  <input id="password" name="password" type="password" required autocomplete="current-password">
+  <button type="submit">{{t .Lang "nav.signin"}}</button>
+</form>
+<p><a href="/forgot-password">{{t .Lang "auth.forgot"}}</a> · <a href="/register">{{t .Lang "nav.register"}}</a></p>
+{{template "footer" .}}

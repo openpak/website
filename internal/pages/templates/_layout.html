@@ -1,0 +1,41 @@
+{{define "header"}}<!DOCTYPE html>
+<html lang="{{.Lang}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}} · OpenPak</title>
+<link rel="stylesheet" href="/static/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <nav aria-label="Main">
+    <a href="/" class="brand">OpenPak</a>
+    <a href="/">{{t .Lang "nav.home"}}</a>
+    {{if .User}}
+      <a href="/account">{{t .Lang "nav.account"}}</a>
+      <a href="/account/friends">{{t .Lang "nav.friends"}}</a>
+      <a href="/account/invitations">{{t .Lang "nav.invitations"}}</a>
+    {{end}}
+    <a href="/status">{{t .Lang "nav.status"}}</a>
+    {{if .User}}
+      <form method="post" action="/logout" class="inline">
+        <input type="hidden" name="csrf" value="{{.CSRF}}">
+        <button type="submit">{{t .Lang "nav.signout"}} ({{.User.DisplayName}})</button>
+      </form>
+    {{else}}
+      <a href="/login">{{t .Lang "nav.signin"}}</a>
+      <a href="/register">{{t .Lang "nav.register"}}</a>
+    {{end}}
+  </nav>
+</header>
+{{if .Banner}}<div class="banner" role="note">{{.Banner}}</div>{{end}}
+<main id="main">
+{{if .Flash}}<p class="flash" role="status">{{.Flash}}</p>{{end}}
+{{end}}
+
+{{define "footer"}}
+</main>
+<footer><p>{{t .Lang "footer.note"}}</p></footer>
+</body>
+</html>{{end}}

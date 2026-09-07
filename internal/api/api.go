@@ -1,0 +1,410 @@
+// Package api serves the versioned mobile API under /api/v1 (WEB-08).
+// Bearer tokens are minted from a core web session: the client performs a
+// password login, the website establishes the core session through the
+// core's HTTP route and stores a hashed bearer bound to it. Every bearer
+// request re-validates the bound core session, so bans, logouts and
+// password resets end mobile access within the core's revocation window.
+package api
+
+import (
+	"context"
+	"crypto/rand"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
+	"log/slog"
+	"net/http"
+	"time"
+
+	"github.com/openpak/website/internal/core"
+	"github.com/openpak/website/internal/ratelimit"
+	"github.com/openpak/website/internal/session"
+	"github.com/openpak/website/internal/store"
+)
+
+// TokenTTL is the mobile bearer lifetime; it can never outlive its bound
+// core web session.
+const TokenTTL = 30 * 24 * time.Hour
+
+// Server hosts the /api/v1 routes.
+type Server struct {
+	Core     core.HTTP
+	Identity core.Identity
+	Social   core.Social
+	Links    core.Links
+	DB       store.Store
+	Sessions *session.Manager
+	Auth     *ratelimit.Limiter // per IP, token minting
+	PerToken *ratelimit.Limiter // per token, API calls
+	log      *slog.Logger
+}
+
+// New builds the API server.
+func New(c core.HTTP, id core.Identity, soc core.Social, lnk core.Links, db store.Store, sess *session.Manager, log *slog.Logger) *Server {
+	return &Server{
+		Core: c, Identity: id, Social: soc, Links: lnk, DB: db, Sessions: sess,
+		Auth:     ratelimit.New(10, time.Minute),
+		PerToken: ratelimit.New(120, time.Minute),
+		log:      log,
+	}
+}
+
+// RegisterRoutes mounts the API under the given path prefix.
+func (s *Server) RegisterRoutes(mux *http.ServeMux) {
+	h := func(pattern string, h http.HandlerFunc) { mux.HandleFunc("POST /api/v1"+pattern, h) }
+	g := func(pattern string, h http.HandlerFunc) { mux.HandleFunc("GET /api/v1"+pattern, h) }
+	d := func(pattern string, h http.HandlerFunc) { mux.HandleFunc("DELETE /api/v1"+pattern, h) }
+
+	h("/token", s.handleMintToken)              // POST /api/v1/token
+	d("/token", s.auth(s.handleRevokeToken))    // DELETE /api/v1/token
+	g("/me", s.auth(s.handleMe))                // GET /api/v1/me
+	g("/me/sessions", s.auth(s.handleSessions)) // GET /api/v1/me/sessions
+	d("/me/sessions/{id}", s.auth(s.handleRevokeSession))
+	g("/me/friends", s.auth(s.handleFriends)) // GET /api/v1/me/friends
+	g("/me/friends/requests", s.auth(s.handleRequests))
+	h("/me/friends/requests", s.auth(s.handleSendRequest)) // POST: add by friend code
+	h("/me/friends/requests/accept", s.auth(s.handleAccept))
+	h("/me/friends/remove", s.auth(s.handleRemove))
+	h("/me/friends/block", s.auth(s.handleBlock))
+	h("/me/friends/unblock", s.auth(s.handleUnblock))
+}
+
+// writeJSON mirrors the core's response conventions.
+func writeJSON(w http.ResponseWriter, code int, v any) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(code)
+	_ = json.NewEncoder(w).Encode(v)
+}
+
+func writeError(w http.ResponseWriter, code int, msg string) {
+	writeJSON(w, code, map[string]string{"error": msg})
+}
+
+type tokenRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+// handleMintToken: POST /api/v1/token {email,password} → {token,expires_at}.
+func (s *Server) handleMintToken(w http.ResponseWriter, r *http.Request) {
+	if !s.Auth.Allow(clientKey(r)) {
+		writeError(w, http.StatusTooManyRequests, "rate limited")
+		return
+	}
+	var req tokenRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	// Establish the core web session through the public HTTP contract.
+	coreSession, err := s.Core.Login(r.Context(), req.Email, req.Password)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "invalid credentials")
+		return
+	}
+	// Resolve the account via the Identity contract (interim whoami, CR-4).
+	acct, err := s.Identity.ResolveAccount(r.Context(), req.Email, req.Password)
+	if err != nil {
+		_ = s.Core.Logout(context.Background(), coreSession)
+		s.log.Error("mint token: resolve account", "err", err)
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	raw, err := session.NewBearer()
+	if err != nil {
+		_ = s.Core.Logout(context.Background(), coreSession)
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	id := newID()
+	expires := time.Now().Add(TokenTTL)
+	if err := s.DB.CreateAPIToken(r.Context(), id, s.Sessions.HashToken(raw), acct.ID, coreSession, expires); err != nil {
+		_ = s.Core.Logout(context.Background(), coreSession)
+		s.log.Error("create api token", "err", err)
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	writeJSON(w, http.StatusCreated, map[string]any{
+		"token":      raw,
+		"token_type": "Bearer",
+		"expires_at": expires.UTC().Format(time.RFC3339),
+	})
+}
+
+// auth validates the bearer and its bound core session.
+func (s *Server) auth(next func(http.ResponseWriter, *http.Request, store.APIToken)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		raw := session.BearerFromRequest(r)
+		if raw == "" {
+			writeError(w, http.StatusUnauthorized, "bearer token required")
+			return
+		}
+		if !s.PerToken.Allow(raw[:min(8, len(raw))]) {
+			writeError(w, http.StatusTooManyRequests, "rate limited")
+			return
+		}
+		tok, err := s.DB.APITokenByHash(r.Context(), s.Sessions.HashToken(raw))
+		if err != nil {
+			writeError(w, http.StatusUnauthorized, "invalid or expired token")
+			return
+		}
+		// Re-validate the bound core session: revocation (logout, ban,
+		// password reset) ends the bearer immediately.
+		if _, err := s.Core.ListSessions(r.Context(), tok.CoreSessionID); err != nil {
+			_ = s.DB.RevokeAPIToken(r.Context(), tok.ID)
+			writeError(w, http.StatusUnauthorized, "invalid or expired token")
+			return
+		}
+		_ = s.DB.TouchAPIToken(r.Context(), tok.ID)
+		next(w, r, tok)
+	}
+}
+
+func (s *Server) handleRevokeToken(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	if err := s.DB.RevokeAPIToken(r.Context(), tok.ID); err != nil {
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	// Ending mobile access ends the core session too.
+	_ = s.Core.Logout(r.Context(), tok.CoreSessionID)
+	writeJSON(w, http.StatusOK, map[string]string{"message": "token revoked"})
+}
+
+// handleMe: GET /api/v1/me → account + friend code projection.
+func (s *Server) handleMe(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	acct, err := s.Identity.GetAccount(r.Context(), tok.AccountID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	resp := map[string]any{
+		"account_id":   tok.AccountID,
+		"display_name": acct.DisplayName,
+	}
+	if link, err := s.Links.ActiveLinkByAccount(r.Context(), "switch", tok.AccountID); err == nil {
+		resp["friend_code"] = friendCode(link.SubjectID)
+		resp["linked_platforms"] = []map[string]string{
+			{"namespace": "switch", "link_id": link.LinkID},
+		}
+	} else {
+		resp["linked_platforms"] = []map[string]string{}
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (s *Server) handleSessions(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	sessions, err := s.Core.ListSessions(r.Context(), tok.CoreSessionID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"sessions": sessions})
+}
+
+func (s *Server) handleRevokeSession(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	id := r.PathValue("id")
+	if err := s.Core.RevokeSession(r.Context(), tok.CoreSessionID, id); err != nil {
+		if errors.Is(err, core.ErrNotFound) {
+			writeError(w, http.StatusNotFound, "session not found")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	if id == tok.CoreSessionID {
+		_ = s.DB.RevokeAPIToken(r.Context(), tok.ID)
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"message": "session revoked"})
+}
+
+func (s *Server) handleFriends(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	friends, err := s.Social.ListFriends(r.Context(), tok.AccountID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	out := make([]map[string]string, 0, len(friends))
+	for _, f := range friends {
+		out = append(out, map[string]string{"account_id": f.AccountID, "display_name": f.DisplayName})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"friends": out})
+}
+
+func (s *Server) handleRequests(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	in, err := s.Social.ListIncoming(r.Context(), tok.AccountID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	out, err := s.Social.ListOutgoing(r.Context(), tok.AccountID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"incoming": friendsJSON(in), "outgoing": friendsJSON(out),
+	})
+}
+
+// handleSendRequest: POST /api/v1/me/friends/requests {"friend_code": "..."}.
+func (s *Server) handleSendRequest(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	var req struct {
+		FriendCode string `json:"friend_code"`
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 4<<10)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	code := normalizeCode(req.FriendCode)
+	target, err := s.Links.AccountBySubject(r.Context(), "switch", code)
+	if err != nil || target == "" {
+		writeError(w, http.StatusNotFound, "no account for that friend code")
+		return
+	}
+	if target == tok.AccountID {
+		writeError(w, http.StatusBadRequest, "cannot befriend yourself")
+		return
+	}
+	if err := s.Social.RequestFriend(r.Context(), tok.AccountID, target); err != nil {
+		if errors.Is(err, core.ErrConflict) {
+			writeError(w, http.StatusConflict, "request exists or relationship conflicts")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	writeJSON(w, http.StatusCreated, map[string]string{"message": "friend request sent", "account_id": target})
+}
+
+func (s *Server) handleAccept(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	var req struct {
+		AccountID string `json:"account_id"`
+	}
+	if !decodeSmall(w, r, &req) {
+		return
+	}
+	if err := s.Social.AcceptFriend(r.Context(), tok.AccountID, req.AccountID); err != nil {
+		writeError(w, http.StatusConflict, "no pending request")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"message": "friend added"})
+}
+
+func (s *Server) handleRemove(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	var req struct {
+		AccountID string `json:"account_id"`
+	}
+	if !decodeSmall(w, r, &req) {
+		return
+	}
+	if err := s.Social.RemoveFriend(r.Context(), tok.AccountID, req.AccountID); err != nil {
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"message": "removed"})
+}
+
+func (s *Server) handleBlock(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	var req struct {
+		AccountID string `json:"account_id"`
+	}
+	if !decodeSmall(w, r, &req) {
+		return
+	}
+	if err := s.Social.Block(r.Context(), tok.AccountID, req.AccountID); err != nil {
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"message": "blocked"})
+}
+
+func (s *Server) handleUnblock(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	var req struct {
+		AccountID string `json:"account_id"`
+	}
+	if !decodeSmall(w, r, &req) {
+		return
+	}
+	if err := s.Social.Unblock(r.Context(), tok.AccountID, req.AccountID); err != nil {
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"message": "unblocked"})
+}
+
+func decodeSmall(w http.ResponseWriter, r *http.Request, v any) bool {
+	r.Body = http.MaxBytesReader(w, r.Body, 4<<10)
+	if err := json.NewDecoder(r.Body).Decode(v); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		return false
+	}
+	return true
+}
+
+func friendsJSON(fs []core.Friend) []map[string]string {
+	out := make([]map[string]string, 0, len(fs))
+	for _, f := range fs {
+		out = append(out, map[string]string{"account_id": f.AccountID, "display_name": f.DisplayName})
+	}
+	return out
+}
+
+// normalizeCode strips SW- display formatting (12 subject digits expected).
+func normalizeCode(code string) string {
+	out := make([]rune, 0, len(code))
+	for _, c := range code {
+		if c != '-' && c != ' ' {
+			out = append(out, c)
+		}
+	}
+	s := string(out)
+	if len(s) == 14 && (s[:2] == "SW" || s[:2] == "sw") {
+		s = s[2:]
+	}
+	return s
+}
+
+// friendCode formats a link subject for display (SW-xxxx-xxxx-xxxx when 16
+// hex digits; verbatim otherwise). Mirrors the web page formatting.
+func friendCode(subject string) string {
+	var hex []rune
+	for _, c := range subject {
+		switch {
+		case c >= '0' && c <= '9', c >= 'a' && c <= 'f', c >= 'A' && c <= 'F':
+			hex = append(hex, c)
+		case c == '-':
+		default:
+			return subject
+		}
+	}
+	if len(hex) != 12 {
+		return subject
+	}
+	return "SW-" + string(hex[0:4]) + "-" + string(hex[4:8]) + "-" + string(hex[8:12])
+}
+
+func clientKey(r *http.Request) string {
+	host := r.RemoteAddr
+	if i := len(host) - 1; i > 0 {
+		for i >= 0 && host[i] != ':' {
+			i--
+		}
+		if i > 0 {
+			return host[:i]
+		}
+	}
+	return host
+}
+
+// newID mints a random token id for the store (the raw bearer is hashed;
+// the id is only for revocation).
+func newID() string {
+	b := make([]byte, 12)
+	if _, err := rand.Read(b); err != nil {
+		return time.Now().UTC().Format("20060102150405.000000000")
+	}
+	return base64.RawURLEncoding.EncodeToString(b)
+}

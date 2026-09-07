@@ -1,0 +1,16 @@
+{{template "header" .}}
+<section class="hero">
+  <h1>OpenPak</h1>
+  <p class="tagline">{{t .Lang "site.tagline"}}</p>
+  {{if not .User}}<p><a class="btn" href="/register">{{t .Lang "landing.cta"}}</a> <a class="btn ghost" href="/login">{{t .Lang "nav.signin"}}</a></p>{{end}}
+</section>
+<section aria-labelledby="titles">
+  <h2 id="titles">{{t .Lang "landing.titles"}}</h2>
+{{with .Titles}}{{if .}}
+  <table>
+    <thead><tr><th scope="col">Title</th><th scope="col">Platform</th><th scope="col">Status</th></tr></thead>
+    <tbody>{{range .}}<tr><td>{{.Name}}</td><td>{{.Platform}}</td><td>{{.Status}}</td></tr>{{end}}</tbody>
+  </table>
+{{else}}<p>{{t $.Lang "landing.titles.none"}}</p>{{end}}{{end}}
+</section>
+{{template "footer" .}}
