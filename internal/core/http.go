@@ -51,7 +51,11 @@ func (c *HTTPClient) call(ctx context.Context, method, path string, body any, co
 		}
 		rdr = bytes.NewReader(b)
 	}
-	req, err := http.NewRequestWithContext(ctx, method, c.base.JoinPath(path).String(), rdr)
+	// Split any query off before JoinPath, which would escape the "?" into the path.
+	pathOnly, rawQuery, _ := strings.Cut(path, "?")
+	u := c.base.JoinPath(pathOnly)
+	u.RawQuery = rawQuery
+	req, err := http.NewRequestWithContext(ctx, method, u.String(), rdr)
 	if err != nil {
 		return 0, nil, nil, err
 	}
@@ -93,7 +97,9 @@ func (c *HTTPClient) Register(ctx context.Context, email, password, displayName 
 
 // VerifyEmail proxies GET /v1/verify.
 func (c *HTTPClient) VerifyEmail(ctx context.Context, token string) error {
-	code, _, _, err := c.call(ctx, http.MethodGet, "v1/verify?token="+url.QueryEscape(token), nil, "")
+	// url.URL.JoinPath escapes what it is given, so a query string cannot ride along in
+	// the path: "v1/verify?token=x" would reach the core as "/v1/verify%3Ftoken=x" and 404.
+	code, _, _, err := c.call(ctx, http.MethodGet, verifyPath(token), nil, "")
 	if err != nil {
 		return err
 	}
@@ -232,4 +238,9 @@ func timeMap(v any) time.Time {
 		}
 	}
 	return time.Time{}
+}
+
+// verifyPath returns the core's verify path with the token as a real query parameter.
+func verifyPath(token string) string {
+	return "v1/verify?" + url.Values{"token": {token}}.Encode()
 }
