@@ -10,22 +10,23 @@ import (
 
 // migrations is embedded SQL applied at boot. Keyed by ordered version name.
 var migrations = map[string]string{
-	"0001_site": `CREATE TABLE site_config (
+	"0001_site": `CREATE TABLE IF NOT EXISTS site_config (
 		key text PRIMARY KEY,
 		value text NOT NULL
 	);
-	INSERT INTO site_config(key, value) VALUES ('registrations_open','true'), ('banner_message','');
+	INSERT INTO site_config(key, value) VALUES ('registrations_open','true'), ('banner_message','')
+		ON CONFLICT (key) DO NOTHING;
 
-	CREATE TABLE web_sessions (
+	CREATE TABLE IF NOT EXISTS web_sessions (
 		core_session_id text PRIMARY KEY,
 		account_id text NOT NULL,
 		email text NOT NULL DEFAULT '',
 		display_name text NOT NULL DEFAULT '',
 		created_at timestamptz NOT NULL DEFAULT now()
 	);
-	CREATE INDEX web_sessions_account_idx ON web_sessions(account_id);
+	CREATE INDEX IF NOT EXISTS web_sessions_account_idx ON web_sessions(account_id);
 
-	CREATE TABLE api_tokens (
+	CREATE TABLE IF NOT EXISTS api_tokens (
 		id text PRIMARY KEY,
 		token_hash text NOT NULL UNIQUE,
 		account_id text NOT NULL,
@@ -35,9 +36,9 @@ var migrations = map[string]string{
 		revoked_at timestamptz,
 		last_seen_at timestamptz NOT NULL DEFAULT now()
 	);
-	CREATE INDEX api_tokens_account_idx ON api_tokens(account_id);
+	CREATE INDEX IF NOT EXISTS api_tokens_account_idx ON api_tokens(account_id);
 
-	CREATE TABLE admin_audit (
+	CREATE TABLE IF NOT EXISTS admin_audit (
 		id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 		actor_id text NOT NULL,
 		action text NOT NULL,
@@ -45,14 +46,14 @@ var migrations = map[string]string{
 		created_at timestamptz NOT NULL DEFAULT now()
 	);
 
-	CREATE TABLE media (
+	CREATE TABLE IF NOT EXISTS media (
 		account_id text NOT NULL,
 		kind text NOT NULL,
 		updated_at timestamptz NOT NULL DEFAULT now(),
 		PRIMARY KEY (account_id, kind)
 	);
 
-	CREATE TABLE titles (
+	CREATE TABLE IF NOT EXISTS titles (
 		name text NOT NULL,
 		platform text NOT NULL,
 		status text NOT NULL,
