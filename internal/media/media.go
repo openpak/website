@@ -12,7 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	_ "image/jpeg" // register JPEG decoder
+	"image/jpeg"
 	"image/png"
 	"io"
 	"os"
@@ -27,6 +27,14 @@ const (
 	MaxUploadBytes = 4 << 20 // 4 MiB
 	SizeLarge      = 512
 	SizeSmall      = 256
+	// SizeConsole is the JPEG the Switch adapter serves at /1/<id> and
+	// /2/<id> (CR-2). Both paths take the same bytes, which the console
+	// accepts; the exact dimensions it prefers are still to be measured, so
+	// this tracks SizeSmall until a device measurement says otherwise.
+	SizeConsole = SizeSmall
+	// ConsoleJPEGQuality trades a little fidelity for a small body: the
+	// console refetches this whenever the version changes.
+	ConsoleJPEGQuality = 85
 )
 
 // ErrInvalid is returned for rejected uploads.
@@ -120,10 +128,62 @@ func AvatarKey(accountID string, size int) string {
 	return fmt.Sprintf("avatars/%s/avatar_%d.png", accountID, size)
 }
 
+// ConsoleKey is the storage key for the JPEG the console path consumes.
+func ConsoleKey(accountID string) string {
+	return fmt.Sprintf("avatars/%s/console.jpg", accountID)
+}
+
+// putDerivatives writes every derivative of one decoded image: the two PNGs the
+// website serves and the JPEG the console path needs.
+func (s *Service) putDerivatives(ctx context.Context, accountID string, img image.Image) error {
+	for _, size := range []int{SizeLarge, SizeSmall} {
+		var buf bytes.Buffer
+		if err := png.Encode(&buf, square(img, size)); err != nil {
+			return err
+		}
+		if err := s.store.Put(ctx, AvatarKey(accountID, size), buf.Bytes()); err != nil {
+			return err
+		}
+	}
+	var jb bytes.Buffer
+	if err := jpeg.Encode(&jb, square(img, SizeConsole), &jpeg.Options{Quality: ConsoleJPEGQuality}); err != nil {
+		return err
+	}
+	return s.store.Put(ctx, ConsoleKey(accountID), jb.Bytes())
+}
+
+// StorePreset stores one of the built-in avatars for an account.
+func (s *Service) StorePreset(ctx context.Context, accountID, presetID string) error {
+	if !validAccountID(accountID) || !IsPreset(presetID) {
+		return ErrInvalid
+	}
+	return s.putDerivatives(ctx, accountID, drawPreset(presetID, SizeLarge))
+}
+
+// PresetImage renders a preset for the picker; no account needed.
+func PresetImage(presetID string, size int) ([]byte, error) {
+	if !IsPreset(presetID) {
+		return nil, ErrInvalid
+	}
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, drawPreset(presetID, size)); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+// ConsoleAvatar returns the JPEG bytes for the console path.
+func (s *Service) ConsoleAvatar(ctx context.Context, accountID string) ([]byte, error) {
+	return s.store.Get(ctx, ConsoleKey(accountID))
+}
+
+func validAccountID(id string) bool {
+	return id != "" && !strings.ContainsAny(id, "/\\") && !strings.Contains(id, "..")
+}
+
 // StoreAvatar validates, resizes to 256 and 512 px and stores both PNGs.
 func (s *Service) StoreAvatar(ctx context.Context, accountID string, r io.Reader) error {
-	if strings.ContainsAny(accountID, "/\\") || accountID == "" ||
-		strings.Contains(accountID, "..") {
+	if !validAccountID(accountID) {
 		return ErrInvalid
 	}
 	raw, err := io.ReadAll(io.LimitReader(r, MaxUploadBytes+1))
@@ -137,16 +197,7 @@ func (s *Service) StoreAvatar(ctx context.Context, accountID string, r io.Reader
 	if err != nil {
 		return ErrInvalid
 	}
-	for _, size := range []int{SizeLarge, SizeSmall} {
-		var buf bytes.Buffer
-		if err := png.Encode(&buf, square(img, size)); err != nil {
-			return err
-		}
-		if err := s.store.Put(ctx, AvatarKey(accountID, size), buf.Bytes()); err != nil {
-			return err
-		}
-	}
-	return nil
+	return s.putDerivatives(ctx, accountID, img)
 }
 
 // Avatar returns stored avatar bytes.

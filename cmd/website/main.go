@@ -95,6 +95,7 @@ func run(log *slog.Logger) error {
 	pageSrv.Media = mediaSvc
 	pageSrv.Sessions = sessions
 	pageSrv.Production = cfg.Environment == "production"
+	pageSrv.AdminAccountIDs = cfg.AdminAccountIDs
 	pageSrv.AuthLimit = ratelimit.New(20, time.Minute)
 	pageSrv.MediaLimit = ratelimit.New(5, time.Hour)
 

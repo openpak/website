@@ -1,48 +1,166 @@
 {{template "header" .}}
-<h1>{{t .Lang "account.title"}}</h1>
-<dl class="kv">
-  <dt>{{t .Lang "account.displayname"}}</dt><dd>{{.User.DisplayName}}</dd>
-  <dt>{{t .Lang "account.email"}}</dt><dd>{{.User.Email}}</dd>
-  <dt>{{t .Lang "account.friendcode"}}</dt>
-  <dd>{{if .HasFriendCode}}<code class="code">{{.FriendCode}}</code>{{else}}{{t .Lang "account.friendcode.none"}}{{end}}</dd>
-</dl>
+{{/* Display names are optional today (CR-7 makes them editable); fall back
+     to the address so the heading is never blank. */}}
+{{$name := .User.DisplayName}}{{if not $name}}{{$name = .User.Email}}{{end}}
+<div class="page-head">
+  <div class="identity">
+    {{/* The avatar is the control: clicking it opens the picker. */}}
+    <a class="avatar-edit" href="#avatar" aria-label="{{t .Lang "account.avatar.change"}}" title="{{t .Lang "account.avatar.change"}}">
+      {{if .AvatarURL}}<img class="avatar" src="{{.AvatarURL}}" alt="" width="48" height="48">
+      {{else}}<span class="avatar blank" aria-hidden="true">{{printf "%.1s" $name}}</span>{{end}}
+    </a>
+    <div>
+      <h1>{{$name}}</h1>
+      {{if ne $name .User.Email}}<p>{{.User.Email}}</p>{{end}}
+    </div>
+  </div>
+</div>
 
-<section aria-labelledby="links-h">
-  <h2 id="links-h">{{t .Lang "account.links"}}</h2>
+<section aria-labelledby="fc-h">
+  <div class="section-head">
+    <h2 id="fc-h">{{t .Lang "account.friendcode"}}</h2>
+    <p>{{t .Lang "account.friendcode.share"}}</p>
+  </div>
+  {{if .HasFriendCode}}<span class="code">{{.FriendCode}}</span>
+  {{else}}<p class="empty">{{t .Lang "account.friendcode.none"}}</p>{{end}}
+</section>
+
+<section aria-labelledby="fr-h" id="friends">
+  <div class="section-head">
+    <h2 id="fr-h">{{t .Lang "friends.title"}}</h2>
+    <p>{{t .Lang "friends.sub"}}</p>
+  </div>
+  <form method="post" action="/account/friends/request" class="row-form">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <label class="sr-only" for="friend_code">{{t .Lang "friends.code"}}</label>
+    {{/* Adapter subjects are 12 or 16 hex digits; the SW- prefix and the
+         dashes are display formatting and optional on input. */}}
+    <input id="friend_code" name="friend_code" type="text" required
+           pattern="(?:[Ss][Ww]-?)?[0-9a-fA-F]{4}(?:-?[0-9a-fA-F]{4}){2,3}"
+           placeholder="SW-1234-5678-9012"
+           autocapitalize="off" autocorrect="off" spellcheck="false"
+           title="{{t .Lang "friends.code.title"}}">
+    <button type="submit" class="primary">{{t .Lang "friends.send"}}</button>
+  </form>
+  <p class="hint">{{t .Lang "friends.add.hint"}}</p>
+
+  {{if .Friends}}
+  <ul class="rows">{{range .Friends}}<li><span class="name">{{.DisplayName}}</span>
+    <form method="post" action="/account/friends/remove" class="inline">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="account_id" value="{{.AccountID}}">
+      <button type="submit" class="small">{{t $.Lang "friends.remove"}}</button></form>
+    <form method="post" action="/account/friends/block" class="inline">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="account_id" value="{{.AccountID}}">
+      <button type="submit" class="small danger">{{t $.Lang "friends.block"}}</button></form>
+  </li>{{end}}</ul>
+  {{else}}<p class="empty">{{t .Lang "friends.list.none"}}</p>{{end}}
+</section>
+
+<section aria-labelledby="req-h">
+  <div class="section-head"><h2 id="req-h">{{t .Lang "friends.requests"}}</h2></div>
+  {{if or .Incoming .Outgoing}}
+  <ul class="rows">
+    {{range .Incoming}}<li>
+      <span class="name">{{.DisplayName}}</span>
+      <span class="sub">{{t $.Lang "friends.incoming.tag"}}</span>
+      <form method="post" action="/account/friends/accept" class="inline">
+        <input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="account_id" value="{{.AccountID}}">
+        <button type="submit" class="small primary">{{t $.Lang "friends.accept"}}</button></form>
+      <form method="post" action="/account/friends/decline" class="inline">
+        <input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="account_id" value="{{.AccountID}}">
+        <button type="submit" class="small">{{t $.Lang "friends.decline"}}</button></form>
+    </li>{{end}}
+    {{range .Outgoing}}<li>
+      <span class="name">{{.DisplayName}}</span>
+      <span class="badge">{{t $.Lang "friends.pending"}}</span>
+    </li>{{end}}
+  </ul>
+  {{else}}<p class="empty">{{t .Lang "friends.requests.none"}}</p>{{end}}
+</section>
+
+<section aria-labelledby="inv-h" id="invitations">
+  <div class="section-head">
+    <h2 id="inv-h">{{t .Lang "invitations.title"}}</h2>
+    <p>{{t .Lang "invitations.sub"}}</p>
+  </div>
+  {{if .ContractWait}}
+  <p class="notice" role="status">{{t .Lang "invitations.pending.contract"}}</p>
+  {{else if .Invites}}
+  <ul class="rows">
+    {{range .Invites}}<li>
+      <span class="name">{{.FromName}}</span>
+      <code>{{.TitleID}}</code>
+      <time class="sub" datetime="{{.ExpiresAt.Format "2006-01-02T15:04:05Z07:00"}}">{{.ExpiresAt.UTC.Format "2006-01-02 15:04 UTC"}}</time>
+    </li>{{end}}
+  </ul>
+  {{else}}<p class="empty">{{t .Lang "invitations.none"}}</p>{{end}}
+</section>
+
+<section aria-labelledby="links-h" id="devices">
+  <div class="section-head"><h2 id="links-h">{{t .Lang "account.links"}}</h2></div>
   {{if .Links}}
-  <ul class="list">
-    {{range .Links}}<li>{{.Namespace}} — <code>{{.Subject}}</code>
+  <ul class="rows">
+    {{range .Links}}<li>
+      <span class="name">{{.Namespace}}</span>
+      <code>{{.Subject}}</code>
       <form method="post" action="/account/link/revoke" class="inline">
         <input type="hidden" name="csrf" value="{{$.CSRF}}">
         <input type="hidden" name="link_id" value="{{.LinkID}}">
-        <button type="submit">{{t $.Lang "account.links.revoke"}}</button>
+        <button type="submit" class="small danger">{{t $.Lang "account.links.revoke"}}</button>
       </form></li>{{end}}
   </ul>
-  {{else}}<p>{{t .Lang "account.links.none"}}</p>{{end}}
-</section>
-
-<section aria-labelledby="avatar-h">
-  <h2 id="avatar-h">{{t .Lang "account.avatar"}}</h2>
-  {{if .AvatarURL}}<img src="{{.AvatarURL}}" alt="" width="96" height="96">{{end}}
-  {{if .AvatarPending}}<p>{{t .Lang "account.avatar.pending"}}</p>{{end}}
-  <form method="post" action="/account/avatar" enctype="multipart/form-data" class="stack">
-    <input type="hidden" name="csrf" value="{{.CSRF}}">
-    <label for="avatar">{{t .Lang "account.avatar.upload"}}</label>
-    <input id="avatar" name="avatar" type="file" accept="image/png,image/jpeg" required>
-    <button type="submit">{{t .Lang "account.avatar.upload"}}</button>
-  </form>
+  {{else}}<p class="empty">{{t .Lang "account.links.none"}}</p>{{end}}
 </section>
 
 <section aria-labelledby="sessions-h">
-  <h2 id="sessions-h">{{t .Lang "account.sessions"}}</h2>
-  <ul class="list">
-    {{range .Sessions}}<li><code>{{printf "%.12s" .ID}}</code>…
-      {{if eq .ID $.CurrentSession}}({{t $.Lang "account.sessions.current"}}){{end}}
+  <div class="section-head">
+    <h2 id="sessions-h">{{t .Lang "account.sessions"}}</h2>
+    <p>{{t .Lang "account.sessions.sub"}}</p>
+  </div>
+  <ul class="rows">
+    {{range .Sessions}}<li>
+      <code class="name">{{printf "%.12s" .ID}}…</code>
+      {{if eq .ID $.CurrentSession}}<span class="badge ok">{{t $.Lang "account.sessions.current"}}</span>{{end}}
       <form method="post" action="/account/sessions/revoke" class="inline">
         <input type="hidden" name="csrf" value="{{$.CSRF}}">
         <input type="hidden" name="id" value="{{.ID}}">
-        <button type="submit">{{t $.Lang "account.sessions.revoke"}}</button>
+        <button type="submit" class="small danger">{{t $.Lang "account.sessions.revoke"}}</button>
       </form></li>{{end}}
   </ul>
 </section>
+
+<div class="modal" id="avatar">
+  <a class="modal-backdrop" href="#" tabindex="-1" aria-hidden="true"></a>
+  <section class="modal-card" role="dialog" aria-labelledby="avatar-h">
+    <div class="modal-head">
+      <h2 id="avatar-h">{{t .Lang "account.avatar.change"}}</h2>
+      <a class="modal-close" href="#">{{t .Lang "modal.close"}}</a>
+    </div>
+    {{if .AvatarPending}}<p class="notice">{{t .Lang "account.avatar.pending"}}</p>{{end}}
+    <p class="muted">{{t .Lang "account.avatar.sub"}}</p>
+    <form method="post" action="/account/avatar" enctype="multipart/form-data">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <fieldset class="picker">
+        <legend class="sr-only">{{t .Lang "account.avatar.choose"}}</legend>
+        {{range .Presets}}
+        <label class="pick">
+          <input type="radio" name="preset" value="{{.}}">
+          <img src="/media/avatars/preset/{{.}}.png" alt="{{.}}" width="64" height="64" loading="lazy">
+        </label>
+        {{end}}
+        {{/* The last tile is the upload: a real file input, styled. */}}
+        <label class="pick upload-tile">
+          <input type="file" name="avatar" accept="image/png,image/jpeg">
+          <span aria-hidden="true">+</span>
+          <span class="sr-only">{{t .Lang "account.avatar.upload"}}</span>
+        </label>
+      </fieldset>
+      <div class="modal-actions">
+        <button type="submit" class="primary">{{t .Lang "account.avatar.save"}}</button>
+        <a class="btn" href="#">{{t .Lang "modal.cancel"}}</a>
+      </div>
+    </form>
+  </section>
+</div>
+
 {{template "footer" .}}

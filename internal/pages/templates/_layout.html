@@ -1,41 +1,61 @@
+{{/* One shell for every page — public and signed-in alike. The nav swaps
+     its links for a session; there is no separate portal chrome. */}}
+
 {{define "header"}}<!DOCTYPE html>
 <html lang="{{.Lang}}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="{{t .Lang "site.tagline"}}">
 <title>{{.Title}} · OpenPak</title>
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/static/site.css">
 </head>
 <body>
-<a class="skip" href="#main">Skip to content</a>
+<a class="skip" href="#main">{{t .Lang "nav.skip"}}</a>
 <header class="top">
   <nav aria-label="Main">
     <a href="/" class="brand">OpenPak</a>
-    <a href="/">{{t .Lang "nav.home"}}</a>
     {{if .User}}
-      <a href="/account">{{t .Lang "nav.account"}}</a>
-      <a href="/account/friends">{{t .Lang "nav.friends"}}</a>
-      <a href="/account/invitations">{{t .Lang "nav.invitations"}}</a>
+      <a class="nav-link" href="/account" {{if eq .Path "/account"}}aria-current="page"{{end}}>{{t .Lang "nav.account"}}</a>
+      {{if .Admin}}<a class="nav-link" href="/admin" {{if eq .Path "/admin"}}aria-current="page"{{end}}>{{t .Lang "admin.title"}}</a>{{end}}
     {{end}}
-    <a href="/status">{{t .Lang "nav.status"}}</a>
+    <a class="nav-link" href="/features" {{if eq .Path "/features"}}aria-current="page"{{end}}>{{t .Lang "nav.features"}}</a>
+    <a class="nav-link" href="/downloads" {{if eq .Path "/downloads"}}aria-current="page"{{end}}>{{t .Lang "nav.downloads"}}</a>
+    <a class="nav-link" href="/status" {{if eq .Path "/status"}}aria-current="page"{{end}}>{{t .Lang "nav.status"}}</a>
+    <span class="spacer"></span>
     {{if .User}}
       <form method="post" action="/logout" class="inline">
         <input type="hidden" name="csrf" value="{{.CSRF}}">
-        <button type="submit">{{t .Lang "nav.signout"}} ({{.User.DisplayName}})</button>
+        <button type="submit" class="small">{{t .Lang "nav.signout"}}</button>
       </form>
     {{else}}
-      <a href="/login">{{t .Lang "nav.signin"}}</a>
-      <a href="/register">{{t .Lang "nav.register"}}</a>
+      <a class="nav-link" href="/login" {{if eq .Path "/login"}}aria-current="page"{{end}}>{{t .Lang "nav.signin"}}</a>
+      <a href="/register" class="btn primary small">{{t .Lang "nav.register"}}</a>
     {{end}}
   </nav>
 </header>
-{{if .Banner}}<div class="banner" role="note">{{.Banner}}</div>{{end}}
+{{if .Banner}}<div class="banner" role="note"><div class="banner-inner">{{.Banner}}</div></div>{{end}}
 <main id="main">
 {{if .Flash}}<p class="flash" role="status">{{.Flash}}</p>{{end}}
 {{end}}
 
 {{define "footer"}}
 </main>
-<footer><p>{{t .Lang "footer.note"}}</p></footer>
+<footer>
+  <div class="foot">
+    <span>OpenPak</span>
+    <nav aria-label="Footer">
+      <a href="/features">{{t .Lang "nav.features"}}</a>
+      <a href="/downloads">{{t .Lang "nav.downloads"}}</a>
+      <a href="/status">{{t .Lang "nav.status"}}</a>
+      <a href="/#titles">{{t .Lang "landing.titles"}}</a>
+      <a href="/register">{{t .Lang "nav.register"}}</a>
+    </nav>
+    <span class="spacer"></span>
+    <p>{{t .Lang "footer.note"}}</p>
+  </div>
+</footer>
 </body>
 </html>{{end}}

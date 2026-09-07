@@ -63,3 +63,33 @@ func TestStoreAvatarRejectsGarbage(t *testing.T) {
 		t.Fatal("traversal account id must fail")
 	}
 }
+
+// TestPresetsProduceConsoleJPEG covers the path the console actually reads:
+// picking a built-in avatar must leave a decodable JPEG behind, because the
+// adapter serves those bytes at /1/<id> and /2/<id> (CR-2).
+func TestPresetsProduceConsoleJPEG(t *testing.T) {
+	st, err := NewFSStorage(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc := New(st)
+	for _, id := range PresetIDs {
+		if err := svc.StorePreset(context.Background(), "acct-1", id); err != nil {
+			t.Fatalf("preset %s: %v", id, err)
+		}
+		raw, err := svc.ConsoleAvatar(context.Background(), "acct-1")
+		if err != nil {
+			t.Fatalf("console avatar after %s: %v", id, err)
+		}
+		cfg, format, err := image.DecodeConfig(bytes.NewReader(raw))
+		if err != nil || format != "jpeg" {
+			t.Fatalf("preset %s: format=%q err=%v", id, format, err)
+		}
+		if cfg.Width != SizeConsole || cfg.Height != SizeConsole {
+			t.Fatalf("preset %s: %dx%d, want %d square", id, cfg.Width, cfg.Height, SizeConsole)
+		}
+	}
+	if err := svc.StorePreset(context.Background(), "acct-1", "not-a-preset"); err == nil {
+		t.Fatal("unknown preset must be rejected")
+	}
+}

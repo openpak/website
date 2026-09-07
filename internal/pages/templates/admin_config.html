@@ -1,9 +1,9 @@
 {{template "header" .}}
-<h1>{{t .Lang "admin.config"}}</h1>
+<div class="page-head"><h1>{{t .Lang "admin.config"}}</h1><p>{{t .Lang "admin.config.sub"}}</p></div>
 <form method="post" action="/admin/config" class="stack">
-  <label><input type="checkbox" name="registrations_open" {{if .RegistrationsOpen}}checked{{end}}> {{t .Lang "admin.registrations"}}</label>
+  <label class="check"><input type="checkbox" name="registrations_open" {{if .RegistrationsOpen}}checked{{end}}> {{t .Lang "admin.registrations"}}</label>
   <label for="banner">{{t .Lang "admin.banner"}}</label>
   <input id="banner" name="banner" type="text" value="{{.BannerMessage}}" maxlength="200">
-  <button type="submit">{{t .Lang "admin.save"}}</button>
+  <button type="submit" class="primary">{{t .Lang "admin.save"}}</button>
 </form>
 {{template "footer" .}}

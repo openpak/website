@@ -7,11 +7,11 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"html/template"
 	"log/slog"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/openpak/website/internal/core"
@@ -34,10 +34,13 @@ type Server struct {
 	Media      *media.Service
 	Sessions   *session.Manager
 	Production bool
-	AuthLimit  *ratelimit.Limiter
-	MediaLimit *ratelimit.Limiter
-	tmpl       *template.Template
-	log        *slog.Logger
+	// AdminAccountIDs mirrors the admin allowlist so the portal can show
+	// the moderation section to the accounts that can actually open it.
+	AdminAccountIDs []string
+	AuthLimit       *ratelimit.Limiter
+	MediaLimit      *ratelimit.Limiter
+	tmpl            *template.Template
+	log             *slog.Logger
 }
 
 // New compiles templates and returns the server.
@@ -61,6 +64,7 @@ type baseData struct {
 	Flash   string
 	CSRF    string
 	Path    string
+	Admin   bool
 }
 
 type viewUser struct {
@@ -78,6 +82,7 @@ func (s *Server) data(r *http.Request, v *viewer, title string) baseData {
 	}
 	if v != nil {
 		d.User = &viewUser{ID: v.AccountID, Email: v.Email, DisplayName: v.DisplayName}
+		d.Admin = slices.Contains(s.AdminAccountIDs, v.AccountID)
 		d.CSRF = s.Sessions.CSRFToken(v.CoreSessionID)
 	}
 	d.Flash = flashText(r.URL.Query().Get("m"))
@@ -212,6 +217,8 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /account/friends/block", s.handleFriendBlock)
 	mux.HandleFunc("POST /account/friends/unblock", s.handleFriendUnblock)
 	mux.HandleFunc("GET /account/invitations", s.handleInvitations)
+	mux.HandleFunc("GET /features", s.handleFeatures)
+	mux.HandleFunc("GET /downloads", s.handleDownloads)
 	mux.HandleFunc("GET /status", s.handleStatus)
 }
 
@@ -227,6 +234,19 @@ func (s *Server) handleLanding(w http.ResponseWriter, r *http.Request) {
 		Titles []store.Title
 	}
 	s.render(w, http.StatusOK, "landing.html", landing{d, titles})
+}
+
+// handleFeatures and handleDownloads are static content pages: what the
+// network does today, and how to get onto it. Both state availability
+// honestly rather than advertising what has not shipped.
+func (s *Server) handleFeatures(w http.ResponseWriter, r *http.Request) {
+	v := s.viewerOf(w, r)
+	s.render(w, http.StatusOK, "features.html", s.data(r, v, i18n.T("en", "features.title")))
+}
+
+func (s *Server) handleDownloads(w http.ResponseWriter, r *http.Request) {
+	v := s.viewerOf(w, r)
+	s.render(w, http.StatusOK, "downloads.html", s.data(r, v, i18n.T("en", "downloads.title")))
 }
 
 func (s *Server) handleRegisterForm(w http.ResponseWriter, r *http.Request) {
@@ -424,11 +444,11 @@ func normalizeEmail(s string) string {
 	return strings.ToLower(strings.TrimSpace(s))
 }
 
-// fmtFriendCode renders a link subject as SW-xxxx-xxxx-xxxx when the
-// adapter stored 12 hex digits; otherwise the subject is shown verbatim
-// (it is adapter-owned; CR-3).
+// fmtFriendCode renders a link subject as SW- plus dash-separated groups of
+// four when the adapter stored 12 or 16 hex digits (both are in the wild;
+// the subject is adapter-owned, CR-3). Anything else is shown verbatim.
 func fmtFriendCode(subject string) string {
-	hex := make([]rune, 0, 12)
+	hex := make([]rune, 0, 16)
 	for _, c := range subject {
 		switch {
 		case c >= '0' && c <= '9', c >= 'a' && c <= 'f', c >= 'A' && c <= 'F':
@@ -438,8 +458,12 @@ func fmtFriendCode(subject string) string {
 			return subject
 		}
 	}
-	if len(hex) != 12 {
+	if len(hex) != 12 && len(hex) != 16 {
 		return subject
 	}
-	return fmt.Sprintf("SW-%s-%s-%s", string(hex[0:4]), string(hex[4:8]), string(hex[8:12]))
+	groups := make([]string, 0, 4)
+	for i := 0; i < len(hex); i += 4 {
+		groups = append(groups, string(hex[i:i+4]))
+	}
+	return "SW-" + strings.Join(groups, "-")
 }

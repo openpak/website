@@ -1,17 +1,25 @@
 {{template "header" .}}
-<h1>{{t .Lang "admin.events"}}</h1>
-<h2>Core events</h2>
-{{if .CoreEvents}}
-<table>
-  <thead><tr><th scope="col">Version</th><th scope="col">Type</th><th scope="col">Account</th><th scope="col">Time</th></tr></thead>
-  <tbody>{{range .CoreEvents}}<tr><td>{{.Version}}</td><td>{{.Type}}</td><td><code>{{.AccountID}}</code></td><td>{{.CreatedAt.UTC.Format "2006-01-02 15:04:05"}}</td></tr>{{end}}</tbody>
-</table>
-{{else}}<p>No events.</p>{{end}}
-<h2>Website audit</h2>
-{{if .SiteAudit}}
-<table>
-  <thead><tr><th scope="col">Actor</th><th scope="col">Action</th><th scope="col">Detail</th><th scope="col">Time</th></tr></thead>
-  <tbody>{{range .SiteAudit}}<tr><td><code>{{.ActorID}}</code></td><td>{{.Action}}</td><td>{{.Detail}}</td><td>{{.CreatedAt.UTC.Format "2006-01-02 15:04:05"}}</td></tr>{{end}}</tbody>
-</table>
-{{else}}<p>No website audit entries.</p>{{end}}
+<div class="page-head"><h1>{{t .Lang "admin.events"}}</h1><p>{{t .Lang "admin.events.sub"}}</p></div>
+<section aria-labelledby="ce-h">
+  <div class="section-head"><h2 id="ce-h">{{t .Lang "admin.events.core"}}</h2></div>
+  {{if .CoreEvents}}
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th scope="col">Version</th><th scope="col">Type</th><th scope="col">Account</th><th scope="col">Time</th></tr></thead>
+    <tbody>{{range .CoreEvents}}<tr><td>{{.Version}}</td><td><span class="cl">Type: </span>{{.Type}}</td><td><span class="cl">Account: </span><code>{{.AccountID}}</code></td><td><span class="cl">Time: </span>{{.CreatedAt.UTC.Format "2006-01-02 15:04:05"}}</td></tr>{{end}}</tbody>
+  </table>
+  </div>
+  {{else}}<p class="empty">{{t .Lang "admin.events.none"}}</p>{{end}}
+</section>
+<section aria-labelledby="wa-h">
+  <div class="section-head"><h2 id="wa-h">{{t .Lang "admin.events.site"}}</h2></div>
+  {{if .SiteAudit}}
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th scope="col">Actor</th><th scope="col">Action</th><th scope="col">Detail</th><th scope="col">Time</th></tr></thead>
+    <tbody>{{range .SiteAudit}}<tr><td><code>{{.ActorID}}</code></td><td><span class="cl">Action: </span>{{.Action}}</td><td><span class="cl">Detail: </span>{{.Detail}}</td><td><span class="cl">Time: </span>{{.CreatedAt.UTC.Format "2006-01-02 15:04:05"}}</td></tr>{{end}}</tbody>
+  </table>
+  </div>
+  {{else}}<p class="empty">{{t .Lang "admin.events.none.site"}}</p>{{end}}
+</section>
 {{template "footer" .}}

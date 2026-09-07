@@ -1,10 +1,14 @@
 {{template "header" .}}
-<h1>{{t .Lang "status.title"}}</h1>
-<table>
-  <tbody>
-  <tr><th scope="row">{{t .Lang "status.core"}}</th><td class="{{if .CoreOK}}ok{{else}}bad{{end}}">{{if .CoreOK}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</td></tr>
-  <tr><th scope="row">{{t .Lang "status.db"}}</th><td class="{{if .DBOk}}ok{{else}}bad{{end}}">{{if .DBOk}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</td></tr>
-  <tr><th scope="row">{{t .Lang "status.storage"}}</th><td class="{{if .StorageOK}}ok{{else}}bad{{end}}">{{if .StorageOK}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</td></tr>
-  </tbody>
-</table>
+<div class="page-head">
+  <h1>{{t .Lang "status.title"}}</h1>
+  <p>{{t .Lang "status.sub"}}</p>
+</div>
+<ul class="rows">
+  <li><span class="name">{{t .Lang "status.core"}}</span>
+    <span class="badge {{if .CoreOK}}ok{{else}}bad{{end}}">{{if .CoreOK}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</span></li>
+  <li><span class="name">{{t .Lang "status.db"}}</span>
+    <span class="badge {{if .DBOk}}ok{{else}}bad{{end}}">{{if .DBOk}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</span></li>
+  <li><span class="name">{{t .Lang "status.storage"}}</span>
+    <span class="badge {{if .StorageOK}}ok{{else}}bad{{end}}">{{if .StorageOK}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</span></li>
+</ul>
 {{template "footer" .}}

@@ -1,0 +1,117 @@
+{{template "header" .}}
+<div class="page-head">
+  <h1>{{t .Lang "downloads.title"}}</h1>
+  <p>{{t .Lang "downloads.sub"}}</p>
+</div>
+
+<p class="notice" role="status">{{t .Lang "downloads.prerelease"}}</p>
+
+<section aria-labelledby="emu-h">
+  <div class="section-head">
+    <h2 id="emu-h">{{t .Lang "downloads.emu"}}</h2>
+    <p>{{t .Lang "downloads.emu.sub"}}</p>
+  </div>
+  <ul class="rows">
+    <li><span class="name">{{t .Lang "downloads.emu.build"}}</span><span class="badge">{{t .Lang "features.wip"}}</span></li>
+  </ul>
+  <ol class="steps-list">
+    <li>{{t .Lang "downloads.emu.1"}}</li>
+    <li>{{t .Lang "downloads.emu.2"}}</li>
+    <li>{{t .Lang "downloads.emu.3"}}</li>
+  </ol>
+</section>
+
+<section aria-labelledby="hw-h">
+  <div class="section-head">
+    <h2 id="hw-h">{{t .Lang "downloads.hw"}}</h2>
+    <p>{{t .Lang "downloads.hw.sub"}}</p>
+  </div>
+  <ul class="rows">
+    <li><span class="name">{{t .Lang "downloads.hw.nro"}}</span><span class="badge">{{t .Lang "features.planned"}}</span></li>
+  </ul>
+  <ol class="steps-list">
+    <li>{{t .Lang "downloads.hw.1"}}</li>
+    <li>{{t .Lang "downloads.hw.2"}}</li>
+    <li>{{t .Lang "downloads.hw.3"}}</li>
+  </ol>
+  <p class="hint">{{t .Lang "downloads.hw.warning"}}</p>
+</section>
+
+
+<section aria-labelledby="plat-h" id="platforms">
+  <div class="section-head">
+    <h2 id="plat-h">{{t .Lang "platforms.title"}}</h2>
+    <p>{{t .Lang "platforms.sub"}}</p>
+  </div>
+  <div class="table-wrap">
+  <table>
+    <thead><tr>
+      <th scope="col">{{t .Lang "platforms.col.platform"}}</th>
+      <th scope="col">{{t .Lang "platforms.col.hardware"}}</th>
+      <th scope="col">{{t .Lang "platforms.col.emulator"}}</th>
+      <th scope="col">{{t .Lang "features.col.state"}}</th>
+    </tr></thead>
+    <tbody>
+      <tr><td><b>Nintendo Switch</b><br><span class="sub">{{t .Lang "platforms.switch"}}</span></td>
+        <td><span class="cl">{{t .Lang "platforms.col.hardware"}}: </span>{{t .Lang "platforms.yes"}}</td><td><span class="cl">{{t .Lang "platforms.col.emulator"}}: </span>{{t .Lang "platforms.yes"}}</td>
+        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.wip"}}</span></td></tr>
+
+      <tr><td><b>Wii U</b><br><span class="sub">{{t .Lang "platforms.wiiu"}}</span></td>
+        <td><span class="cl">{{t .Lang "platforms.col.hardware"}}: </span>{{t .Lang "platforms.yes"}}</td><td><span class="cl">{{t .Lang "platforms.col.emulator"}}: </span>{{t .Lang "platforms.yes"}}</td>
+        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.planned"}}</span></td></tr>
+
+      <tr><td><b>Nintendo 3DS</b><br><span class="sub">{{t .Lang "platforms.3ds"}}</span></td>
+        <td><span class="cl">{{t .Lang "platforms.col.hardware"}}: </span>{{t .Lang "platforms.yes"}}</td><td><span class="cl">{{t .Lang "platforms.col.emulator"}}: </span>{{t .Lang "platforms.yes"}}</td>
+        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.planned"}}</span></td></tr>
+
+      <tr><td><b>PlayStation 3</b><br><span class="sub">{{t .Lang "platforms.ps3"}}</span></td>
+        <td><span class="cl">{{t .Lang "platforms.col.hardware"}}: </span>{{t .Lang "platforms.no"}}</td><td><span class="cl">{{t .Lang "platforms.col.emulator"}}: </span>{{t .Lang "platforms.yes"}}</td>
+        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.planned"}}</span></td></tr>
+
+      <tr><td><b>Xbox 360</b><br><span class="sub">{{t .Lang "platforms.x360"}}</span></td>
+        <td><span class="cl">{{t .Lang "platforms.col.hardware"}}: </span>{{t .Lang "platforms.no"}}</td><td><span class="cl">{{t .Lang "platforms.col.emulator"}}: </span>{{t .Lang "platforms.yes"}}</td>
+        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.planned"}}</span></td></tr>
+
+      <tr><td><b>Wii</b><br><span class="sub">{{t .Lang "platforms.wii"}}</span></td>
+        <td><span class="cl">{{t .Lang "platforms.col.hardware"}}: </span>{{t .Lang "platforms.yes"}}</td><td><span class="cl">{{t .Lang "platforms.col.emulator"}}: </span>{{t .Lang "platforms.yes"}}</td>
+        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.exploring"}}</span></td></tr>
+
+      <tr><td><b>Nintendo DS</b><br><span class="sub">{{t .Lang "platforms.ds"}}</span></td>
+        <td><span class="cl">{{t .Lang "platforms.col.hardware"}}: </span>{{t .Lang "platforms.yes"}}</td><td><span class="cl">{{t .Lang "platforms.col.emulator"}}: </span>{{t .Lang "platforms.yes"}}</td>
+        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.exploring"}}</span></td></tr>
+
+      <tr><td><b>PlayStation 2</b><br><span class="sub">{{t .Lang "platforms.ps2"}}</span></td>
+        <td><span class="cl">{{t .Lang "platforms.col.hardware"}}: </span>{{t .Lang "platforms.yes"}}</td><td><span class="cl">{{t .Lang "platforms.col.emulator"}}: </span>{{t .Lang "platforms.yes"}}</td>
+        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.exploring"}}</span></td></tr>
+
+      <tr><td><b>PlayStation Portable</b><br><span class="sub">{{t .Lang "platforms.psp"}}</span></td>
+        <td><span class="cl">{{t .Lang "platforms.col.hardware"}}: </span>{{t .Lang "platforms.yes"}}</td><td><span class="cl">{{t .Lang "platforms.col.emulator"}}: </span>{{t .Lang "platforms.yes"}}</td>
+        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.exploring"}}</span></td></tr>
+
+      <tr><td><b>PlayStation Vita</b><br><span class="sub">{{t .Lang "platforms.vita"}}</span></td>
+        <td><span class="cl">{{t .Lang "platforms.col.hardware"}}: </span>{{t .Lang "platforms.no"}}</td><td><span class="cl">{{t .Lang "platforms.col.emulator"}}: </span>{{t .Lang "platforms.partial"}}</td>
+        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.exploring"}}</span></td></tr>
+
+      <tr><td><b>PlayStation 4</b><br><span class="sub">{{t .Lang "platforms.ps4"}}</span></td>
+        <td><span class="cl">{{t .Lang "platforms.col.hardware"}}: </span>{{t .Lang "platforms.no"}}</td><td><span class="cl">{{t .Lang "platforms.col.emulator"}}: </span>{{t .Lang "platforms.partial"}}</td>
+        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.exploring"}}</span></td></tr>
+
+      <tr><td><b>Xbox</b><br><span class="sub">{{t .Lang "platforms.xbox"}}</span></td>
+        <td><span class="cl">{{t .Lang "platforms.col.hardware"}}: </span>{{t .Lang "platforms.yes"}}</td><td><span class="cl">{{t .Lang "platforms.col.emulator"}}: </span>{{t .Lang "platforms.no"}}</td>
+        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.exploring"}}</span></td></tr>
+
+      <tr><td><b>PlayStation 5 · Xbox One · Xbox Series</b><br><span class="sub">{{t .Lang "platforms.modern"}}</span></td>
+        <td><span class="cl">{{t .Lang "platforms.col.hardware"}}: </span>{{t .Lang "platforms.no"}}</td><td><span class="cl">{{t .Lang "platforms.col.emulator"}}: </span>{{t .Lang "platforms.no"}}</td>
+        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.nofeasible"}}</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="hint">{{t .Lang "platforms.note"}}</p>
+</section>
+
+<section aria-labelledby="help-h">
+  <div class="section-head"><h2 id="help-h">{{t .Lang "downloads.help"}}</h2></div>
+  <p class="prose">{{t .Lang "downloads.help.body"}}</p>
+  <p class="actions"><a class="btn" href="/status">{{t .Lang "nav.status"}}</a></p>
+</section>
+{{template "footer" .}}

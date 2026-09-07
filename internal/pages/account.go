@@ -1,9 +1,13 @@
 package pages
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
@@ -21,6 +25,8 @@ type accountView struct {
 	CurrentSession string
 	AvatarURL      string
 	AvatarPending  bool
+	Presets        []string
+	friendsData
 }
 
 type linkRow struct {
@@ -51,6 +57,8 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 		s.log.Error("list sessions", "err", err)
 	}
 	view.Sessions = sessions
+	view.friendsData = s.loadFriends(ctx, v.AccountID)
+	view.Presets = media.PresetIDs
 
 	// Avatar existence check is cheap and local.
 	if s.Media != nil {
@@ -125,69 +133,154 @@ func (s *Server) handleAvatarUpload(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "too many uploads; slow down", http.StatusTooManyRequests)
 		return
 	}
-	file, _, err := r.FormFile("avatar")
-	if err != nil {
-		http.Error(w, "avatar file required", http.StatusBadRequest)
-		return
-	}
-	defer file.Close()
-	if err := s.Media.StoreAvatar(r.Context(), v.AccountID, file); err != nil {
-		if errors.Is(err, media.ErrInvalid) {
-			http.Error(w, "upload a PNG or JPEG up to 4 MiB", http.StatusBadRequest)
+	// One form, two ways to choose: upload a file, or pick a built-in. An
+	// uploaded file wins — it is the more deliberate act, and the tiles
+	// cannot be made mutually exclusive without script.
+	if file, _, err := r.FormFile("avatar"); err == nil {
+		defer file.Close()
+		if err := s.Media.StoreAvatar(r.Context(), v.AccountID, file); err != nil {
+			if errors.Is(err, media.ErrInvalid) {
+				http.Error(w, "upload a PNG or JPEG up to 4 MiB", http.StatusBadRequest)
+				return
+			}
+			s.log.Error("store avatar", "err", err)
+			http.Error(w, "could not store avatar", http.StatusInternalServerError)
 			return
 		}
-		s.log.Error("store avatar", "err", err)
-		http.Error(w, "could not store avatar", http.StatusInternalServerError)
+	} else if preset := r.PostFormValue("preset"); preset != "" {
+		if err := s.Media.StorePreset(r.Context(), v.AccountID, preset); err != nil {
+			if errors.Is(err, media.ErrInvalid) {
+				http.Error(w, "unknown avatar", http.StatusBadRequest)
+				return
+			}
+			s.log.Error("store preset avatar", "err", err)
+			http.Error(w, "could not store avatar", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		http.Error(w, "choose an avatar or upload a file", http.StatusBadRequest)
 		return
 	}
-	if err := s.DB.UpsertMedia(r.Context(), store.MediaRecord{AccountID: v.AccountID, Kind: "avatar"}); err != nil {
+	// UpdatedAt is the version the console path needs: the adapter builds
+	// its ?v= cache key from it, so a stale value means a stale picture on
+	// the console (CR-2).
+	if err := s.DB.UpsertMedia(r.Context(), store.MediaRecord{
+		AccountID: v.AccountID, Kind: "avatar", UpdatedAt: time.Now().UTC(),
+	}); err != nil {
 		s.log.Error("media metadata", "err", err)
 	}
 	redirectMsg(w, r, "/account", "saved")
 }
 
-// handleAvatarServe serves stored avatars. Console delivery will move to
-// the adapter once CR-2 lands; the website keeps serving its own copies.
+// handleAvatarServe serves the website's own PNG copies, the console JPEG,
+// and previews of the built-in avatars.
 func (s *Server) handleAvatarServe(w http.ResponseWriter, r *http.Request) {
 	if s.Media == nil {
 		http.NotFound(w, r)
 		return
 	}
-	accountID := r.PathValue("accountID")
-	size, err := strconv.Atoi(r.PathValue("size"))
-	if err != nil || (size != media.SizeSmall && size != media.SizeLarge) {
+	accountID, size := r.PathValue("accountID"), r.PathValue("size")
+
+	// Preset previews are account-independent and immutable.
+	if accountID == "preset" {
+		data, err := media.PresetImage(strings.TrimSuffix(size, ".png"), 128)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "image/png")
+		w.Header().Set("Cache-Control", "public, max-age=604800, immutable")
+		_, _ = w.Write(data)
+		return
+	}
+
+	// The console JPEG (CR-2 interim): served with a validator so a refresh
+	// costs a 304 when nothing changed.
+	if size == "console.jpg" {
+		data, err := s.Media.ConsoleAvatar(r.Context(), accountID)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "image/jpeg")
+		w.Header().Set("Cache-Control", "public, max-age=3600")
+		s.writeWithValidators(w, r, accountID, data)
+		return
+	}
+
+	px, err := strconv.Atoi(size)
+	if err != nil || (px != media.SizeSmall && px != media.SizeLarge) {
 		http.NotFound(w, r)
 		return
 	}
-	data, err := s.Media.Avatar(r.Context(), accountID, size)
+	data, err := s.Media.Avatar(r.Context(), accountID, px)
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
 	w.Header().Set("Content-Type", "image/png")
 	w.Header().Set("Cache-Control", "public, max-age=300")
+	s.writeWithValidators(w, r, accountID, data)
+}
+
+// writeWithValidators stamps ETag/Last-Modified from the avatar's recorded
+// update time and answers conditional requests with 304, so a console or
+// browser re-checking after a refresh transfers nothing when nothing moved.
+func (s *Server) writeWithValidators(w http.ResponseWriter, r *http.Request, accountID string, data []byte) {
+	rec, err := s.DB.GetMedia(r.Context(), accountID, "avatar")
+	if err == nil && !rec.UpdatedAt.IsZero() {
+		etag := fmt.Sprintf("\"%d\"", rec.UpdatedAt.UnixNano())
+		w.Header().Set("ETag", etag)
+		w.Header().Set("Last-Modified", rec.UpdatedAt.UTC().Format(http.TimeFormat))
+		if match := r.Header.Get("If-None-Match"); match == etag {
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
+		if since, err := http.ParseTime(r.Header.Get("If-Modified-Since")); err == nil &&
+			!rec.UpdatedAt.Truncate(time.Second).After(since) {
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
+	}
 	_, _ = w.Write(data)
 }
 
 // --- Friends (WEB-04): every write goes through the Social contract. ---
 
-type friendsView struct {
-	baseData
+// friendsData is the friend-graph half of the account page: friends,
+// pending requests in both directions, and invitations (WEB-04, WEB-05).
+type friendsData struct {
 	Friends, Incoming, Outgoing []core.Friend
 	BlockedNote                 []string // ids the viewer blocked
+	Invites                     []core.PendingInvitation
+	ContractWait                bool
 }
 
+// handleFriends keeps the old URL working; friends are a section of the
+// account page now, not a page of their own.
 func (s *Server) handleFriends(w http.ResponseWriter, r *http.Request) {
-	v := s.requireViewer(w, r)
-	if v == nil {
+	if v := s.requireViewer(w, r); v == nil {
 		return
 	}
-	ctx := r.Context()
-	view := friendsView{baseData: s.data(r, v, i18n.T("en", "friends.title"))}
-	view.Friends, _ = s.Social.ListFriends(ctx, v.AccountID)
-	view.Incoming, _ = s.Social.ListIncoming(ctx, v.AccountID)
-	view.Outgoing, _ = s.Social.ListOutgoing(ctx, v.AccountID)
-	s.render(w, http.StatusOK, "friends.html", view)
+	http.Redirect(w, r, "/account#friends", http.StatusSeeOther)
+}
+
+// loadFriends fills the friend-graph half of the account page.
+func (s *Server) loadFriends(ctx context.Context, accountID string) friendsData {
+	var d friendsData
+	d.Friends, _ = s.Social.ListFriends(ctx, accountID)
+	d.Incoming, _ = s.Social.ListIncoming(ctx, accountID)
+	d.Outgoing, _ = s.Social.ListOutgoing(ctx, accountID)
+	// Invitations are read-only pending CR-1; the page says so rather than
+	// rendering a misleading empty list.
+	inv, err := s.Invites.ListPending(ctx, accountID)
+	if errors.Is(err, core.ErrContractPending) {
+		d.ContractWait = true
+	} else if err != nil {
+		s.log.Error("list invitations", "err", err)
+	}
+	d.Invites = inv
+	return d
 }
 
 func (s *Server) handleFriendRequest(w http.ResponseWriter, r *http.Request) {
@@ -204,11 +297,11 @@ func (s *Server) handleFriendRequest(w http.ResponseWriter, r *http.Request) {
 	// IS the adapter-owned link subject (CR-3 interim).
 	target, err := s.Links.AccountBySubject(r.Context(), "switch", code)
 	if err != nil || target == "" {
-		redirectMsg(w, r, "/account/friends", "funknown")
+		redirectMsg(w, r, "/account", "funknown")
 		return
 	}
 	if target == v.AccountID {
-		redirectMsg(w, r, "/account/friends", "fself")
+		redirectMsg(w, r, "/account", "fself")
 		return
 	}
 	if err := s.Social.RequestFriend(r.Context(), v.AccountID, target); err != nil {
@@ -216,11 +309,12 @@ func (s *Server) handleFriendRequest(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not send request", http.StatusInternalServerError)
 		return
 	}
-	redirectMsg(w, r, "/account/friends", "frequest")
+	redirectMsg(w, r, "/account", "frequest")
 }
 
-// normalizeFriendCode strips display formatting: SW-1234-5678-9012 and
-// 123456789012 both arrive at the contract as the stored subject.
+// normalizeFriendCode strips display formatting: SW-1234-5678-9012,
+// sw123456789012 and 1234-5678-9012 all arrive at the contract as the
+// stored subject — 12 lower-case hex digits.
 func normalizeFriendCode(code string) string {
 	out := make([]rune, 0, len(code))
 	for _, c := range code {
@@ -228,9 +322,10 @@ func normalizeFriendCode(code string) string {
 			out = append(out, c)
 		}
 	}
-	s := string(out)
-	// The "SW" prefix is display-only; the adapter subject is 12 chars.
-	if len(s) == 14 && (s[:2] == "SW" || s[:2] == "sw") {
+	// Subjects are stored lower-case; the field accepts either case.
+	s := strings.ToLower(string(out))
+	// The "sw" prefix is display-only; adapter subjects are 12 or 16 chars.
+	if (len(s) == 14 || len(s) == 18) && strings.HasPrefix(s, "sw") {
 		s = s[2:]
 	}
 	return s
@@ -246,7 +341,7 @@ func (s *Server) handleFriendAccept(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not accept request", http.StatusInternalServerError)
 		return
 	}
-	redirectMsg(w, r, "/account/friends", "saved")
+	redirectMsg(w, r, "/account", "saved")
 }
 
 func (s *Server) handleFriendDecline(w http.ResponseWriter, r *http.Request) {
@@ -260,7 +355,7 @@ func (s *Server) handleFriendDecline(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not decline request", http.StatusInternalServerError)
 		return
 	}
-	redirectMsg(w, r, "/account/friends", "saved")
+	redirectMsg(w, r, "/account", "saved")
 }
 
 func (s *Server) handleFriendRemove(w http.ResponseWriter, r *http.Request) {
@@ -273,7 +368,7 @@ func (s *Server) handleFriendRemove(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not remove friend", http.StatusInternalServerError)
 		return
 	}
-	redirectMsg(w, r, "/account/friends", "saved")
+	redirectMsg(w, r, "/account", "saved")
 }
 
 func (s *Server) handleFriendBlock(w http.ResponseWriter, r *http.Request) {
@@ -286,7 +381,7 @@ func (s *Server) handleFriendBlock(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not block", http.StatusInternalServerError)
 		return
 	}
-	redirectMsg(w, r, "/account/friends", "saved")
+	redirectMsg(w, r, "/account", "saved")
 }
 
 func (s *Server) handleFriendUnblock(w http.ResponseWriter, r *http.Request) {
@@ -299,30 +394,16 @@ func (s *Server) handleFriendUnblock(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not unblock", http.StatusInternalServerError)
 		return
 	}
-	redirectMsg(w, r, "/account/friends", "saved")
+	redirectMsg(w, r, "/account", "saved")
 }
 
-// handleInvitations is WEB-05. Read-only view pending CR-1; the page
-// renders a clear notice instead of pretending.
+// handleInvitations keeps the old URL working: invitations are a section
+// of the friends page (WEB-05), not a separate destination.
 func (s *Server) handleInvitations(w http.ResponseWriter, r *http.Request) {
-	v := s.requireViewer(w, r)
-	if v == nil {
+	if v := s.requireViewer(w, r); v == nil {
 		return
 	}
-	type invView struct {
-		baseData
-		Invites      []core.PendingInvitation
-		ContractWait bool
-	}
-	view := invView{baseData: s.data(r, v, i18n.T("en", "invitations.title"))}
-	inv, err := s.Invites.ListPending(r.Context(), v.AccountID)
-	if errors.Is(err, core.ErrContractPending) {
-		view.ContractWait = true
-	} else if err != nil {
-		s.log.Error("list invitations", "err", err)
-	}
-	view.Invites = inv
-	s.render(w, http.StatusOK, "invitations.html", view)
+	http.Redirect(w, r, "/account/friends#invitations", http.StatusSeeOther)
 }
 
 // handleStatus is the public status page (journey 5).

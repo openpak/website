@@ -78,6 +78,13 @@ func TestW1Journey(t *testing.T) {
 		t.Fatalf("landing: %d", rec.Code)
 	}
 
+	// Status renders (the only page no other journey touches).
+	rec = httptest.NewRecorder()
+	mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/status", nil))
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "Account core") {
+		t.Fatalf("status: %d %s", rec.Code, rec.Body.String())
+	}
+
 	// Register (masked success response).
 	form := url.Values{"email": {"a@x.test"}, "password": {"password-A-1"}, "display_name": {"Alice"}}
 	rec = httptest.NewRecorder()
@@ -178,7 +185,7 @@ func TestW2FriendJourney(t *testing.T) {
 	}
 
 	// A sees the incoming request and accepts.
-	rec = authedRequest(s, recA, http.MethodGet, "/account/friends", nil)
+	rec = authedRequest(s, recA, http.MethodGet, "/account", nil)
 	if !strings.Contains(rec.Body.String(), "acct-b@x.test") {
 		t.Fatal("incoming request not visible to addressee")
 	}
@@ -246,7 +253,7 @@ func TestInvitationsPendingCR1(t *testing.T) {
 	s, fc, _ := newTestServer(t)
 	seedTwoAccounts(fc)
 	recA := login(t, s, "a@x.test", "password-A-1")
-	rec := authedRequest(s, recA, http.MethodGet, "/account/invitations", nil)
+	rec := authedRequest(s, recA, http.MethodGet, "/account", nil)
 	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "CR-1") {
 		t.Fatalf("invitations page must explain CR-1 pending: %d", rec.Code)
 	}

@@ -26,7 +26,24 @@ internal/api/           /api/v1 mobile API (+ openapi/openapi.yaml contract)
 internal/media/         avatar pipeline (validate, resize 256/512, storage)
 internal/i18n/          single string catalogue (WEB-09)
 internal/ratelimit/     fixed-window limiter (login, token minting, API)
+web/static/             site.css + icon.svg (no build step, no JavaScript)
 ```
+
+### UI
+
+One shell for every page — public and signed-in alike (`header`/`footer` in
+`internal/pages/templates/_layout.html`); the nav swaps its links for a
+session, and the moderation link appears only for accounts in
+`WEBSITE_ADMIN_ACCOUNT_IDS` (`pages.Server.AdminAccountIDs` mirrors the
+allowlist for display only; `/admin` authorization stays in `internal/admin`
+and remains fail-closed).
+
+`web/static/site.css` is the whole design system. It is deliberately plain:
+near-black text on white, hairline rules instead of shadows, one accent used
+only for links and focus, ink-filled primary buttons, and a `--col` reading
+column so a list row keeps its actions beside the row. All UI copy lives in
+`internal/i18n`, and the render CSP is `style-src 'self'`, so templates carry
+no inline `style` attributes.
 
 ## Building
 
