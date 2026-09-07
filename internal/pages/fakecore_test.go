@@ -78,6 +78,16 @@ func (f *fakeCore) RevokeSession(_ context.Context, sid, id string) error {
 	delete(f.sessions, id)
 	return nil
 }
+
+// The core checks the current password; the fake mirrors that so the handler's failure path
+// is exercised too.
+func (f *fakeCore) ChangePassword(_ context.Context, _, current, next string) error {
+	if f.accounts["a@x.test"] != current {
+		return core.ErrInvalidCredentials
+	}
+	f.accounts["a@x.test"] = next
+	return nil
+}
 func (f *fakeCore) ForgotPassword(_ context.Context, _ string) error { return nil }
 func (f *fakeCore) ResetPassword(_ context.Context, _, password string) error {
 	f.accounts["a@x.test"] = password

@@ -6,13 +6,19 @@ package pages
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"html/template"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
@@ -56,6 +62,10 @@ type viewer struct {
 
 // baseData feeds the layout template.
 type baseData struct {
+	// Asset is a fingerprint of the static files, appended to their URLs. Without it a CDN
+	// keeps serving the previous deploy's stylesheet for as long as its TTL says it may —
+	// which is exactly what happened: a cached 2.6 KB site.css against a 16 KB one on disk.
+	Asset   string
 	Lang    string
 	Title   string
 	Banner  string
@@ -75,7 +85,7 @@ type viewUser struct {
 
 // data builds baseData for a request.
 func (s *Server) data(r *http.Request, v *viewer, title string) baseData {
-	d := baseData{Lang: i18n.Lang(r.Header.Get("Accept-Language")), Title: title, Path: r.URL.Path}
+	d := baseData{Asset: assetVersion(), Lang: i18n.Lang(r.Header.Get("Accept-Language")), Title: title, Path: r.URL.Path}
 	if cfg, err := s.DB.GetSiteConfig(r.Context()); err == nil {
 		d.Banner = cfg.BannerMessage
 		d.RegOpen = cfg.RegistrationsOpen
@@ -102,6 +112,12 @@ func flashText(code string) string {
 		return i18n.T("en", "friends.request.unknown")
 	case "fself":
 		return i18n.T("en", "friends.request.self")
+	case "password-changed":
+		return i18n.T("en", "account.password.ok")
+	case "password-mismatch":
+		return i18n.T("en", "account.password.mismatch")
+	case "password-failed":
+		return i18n.T("en", "account.password.failed")
 	default:
 		return ""
 	}
@@ -205,6 +221,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /reset-password", s.handleResetForm)
 	mux.HandleFunc("POST /reset-password", s.handleResetSubmit)
 	mux.HandleFunc("GET /account", s.handleAccount)
+	mux.HandleFunc("POST /account/password", s.handleChangePassword)
 	mux.HandleFunc("POST /account/sessions/revoke", s.handleRevokeSession)
 	mux.HandleFunc("POST /account/link/revoke", s.handleUnlink)
 	mux.HandleFunc("POST /account/avatar", s.handleAvatarUpload)
@@ -467,3 +484,25 @@ func fmtFriendCode(subject string) string {
 	}
 	return "SW-" + strings.Join(groups, "-")
 }
+
+// AssetVersion is the fingerprint appended to static URLs; admin templates share the layout,
+// so they need it too.
+func AssetVersion() string { return assetVersion() }
+
+// assetVersion hashes the files served from web/static, once per process. A new deploy has a
+// new binary, so a new fingerprint, so browsers and caches fetch the new files.
+var assetVersion = sync.OnceValue(func() string {
+	h := sha256.New()
+	filepath.WalkDir("web/static", func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return nil
+		}
+		b, err := os.ReadFile(path)
+		if err == nil {
+			h.Write([]byte(path))
+			h.Write(b)
+		}
+		return nil
+	})
+	return hex.EncodeToString(h.Sum(nil))[:10]
+})

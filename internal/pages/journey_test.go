@@ -343,3 +343,36 @@ func TestAvatarUploadMultipartCSRF(t *testing.T) {
 		t.Fatalf("avatar not stored: %v", err)
 	}
 }
+
+// Changing a password from the account page: a mismatched confirmation must not reach the
+// core, and the wrong current password must not rotate anything.
+func TestChangePasswordJourney(t *testing.T) {
+	s, fc, _ := newTestServer(t)
+	fc.accounts["a@x.test"] = "password-A-1"
+	fc.verified["a@x.test"] = true      // login refuses unverified accounts
+	rec := login(t, s, "a@x.test", "password-A-1")
+
+	attempt := func(current, next, confirm string) string {
+		body := url.Values{"current_password": {current}, "new_password": {next}, "confirm_password": {confirm}}
+		return authedRequest(s, rec, http.MethodPost, "/account/password", &body).Header().Get("Location")
+	}
+
+	if got := attempt("password-A-1", "password-B-2", "different"); !strings.Contains(got, "password-mismatch") {
+		t.Errorf("mismatched confirmation redirected to %q", got)
+	}
+	if fc.accounts["a@x.test"] != "password-A-1" {
+		t.Error("password rotated despite a mismatched confirmation")
+	}
+	if got := attempt("wrong-one", "password-B-2", "password-B-2"); !strings.Contains(got, "password-failed") {
+		t.Errorf("wrong current password redirected to %q", got)
+	}
+	if fc.accounts["a@x.test"] != "password-A-1" {
+		t.Error("password rotated with the wrong current password")
+	}
+	if got := attempt("password-A-1", "password-B-2", "password-B-2"); !strings.Contains(got, "password-changed") {
+		t.Errorf("valid change redirected to %q", got)
+	}
+	if fc.accounts["a@x.test"] != "password-B-2" {
+		t.Error("password was not rotated")
+	}
+}

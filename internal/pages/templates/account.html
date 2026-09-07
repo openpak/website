@@ -112,6 +112,23 @@
   {{else}}<p class="empty">{{t .Lang "account.links.none"}}</p>{{end}}
 </section>
 
+<section aria-labelledby="pw-h">
+  <div class="section-head">
+    <h2 id="pw-h">{{t .Lang "account.password.title"}}</h2>
+    <p>{{t .Lang "account.password.hint"}}</p>
+  </div>
+  <form method="post" action="/account/password" class="stack">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <label for="pw-current">{{t .Lang "account.password.current"}}</label>
+    <input id="pw-current" type="password" name="current_password" autocomplete="current-password" required>
+    <label for="pw-new">{{t .Lang "account.password.new"}}</label>
+    <input id="pw-new" type="password" name="new_password" autocomplete="new-password" minlength="8" required>
+    <label for="pw-confirm">{{t .Lang "account.password.confirm"}}</label>
+    <input id="pw-confirm" type="password" name="confirm_password" autocomplete="new-password" minlength="8" required>
+    <button type="submit">{{t .Lang "account.password.submit"}}</button>
+  </form>
+</section>
+
 <section aria-labelledby="sessions-h">
   <div class="section-head">
     <h2 id="sessions-h">{{t .Lang "account.sessions"}}</h2>

@@ -71,6 +71,26 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 	s.render(w, http.StatusOK, "account.html", view)
 }
 
+// handleChangePassword rotates the password of the signed-in account. The core requires the
+// current one and revokes the account's other sessions, so this page only has to report back.
+func (s *Server) handleChangePassword(w http.ResponseWriter, r *http.Request) {
+	v, ok := s.postGuard(w, r)
+	if !ok {
+		return
+	}
+	current := r.PostFormValue("current_password")
+	next := r.PostFormValue("new_password")
+	if next != r.PostFormValue("confirm_password") {
+		redirectMsg(w, r, "/account", "password-mismatch")
+		return
+	}
+	if err := s.Core.ChangePassword(r.Context(), v.CoreSessionID, current, next); err != nil {
+		redirectMsg(w, r, "/account", "password-failed")
+		return
+	}
+	redirectMsg(w, r, "/account", "password-changed")
+}
+
 func (s *Server) handleRevokeSession(w http.ResponseWriter, r *http.Request) {
 	v, ok := s.postGuard(w, r)
 	if !ok {

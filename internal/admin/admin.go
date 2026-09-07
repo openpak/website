@@ -16,6 +16,7 @@ import (
 
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
+	"github.com/openpak/website/internal/pages"
 	"github.com/openpak/website/internal/store"
 )
 
@@ -41,6 +42,9 @@ func New(tpl *template.Template, coreEvents core.Events, db store.Store, session
 }
 
 type base struct {
+	// Same fingerprint the public pages use: _layout.html is shared, and without this field
+	// every admin page fails to render.
+	Asset  string
 	Lang   string
 	Title  string
 	User   adminUser
@@ -69,7 +73,7 @@ func (s *Server) authorize(w http.ResponseWriter, r *http.Request) (store.WebSes
 		s.render(w, http.StatusForbidden, "message.html", struct {
 			base
 			Message string
-		}{base{Admin: true, Path: r.URL.Path, Lang: "en", Title: "Admin", User: adminUser{ws.DisplayName, ws.Email}}, i18n.T("en", "admin.denied")})
+		}{base{Asset: pages.AssetVersion(), Admin: true, Path: r.URL.Path, Lang: "en", Title: "Admin", User: adminUser{ws.DisplayName, ws.Email}}, i18n.T("en", "admin.denied")})
 		return ws, false
 	}
 	return ws, true
@@ -105,7 +109,7 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	s.render(w, http.StatusOK, "admin.html", base{Admin: true, Path: r.URL.Path, Lang: "en", Title: i18n.T("en", "admin.title"), User: adminUser{ws.DisplayName, ws.Email}})
+	s.render(w, http.StatusOK, "admin.html", base{Asset: pages.AssetVersion(), Admin: true, Path: r.URL.Path, Lang: "en", Title: i18n.T("en", "admin.title"), User: adminUser{ws.DisplayName, ws.Email}})
 }
 
 func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
@@ -123,7 +127,7 @@ func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
 		base
 		store.SiteConfig
 	}
-	s.render(w, http.StatusOK, "admin_config.html", cfgView{base{Admin: true, Path: r.URL.Path, Lang: "en", Title: i18n.T("en", "admin.config"), User: adminUser{ws.DisplayName, ws.Email}}, cfg})
+	s.render(w, http.StatusOK, "admin_config.html", cfgView{base{Asset: pages.AssetVersion(), Admin: true, Path: r.URL.Path, Lang: "en", Title: i18n.T("en", "admin.config"), User: adminUser{ws.DisplayName, ws.Email}}, cfg})
 }
 
 func (s *Server) handleConfigSave(w http.ResponseWriter, r *http.Request) {
@@ -170,7 +174,7 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 		SiteAudit  []store.AuditEntry
 	}
 	s.render(w, http.StatusOK, "admin_events.html", eventsView{
-		base{Admin: true, Path: r.URL.Path, Lang: "en", Title: i18n.T("en", "admin.events"), User: adminUser{ws.DisplayName, ws.Email}},
+		base{Asset: pages.AssetVersion(), Admin: true, Path: r.URL.Path, Lang: "en", Title: i18n.T("en", "admin.events"), User: adminUser{ws.DisplayName, ws.Email}},
 		coreEvents, siteAudit,
 	})
 }
@@ -184,7 +188,7 @@ func (s *Server) handleUsers(w http.ResponseWriter, r *http.Request) {
 	s.render(w, http.StatusOK, "admin_pending.html", struct {
 		base
 		Notice string
-	}{base{Admin: true, Path: r.URL.Path, Lang: "en", Title: i18n.T("en", "admin.users"), User: adminUser{ws.DisplayName, ws.Email}}, i18n.T("en", "admin.pending.cr5")})
+	}{base{Asset: pages.AssetVersion(), Admin: true, Path: r.URL.Path, Lang: "en", Title: i18n.T("en", "admin.users"), User: adminUser{ws.DisplayName, ws.Email}}, i18n.T("en", "admin.pending.cr5")})
 }
 
 // handleReports: the reports queue is fail-closed pending CR-6.
@@ -196,5 +200,5 @@ func (s *Server) handleReports(w http.ResponseWriter, r *http.Request) {
 	s.render(w, http.StatusOK, "admin_pending.html", struct {
 		base
 		Notice string
-	}{base{Admin: true, Path: r.URL.Path, Lang: "en", Title: i18n.T("en", "admin.reports"), User: adminUser{ws.DisplayName, ws.Email}}, i18n.T("en", "admin.pending.cr6")})
+	}{base{Asset: pages.AssetVersion(), Admin: true, Path: r.URL.Path, Lang: "en", Title: i18n.T("en", "admin.reports"), User: adminUser{ws.DisplayName, ws.Email}}, i18n.T("en", "admin.pending.cr6")})
 }

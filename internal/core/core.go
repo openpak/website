@@ -79,6 +79,7 @@ type HTTP interface {
 	Logout(ctx context.Context, coreSessionID string) error
 	ListSessions(ctx context.Context, coreSessionID string) ([]Session, error)
 	RevokeSession(ctx context.Context, coreSessionID, sessionID string) error
+	ChangePassword(ctx context.Context, coreSessionID, current, next string) error
 	ForgotPassword(ctx context.Context, email string) error
 	ResetPassword(ctx context.Context, token, password string) error
 	Healthy(ctx context.Context) error

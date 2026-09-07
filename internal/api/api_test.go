@@ -58,10 +58,11 @@ func (f *fakeCore) ListSessions(_ context.Context, sid string) ([]core.Session, 
 	}
 	return []core.Session{{ID: sid, CreatedAt: time.Now(), ExpiresAt: time.Now().Add(time.Hour)}}, nil
 }
-func (f *fakeCore) RevokeSession(_ context.Context, _, _ string) error { return nil }
-func (f *fakeCore) ForgotPassword(_ context.Context, _ string) error   { return nil }
-func (f *fakeCore) ResetPassword(_ context.Context, _, _ string) error { return nil }
-func (f *fakeCore) Healthy(_ context.Context) error                    { return nil }
+func (f *fakeCore) RevokeSession(_ context.Context, _, _ string) error     { return nil }
+func (f *fakeCore) ChangePassword(_ context.Context, _, _, _ string) error { return nil }
+func (f *fakeCore) ForgotPassword(_ context.Context, _ string) error       { return nil }
+func (f *fakeCore) ResetPassword(_ context.Context, _, _ string) error     { return nil }
+func (f *fakeCore) Healthy(_ context.Context) error                        { return nil }
 func (f *fakeCore) ResolveAccount(_ context.Context, email, password string) (core.Account, error) {
 	if pw, ok := f.accounts[email]; !ok || pw != password {
 		return core.Account{}, core.ErrInvalidCredentials

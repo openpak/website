@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -189,6 +190,24 @@ func (c *HTTPClient) RevokeSession(ctx context.Context, coreSessionID, sessionID
 
 // ForgotPassword proxies POST /v1/forgot-password. Always succeeds from the
 // caller's perspective (enumeration resistance is enforced core-side).
+// ChangePassword proxies POST /v1/change-password for a signed-in account. The core requires
+// the current password, so a stolen session cannot take the account over.
+func (c *HTTPClient) ChangePassword(ctx context.Context, coreSessionID, current, next string) error {
+	code, body, _, err := c.call(ctx, http.MethodPost, "v1/change-password", map[string]string{
+		"current_password": current, "new_password": next,
+	}, coreSessionID)
+	if err != nil {
+		return err
+	}
+	if code == http.StatusOK {
+		return nil
+	}
+	if msg, ok := body["error"].(string); ok && msg != "" {
+		return errors.New(msg)
+	}
+	return ErrNotFound
+}
+
 func (c *HTTPClient) ForgotPassword(ctx context.Context, email string) error {
 	_, _, _, err := c.call(ctx, http.MethodPost, "v1/forgot-password", map[string]string{"email": email}, "")
 	return err
