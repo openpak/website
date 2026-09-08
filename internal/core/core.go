@@ -144,6 +144,15 @@ type InvitationsView interface {
 	ListPending(ctx context.Context, accountID string) ([]PendingInvitation, error)
 	Decline(ctx context.Context, accountID, invitationID string) (bool, error)
 	Presence(ctx context.Context, accountIDs []string) (map[string]Presence, error)
+	// PlayerCounts is who is playing what, right now. Accounts, not sessions.
+	PlayerCounts(ctx context.Context) ([]TitlePlayers, int, error)
+}
+
+// TitlePlayers is how many people are in one title.
+type TitlePlayers struct {
+	TitleID   string
+	Namespace string
+	Players   int
 }
 
 type PendingInvitation struct {

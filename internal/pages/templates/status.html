@@ -3,6 +3,31 @@
   <h1>{{t .Lang "status.title"}}</h1>
   <p>{{t .Lang "status.sub"}}</p>
 </div>
+
+<div class="notice {{if .Operational}}ok{{else}}bad{{end}}" role="status">
+  <strong>{{if .Operational}}{{t .Lang "status.all.ok"}}{{else}}{{t .Lang "status.all.bad"}}{{end}}</strong>
+  {{if .CountsOK}}
+    <span class="sub">{{if eq .TotalPlayers 1}}{{t .Lang "status.players.one"}}{{else}}{{.TotalPlayers}} {{t .Lang "status.players.many"}}{{end}}</span>
+  {{end}}
+</div>
+
+{{if .CountsOK}}
+  <h2>{{t .Lang "status.playing"}}</h2>
+  {{if .Titles}}
+    <ul class="rows">
+      {{range .Titles}}
+      <li>
+        <span class="name">{{.Name}}</span>
+        <span class="sub">{{if eq .Players 1}}{{t $.Lang "status.players.one"}}{{else}}{{.Players}} {{t $.Lang "status.players.many"}}{{end}}</span>
+      </li>
+      {{end}}
+    </ul>
+  {{else}}
+    <p class="empty">{{t .Lang "status.nobody"}}</p>
+  {{end}}
+{{end}}
+
+<h2>{{t .Lang "status.services"}}</h2>
 <ul class="rows">
   <li><span class="name">{{t .Lang "status.core"}}</span>
     <span class="badge {{if .CoreOK}}ok{{else}}bad{{end}}">{{if .CoreOK}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</span></li>
@@ -11,4 +36,6 @@
   <li><span class="name">{{t .Lang "status.storage"}}</span>
     <span class="badge {{if .StorageOK}}ok{{else}}bad{{end}}">{{if .StorageOK}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</span></li>
 </ul>
+
+<p class="hint">{{t .Lang "status.elsewhere"}}</p>
 {{template "footer" .}}

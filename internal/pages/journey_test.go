@@ -419,3 +419,32 @@ func TestProfileCountryAndBirthdayCanBeSaved(t *testing.T) {
 		t.Errorf("a bad date redirected to %q", got)
 	}
 }
+
+// The status page answers "is my game up and is anyone on", so the counts have
+// to reach the page and an unknown title id must not be dressed up as a name.
+func TestStatusPageShowsWhoIsPlaying(t *testing.T) {
+	s, fc, _ := newTestServer(t)
+	fc.players = []core.TitlePlayers{
+		{TitleID: "0100ED9024EB8000", Players: 2},
+		{TitleID: "0100DEADBEEF0000", Players: 1},
+	}
+	fc.totalPlayers = 3
+
+	rec := httptest.NewRecorder()
+	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/status", nil))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status: %d", rec.Code)
+	}
+	body := rec.Body.String()
+	if !strings.Contains(body, "Outbound") {
+		t.Error("a known title should read as its name")
+	}
+	// An unknown id is shown as the id: inventing a name would be a lie, and
+	// hiding the row would make players vanish from the total.
+	if !strings.Contains(body, "0100DEADBEEF0000") {
+		t.Error("an unknown title should still be listed, by id")
+	}
+	if !strings.Contains(body, "3 players online") {
+		t.Errorf("total missing from the page")
+	}
+}

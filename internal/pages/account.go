@@ -453,16 +453,48 @@ func (s *Server) handleInvitations(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleStatus is the public status page (journey 5).
+// handleStatus is the network's own status page: what is running, and who is
+// playing what. The availability page on a separate host answers "is OpenPak
+// reachable at all"; this one answers "is my game up and is anyone on", which
+// is the question a person actually arrives with — and it can afford to be
+// richer precisely because the other page exists for when this one cannot load.
 func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	coreOK := s.Core.Healthy(ctx) == nil
 	dbOK := s.DB.Ping(ctx) == nil
 	storeOK := s.Media == nil || s.Media.Healthy(ctx) == nil
 
+	type titleRow struct {
+		Name    string
+		Players int
+	}
 	type statusView struct {
 		baseData
 		CoreOK, DBOk, StorageOK bool
+		Operational             bool
+		Titles                  []titleRow
+		TotalPlayers            int
+		CountsOK                bool
 	}
-	view := statusView{s.data(r, s.viewerOf(w, r), i18n.T("en", "status.title")), coreOK, dbOK, storeOK}
+	view := statusView{
+		baseData:    s.data(r, s.viewerOf(w, r), i18n.T("en", "status.title")),
+		CoreOK:      coreOK,
+		DBOk:        dbOK,
+		StorageOK:   storeOK,
+		Operational: coreOK && dbOK && storeOK,
+	}
+	// Player counts come from the live session leases, so an empty list means
+	// nobody is playing rather than that something is broken. A failure to
+	// read them is shown as its own thing, not as an outage.
+	if s.Invites != nil {
+		if titles, total, err := s.Invites.PlayerCounts(ctx); err == nil {
+			view.CountsOK, view.TotalPlayers = true, total
+			for _, t := range titles {
+				view.Titles = append(view.Titles, titleRow{Name: titleName(t.TitleID), Players: t.Players})
+			}
+		} else {
+			s.log.Error("player counts", "err", err)
+		}
+	}
 	s.render(w, http.StatusOK, "status.html", view)
 }
