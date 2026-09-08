@@ -83,9 +83,7 @@
     <h2 id="inv-h">{{t .Lang "invitations.title"}}</h2>
     <p>{{t .Lang "invitations.sub"}}</p>
   </div>
-  {{if .ContractWait}}
-  <p class="notice" role="status">{{t .Lang "invitations.pending.contract"}}</p>
-  {{else if .Invites}}
+  {{if .Invites}}
   <ul class="rows">
     {{range .Invites}}<li>
       <span class="name">{{.FromName}}</span>

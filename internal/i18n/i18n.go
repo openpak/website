@@ -208,7 +208,6 @@ var languages = map[string]Catalogue{
 		"invitations.title":            "Invitations",
 		"invitations.sub":              "Game invitations waiting for you.",
 		"invitations.none":             "No pending invitations.",
-		"invitations.pending.contract": "The invitations view needs a read-only core contract (CR-1) and is not available yet.",
 		"status.title":                 "Service status",
 		"status.sub":                   "Live checks against each dependency of this site.",
 		"status.core":                  "Account core",

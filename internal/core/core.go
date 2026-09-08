@@ -130,19 +130,29 @@ type Events interface {
 	Poll(ctx context.Context, sinceVersion uint64, limit int32) ([]Event, uint64, error)
 }
 
-// InvitationsView is WEB-05. The core's PollInvitations is adapter-scoped
-// with delivery side effects, so a read-only website view needs CR-1
-// (Invitations.ListForAccount). Until then the implementation returns
-// ErrContractPending and pages render a clear notice.
+// InvitationsView is WEB-05: a read of what is waiting for someone, plus the
+// decline that a person can act on. Both go to the core's non-consuming
+// ListInvitations/RejectInvitation, never to the adapter-scoped delivery path.
 type InvitationsView interface {
 	ListPending(ctx context.Context, accountID string) ([]PendingInvitation, error)
+	Decline(ctx context.Context, accountID, invitationID string) (bool, error)
+	Presence(ctx context.Context, accountIDs []string) (map[string]Presence, error)
 }
 
 type PendingInvitation struct {
 	ID        string
 	FromName  string
 	TitleID   string
+	Namespace string
 	ExpiresAt time.Time
+}
+
+// Presence is what is known about someone who is playing right now. Absence
+// from a presence map means offline; there is no explicit offline state.
+type Presence struct {
+	Namespace string
+	TitleID   string
+	Since     time.Time
 }
 
 // ErrIs reports whether err wraps target.

@@ -20,7 +20,9 @@ type fakeCore struct {
 	sessions    map[string]string // coreSessionID -> email
 	friends     []friendRow
 	blocks      [][2]string
-	profile     [2]string         // country, birthday as last saved
+	profile     [2]string // country, birthday as last saved
+	invitations []core.PendingInvitation
+	presence    map[string]core.Presence
 	links       map[string]string // accountID -> subject (switch)
 	subjectToAc map[string]string // subject -> accountID
 }
@@ -258,7 +260,27 @@ func (f *fakeCore) Poll(_ context.Context, since uint64, _ int32) ([]core.Event,
 }
 
 func (f *fakeCore) ListPending(_ context.Context, _ string) ([]core.PendingInvitation, error) {
-	return nil, core.ErrContractPending
+	return f.invitations, nil
+}
+
+func (f *fakeCore) Decline(_ context.Context, _, invitationID string) (bool, error) {
+	for i, in := range f.invitations {
+		if in.ID == invitationID {
+			f.invitations = append(f.invitations[:i], f.invitations[i+1:]...)
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (f *fakeCore) Presence(_ context.Context, ids []string) (map[string]core.Presence, error) {
+	out := map[string]core.Presence{}
+	for _, id := range ids {
+		if p, ok := f.presence[id]; ok {
+			out[id] = p
+		}
+	}
+	return out, nil
 }
 
 // newTestServer wires a fully in-process pages.Server with templates.

@@ -254,11 +254,63 @@ func (g *GRPC) Poll(ctx context.Context, sinceVersion uint64, limit int32) ([]Ev
 	return out, resp.GetMaxVersion(), nil
 }
 
-// --- InvitationsView (CR-1 pending) ---
+// --- InvitationsView ---
 
-// ListPending is stubbed until the core ships Invitations.ListForAccount
-// (CR-1). PollInvitations has delivery side effects and is adapter-scoped,
-// so the website must not call it for a read view.
+// ListPending reads the invitations waiting for an account. It calls
+// ListInvitations, never PollInvitations: the latter is adapter-scoped, starts
+// a redelivery window and is consumed by AckInvitations, so a website or phone
+// read of it would take invitations away from the console that has to receive
+// them.
 func (g *GRPC) ListPending(ctx context.Context, accountID string) ([]PendingInvitation, error) {
-	return nil, ErrContractPending
+	c := accountv1.NewInvitationsClient(g.conn)
+	resp, err := c.ListInvitations(ctx, &accountv1.ListInvitationsRequest{AccountId: accountID})
+	if err != nil {
+		return nil, err
+	}
+	out := make([]PendingInvitation, 0, len(resp.GetInvitations()))
+	for _, in := range resp.GetInvitations() {
+		out = append(out, PendingInvitation{
+			ID:        in.GetInvitationId(),
+			FromName:  in.GetFromDisplayName(),
+			TitleID:   in.GetTitleId(),
+			Namespace: in.GetNamespace(),
+			ExpiresAt: time.Unix(in.GetExpiresAtUnix(), 0).UTC(),
+		})
+	}
+	return out, nil
+}
+
+// Decline rejects one invitation on behalf of its recipient. A false return is
+// not an error: the invitation was already gone, or was never theirs.
+func (g *GRPC) Decline(ctx context.Context, accountID, invitationID string) (bool, error) {
+	c := accountv1.NewInvitationsClient(g.conn)
+	resp, err := c.RejectInvitation(ctx, &accountv1.RejectInvitationRequest{
+		AccountId: accountID, InvitationId: invitationID})
+	if err != nil {
+		return false, err
+	}
+	return resp.GetRejected(), nil
+}
+
+// Presence reports which of the given accounts are online and in which title.
+// Accounts without a live session are absent from the map rather than present
+// and false: "offline" and "we have never heard of them" are the same fact here.
+func (g *GRPC) Presence(ctx context.Context, accountIDs []string) (map[string]Presence, error) {
+	if len(accountIDs) == 0 {
+		return nil, nil
+	}
+	c := accountv1.NewSessionsClient(g.conn)
+	resp, err := c.GetPresence(ctx, &accountv1.GetPresenceRequest{AccountIds: accountIDs})
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string]Presence, len(resp.GetPresence()))
+	for _, p := range resp.GetPresence() {
+		out[p.GetAccountId()] = Presence{
+			Namespace: p.GetNamespace(),
+			TitleID:   p.GetTitleId(),
+			Since:     time.Unix(p.GetSinceUnix(), 0).UTC(),
+		}
+	}
+	return out, nil
 }

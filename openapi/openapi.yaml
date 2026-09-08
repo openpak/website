@@ -105,6 +105,49 @@ paths:
                     type: array
                     items: { $ref: "#/components/schemas/Friend" }
         "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/invitations:
+    get:
+      summary: Invitations waiting for this account
+      description: |
+        A read of the account's pending invitations across every adapter
+        namespace. Non-consuming: it starts no redelivery window and marks
+        nothing delivered, so opening an inbox on a phone cannot take an
+        invitation away from the console that has to receive it.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invitations:
+                    type: array
+                    items: { $ref: "#/components/schemas/Invitation" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/invitations/decline:
+    post:
+      summary: Decline an invitation
+      description: |
+        Declines an invitation addressed to this account. Declining one that is
+        already gone — expired, delivered, or never theirs — answers
+        `declined: false` rather than failing.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DeclineBody" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  declined: { type: boolean }
+        "400": { description: invitation_id is required }
+        "401": { $ref: "#/components/responses/Unauthorized" }
   /me/friends/requests:
     get:
       summary: Pending incoming and outgoing friend requests
@@ -259,9 +302,56 @@ components:
         expires_at: { type: string, format: date-time }
     Friend:
       type: object
+      required: [account_id, display_name, online]
       properties:
         account_id: { type: string }
         display_name: { type: string }
+        online:
+          type: boolean
+          description: |
+            Whether this friend holds a live session right now. Presence is
+            derived from that session's lease, so it cannot drift out of step
+            with it. The remaining fields are present only when `online` is
+            true; presence is best-effort, and a friends list still loads with
+            everyone shown offline if presence cannot be read.
+        title_id:
+          type: string
+          description: What they are playing. Absent when the adapter registered no title.
+        namespace:
+          type: string
+          description: The adapter the live session belongs to, e.g. `switch`.
+          examples: ["switch"]
+        since:
+          type: string
+          format: date-time
+          description: When the session was registered.
+      examples:
+        - account_id: "3f1c…"
+          display_name: "Leia"
+          online: true
+          title_id: "0100E65002BB8000"
+          namespace: "switch"
+          since: "2026-09-08T09:15:00Z"
+    Invitation:
+      type: object
+      required: [invitation_id, from, title_id, namespace, expires_at]
+      properties:
+        invitation_id: { type: string }
+        from:
+          type: string
+          description: Display name of the account that sent it.
+        title_id: { type: string }
+        namespace: { type: string, examples: ["switch"] }
+        expires_at: { type: string, format: date-time }
+      description: |
+        Deliberately carries no payload and no nonce: both belong to the adapter
+        that has to deliver the invitation to a console, and reading this inbox
+        never consumes an invitation or interferes with that delivery.
+    DeclineBody:
+      type: object
+      required: [invitation_id]
+      properties:
+        invitation_id: { type: string }
     AccountIDBody:
       type: object
       required: [account_id]

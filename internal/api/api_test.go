@@ -25,6 +25,8 @@ type fakeCore struct {
 	friends     map[string][]string
 	links       map[string]string
 	subjectToAc map[string]string
+	invitations []core.PendingInvitation
+	presence    map[string]core.Presence
 }
 
 func newFakeCore() *fakeCore {
@@ -60,7 +62,28 @@ func (f *fakeCore) ListSessions(_ context.Context, sid string) ([]core.Session, 
 }
 func (f *fakeCore) RevokeSession(_ context.Context, _, _ string) error     { return nil }
 func (f *fakeCore) ChangePassword(_ context.Context, _, _, _ string) error { return nil }
-func (f *fakeCore) UpdateProfile(_ context.Context, _, _, _ string) error  { return nil }
+func (f *fakeCore) ListPending(_ context.Context, _ string) ([]core.PendingInvitation, error) {
+	return f.invitations, nil
+}
+func (f *fakeCore) Decline(_ context.Context, _, id string) (bool, error) {
+	for i, in := range f.invitations {
+		if in.ID == id {
+			f.invitations = append(f.invitations[:i], f.invitations[i+1:]...)
+			return true, nil
+		}
+	}
+	return false, nil
+}
+func (f *fakeCore) Presence(_ context.Context, ids []string) (map[string]core.Presence, error) {
+	out := map[string]core.Presence{}
+	for _, id := range ids {
+		if p, ok := f.presence[id]; ok {
+			out[id] = p
+		}
+	}
+	return out, nil
+}
+func (f *fakeCore) UpdateProfile(_ context.Context, _, _, _ string) error { return nil }
 func (f *fakeCore) RegisterWithProfile(ctx context.Context, email, password, displayName, _, _ string) error {
 	return f.Register(ctx, email, password, displayName)
 }
@@ -137,7 +160,7 @@ func newTestAPI(t *testing.T) (*Server, *fakeCore, *store.Memory) {
 	}
 	db := store.NewMemory()
 	sess := session.New("opak_session", "test-secret-0123456789abcdef-test!", false, time.Hour)
-	srv := New(fc, fc, fc, fc, db, sess, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	srv := New(fc, fc, fc, fc, fc, db, sess, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	return srv, fc, db
 }
 
@@ -243,5 +266,72 @@ func TestFriendCodeFormatting(t *testing.T) {
 	}
 	if got := normalizeCode("SW-0123-4567-89ab"); got != "0123456789ab" {
 		t.Errorf("normalizeCode = %q", got)
+	}
+}
+
+// The two surfaces a companion app is built around: a friends list that says
+// who can be played with right now, and an inbox that can be read and declined.
+func TestPresenceAndInvitationsInbox(t *testing.T) {
+	s, fc, _ := newTestAPI(t)
+	fc.accounts["b@x.test"] = "password-B-1"
+	fc.verified["b@x.test"] = true
+	// The fake keys accounts as "acct-<email>", the way ResolveAccount mints them.
+	fc.friends["acct-a@x.test"] = []string{"acct-b@x.test"}
+	fc.presence = map[string]core.Presence{
+		"acct-b@x.test": {Namespace: "switch", TitleID: "0100E65002BB8000", Since: time.Now()},
+	}
+	fc.invitations = []core.PendingInvitation{{
+		ID: "inv-1", FromName: "Host", TitleID: "0100E65002BB8000",
+		Namespace: "switch", ExpiresAt: time.Now().Add(2 * time.Minute),
+	}}
+
+	rec := do(t, s, http.MethodPost, "/api/v1/token", "", tokenRequest{Email: "a@x.test", Password: "password-A-1"})
+	var minted struct {
+		Token string `json:"token"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &minted)
+
+	// A friend with a live session is online and names the title.
+	rec = do(t, s, http.MethodGet, "/api/v1/me/friends", minted.Token, nil)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("friends: %d %s", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"online":true`) || !strings.Contains(rec.Body.String(), "0100E65002BB8000") {
+		t.Fatalf("presence missing from the friends list: %s", rec.Body.String())
+	}
+
+	// An offline friend is present in the list and plainly not online, rather
+	// than missing: the phone shows every friend, greyed.
+	fc.presence = nil
+	rec = do(t, s, http.MethodGet, "/api/v1/me/friends", minted.Token, nil)
+	if !strings.Contains(rec.Body.String(), `"online":false`) {
+		t.Fatalf("offline friend dropped from the list: %s", rec.Body.String())
+	}
+
+	// The inbox.
+	rec = do(t, s, http.MethodGet, "/api/v1/me/invitations", minted.Token, nil)
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "inv-1") {
+		t.Fatalf("inbox: %d %s", rec.Code, rec.Body.String())
+	}
+	// Nothing adapter-owned leaks to the phone.
+	if strings.Contains(rec.Body.String(), "nonce") || strings.Contains(rec.Body.String(), "payload") {
+		t.Errorf("inbox exposes adapter-owned fields: %s", rec.Body.String())
+	}
+
+	// Decline, and declining again is calm rather than an error.
+	rec = do(t, s, http.MethodPost, "/api/v1/me/invitations/decline", minted.Token,
+		map[string]string{"invitation_id": "inv-1"})
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `"declined":true`) {
+		t.Fatalf("decline: %d %s", rec.Code, rec.Body.String())
+	}
+	rec = do(t, s, http.MethodPost, "/api/v1/me/invitations/decline", minted.Token,
+		map[string]string{"invitation_id": "inv-1"})
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `"declined":false`) {
+		t.Fatalf("second decline: %d %s", rec.Code, rec.Body.String())
+	}
+	// A missing id is a client error, not a silent no-op.
+	rec = do(t, s, http.MethodPost, "/api/v1/me/invitations/decline", minted.Token, map[string]string{})
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("empty decline: %d", rec.Code)
 	}
 }

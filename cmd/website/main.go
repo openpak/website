@@ -99,7 +99,7 @@ func run(log *slog.Logger) error {
 	pageSrv.AuthLimit = ratelimit.New(20, time.Minute)
 	pageSrv.MediaLimit = ratelimit.New(5, time.Hour)
 
-	apiSrv := api.New(coreHTTP, coreGRPC, coreGRPC, coreGRPC, db, sessions, log)
+	apiSrv := api.New(coreHTTP, coreGRPC, coreGRPC, coreGRPC, coreGRPC, db, sessions, log)
 	adminSrv := admin.New(tmpl, coreGRPC, db, sessions, cfg.AdminAccountIDs, log)
 
 	mux := http.NewServeMux()

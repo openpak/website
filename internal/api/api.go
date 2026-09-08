@@ -32,6 +32,7 @@ type Server struct {
 	Identity core.Identity
 	Social   core.Social
 	Links    core.Links
+	Invites  core.InvitationsView
 	DB       store.Store
 	Sessions *session.Manager
 	Auth     *ratelimit.Limiter // per IP, token minting
@@ -40,9 +41,9 @@ type Server struct {
 }
 
 // New builds the API server.
-func New(c core.HTTP, id core.Identity, soc core.Social, lnk core.Links, db store.Store, sess *session.Manager, log *slog.Logger) *Server {
+func New(c core.HTTP, id core.Identity, soc core.Social, lnk core.Links, inv core.InvitationsView, db store.Store, sess *session.Manager, log *slog.Logger) *Server {
 	return &Server{
-		Core: c, Identity: id, Social: soc, Links: lnk, DB: db, Sessions: sess,
+		Core: c, Identity: id, Social: soc, Links: lnk, Invites: inv, DB: db, Sessions: sess,
 		Auth:     ratelimit.New(10, time.Minute),
 		PerToken: ratelimit.New(120, time.Minute),
 		log:      log,
@@ -67,6 +68,8 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	h("/me/friends/remove", s.auth(s.handleRemove))
 	h("/me/friends/block", s.auth(s.handleBlock))
 	h("/me/friends/unblock", s.auth(s.handleUnblock))
+	g("/me/invitations", s.auth(s.handleInvitations))
+	h("/me/invitations/decline", s.auth(s.handleDeclineInvitation))
 }
 
 // writeJSON mirrors the core's response conventions.
@@ -225,9 +228,26 @@ func (s *Server) handleFriends(w http.ResponseWriter, r *http.Request, tok store
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
-	out := make([]map[string]string, 0, len(friends))
+	ids := make([]string, 0, len(friends))
 	for _, f := range friends {
-		out = append(out, map[string]string{"account_id": f.AccountID, "display_name": f.DisplayName})
+		ids = append(ids, f.AccountID)
+	}
+	// Presence is best-effort: a friends list that loads without it beats an
+	// error page, so a presence failure is logged and the list still renders.
+	presence, err := s.Invites.Presence(r.Context(), ids)
+	if err != nil {
+		s.log.Error("presence", "err", err)
+	}
+	out := make([]map[string]any, 0, len(friends))
+	for _, f := range friends {
+		row := map[string]any{"account_id": f.AccountID, "display_name": f.DisplayName, "online": false}
+		if p, ok := presence[f.AccountID]; ok {
+			row["online"] = true
+			row["title_id"] = p.TitleID
+			row["namespace"] = p.Namespace
+			row["since"] = p.Since.UTC().Format(time.RFC3339)
+		}
+		out = append(out, row)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"friends": out})
 }
@@ -407,4 +427,47 @@ func newID() string {
 		return time.Now().UTC().Format("20060102150405.000000000")
 	}
 	return base64.RawURLEncoding.EncodeToString(b)
+}
+
+// handleInvitations is the phone's inbox: what is waiting, who sent it, and
+// when it lapses. It never consumes anything — delivery to the console is a
+// separate path and reading this must not interfere with it.
+func (s *Server) handleInvitations(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	ins, err := s.Invites.ListPending(r.Context(), tok.AccountID)
+	if err != nil {
+		s.log.Error("list invitations", "err", err)
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	out := make([]map[string]any, 0, len(ins))
+	for _, in := range ins {
+		out = append(out, map[string]any{
+			"invitation_id": in.ID,
+			"from":          in.FromName,
+			"title_id":      in.TitleID,
+			"namespace":     in.Namespace,
+			"expires_at":    in.ExpiresAt.UTC().Format(time.RFC3339),
+		})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"invitations": out})
+}
+
+// handleDeclineInvitation is the decline button. Declining something already
+// gone is not an error: the phone that asked twice, or raced the console, gets
+// the same calm answer.
+func (s *Server) handleDeclineInvitation(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	var req struct {
+		InvitationID string `json:"invitation_id"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&req); err != nil || req.InvitationID == "" {
+		writeError(w, http.StatusBadRequest, "invitation_id is required")
+		return
+	}
+	declined, err := s.Invites.Decline(r.Context(), tok.AccountID, req.InvitationID)
+	if err != nil {
+		s.log.Error("decline invitation", "err", err)
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"declined": declined})
 }

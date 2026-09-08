@@ -302,7 +302,6 @@ type friendsData struct {
 	Friends, Incoming, Outgoing []core.Friend
 	BlockedNote                 []string // ids the viewer blocked
 	Invites                     []core.PendingInvitation
-	ContractWait                bool
 }
 
 // handleFriends keeps the old URL working; friends are a section of the
@@ -320,12 +319,10 @@ func (s *Server) loadFriends(ctx context.Context, accountID string) friendsData 
 	d.Friends, _ = s.Social.ListFriends(ctx, accountID)
 	d.Incoming, _ = s.Social.ListIncoming(ctx, accountID)
 	d.Outgoing, _ = s.Social.ListOutgoing(ctx, accountID)
-	// Invitations are read-only pending CR-1; the page says so rather than
-	// rendering a misleading empty list.
+	// Read-only here: the core's ListInvitations consumes nothing, so showing
+	// someone their inbox cannot disturb delivery to their console.
 	inv, err := s.Invites.ListPending(ctx, accountID)
-	if errors.Is(err, core.ErrContractPending) {
-		d.ContractWait = true
-	} else if err != nil {
+	if err != nil {
 		s.log.Error("list invitations", "err", err)
 	}
 	d.Invites = inv

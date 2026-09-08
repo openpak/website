@@ -13,6 +13,9 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strings"
+	"time"
+
+	"github.com/openpak/website/internal/core"
 	"testing"
 
 	"github.com/openpak/website/internal/media"
@@ -248,14 +251,22 @@ func TestUnknownFriendCode(t *testing.T) {
 	}
 }
 
-// TestInvitationsPendingCR1 checks the fail-closed invitations view.
-func TestInvitationsPendingCR1(t *testing.T) {
+// The invitations view is live now that the core can be read without consuming
+// anything; it used to render a notice explaining the missing contract.
+func TestInvitationsAreListed(t *testing.T) {
 	s, fc, _ := newTestServer(t)
 	seedTwoAccounts(fc)
+	fc.invitations = []core.PendingInvitation{{
+		ID: "inv-1", FromName: "Host", TitleID: "0100E65002BB8000",
+		Namespace: "switch", ExpiresAt: time.Now().Add(2 * time.Minute),
+	}}
 	recA := login(t, s, "a@x.test", "password-A-1")
 	rec := authedRequest(s, recA, http.MethodGet, "/account", nil)
-	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "CR-1") {
-		t.Fatalf("invitations page must explain CR-1 pending: %d", rec.Code)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("account page: %d", rec.Code)
+	}
+	if !strings.Contains(rec.Body.String(), "0100E65002BB8000") || !strings.Contains(rec.Body.String(), "Host") {
+		t.Error("the pending invitation is not on the page")
 	}
 }
 
