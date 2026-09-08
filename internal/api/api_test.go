@@ -453,3 +453,23 @@ func TestAvatarChoicesAreListedAndSettable(t *testing.T) {
 		t.Errorf("no media service should be 503, got %d", rec.Code)
 	}
 }
+
+// The status endpoint is public: an account is exactly what a person checking
+// status may be unable to use.
+func TestStatusNeedsNoToken(t *testing.T) {
+	s, fc, _ := newTestAPI(t)
+	fc.players = []core.TitlePlayers{{TitleID: "0100ED9024EB8000", Namespace: "switch", Players: 2}}
+	fc.networkPlayers = map[string]int{"switch": 2}
+	fc.totalPlayers = 2
+
+	rec := do(t, s, http.MethodGet, "/api/v1/status", "", nil)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status: %d %s", rec.Code, rec.Body.String())
+	}
+	body := rec.Body.String()
+	for _, want := range []string{`"players_online":2`, "0100ED9024EB8000", `"networks"`} {
+		if !strings.Contains(body, want) {
+			t.Errorf("%s missing from %s", want, body)
+		}
+	}
+}

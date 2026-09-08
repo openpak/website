@@ -53,6 +53,43 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Message" }
         "401": { $ref: "#/components/responses/Unauthorized" }
+  /status:
+    get:
+      summary: Who is online, per title and per console network
+      security: []
+      description: |
+        Public: no bearer. The people most likely to check status are the ones
+        whose sign-in is the part that is broken.
+
+        Counts are distinct accounts, taken from the same live session leases a
+        friends list reads, so this can never disagree with presence. Someone
+        playing two titles is one player in `players_online` and one player on
+        their network, while appearing under both titles.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  players_online: { type: integer }
+                  titles:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        title_id: { type: string, examples: ["0100ED9024EB8000"] }
+                        namespace: { type: string, examples: ["switch"] }
+                        players: { type: integer }
+                  networks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        namespace: { type: string, examples: ["switch"] }
+                        players: { type: integer }
+        "502": { description: The account core could not be reached. }
   /me:
     get:
       summary: Account projection with friend code and linked platforms

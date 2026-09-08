@@ -459,8 +459,21 @@ func TestStatusPageShowsWhoIsPlaying(t *testing.T) {
 	if !strings.Contains(body, "Planned") || !strings.Contains(body, "Being built") {
 		t.Error("unfinished networks should say so rather than show as online")
 	}
-	// Photon is UDP only; claiming it is up would be inventing a measurement.
-	if !strings.Contains(body, "Not checked") {
-		t.Error("a server that cannot be probed should say so")
+	// Both game servers have health endpoints now, so both are really checked;
+	// unreachable in a test means "down", which is the honest answer here.
+	if strings.Contains(body, "Not checked") {
+		t.Error("both servers have health endpoints and should be checked")
+	}
+}
+
+// A deployment that does not run one of the servers should say the row is not
+// checked, rather than report a server that was never there as down.
+func TestStatusPageSaysWhenAServerIsNotChecked(t *testing.T) {
+	t.Setenv("PHOTON_HEALTH_URL", "off")
+	s, _, _ := newTestServer(t)
+	rec := httptest.NewRecorder()
+	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/status", nil))
+	if !strings.Contains(rec.Body.String(), "Not checked") {
+		t.Error("a server with no health endpoint should say it is not checked")
 	}
 }

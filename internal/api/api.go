@@ -14,6 +14,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/openpak/website/internal/core"
@@ -79,6 +80,12 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	d("/me/push", s.auth(s.handleForgetPush))
 	h("/me/profile", s.auth(s.handleUpdateProfile))
 	g("/avatars", s.auth(s.handleAvatarChoices))
+	// Public: no bearer. A status endpoint that needed an account could not be
+	// read by the thing most likely to want it — someone whose sign-in is the
+	// part that is broken. Registered through the same helper as everything
+	// else so the contract test sees it; a route added straight on the mux
+	// would slip past that check unnoticed.
+	g("/status", s.handleStatus)
 	h("/me/avatar", s.auth(s.handleChooseAvatar))
 }
 
@@ -592,4 +599,34 @@ func (s *Server) handleChooseAvatar(w http.ResponseWriter, r *http.Request, tok 
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"saved": true})
+}
+
+// handleStatus is the machine-readable half of the status page: who is online,
+// per title and per console network. Public on purpose — the people most likely
+// to check it are the ones who cannot sign in.
+func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
+	titles, networks, total, err := s.Invites.PlayerCounts(r.Context())
+	if err != nil {
+		s.log.Error("status: player counts", "err", err)
+		writeError(w, http.StatusBadGateway, "counts unavailable")
+		return
+	}
+	rows := make([]map[string]any, 0, len(titles))
+	for _, t := range titles {
+		rows = append(rows, map[string]any{
+			"title_id": t.TitleID, "namespace": t.Namespace, "players": t.Players,
+		})
+	}
+	nets := make([]map[string]any, 0, len(networks))
+	for ns, n := range networks {
+		nets = append(nets, map[string]any{"namespace": ns, "players": n})
+	}
+	sort.Slice(nets, func(i, j int) bool {
+		return nets[i]["namespace"].(string) < nets[j]["namespace"].(string)
+	})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"players_online": total,
+		"titles":         rows,
+		"networks":       nets,
+	})
 }
