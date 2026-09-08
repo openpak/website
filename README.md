@@ -79,7 +79,16 @@ the core's contracts move.
   `/metrics` is Prometheus text; `/debug/pprof/` is mounted on the same port.
   Keep both off the public internet (port plan rule 4).
 
-### Push notifications
+### Status page
+
+`/status` shows game servers, console networks and who is playing; every server
+is asked its own `/health`. Set `PHOTON_HEALTH_URL` or `STARDEW_HEALTH_URL` to
+`off` for a server this deployment does not run — its row then says "not
+checked" rather than reporting an absent server as down. `GET /api/v1/status`
+is the same counts as JSON, with no bearer, because the people most likely to
+check status are the ones who cannot sign in.
+
+## Push notifications
 
 Set `FCM_CREDENTIALS_FILE` to a Firebase service-account JSON and the notifier
 starts with the site; leave it unset and the site runs normally with
