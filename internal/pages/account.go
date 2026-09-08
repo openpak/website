@@ -72,13 +72,10 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 		s.log.Error("get account", "err", err)
 	}
 
-	// Avatar existence check is cheap and local.
-	if s.Media != nil {
-		if _, err := s.Media.Avatar(ctx, v.AccountID, media.SizeSmall); err != nil {
-			view.AvatarURL = ""
-		}
-	} else {
-		view.AvatarPending = true
+	// No existence check: the URL always resolves, to the account's own
+	// picture or to the preset its id picks.
+	if s.Media == nil {
+		view.AvatarURL, view.AvatarPending = "", true
 	}
 	s.render(w, http.StatusOK, "account.html", view)
 }
@@ -264,7 +261,17 @@ func (s *Server) handleAvatarServe(w http.ResponseWriter, r *http.Request) {
 	}
 	data, err := s.Media.Avatar(r.Context(), accountID, px)
 	if err != nil {
-		http.NotFound(w, r)
+		// Never a 404: every account has a picture, chosen from its id until
+		// somebody picks another. A missing avatar used to mean a blank
+		// initial on the site and the generic default on a console.
+		data, err = media.PresetImage(media.PresetForAccount(accountID), px)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "image/png")
+		w.Header().Set("Cache-Control", "public, max-age=300")
+		_, _ = w.Write(data)
 		return
 	}
 	w.Header().Set("Content-Type", "image/png")

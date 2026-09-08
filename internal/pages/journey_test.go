@@ -483,3 +483,30 @@ func TestStatusPageSaysWhenAServerIsNotChecked(t *testing.T) {
 		t.Error("a server with no health endpoint should say it is not checked")
 	}
 }
+
+// An account nobody has uploaded a picture for still has one: the preset its
+// id picks. Before this the URL 404'd, the page fell back to a letter, and a
+// console linking to that account was shown the adapter's generic default.
+func TestAvatarURLAlwaysServesSomething(t *testing.T) {
+	s, _, _ := newTestServer(t)
+
+	for _, size := range []string{"256", "512"} {
+		req := httptest.NewRequest(http.MethodGet, "/media/avatars/acct-nobody-uploaded/"+size, nil)
+		rec := httptest.NewRecorder()
+		s.Handler().ServeHTTP(rec, req)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("/%s = %d, want a picture", size, rec.Code)
+		}
+		if got := rec.Header().Get("Content-Type"); got != "image/png" {
+			t.Errorf("/%s content-type = %q", size, got)
+		}
+		if rec.Body.Len() < 200 {
+			t.Errorf("/%s served %d bytes", size, rec.Body.Len())
+		}
+	}
+
+	// Deterministic: the same account always gets the same face.
+	if a, b := media.PresetForAccount("acct-x"), media.PresetForAccount("acct-x"); a != b {
+		t.Fatalf("preset for one account changed between calls: %s then %s", a, b)
+	}
+}

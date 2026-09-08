@@ -634,3 +634,33 @@ func pngEncode(w io.Writer) error {
 	m := image.NewRGBA(image.Rect(0, 0, 8, 8))
 	return png.Encode(w, m)
 }
+
+// An account that exists has a face. Linking a console to an account with no
+// picture used to fall back to the adapter's generic default, and the site
+// showed a blank initial; the preset an account's id picks is served until
+// somebody chooses another, so "no avatar" is a state only the picker knows.
+func TestEveryAccountHasAnAvatar(t *testing.T) {
+	s, _, _ := newTestAPI(t)
+	st, err := media.NewFSStorage(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.Media = media.New(st) // empty store: nobody has uploaded anything
+
+	rec := do(t, s, http.MethodPost, "/api/v1/token", "", tokenRequest{Email: "a@x.test", Password: "password-A-1"})
+	var minted struct {
+		Token string `json:"token"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &minted)
+
+	rec = do(t, s, http.MethodGet, "/api/v1/me", minted.Token, nil)
+	var me struct {
+		AvatarURL *string `json:"avatar_url"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &me); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if me.AvatarURL == nil || *me.AvatarURL == "" {
+		t.Fatal("an account with nothing uploaded was given no picture at all")
+	}
+}

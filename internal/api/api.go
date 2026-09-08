@@ -221,9 +221,9 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request, tok store.APIT
 		"avatar_url": nil,
 	}
 	if s.Media != nil {
-		if _, err := s.Media.Avatar(r.Context(), tok.AccountID, media.SizeSmall); err == nil {
-			resp["avatar_url"] = "/media/avatars/" + tok.AccountID + "/256"
-		}
+		// Always set: every account has a picture, its own or the preset its
+		// id picks, and the URL serves both.
+		resp["avatar_url"] = "/media/avatars/" + tok.AccountID + "/256"
 	}
 	if link, err := s.Links.ActiveLinkByAccount(r.Context(), "switch", tok.AccountID); err == nil {
 		resp["friend_code"] = friendCode(link.SubjectID)

@@ -1,6 +1,7 @@
 package media
 
 import (
+	"crypto/sha256"
 	"image"
 	"image/color"
 	"math"
@@ -9,6 +10,16 @@ import (
 // Preset avatars are drawn here rather than shipped as files: no binary
 // assets in the repo, nothing copyrighted, and a new one is a palette entry.
 // Each is a coloured field with an off-centre disc and a smaller companion.
+
+// PresetForAccount is the picture an account has before anyone chooses one.
+// Every account gets one, deterministically, so "no avatar" is a state that
+// only exists in the picker: nothing has to enforce a choice at registration,
+// nothing has to migrate the accounts that came before, and a linked console
+// is never shown a stranger's generic default.
+func PresetForAccount(accountID string) string {
+	sum := sha256.Sum256([]byte(accountID))
+	return PresetIDs[int(sum[0])%len(PresetIDs)]
+}
 
 // PresetIDs is the offered set, in display order.
 var PresetIDs = []string{
