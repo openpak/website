@@ -86,6 +86,8 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	// else so the contract test sees it; a route added straight on the mux
 	// would slip past that check unnoticed.
 	g("/status", s.handleStatus)
+
+	s.registerInternal(mux)
 	h("/me/avatar", s.auth(s.handleChooseAvatar))
 }
 

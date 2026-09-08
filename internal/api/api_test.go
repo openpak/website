@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"io"
@@ -203,6 +204,26 @@ func do(t *testing.T, s *Server, method, target, bearer string, body any) *httpt
 	}
 	if bearer != "" {
 		req.Header.Set("Authorization", "Bearer "+bearer)
+	}
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	return rec
+}
+
+// doRaw sends the Authorization header exactly as given, so a test can send a
+// wrong or absent credential rather than a well-formed bearer.
+func doRaw(t *testing.T, s *Server, method, target, auth string, body any) *httptest.ResponseRecorder {
+	t.Helper()
+	mux := http.NewServeMux()
+	s.RegisterRoutes(mux)
+	b, err := json.Marshal(body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(method, target, bytes.NewReader(b))
+	req.Header.Set("Content-Type", "application/json")
+	if auth != "" {
+		req.Header.Set("Authorization", auth)
 	}
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
@@ -471,5 +492,35 @@ func TestStatusNeedsNoToken(t *testing.T) {
 		if !strings.Contains(body, want) {
 			t.Errorf("%s missing from %s", want, body)
 		}
+	}
+}
+
+// The internal surface carries a bearer secret and is not published, so the
+// two ways it can go wrong are accepting an unauthenticated call and existing
+// at all on a deployment that never configured it.
+func TestInternalAvatarRefusesWithoutTheKey(t *testing.T) {
+	s, _, _ := newTestAPI(t)
+	img := map[string]string{
+		"namespace": "switch", "subject": "0123456789ab",
+		"content_base64": base64.StdEncoding.EncodeToString([]byte{0xFF, 0xD8, 0xFF, 0xD9}),
+	}
+
+	// No key configured: refuse rather than accept from anybody.
+	if rec := doRaw(t, s, http.MethodPost, "/internal/avatar", "", img); rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("unconfigured = %d, want 503", rec.Code)
+	}
+
+	t.Setenv("WEBSITE_INTERNAL_KEY", "shared-secret-value")
+	if rec := doRaw(t, s, http.MethodPost, "/internal/avatar", "", img); rec.Code != http.StatusUnauthorized {
+		t.Errorf("no credential = %d, want 401", rec.Code)
+	}
+	if rec := doRaw(t, s, http.MethodPost, "/internal/avatar", "Bearer wrong", img); rec.Code != http.StatusUnauthorized {
+		t.Errorf("wrong credential = %d, want 401", rec.Code)
+	}
+	// With the key it gets as far as needing a media service, which the test
+	// server has none of — past authentication is what this test is for.
+	rec := doRaw(t, s, http.MethodPost, "/internal/avatar", "Bearer shared-secret-value", img)
+	if rec.Code == http.StatusUnauthorized {
+		t.Error("the right credential was refused")
 	}
 }

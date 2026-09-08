@@ -79,7 +79,19 @@ the core's contracts move.
   `/metrics` is Prometheus text; `/debug/pprof/` is mounted on the same port.
   Keep both off the public internet (port plan rule 4).
 
-### Styling
+### The internal surface
+
+`POST /internal/avatar` is service-to-service, never a browser, and deliberately
+not in the OpenAPI. The Switch adapter calls it when a console uploads its
+profile picture, so the picture a person set on their console is the avatar the
+website and the app show — an avatar is an account fact, not an adapter one.
+
+It is authenticated with `WEBSITE_INTERNAL_KEY`, compared in constant time.
+**An unset key disables the route** rather than leaving it open: a deployment
+that has not configured this should refuse the call, not accept it from anyone.
+The adapter needs the same value plus `WEBSITE_INTERNAL_URL`.
+
+## Styling
 
 The stylesheet is built by Tailwind from `web/src/input.css`; run
 `./scripts/css.sh` after changing a template or the classes you just wrote will
