@@ -112,7 +112,7 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 	country := strings.TrimSpace(r.PostFormValue("country"))
 	birthday := strings.TrimSpace(r.PostFormValue("birthday"))
-	if err := s.Core.UpdateProfile(r.Context(), v.CoreSessionID, country, birthday); err != nil {
+	if err := s.Core.UpdateProfile(r.Context(), v.CoreSessionID, country, birthday, ""); err != nil {
 		s.log.Error("update profile", "err", err)
 		redirectMsg(w, r, "/account", "profile-failed")
 		return

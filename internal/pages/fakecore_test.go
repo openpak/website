@@ -97,7 +97,7 @@ func (f *fakeCore) ChangePassword(_ context.Context, _, current, next string) er
 	f.accounts["a@x.test"] = next
 	return nil
 }
-func (f *fakeCore) UpdateProfile(_ context.Context, _, country, birthday string) error {
+func (f *fakeCore) UpdateProfile(_ context.Context, _, country, birthday, _ string) error {
 	// Mirror the core's own rule: an ISO date or nothing.
 	if birthday != "" {
 		if _, err := time.Parse("2006-01-02", birthday); err != nil {

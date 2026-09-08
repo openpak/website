@@ -217,9 +217,9 @@ func (c *HTTPClient) ChangePassword(ctx context.Context, coreSessionID, current,
 
 // UpdateProfile sets the country and date of birth of the signed-in account. Registration
 // collects both; this is how an account created before that fills them in.
-func (c *HTTPClient) UpdateProfile(ctx context.Context, coreSessionID, country, birthday string) error {
+func (c *HTTPClient) UpdateProfile(ctx context.Context, coreSessionID, country, birthday, displayName string) error {
 	code, body, _, err := c.call(ctx, http.MethodPost, "v1/profile", map[string]string{
-		"country": country, "birthday": birthday,
+		"country": country, "birthday": birthday, "display_name": displayName,
 	}, coreSessionID)
 	if err != nil {
 		return err

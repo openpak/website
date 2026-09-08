@@ -100,7 +100,7 @@ func run(log *slog.Logger) error {
 	pageSrv.AuthLimit = ratelimit.New(20, time.Minute)
 	pageSrv.MediaLimit = ratelimit.New(5, time.Hour)
 
-	apiSrv := api.New(coreHTTP, coreGRPC, coreGRPC, coreGRPC, coreGRPC, db, sessions, log)
+	apiSrv := api.New(coreHTTP, coreGRPC, coreGRPC, coreGRPC, coreGRPC, db, sessions, mediaSvc, log)
 
 	// Push. Absent credentials is a supported configuration: the site runs, the
 	// app can still register a token, and nothing is delivered until a service

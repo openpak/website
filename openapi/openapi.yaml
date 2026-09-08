@@ -148,6 +148,86 @@ paths:
                   declined: { type: boolean }
         "400": { description: invitation_id is required }
         "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/profile:
+    post:
+      summary: Edit the account's profile
+      description: |
+        Every field is optional and an empty one is left unchanged, so a screen
+        that edits one thing sends one thing. Validation lives in the account
+        core: a two-letter country, an ISO date, a display name of 3 to 32
+        characters.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                display_name: { type: string, minLength: 3, maxLength: 32 }
+                country: { type: string, minLength: 2, maxLength: 2, examples: ["IE"] }
+                birthday: { type: string, format: date, examples: ["1990-01-01"] }
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  saved: { type: boolean }
+        "400": { description: The core rejected a value; the message says which. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /avatars:
+    get:
+      summary: The built-in avatars
+      description: |
+        The same set the website offers, so a client shows what exists rather
+        than a hardcoded list that drifts. `url` is relative to the site and
+        immutable.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  avatars:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string, examples: ["aurora"] }
+                        url: { type: string, examples: ["/media/avatars/preset/aurora"] }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/avatar:
+    post:
+      summary: Choose a built-in avatar
+      description: |
+        Uploading a photo stays on the website, where the multipart handling,
+        size limit and rate limit already live.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [preset]
+              properties:
+                preset: { type: string, examples: ["aurora"] }
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  saved: { type: boolean }
+        "400": { description: preset is required, or is not one of the built-ins }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { description: Avatars are not configured on this deployment. }
   /me/push:
     post:
       summary: Register this install for notifications
@@ -339,6 +419,14 @@ components:
       properties:
         account_id: { type: string }
         display_name: { type: string }
+        country: { type: string, description: Empty when the account has never set one. }
+        birthday: { type: string, description: Empty when the account has never set one. }
+        avatar_url:
+          type: ['string', 'null']
+          description: |
+            Relative to the site. Null when the account has never chosen an
+            avatar, so a client shows its own fallback rather than a broken
+            image.
         friend_code:
           type: [string, "null"]
           description: Present only when a console link exists (CR-3 projection).

@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/openpak/website/internal/core"
+	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/ratelimit"
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/store"
@@ -28,25 +29,29 @@ const TokenTTL = 30 * 24 * time.Hour
 
 // Server hosts the /api/v1 routes.
 type Server struct {
-	Core     core.HTTP
-	Identity core.Identity
-	Social   core.Social
-	Links    core.Links
-	Invites  core.InvitationsView
-	DB       store.Store
-	Sessions *session.Manager
-	Auth     *ratelimit.Limiter // per IP, token minting
-	PerToken *ratelimit.Limiter // per token, API calls
-	log      *slog.Logger
+	Core       core.HTTP
+	Identity   core.Identity
+	Social     core.Social
+	Links      core.Links
+	Invites    core.InvitationsView
+	Media      *media.Service
+	MediaLimit *ratelimit.Limiter
+	DB         store.Store
+	Sessions   *session.Manager
+	Auth       *ratelimit.Limiter // per IP, token minting
+	PerToken   *ratelimit.Limiter // per token, API calls
+	log        *slog.Logger
 }
 
 // New builds the API server.
-func New(c core.HTTP, id core.Identity, soc core.Social, lnk core.Links, inv core.InvitationsView, db store.Store, sess *session.Manager, log *slog.Logger) *Server {
+func New(c core.HTTP, id core.Identity, soc core.Social, lnk core.Links, inv core.InvitationsView, db store.Store, sess *session.Manager, md *media.Service, log *slog.Logger) *Server {
 	return &Server{
 		Core: c, Identity: id, Social: soc, Links: lnk, Invites: inv, DB: db, Sessions: sess,
-		Auth:     ratelimit.New(10, time.Minute),
-		PerToken: ratelimit.New(120, time.Minute),
-		log:      log,
+		Media:      md,
+		Auth:       ratelimit.New(10, time.Minute),
+		PerToken:   ratelimit.New(120, time.Minute),
+		MediaLimit: ratelimit.New(5, time.Hour),
+		log:        log,
 	}
 }
 
@@ -72,6 +77,9 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	h("/me/invitations/decline", s.auth(s.handleDeclineInvitation))
 	h("/me/push", s.auth(s.handleRegisterPush))
 	d("/me/push", s.auth(s.handleForgetPush))
+	h("/me/profile", s.auth(s.handleUpdateProfile))
+	g("/avatars", s.auth(s.handleAvatarChoices))
+	h("/me/avatar", s.auth(s.handleChooseAvatar))
 }
 
 // writeJSON mirrors the core's response conventions.
@@ -187,6 +195,16 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request, tok store.APIT
 	resp := map[string]any{
 		"account_id":   tok.AccountID,
 		"display_name": acct.DisplayName,
+		"country":      acct.Country,
+		"birthday":     acct.Birthday,
+		// Null when the account has never chosen one, so a client shows its own
+		// fallback rather than a broken image. Relative to the site.
+		"avatar_url": nil,
+	}
+	if s.Media != nil {
+		if _, err := s.Media.Avatar(r.Context(), tok.AccountID, media.SizeSmall); err == nil {
+			resp["avatar_url"] = "/media/avatars/" + tok.AccountID + "/256"
+		}
 	}
 	if link, err := s.Links.ActiveLinkByAccount(r.Context(), "switch", tok.AccountID); err == nil {
 		resp["friend_code"] = friendCode(link.SubjectID)
@@ -510,4 +528,68 @@ func (s *Server) handleForgetPush(w http.ResponseWriter, r *http.Request, tok st
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"forgotten": true})
+}
+
+// handleUpdateProfile edits the account. Every field is optional and an empty
+// one is left alone, so a screen that edits a single thing sends a single
+// thing rather than having to echo back the rest.
+func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	var req struct {
+		DisplayName string `json:"display_name"`
+		Country     string `json:"country"`
+		Birthday    string `json:"birthday"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8192)).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid body")
+		return
+	}
+	err := s.Core.UpdateProfile(r.Context(), tok.CoreSessionID, req.Country, req.Birthday, req.DisplayName)
+	if err != nil {
+		// The core validates: a two-letter country, an ISO date, a name of a
+		// sane length. Its complaint is the useful one to pass on.
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"saved": true})
+}
+
+// handleAvatarChoices lists the built-in avatars, so the app can offer the
+// same set as the website instead of hardcoding names that would drift.
+func (s *Server) handleAvatarChoices(w http.ResponseWriter, r *http.Request, _ store.APIToken) {
+	out := make([]map[string]string, 0, len(media.PresetIDs))
+	for _, id := range media.PresetIDs {
+		out = append(out, map[string]string{"id": id, "url": "/media/avatars/preset/" + id})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"avatars": out})
+}
+
+// handleChooseAvatar sets one of the built-ins. Uploading a photo stays on the
+// website for now: it is multipart, rate limited and size checked there, and
+// none of that is worth duplicating until the app asks for a camera.
+func (s *Server) handleChooseAvatar(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	var req struct {
+		Preset string `json:"preset"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&req); err != nil || req.Preset == "" {
+		writeError(w, http.StatusBadRequest, "preset is required")
+		return
+	}
+	if s.Media == nil {
+		writeError(w, http.StatusServiceUnavailable, "avatars are not configured")
+		return
+	}
+	if !s.MediaLimit.Allow(tok.AccountID) {
+		writeError(w, http.StatusTooManyRequests, "too many changes; slow down")
+		return
+	}
+	if err := s.Media.StorePreset(r.Context(), tok.AccountID, req.Preset); err != nil {
+		if errors.Is(err, media.ErrInvalid) {
+			writeError(w, http.StatusBadRequest, "unknown avatar")
+			return
+		}
+		s.log.Error("store preset avatar", "err", err)
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"saved": true})
 }

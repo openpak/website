@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
@@ -27,6 +28,7 @@ type fakeCore struct {
 	subjectToAc map[string]string
 	invitations []core.PendingInvitation
 	presence    map[string]core.Presence
+	profile     [3]string // country, birthday, display name as last saved
 }
 
 func newFakeCore() *fakeCore {
@@ -83,7 +85,17 @@ func (f *fakeCore) Presence(_ context.Context, ids []string) (map[string]core.Pr
 	}
 	return out, nil
 }
-func (f *fakeCore) UpdateProfile(_ context.Context, _, _, _ string) error { return nil }
+func (f *fakeCore) UpdateProfile(_ context.Context, _, country, birthday, displayName string) error {
+	// Mirror the core's own validation: the API must pass its complaint on
+	// rather than flatten it.
+	if birthday != "" {
+		if _, err := time.Parse("2006-01-02", birthday); err != nil {
+			return errors.New("identity: birthday must be YYYY-MM-DD")
+		}
+	}
+	f.profile = [3]string{country, birthday, displayName}
+	return nil
+}
 func (f *fakeCore) RegisterWithProfile(ctx context.Context, email, password, displayName, _, _ string) error {
 	return f.Register(ctx, email, password, displayName)
 }
@@ -160,7 +172,7 @@ func newTestAPI(t *testing.T) (*Server, *fakeCore, *store.Memory) {
 	}
 	db := store.NewMemory()
 	sess := session.New("opak_session", "test-secret-0123456789abcdef-test!", false, time.Hour)
-	srv := New(fc, fc, fc, fc, fc, db, sess, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	srv := New(fc, fc, fc, fc, fc, db, sess, nil, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	return srv, fc, db
 }
 
@@ -385,5 +397,53 @@ func TestPushRegistration(t *testing.T) {
 	}
 	if toks, _ := db.PushTokensForAccount(context.Background(), "acct-b@x.test"); len(toks) != 0 {
 		t.Errorf("token survived sign-out: %+v", toks)
+	}
+}
+
+// Editing a profile from the phone: each field optional, and the core's
+// complaint passed through rather than flattened into "internal error".
+func TestProfileEditing(t *testing.T) {
+	s, fc, _ := newTestAPI(t)
+	rec := do(t, s, http.MethodPost, "/api/v1/token", "", tokenRequest{Email: "a@x.test", Password: "password-A-1"})
+	var a struct {
+		Token string `json:"token"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &a)
+
+	if rec := do(t, s, http.MethodPost, "/api/v1/me/profile", a.Token,
+		map[string]string{"country": "IE"}); rec.Code != http.StatusOK {
+		t.Fatalf("country only: %d %s", rec.Code, rec.Body.String())
+	}
+	if fc.profile[0] != "IE" {
+		t.Errorf("core received %v", fc.profile)
+	}
+	// A bad date is the user's problem to fix, so the reason has to survive.
+	rec = do(t, s, http.MethodPost, "/api/v1/me/profile", a.Token,
+		map[string]string{"birthday": "not-a-date"})
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("bad date: %d %s", rec.Code, rec.Body.String())
+	}
+}
+
+// Avatars are unavailable rather than broken when the media service is absent,
+// which is how the test server runs.
+func TestAvatarChoicesAreListedAndSettable(t *testing.T) {
+	s, _, _ := newTestAPI(t)
+	rec := do(t, s, http.MethodPost, "/api/v1/token", "", tokenRequest{Email: "a@x.test", Password: "password-A-1"})
+	var a struct {
+		Token string `json:"token"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &a)
+
+	rec = do(t, s, http.MethodGet, "/api/v1/avatars", a.Token, nil)
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "aurora") {
+		t.Fatalf("avatars: %d %s", rec.Code, rec.Body.String())
+	}
+	if rec := do(t, s, http.MethodPost, "/api/v1/me/avatar", a.Token, map[string]string{}); rec.Code != http.StatusBadRequest {
+		t.Errorf("empty preset: %d", rec.Code)
+	}
+	if rec := do(t, s, http.MethodPost, "/api/v1/me/avatar", a.Token,
+		map[string]string{"preset": "aurora"}); rec.Code != http.StatusServiceUnavailable {
+		t.Errorf("no media service should be 503, got %d", rec.Code)
 	}
 }

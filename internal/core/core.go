@@ -90,7 +90,9 @@ type HTTP interface {
 	ListSessions(ctx context.Context, coreSessionID string) ([]Session, error)
 	RevokeSession(ctx context.Context, coreSessionID, sessionID string) error
 	ChangePassword(ctx context.Context, coreSessionID, current, next string) error
-	UpdateProfile(ctx context.Context, coreSessionID, country, birthday string) error
+	// An empty field means "leave it alone", so the phone and the site can each
+	// send only what their screen edits.
+	UpdateProfile(ctx context.Context, coreSessionID, country, birthday, displayName string) error
 	ForgotPassword(ctx context.Context, email string) error
 	ResetPassword(ctx context.Context, token, password string) error
 	Healthy(ctx context.Context) error
