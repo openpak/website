@@ -15,18 +15,19 @@ import (
 // fakeCore implements every core interface in memory, mirroring the
 // contract semantics the website relies on.
 type fakeCore struct {
-	accounts     map[string]string // email -> password
-	verified     map[string]bool
-	sessions     map[string]string // coreSessionID -> email
-	friends      []friendRow
-	blocks       [][2]string
-	profile      [2]string // country, birthday as last saved
-	invitations  []core.PendingInvitation
-	presence     map[string]core.Presence
-	players      []core.TitlePlayers
-	totalPlayers int
-	links        map[string]string // accountID -> subject (switch)
-	subjectToAc  map[string]string // subject -> accountID
+	accounts       map[string]string // email -> password
+	verified       map[string]bool
+	sessions       map[string]string // coreSessionID -> email
+	friends        []friendRow
+	blocks         [][2]string
+	profile        [2]string // country, birthday as last saved
+	invitations    []core.PendingInvitation
+	presence       map[string]core.Presence
+	players        []core.TitlePlayers
+	networkPlayers map[string]int
+	totalPlayers   int
+	links          map[string]string // accountID -> subject (switch)
+	subjectToAc    map[string]string // subject -> accountID
 }
 
 type friendRow struct {
@@ -275,8 +276,8 @@ func (f *fakeCore) Decline(_ context.Context, _, invitationID string) (bool, err
 	return false, nil
 }
 
-func (f *fakeCore) PlayerCounts(_ context.Context) ([]core.TitlePlayers, int, error) {
-	return f.players, f.totalPlayers, nil
+func (f *fakeCore) PlayerCounts(_ context.Context) ([]core.TitlePlayers, map[string]int, int, error) {
+	return f.players, f.networkPlayers, f.totalPlayers, nil
 }
 func (f *fakeCore) Presence(_ context.Context, ids []string) (map[string]core.Presence, error) {
 	out := map[string]core.Presence{}

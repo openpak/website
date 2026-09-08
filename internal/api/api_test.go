@@ -20,17 +20,18 @@ import (
 
 // fakeCore mirrors contract semantics the API relies on.
 type fakeCore struct {
-	accounts     map[string]string
-	verified     map[string]bool
-	sessions     map[string]string
-	friends      map[string][]string
-	links        map[string]string
-	subjectToAc  map[string]string
-	invitations  []core.PendingInvitation
-	presence     map[string]core.Presence
-	players      []core.TitlePlayers
-	totalPlayers int
-	profile      [3]string // country, birthday, display name as last saved
+	accounts       map[string]string
+	verified       map[string]bool
+	sessions       map[string]string
+	friends        map[string][]string
+	links          map[string]string
+	subjectToAc    map[string]string
+	invitations    []core.PendingInvitation
+	presence       map[string]core.Presence
+	players        []core.TitlePlayers
+	networkPlayers map[string]int
+	totalPlayers   int
+	profile        [3]string // country, birthday, display name as last saved
 }
 
 func newFakeCore() *fakeCore {
@@ -78,8 +79,8 @@ func (f *fakeCore) Decline(_ context.Context, _, id string) (bool, error) {
 	}
 	return false, nil
 }
-func (f *fakeCore) PlayerCounts(_ context.Context) ([]core.TitlePlayers, int, error) {
-	return f.players, f.totalPlayers, nil
+func (f *fakeCore) PlayerCounts(_ context.Context) ([]core.TitlePlayers, map[string]int, int, error) {
+	return f.players, f.networkPlayers, f.totalPlayers, nil
 }
 func (f *fakeCore) Presence(_ context.Context, ids []string) (map[string]core.Presence, error) {
 	out := map[string]core.Presence{}

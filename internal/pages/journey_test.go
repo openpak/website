@@ -429,6 +429,7 @@ func TestStatusPageShowsWhoIsPlaying(t *testing.T) {
 		{TitleID: "0100DEADBEEF0000", Players: 1},
 	}
 	fc.totalPlayers = 3
+	fc.networkPlayers = map[string]int{"switch": 3}
 
 	rec := httptest.NewRecorder()
 	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/status", nil))
@@ -446,5 +447,20 @@ func TestStatusPageShowsWhoIsPlaying(t *testing.T) {
 	}
 	if !strings.Contains(body, "3 players online") {
 		t.Errorf("total missing from the page")
+	}
+	// A game server is listed whether or not anybody is on it: "nobody is
+	// playing" and "it is not running" are different answers.
+	for _, want := range []string{"Outbound", "Stardew Valley", "Game servers", "Console networks"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("%q missing from the status page", want)
+		}
+	}
+	// Networks nobody has written yet must not read as healthy.
+	if !strings.Contains(body, "Planned") || !strings.Contains(body, "Being built") {
+		t.Error("unfinished networks should say so rather than show as online")
+	}
+	// Photon is UDP only; claiming it is up would be inventing a measurement.
+	if !strings.Contains(body, "Not checked") {
+		t.Error("a server that cannot be probed should say so")
 	}
 }

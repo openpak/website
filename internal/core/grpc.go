@@ -257,11 +257,11 @@ func (g *GRPC) Poll(ctx context.Context, sinceVersion uint64, limit int32) ([]Ev
 }
 
 // PlayerCounts reports live players per title, for the status page.
-func (g *GRPC) PlayerCounts(ctx context.Context) ([]TitlePlayers, int, error) {
+func (g *GRPC) PlayerCounts(ctx context.Context) ([]TitlePlayers, map[string]int, int, error) {
 	c := accountv1.NewSessionsClient(g.conn)
 	resp, err := c.GetPlayerCounts(ctx, &accountv1.GetPlayerCountsRequest{})
 	if err != nil {
-		return nil, 0, err
+		return nil, nil, 0, err
 	}
 	out := make([]TitlePlayers, 0, len(resp.GetTitles()))
 	for _, t := range resp.GetTitles() {
@@ -269,7 +269,11 @@ func (g *GRPC) PlayerCounts(ctx context.Context) ([]TitlePlayers, int, error) {
 			TitleID: t.GetTitleId(), Namespace: t.GetNamespace(), Players: int(t.GetPlayers()),
 		})
 	}
-	return out, int(resp.GetTotalPlayers()), nil
+	nets := make(map[string]int, len(resp.GetNetworks()))
+	for _, n := range resp.GetNetworks() {
+		nets[n.GetNamespace()] = int(n.GetPlayers())
+	}
+	return out, nets, int(resp.GetTotalPlayers()), nil
 }
 
 // --- InvitationsView ---

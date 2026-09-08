@@ -468,10 +468,24 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		Name    string
 		Players int
 	}
+	type serverRow struct {
+		Name      string
+		Players   int
+		Checkable bool
+		Up        bool
+		Note      string
+	}
+	type networkRow struct {
+		Name, State, Note string
+		Live              bool
+		Players           int
+	}
 	type statusView struct {
 		baseData
 		CoreOK, DBOk, StorageOK bool
 		Operational             bool
+		Networks                []networkRow
+		Servers                 []serverRow
 		Titles                  []titleRow
 		TotalPlayers            int
 		CountsOK                bool
@@ -486,15 +500,44 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	// Player counts come from the live session leases, so an empty list means
 	// nobody is playing rather than that something is broken. A failure to
 	// read them is shown as its own thing, not as an outage.
+	var perNetwork map[string]int
+	var titlesRaw []core.TitlePlayers
 	if s.Invites != nil {
-		if titles, total, err := s.Invites.PlayerCounts(ctx); err == nil {
-			view.CountsOK, view.TotalPlayers = true, total
+		if titles, nets, total, err := s.Invites.PlayerCounts(ctx); err == nil {
+			titlesRaw = titles
+			view.CountsOK, view.TotalPlayers, perNetwork = true, total, nets
 			for _, t := range titles {
 				view.Titles = append(view.Titles, titleRow{Name: titleName(t.TitleID), Players: t.Players})
 			}
 		} else {
 			s.log.Error("player counts", "err", err)
 		}
+	}
+	// The game servers themselves, so a title that nobody happens to be playing
+	// still shows up: "no players" and "not running" are different answers and
+	// a status page has to tell them apart.
+	byTitle := map[string]int{}
+	for _, t := range titlesRaw {
+		byTitle[t.TitleID] = t.Players
+	}
+	for _, g := range gameServers() {
+		row := serverRow{Name: g.Name, Players: byTitle[g.TitleID], Note: g.Note, Checkable: g.Addr != ""}
+		if row.Checkable {
+			row.Up = reachable(ctx, g.Addr)
+		}
+		view.Servers = append(view.Servers, row)
+	}
+
+	// Every network we intend to replace, with numbers only where something is
+	// actually deployed. A network still being written says so; showing it as
+	// green because nothing has failed yet would be the one lie a status page
+	// must not tell.
+	for _, n := range networks {
+		row := networkRow{Name: n.Name, State: n.State, Note: n.Note, Live: n.State == "live"}
+		if n.Namespace != "" {
+			row.Players = perNetwork[n.Namespace]
+		}
+		view.Networks = append(view.Networks, row)
 	}
 	s.render(w, http.StatusOK, "status.html", view)
 }

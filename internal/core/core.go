@@ -145,10 +145,11 @@ type InvitationsView interface {
 	Decline(ctx context.Context, accountID, invitationID string) (bool, error)
 	Presence(ctx context.Context, accountIDs []string) (map[string]Presence, error)
 	// PlayerCounts is who is playing what, right now. Accounts, not sessions.
-	PlayerCounts(ctx context.Context) ([]TitlePlayers, int, error)
+	PlayerCounts(ctx context.Context) ([]TitlePlayers, map[string]int, int, error)
 }
 
-// TitlePlayers is how many people are in one title.
+// TitlePlayers is how many people are in one title. The second return of
+// PlayerCounts is players per adapter namespace, keyed by namespace.
 type TitlePlayers struct {
 	TitleID   string
 	Namespace string

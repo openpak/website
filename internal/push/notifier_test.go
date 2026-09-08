@@ -37,17 +37,18 @@ func (fakeIdentity) GetAccount(_ context.Context, id string) (core.Account, erro
 }
 
 type fakeInvites struct {
-	pending      []core.PendingInvitation
-	players      []core.TitlePlayers
-	totalPlayers int
+	pending        []core.PendingInvitation
+	players        []core.TitlePlayers
+	networkPlayers map[string]int
+	totalPlayers   int
 }
 
 func (f *fakeInvites) ListPending(_ context.Context, _ string) ([]core.PendingInvitation, error) {
 	return f.pending, nil
 }
 func (f *fakeInvites) Decline(_ context.Context, _, _ string) (bool, error) { return true, nil }
-func (f *fakeInvites) PlayerCounts(_ context.Context) ([]core.TitlePlayers, int, error) {
-	return f.players, f.totalPlayers, nil
+func (f *fakeInvites) PlayerCounts(_ context.Context) ([]core.TitlePlayers, map[string]int, int, error) {
+	return f.players, f.networkPlayers, f.totalPlayers, nil
 }
 func (f *fakeInvites) Presence(_ context.Context, _ []string) (map[string]core.Presence, error) {
 	return nil, nil

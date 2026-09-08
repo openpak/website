@@ -11,6 +11,36 @@
   {{end}}
 </div>
 
+<h2>{{t .Lang "status.servers"}}</h2>
+<ul class="rows">
+  {{range .Servers}}
+  <li>
+    <span class="name">{{.Name}}</span>
+    {{if .Checkable}}
+      <span class="badge {{if .Up}}ok{{else}}bad{{end}}">{{if .Up}}{{t $.Lang "status.ok"}}{{else}}{{t $.Lang "status.down"}}{{end}}</span>
+    {{else}}
+      <span class="badge">{{t $.Lang "status.unchecked"}}</span>
+    {{end}}
+    <span class="sub">{{if eq .Players 1}}{{t $.Lang "status.players.one"}}{{else}}{{.Players}} {{t $.Lang "status.players.many"}}{{end}}</span>
+    {{if .Note}}<p class="hint">{{.Note}}</p>{{end}}
+  </li>
+  {{end}}
+</ul>
+
+<h2>{{t .Lang "status.networks"}}</h2>
+<ul class="rows">
+  {{range .Networks}}
+  <li>
+    <span class="name">{{.Name}}</span>
+    <span class="badge {{if .Live}}ok{{end}}">
+      {{if eq .State "live"}}{{t $.Lang "status.net.live"}}{{else if eq .State "building"}}{{t $.Lang "status.net.building"}}{{else}}{{t $.Lang "status.net.planned"}}{{end}}
+    </span>
+    {{if .Live}}<span class="sub">{{if eq .Players 1}}{{t $.Lang "status.players.one"}}{{else}}{{.Players}} {{t $.Lang "status.players.many"}}{{end}}</span>{{end}}
+    {{if .Note}}<p class="hint">{{.Note}}</p>{{end}}
+  </li>
+  {{end}}
+</ul>
+
 {{if .CountsOK}}
   <h2>{{t .Lang "status.playing"}}</h2>
   {{if .Titles}}
