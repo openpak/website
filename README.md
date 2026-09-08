@@ -196,7 +196,9 @@ adapter-owned value — see CR-3.
 
 Carried from the PRD, plus what this implementation discovered:
 
-- **CR-1** `Invitations.ListForAccount(account_id) → [pending invitations]`,
+- ~~**CR-1** `Invitations.ListForAccount(account_id) → [pending invitations]`~~ — **delivered
+  2026-09-08** as `Invitations.ListInvitations`; also `RejectInvitation`, `Sessions.GetPresence`
+  and `Sessions.GetPlayerCounts`. Original request kept for the reasoning:
   read-only, no delivery side effects. Until then `/account/invitations`
   renders a pending notice; the website must not call `PollInvitations`
   (adapter-scoped, delivery side effects).
