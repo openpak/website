@@ -77,6 +77,9 @@ body {
 }
 
 h1, h2, h3 { line-height: 1.25; letter-spacing: -0.015em; margin: 0 0 0.5em; font-weight: 650; }
+/* A heading directly after content needs air above it: without this a section
+   title collides with the last row of the list it follows. */
+.rows + h2, table + h2, .notice + h2, p + h2, .table-wrap + h2 { margin-top: 36px; }
 h1 { font-size: 1.75rem; }
 h2 { font-size: 1.2rem; }
 h3 { font-size: 1rem; font-weight: 600; }
@@ -203,6 +206,9 @@ a.card h3 { color: var(--accent); }
 }
 .rows li:hover { background: var(--paper-2); }
 .rows .name { font-weight: 550; margin-right: auto; }
+/* A row's explanation goes under it, never beside the badge: inline, it pushes
+   each row's badge to a different place and the column stops existing. */
+.rows li > p { flex-basis: 100%; margin: 2px 0 0; }
 .rows .sub { color: var(--muted); font-size: 0.87rem; }
 
 .empty { color: var(--muted); font-size: 0.94rem; margin: 0; padding: 14px 0; }
@@ -264,12 +270,29 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0
 .stack.full { max-width: none; }
 .stack.full button { align-self: stretch; }
 
-input[type=text], input[type=email], input[type=password], input[type=file] {
+input[type=text], input[type=email], input[type=password], input[type=file],
+input[type=date], input[type=number], input[type=search], input[type=tel], select, textarea {
   width: 100%; font: inherit; color: var(--ink);
   background: var(--paper); border: 1px solid var(--line-2); border-radius: var(--r-sm);
   padding: 9px 12px;
+  /* 16px is the size below which iOS zooms the page on focus, which then
+     leaves the layout scrolled sideways. Never smaller on touch. */
+  font-size: max(1rem, 16px);
 }
-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-weak); }
+select {
+  appearance: none;
+  /* The chevron, drawn rather than fetched: one background-image beats an
+     asset request and keeps the control themable from the tokens. */
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+                    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: right 18px center, right 13px center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 34px;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-weak);
+}
 input::placeholder { color: var(--muted); }
 input[type=file] { padding: 7px 10px; color: var(--ink-2); }
 input[type=file]::file-selector-button {
@@ -364,6 +387,26 @@ tbody tr:last-child td { border-bottom: 0; }
 .cl { display: none; }
 
 @media (max-width: 640px) {
+  /* The header wraps on a phone whatever we do, so make the wrap deliberate:
+     the brand and the one action people came for share the first line, and the
+     section links take the second, rather than links spilling raggedly and
+     leaving "Create account" stranded on a line of its own. */
+  .top nav { row-gap: 10px; }
+  .top .spacer { display: none; }
+  .brand { flex: 1 1 auto; margin-right: 0; }
+  .top .nav-link { order: 2; }
+  .top .btn, .top form.inline { order: 1; }
+  /* Force the break after the actions, or the first section link fills the
+     space left on line one and the header reads as an accident. A zero-height
+     full-width item is the only way flexbox takes an explicit line break. */
+  .top nav::after { content: ""; order: 1; flex-basis: 100%; height: 0; }
+  .top .nav-link:first-of-type { margin-left: -10px; }
+
+  /* Long unbroken strings — friend codes, title ids, tokens — must not push
+     the page sideways. Horizontal scroll is the one layout bug a phone user
+     cannot work around. */
+  .rows .name, .rows .sub, code { overflow-wrap: anywhere; }
+
   table { min-width: 0; }
   thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   table, tbody, tr, td { display: block; width: auto; }
