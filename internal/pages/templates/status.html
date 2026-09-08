@@ -9,9 +9,7 @@
 </div>
 
 <div class="state-row {{if .Operational}}ok{{else}}bad{{end}} mb-9" role="status">
-  <div>
-    <span class="name text-lg">{{if .Operational}}{{t .Lang "status.all.ok"}}{{else}}{{t .Lang "status.all.bad"}}{{end}}</span>
-  </div>
+  <span class="name text-lg">{{if .Operational}}{{t .Lang "status.all.ok"}}{{else}}{{t .Lang "status.all.bad"}}{{end}}</span>
   {{if .CountsOK}}<span class="pill">{{if eq .TotalPlayers 1}}{{t .Lang "status.pill.one"}}{{else}}{{.TotalPlayers}} {{t .Lang "status.pill.many"}}{{end}}</span>{{end}}
 </div>
 
@@ -19,10 +17,7 @@
 <div class="mb-9">
   {{range .Servers}}
   <div class="state-row {{if not .Checkable}}idle{{else if .Up}}ok{{else}}bad{{end}}">
-    <div>
-      <span class="name">{{.Name}}</span>
-      {{if .Note}}<p class="note">{{.Note}}</p>{{end}}
-    </div>
+    <span class="name">{{.Name}}</span>
     <span class="pill">
       {{if not .Checkable}}{{t $.Lang "status.unchecked"}}
       {{else if not .Up}}{{t $.Lang "status.down"}}
@@ -37,10 +32,7 @@
 <div class="mb-9">
   {{range .Networks}}
   <div class="state-row {{if eq .State "live"}}ok{{else if eq .State "building"}}warn{{else}}idle{{end}}">
-    <div>
-      <span class="name">{{.Name}}</span>
-      {{if .Note}}<p class="note">{{.Note}}</p>{{end}}
-    </div>
+    <span class="name">{{.Name}}</span>
     <span class="pill">
       {{if eq .State "live"}}{{if eq .Players 1}}{{t $.Lang "status.pill.one"}}{{else}}{{.Players}} {{t $.Lang "status.pill.many"}}{{end}}
       {{else if eq .State "building"}}{{t $.Lang "status.net.building"}}

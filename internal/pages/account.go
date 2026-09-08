@@ -473,12 +473,11 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		Players   int
 		Checkable bool
 		Up        bool
-		Note      string
 	}
 	type networkRow struct {
-		Name, State, Note string
-		Live              bool
-		Players           int
+		Name, State string
+		Live        bool
+		Players     int
 	}
 	type statusView struct {
 		baseData
@@ -521,7 +520,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		byTitle[t.TitleID] = t.Players
 	}
 	for _, g := range gameServers() {
-		row := serverRow{Name: g.Name, Players: byTitle[g.TitleID], Note: g.Note, Checkable: g.Health != ""}
+		row := serverRow{Name: g.Name, Players: byTitle[g.TitleID], Checkable: g.Health != ""}
 		if row.Checkable {
 			row.Up = healthy(ctx, g.Health)
 		}
@@ -533,7 +532,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	// green because nothing has failed yet would be the one lie a status page
 	// must not tell.
 	for _, n := range networks {
-		row := networkRow{Name: n.Name, State: n.State, Note: n.Note, Live: n.State == "live"}
+		row := networkRow{Name: n.Name, State: n.State, Live: n.State == "live"}
 		if n.Namespace != "" {
 			row.Players = perNetwork[n.Namespace]
 		}

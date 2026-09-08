@@ -264,7 +264,6 @@
   }
   .state-row + .state-row { margin-top: 0.6rem; }
   .state-row .name { font-weight: 600; overflow-wrap: anywhere; }
-  .state-row .note { margin: 0.15rem 0 0; font-size: 0.88rem; color: var(--muted); }
   .state-row .pill {
     margin-left: auto; flex: none; white-space: nowrap;
     display: inline-flex; align-items: center; gap: 0.4rem;

@@ -20,7 +20,6 @@ type gameServer struct {
 	// Health is an HTTP URL that answers 200 when the server is up. Empty
 	// means this server cannot be checked, and its row says so.
 	Health string
-	Note   string
 }
 
 // healthURL reads a health endpoint from the environment. The literal "off"
@@ -39,7 +38,6 @@ func gameServers() []gameServer {
 		{
 			Name: "Outbound", TitleID: "0100ED9024EB8000",
 			Health: healthURL("PHOTON_HEALTH_URL", "http://openpak-photon:8080/health"),
-			Note:   "Runs on Photon.",
 		},
 		{
 			Name: "Stardew Valley", TitleID: "0100E65002BB8000",
