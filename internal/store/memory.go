@@ -19,6 +19,9 @@ type Memory struct {
 	media       map[[2]string]MediaRecord
 	webSessions map[string]WebSession
 	nextToken   int
+	pushTokens  map[string]PushToken // by token
+	pushOwner   map[string]string    // token -> account
+	pushCursor  uint64
 }
 
 // NewMemory returns an empty in-memory store with registrations open.
@@ -177,5 +180,49 @@ func (m *Memory) SeedTitles(ctx context.Context, titles []Title) error {
 		return nil
 	}
 	m.titles = append(m.titles, titles...)
+	return nil
+}
+
+func (m *Memory) SavePushToken(_ context.Context, accountID, token, platform string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.pushTokens == nil {
+		m.pushTokens, m.pushOwner = map[string]PushToken{}, map[string]string{}
+	}
+	m.pushTokens[token] = PushToken{Token: token, Platform: platform}
+	m.pushOwner[token] = accountID
+	return nil
+}
+
+func (m *Memory) DeletePushToken(_ context.Context, token string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	delete(m.pushTokens, token)
+	delete(m.pushOwner, token)
+	return nil
+}
+
+func (m *Memory) PushTokensForAccount(_ context.Context, accountID string) ([]PushToken, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	var out []PushToken
+	for tok, owner := range m.pushOwner {
+		if owner == accountID {
+			out = append(out, m.pushTokens[tok])
+		}
+	}
+	return out, nil
+}
+
+func (m *Memory) PushCursor(_ context.Context) (uint64, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.pushCursor, nil
+}
+
+func (m *Memory) SetPushCursor(_ context.Context, v uint64) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.pushCursor = v
 	return nil
 }

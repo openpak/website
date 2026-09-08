@@ -70,6 +70,8 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	h("/me/friends/unblock", s.auth(s.handleUnblock))
 	g("/me/invitations", s.auth(s.handleInvitations))
 	h("/me/invitations/decline", s.auth(s.handleDeclineInvitation))
+	h("/me/push", s.auth(s.handleRegisterPush))
+	d("/me/push", s.auth(s.handleForgetPush))
 }
 
 // writeJSON mirrors the core's response conventions.
@@ -470,4 +472,42 @@ func (s *Server) handleDeclineInvitation(w http.ResponseWriter, r *http.Request,
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"declined": declined})
+}
+
+// handleRegisterPush records the device token this install can be reached at.
+// Keyed by the token, so signing in as someone else on the same phone moves it
+// rather than leaving the previous account's notifications arriving here.
+func (s *Server) handleRegisterPush(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	var req struct {
+		Token    string `json:"token"`
+		Platform string `json:"platform"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8192)).Decode(&req); err != nil || req.Token == "" {
+		writeError(w, http.StatusBadRequest, "token is required")
+		return
+	}
+	if req.Platform == "" {
+		req.Platform = "fcm"
+	}
+	if err := s.DB.SavePushToken(r.Context(), tok.AccountID, req.Token, req.Platform); err != nil {
+		s.log.Error("save push token", "err", err)
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"registered": true})
+}
+
+// handleForgetPush drops a device token: sign-out, or notifications turned off.
+func (s *Server) handleForgetPush(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	token := r.URL.Query().Get("token")
+	if token == "" {
+		writeError(w, http.StatusBadRequest, "token is required")
+		return
+	}
+	if err := s.DB.DeletePushToken(r.Context(), token); err != nil {
+		s.log.Error("delete push token", "err", err)
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"forgotten": true})
 }

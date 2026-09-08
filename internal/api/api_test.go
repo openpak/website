@@ -335,3 +335,55 @@ func TestPresenceAndInvitationsInbox(t *testing.T) {
 		t.Fatalf("empty decline: %d", rec.Code)
 	}
 }
+
+// Registering an install for notifications, and the rule that keeps a shared
+// phone honest: the token identifies the install, so signing in as someone else
+// moves it rather than leaving two accounts notified on one device.
+func TestPushRegistration(t *testing.T) {
+	s, fc, db := newTestAPI(t)
+	fc.accounts["b@x.test"] = "password-B-1"
+	fc.verified["b@x.test"] = true
+
+	rec := do(t, s, http.MethodPost, "/api/v1/token", "", tokenRequest{Email: "a@x.test", Password: "password-A-1"})
+	var a struct {
+		Token string `json:"token"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &a)
+
+	if rec := do(t, s, http.MethodPost, "/api/v1/me/push", a.Token,
+		map[string]string{"token": "device-1", "platform": "fcm"}); rec.Code != http.StatusOK {
+		t.Fatalf("register: %d %s", rec.Code, rec.Body.String())
+	}
+	toks, _ := db.PushTokensForAccount(context.Background(), "acct-a@x.test")
+	if len(toks) != 1 || toks[0].Token != "device-1" {
+		t.Fatalf("stored: %+v", toks)
+	}
+
+	// The same device, now signed in as B.
+	rec = do(t, s, http.MethodPost, "/api/v1/token", "", tokenRequest{Email: "b@x.test", Password: "password-B-1"})
+	var b struct {
+		Token string `json:"token"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &b)
+	if rec := do(t, s, http.MethodPost, "/api/v1/me/push", b.Token,
+		map[string]string{"token": "device-1"}); rec.Code != http.StatusOK {
+		t.Fatalf("re-register: %d", rec.Code)
+	}
+	if toks, _ := db.PushTokensForAccount(context.Background(), "acct-a@x.test"); len(toks) != 0 {
+		t.Errorf("the previous account still gets this phone's notifications: %+v", toks)
+	}
+	if toks, _ := db.PushTokensForAccount(context.Background(), "acct-b@x.test"); len(toks) != 1 {
+		t.Errorf("the new account was not registered: %+v", toks)
+	}
+
+	// A token is required, and sign-out forgets the install.
+	if rec := do(t, s, http.MethodPost, "/api/v1/me/push", b.Token, map[string]string{}); rec.Code != http.StatusBadRequest {
+		t.Errorf("empty token: %d", rec.Code)
+	}
+	if rec := do(t, s, http.MethodDelete, "/api/v1/me/push?token=device-1", b.Token, nil); rec.Code != http.StatusOK {
+		t.Errorf("forget: %d %s", rec.Code, rec.Body.String())
+	}
+	if toks, _ := db.PushTokensForAccount(context.Background(), "acct-b@x.test"); len(toks) != 0 {
+		t.Errorf("token survived sign-out: %+v", toks)
+	}
+}

@@ -59,6 +59,25 @@ var migrations = map[string]string{
 		status text NOT NULL,
 		PRIMARY KEY (name, platform)
 	);`,
+
+	// Push. The token is the primary key because it identifies the install,
+	// not the person: reinstalling gives a new one, and the same phone signing
+	// in as someone else must move rather than duplicate — hence the upsert on
+	// conflict rewriting account_id.
+	"0002_push": `CREATE TABLE IF NOT EXISTS push_tokens (
+		token text PRIMARY KEY,
+		account_id text NOT NULL,
+		platform text NOT NULL,
+		created_at timestamptz NOT NULL DEFAULT now(),
+		last_seen_at timestamptz NOT NULL DEFAULT now()
+	);
+	CREATE INDEX IF NOT EXISTS push_tokens_account_idx ON push_tokens(account_id);
+
+	CREATE TABLE IF NOT EXISTS push_cursor (
+		id int PRIMARY KEY,
+		version bigint NOT NULL
+	);
+	INSERT INTO push_cursor(id, version) VALUES (1, 0) ON CONFLICT (id) DO NOTHING;`,
 }
 
 // Ping verifies database connectivity (status page).
@@ -274,4 +293,50 @@ func (s *PG) SeedTitles(ctx context.Context, titles []Title) error {
 		}
 	}
 	return tx.Commit(ctx)
+}
+
+// SavePushToken records an app install for this account. The token is the key:
+// the same install signing in as a different account moves rather than
+// duplicating, so one phone never receives another person's notifications.
+func (s *PG) SavePushToken(ctx context.Context, accountID, token, platform string) error {
+	_, err := s.pool.Exec(ctx, `INSERT INTO push_tokens(token, account_id, platform)
+		VALUES($1,$2,$3)
+		ON CONFLICT (token) DO UPDATE SET account_id=EXCLUDED.account_id,
+			platform=EXCLUDED.platform, last_seen_at=now()`, token, accountID, platform)
+	return err
+}
+
+// DeletePushToken forgets an install: sign-out, or a token the transport told
+// us is dead.
+func (s *PG) DeletePushToken(ctx context.Context, token string) error {
+	_, err := s.pool.Exec(ctx, `DELETE FROM push_tokens WHERE token=$1`, token)
+	return err
+}
+
+func (s *PG) PushTokensForAccount(ctx context.Context, accountID string) ([]PushToken, error) {
+	rows, err := s.pool.Query(ctx, `SELECT token, platform FROM push_tokens WHERE account_id=$1`, accountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []PushToken
+	for rows.Next() {
+		var t PushToken
+		if err := rows.Scan(&t.Token, &t.Platform); err != nil {
+			return nil, err
+		}
+		out = append(out, t)
+	}
+	return out, rows.Err()
+}
+
+func (s *PG) PushCursor(ctx context.Context) (uint64, error) {
+	var v uint64
+	err := s.pool.QueryRow(ctx, `SELECT version FROM push_cursor WHERE id=1`).Scan(&v)
+	return v, err
+}
+
+func (s *PG) SetPushCursor(ctx context.Context, version uint64) error {
+	_, err := s.pool.Exec(ctx, `UPDATE push_cursor SET version=$1 WHERE id=1`, version)
+	return err
 }

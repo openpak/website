@@ -248,6 +248,8 @@ func (g *GRPC) Poll(ctx context.Context, sinceVersion uint64, limit int32) ([]Ev
 			EventID:   e.GetEventId(),
 			Type:      e.GetType(),
 			AccountID: e.GetAccountId(),
+			Namespace: e.GetNamespace(),
+			SubjectID: e.GetSubjectId(),
 			CreatedAt: time.Unix(e.GetCreatedAtUnix(), 0).UTC(),
 		})
 	}

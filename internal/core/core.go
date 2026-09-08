@@ -67,10 +67,15 @@ type Link struct {
 
 // Event is a durable core invalidation event (audit trail for moderators).
 type Event struct {
-	Version   uint64
-	EventID   string
-	Type      string
+	Version uint64
+	EventID string
+	Type    string
+	// AccountID is who the event is about — and, for the notifiable types, who
+	// gets told. SubjectID is who or what it concerns: the requester of a
+	// friend request, the id of an invitation.
 	AccountID string
+	Namespace string
+	SubjectID string
 	CreatedAt time.Time
 }
 

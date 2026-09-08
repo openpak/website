@@ -148,6 +148,61 @@ paths:
                   declined: { type: boolean }
         "400": { description: invitation_id is required }
         "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/push:
+    post:
+      summary: Register this install for notifications
+      description: |
+        Records the device token this install can be reached at. Keyed by the
+        token, so the same phone signing in as a different account moves the
+        registration rather than leaving the previous account's notifications
+        arriving on it.
+
+        Delivery is through FCM, which reaches Android directly and iOS via
+        APNs. iOS therefore also needs an APNs key uploaded to the Firebase
+        project; without one, iOS installs register successfully and receive
+        nothing.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string, description: The transport's device token. }
+                platform:
+                  type: string
+                  default: fcm
+                  description: Which transport the token belongs to.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  registered: { type: boolean }
+        "400": { description: token is required }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    delete:
+      summary: Stop notifying this install
+      parameters:
+        - in: query
+          name: token
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  forgotten: { type: boolean }
+        "400": { description: token is required }
+        "401": { $ref: "#/components/responses/Unauthorized" }
   /me/friends/requests:
     get:
       summary: Pending incoming and outgoing friend requests

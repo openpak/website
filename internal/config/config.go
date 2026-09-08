@@ -28,6 +28,13 @@ type Config struct {
 
 	AdminAccountIDs []string // account ids allowed to open /admin (fail closed)
 
+	// FCMCredentialsFile is a Firebase service-account JSON. Empty means push
+	// is not configured and the notifier does not run; the rest of the site is
+	// unaffected. Note that iOS delivery additionally needs an APNs key
+	// uploaded to the Firebase project, which requires an Apple Developer
+	// account — without it FCM reaches Android only.
+	FCMCredentialsFile string
+
 	MediaDir   string // filesystem storage root for avatars
 	SeedTitles bool   // seed the supported-titles table with defaults on boot
 }
@@ -35,19 +42,20 @@ type Config struct {
 // Load reads the environment and validates required fields.
 func Load() (Config, error) {
 	c := Config{
-		HTTPAddr:          env("WEBSITE_HTTP_ADDR", ":20010"),
-		MetricsAddr:       env("WEBSITE_METRICS_ADDR", ":20012"),
-		CoreBaseURL:       env("CORE_BASE_URL", "http://localhost:20000"),
-		CoreGRPCAddr:      env("CORE_GRPC_ADDR", "localhost:20001"),
-		CoreInternalKey:   os.Getenv("CORE_INTERNAL_KEY"),
-		CoreHTTPTimeout:   10 * time.Second,
-		SessionCookieName: "opak_session",
-		SiteDatabaseURL:   os.Getenv("WEBSITE_DATABASE_URL"),
-		CoreSessionTTL:    30 * 24 * time.Hour,
-		SessionSecret:     os.Getenv("WEBSITE_SESSION_SECRET"),
-		Environment:       env("WEBSITE_ENVIRONMENT", "development"),
-		MediaDir:          env("WEBSITE_MEDIA_DIR", "storage/media"),
-		SeedTitles:        env("WEBSITE_SEED_TITLES", "") != "",
+		HTTPAddr:           env("WEBSITE_HTTP_ADDR", ":20010"),
+		MetricsAddr:        env("WEBSITE_METRICS_ADDR", ":20012"),
+		CoreBaseURL:        env("CORE_BASE_URL", "http://localhost:20000"),
+		CoreGRPCAddr:       env("CORE_GRPC_ADDR", "localhost:20001"),
+		CoreInternalKey:    os.Getenv("CORE_INTERNAL_KEY"),
+		CoreHTTPTimeout:    10 * time.Second,
+		SessionCookieName:  "opak_session",
+		SiteDatabaseURL:    os.Getenv("WEBSITE_DATABASE_URL"),
+		FCMCredentialsFile: os.Getenv("FCM_CREDENTIALS_FILE"),
+		CoreSessionTTL:     30 * 24 * time.Hour,
+		SessionSecret:      os.Getenv("WEBSITE_SESSION_SECRET"),
+		Environment:        env("WEBSITE_ENVIRONMENT", "development"),
+		MediaDir:           env("WEBSITE_MEDIA_DIR", "storage/media"),
+		SeedTitles:         env("WEBSITE_SEED_TITLES", "") != "",
 	}
 	for _, id := range strings.Split(os.Getenv("WEBSITE_ADMIN_ACCOUNT_IDS"), ",") {
 		if id = strings.TrimSpace(id); id != "" {

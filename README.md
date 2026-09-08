@@ -79,7 +79,24 @@ the core's contracts move.
   `/metrics` is Prometheus text; `/debug/pprof/` is mounted on the same port.
   Keep both off the public internet (port plan rule 4).
 
-### Configuration
+### Push notifications
+
+Set `FCM_CREDENTIALS_FILE` to a Firebase service-account JSON and the notifier
+starts with the site; leave it unset and the site runs normally with
+notifications disabled (the app can still register a token — nothing is
+delivered). The notifier polls the account core's event stream, so it sends on
+`friend_requested` and `invitation_sent` and on nothing else.
+
+Its first run on a fresh database skips to the present rather than treating the
+whole event history as unread. The read position lives in `push_cursor`, so a
+restart resumes instead of replaying.
+
+FCM reaches Android directly and iOS through APNs, which means **iOS delivery
+additionally needs an APNs key uploaded to the Firebase project, and that key
+requires a paid Apple Developer account.** Without one, iOS installs register
+successfully and receive nothing.
+
+## Configuration
 
 See `example.env`. Required: `CORE_INTERNAL_KEY` (must equal the core's
 `ACCOUNT_INTERNAL_KEY`), `WEBSITE_DATABASE_URL`, `WEBSITE_SESSION_SECRET`

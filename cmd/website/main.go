@@ -20,6 +20,7 @@ import (
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/metrics"
 	"github.com/openpak/website/internal/pages"
+	"github.com/openpak/website/internal/push"
 	"github.com/openpak/website/internal/ratelimit"
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/store"
@@ -100,6 +101,19 @@ func run(log *slog.Logger) error {
 	pageSrv.MediaLimit = ratelimit.New(5, time.Hour)
 
 	apiSrv := api.New(coreHTTP, coreGRPC, coreGRPC, coreGRPC, coreGRPC, db, sessions, log)
+
+	// Push. Absent credentials is a supported configuration: the site runs, the
+	// app can still register a token, and nothing is delivered until a service
+	// account exists.
+	if fcm, err := push.NewFCM(cfg.FCMCredentialsFile); err != nil {
+		return err
+	} else if fcm == nil {
+		log.Info("push: no FCM credentials configured; notifications are disabled")
+	} else {
+		notifier := push.NewNotifier(coreGRPC, coreGRPC, coreGRPC, db, fcm, log)
+		go notifier.Run(ctx)
+		log.Info("push: notifier started")
+	}
 	adminSrv := admin.New(tmpl, coreGRPC, db, sessions, cfg.AdminAccountIDs, log)
 
 	mux := http.NewServeMux()

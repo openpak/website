@@ -83,6 +83,20 @@ type Store interface {
 
 	ListTitles(ctx context.Context) ([]Title, error)
 	SeedTitles(ctx context.Context, titles []Title) error
+
+	SavePushToken(ctx context.Context, accountID, token, platform string) error
+	DeletePushToken(ctx context.Context, token string) error
+	PushTokensForAccount(ctx context.Context, accountID string) ([]PushToken, error)
+	// PushCursor/SetPushCursor persist how far the notifier has read the core's
+	// event stream, so a restart resumes instead of replaying or skipping.
+	PushCursor(ctx context.Context) (uint64, error)
+	SetPushCursor(ctx context.Context, version uint64) error
+}
+
+// PushToken is one app install that can be notified.
+type PushToken struct {
+	Token    string
+	Platform string // "fcm" today; the column exists so a second transport needs no migration
 }
 
 // Title is one supported title row for the landing page.
