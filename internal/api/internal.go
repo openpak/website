@@ -8,8 +8,10 @@ import (
 	"errors"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/openpak/website/internal/media"
+	"github.com/openpak/website/internal/store"
 )
 
 // The internal surface: service-to-service, never a browser, never published
@@ -83,6 +85,17 @@ func (s *Server) handleInternalAvatar(w http.ResponseWriter, r *http.Request) {
 		s.log.Error("internal avatar: store", "err", err)
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
+	}
+	// The bytes are only half of it. Every cache -- the browser, Cloudflare,
+	// the console's own ?v= key -- keys off this row, so writing the picture
+	// without stamping it leaves the site serving the previous avatar
+	// against a validator that never moves. That is exactly what happened on
+	// 2026-09-08: the file changed at 18:49 and the row still said the day
+	// before.
+	if err := s.DB.UpsertMedia(r.Context(), store.MediaRecord{
+		AccountID: accountID, Kind: "avatar", UpdatedAt: time.Now().UTC(),
+	}); err != nil {
+		s.log.Error("internal avatar: media metadata", "err", err)
 	}
 	s.log.Info("internal avatar stored", "account", accountID, "bytes", len(raw))
 	writeJSON(w, http.StatusOK, map[string]any{"stored": true})

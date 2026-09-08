@@ -152,7 +152,12 @@ func (m *Memory) ListAudit(ctx context.Context, limit int) ([]AuditEntry, error)
 func (m *Memory) UpsertMedia(ctx context.Context, rec MediaRecord) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	rec.UpdatedAt = time.Now()
+	// Honour the caller's timestamp, as the SQL store does. Overwriting it
+	// with now() made this double incapable of showing a stale row, which is
+	// the only interesting thing that can go wrong here.
+	if rec.UpdatedAt.IsZero() {
+		rec.UpdatedAt = time.Now()
+	}
 	m.media[[2]string{rec.AccountID, rec.Kind}] = rec
 	return nil
 }

@@ -6,6 +6,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"image"
+	"image/png"
 	"io"
 	"log/slog"
 	"net/http"
@@ -15,6 +17,7 @@ import (
 	"time"
 
 	"github.com/openpak/website/internal/core"
+	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/store"
 )
@@ -581,4 +584,53 @@ func TestSessionsAreSnakeCase(t *testing.T) {
 	if len(got.Sessions) != 1 || got.Sessions[0].ID == "" || got.Sessions[0].CreatedAt == "" {
 		t.Fatalf("session fields did not survive the wire: %s", rec.Body.String())
 	}
+}
+
+
+// The console's picture reaches the site through /internal/avatar, and the
+// site's caches key off the media row, not the file. Writing bytes without
+// stamping the row leaves every browser showing the old avatar against a
+// validator that never moves -- observed on 2026-09-08, file changed at
+// 18:49, row still the day before.
+func TestInternalAvatarStampsTheMediaRow(t *testing.T) {
+	s, _, db := newTestAPI(t)
+	dir := t.TempDir()
+	st, err := media.NewFSStorage(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.Media = media.New(st)
+	t.Setenv("WEBSITE_INTERNAL_KEY", "shared-secret-value")
+
+	var png bytes.Buffer
+	if err := pngEncode(&png); err != nil {
+		t.Fatal(err)
+	}
+	img := map[string]string{
+		"namespace": "switch", "subject": "0123456789ab",
+		"content_base64": base64.StdEncoding.EncodeToString(png.Bytes()),
+	}
+	before := time.Now().Add(-time.Hour).UTC()
+	if err := db.UpsertMedia(context.Background(), store.MediaRecord{
+		AccountID: "acct-b@x.test", Kind: "avatar", UpdatedAt: before,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if rec := doRaw(t, s, http.MethodPost, "/internal/avatar", "Bearer shared-secret-value", img); rec.Code != http.StatusOK {
+		t.Fatalf("upload = %d: %s", rec.Code, rec.Body.String())
+	}
+
+	got, err := db.GetMedia(context.Background(), "acct-b@x.test", "avatar")
+	if err != nil {
+		t.Fatalf("media row: %v", err)
+	}
+	if !got.UpdatedAt.After(before) {
+		t.Fatalf("row was not stamped: still %s", got.UpdatedAt)
+	}
+}
+
+func pngEncode(w io.Writer) error {
+	m := image.NewRGBA(image.Rect(0, 0, 8, 8))
+	return png.Encode(w, m)
 }
