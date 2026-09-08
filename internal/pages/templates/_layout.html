@@ -1,5 +1,10 @@
 {{/* One shell for every page — public and signed-in alike. The nav swaps
-     its links for a session; there is no separate portal chrome. */}}
+     its links for a session; there is no separate portal chrome.
+
+     Mobile first: the phone layout is the plain one, and the wider layout is
+     added at sm/md. The menu is a <details> element, so it opens and closes
+     with no JavaScript — every journey on this site still works with scripting
+     off, which a hamburger built from a button and a listener would end. */}}
 
 {{define "header"}}<!DOCTYPE html>
 <html lang="{{.Lang}}">
@@ -12,49 +17,88 @@
 <link rel="icon" href="/static/icon.svg?v={{.Asset}}" type="image/svg+xml">
 <link rel="stylesheet" href="/static/site.css?v={{.Asset}}">
 </head>
-<body>
-<a class="skip" href="#main">{{t .Lang "nav.skip"}}</a>
-<header class="top">
-  <nav aria-label="Main">
-    <a href="/" class="brand">OpenPak</a>
-    {{if .User}}
-      <a class="nav-link" href="/account" {{if eq .Path "/account"}}aria-current="page"{{end}}>{{t .Lang "nav.account"}}</a>
-      {{if .Admin}}<a class="nav-link" href="/admin" {{if eq .Path "/admin"}}aria-current="page"{{end}}>{{t .Lang "admin.title"}}</a>{{end}}
-    {{end}}
-    <a class="nav-link" href="/features" {{if eq .Path "/features"}}aria-current="page"{{end}}>{{t .Lang "nav.features"}}</a>
-    <a class="nav-link" href="/downloads" {{if eq .Path "/downloads"}}aria-current="page"{{end}}>{{t .Lang "nav.downloads"}}</a>
-    <a class="nav-link" href="/status" {{if eq .Path "/status"}}aria-current="page"{{end}}>{{t .Lang "nav.status"}}</a>
-    <span class="spacer"></span>
-    {{if .User}}
-      <form method="post" action="/logout" class="inline">
-        <input type="hidden" name="csrf" value="{{.CSRF}}">
-        <button type="submit" class="small">{{t .Lang "nav.signout"}}</button>
-      </form>
-    {{else}}
-      <a class="nav-link" href="/login" {{if eq .Path "/login"}}aria-current="page"{{end}}>{{t .Lang "nav.signin"}}</a>
-      <a href="/register" class="btn primary small">{{t .Lang "nav.register"}}</a>
-    {{end}}
-  </nav>
+<body class="min-h-screen flex flex-col">
+<a class="sr-only focus:not-sr-only focus:absolute focus:m-3 focus:p-3 focus:card" href="#main">{{t .Lang "nav.skip"}}</a>
+
+<header class="border-b border-line bg-paper">
+  <div class="mx-auto w-full max-w-5xl px-4 sm:px-6">
+    <div class="flex items-center gap-3 py-3">
+      <a href="/" class="flex items-center gap-2 font-bold tracking-tight text-ink no-underline">
+        <img src="/static/icon.svg?v={{.Asset}}" alt="" width="26" height="26" class="size-6">
+        OpenPak
+      </a>
+
+      {{/* Wide: the links sit in the bar. Narrow: they live in the menu below. */}}
+      <nav aria-label="Main" class="hidden md:flex items-center gap-1 ml-4">
+        {{if .User}}
+          <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/account"}}font-semibold text-ink{{end}}" href="/account" {{if eq .Path "/account"}}aria-current="page"{{end}}>{{t .Lang "nav.account"}}</a>
+          {{if .Admin}}<a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink" href="/admin">{{t .Lang "admin.title"}}</a>{{end}}
+        {{end}}
+        <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/features"}}font-semibold text-ink{{end}}" href="/features" {{if eq .Path "/features"}}aria-current="page"{{end}}>{{t .Lang "nav.features"}}</a>
+        <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/downloads"}}font-semibold text-ink{{end}}" href="/downloads" {{if eq .Path "/downloads"}}aria-current="page"{{end}}>{{t .Lang "nav.downloads"}}</a>
+        <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/status"}}font-semibold text-ink{{end}}" href="/status" {{if eq .Path "/status"}}aria-current="page"{{end}}>{{t .Lang "nav.status"}}</a>
+      </nav>
+
+      <div class="ml-auto flex items-center gap-2">
+        {{if .User}}
+          <form method="post" action="/logout" class="hidden sm:block">
+            <input type="hidden" name="csrf" value="{{.CSRF}}">
+            <button type="submit" class="btn text-sm">{{t .Lang "nav.signout"}}</button>
+          </form>
+        {{else}}
+          <a class="hidden sm:inline-flex btn text-sm" href="/login">{{t .Lang "nav.signin"}}</a>
+          <a href="/register" class="btn primary text-sm">{{t .Lang "nav.register"}}</a>
+        {{end}}
+
+        {{/* The menu button: only ever on narrow screens. */}}
+        <details class="md:hidden relative" name="nav">
+          <summary class="btn size-11 !p-0 list-none [&::-webkit-details-marker]:hidden" aria-label="{{t .Lang "nav.menu"}}">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </summary>
+          <nav aria-label="Main" class="absolute right-0 z-20 mt-2 w-56 card p-2 shadow-lg">
+            {{if .User}}
+              <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/account">{{t .Lang "nav.account"}}</a>
+              {{if .Admin}}<a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/admin">{{t .Lang "admin.title"}}</a>{{end}}
+            {{end}}
+            <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/features">{{t .Lang "nav.features"}}</a>
+            <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/downloads">{{t .Lang "nav.downloads"}}</a>
+            <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/status">{{t .Lang "nav.status"}}</a>
+            {{if .User}}
+              <form method="post" action="/logout" class="sm:hidden mt-1 border-t border-line pt-1">
+                <input type="hidden" name="csrf" value="{{.CSRF}}">
+                <button type="submit" class="w-full rounded-lg px-3 py-3 text-left text-ink hover:bg-paper-2">{{t .Lang "nav.signout"}}</button>
+              </form>
+            {{else}}
+              <a class="sm:hidden mt-1 block border-t border-line px-3 py-3 pt-4 text-ink no-underline hover:bg-paper-2" href="/login">{{t .Lang "nav.signin"}}</a>
+            {{end}}
+          </nav>
+        </details>
+      </div>
+    </div>
+  </div>
 </header>
-{{if .Banner}}<div class="banner" role="note"><div class="banner-inner">{{.Banner}}</div></div>{{end}}
-<main id="main">
-{{if .Flash}}<p class="flash" role="status">{{.Flash}}</p>{{end}}
+
+{{if .Banner}}<div class="border-b border-line bg-paper-2 text-ink-2" role="note"><div class="mx-auto max-w-5xl px-4 py-2.5 text-sm sm:px-6">{{.Banner}}</div></div>{{end}}
+
+<main id="main" class="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
+{{if .Flash}}<p class="card mb-6 border-accent-line bg-accent-weak px-4 py-3 text-ink-2" role="status">{{.Flash}}</p>{{end}}
 {{end}}
 
 {{define "footer"}}
 </main>
-<footer>
-  <div class="foot">
+<footer class="border-t border-line">
+  <div class="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-7 text-sm text-muted sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-7 sm:px-6">
     <span>OpenPak</span>
-    <nav aria-label="Footer">
-      <a href="/features">{{t .Lang "nav.features"}}</a>
-      <a href="/downloads">{{t .Lang "nav.downloads"}}</a>
-      <a href="/status">{{t .Lang "nav.status"}}</a>
-      <a href="/#titles">{{t .Lang "landing.titles"}}</a>
-      <a href="/register">{{t .Lang "nav.register"}}</a>
+    <nav aria-label="Footer" class="flex flex-wrap gap-x-5 gap-y-2">
+      <a class="text-muted no-underline hover:text-ink hover:underline" href="/features">{{t .Lang "nav.features"}}</a>
+      <a class="text-muted no-underline hover:text-ink hover:underline" href="/downloads">{{t .Lang "nav.downloads"}}</a>
+      <a class="text-muted no-underline hover:text-ink hover:underline" href="/status">{{t .Lang "nav.status"}}</a>
+      <a class="text-muted no-underline hover:text-ink hover:underline" href="/#titles">{{t .Lang "landing.titles"}}</a>
+      <a class="text-muted no-underline hover:text-ink hover:underline" href="/register">{{t .Lang "nav.register"}}</a>
     </nav>
-    <span class="spacer"></span>
-    <p>{{t .Lang "footer.note"}}</p>
+    <p class="m-0 max-w-prose sm:ml-auto">{{t .Lang "footer.note"}}</p>
   </div>
 </footer>
 </body>

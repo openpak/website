@@ -1,71 +1,82 @@
 {{template "header" .}}
-<div class="page-head">
-  <h1>{{t .Lang "status.title"}}</h1>
-  <p>{{t .Lang "status.sub"}}</p>
+{{/* Cards on a phone, rows on a wide screen: a row that has to hold a name, a
+     state and a count does not fit 390px without one of them being squeezed,
+     so narrow gets its own stacked shape rather than a compressed wide one. */}}
+<div class="mb-7">
+  <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">{{t .Lang "status.title"}}</h1>
+  <p class="mt-1 text-muted">{{t .Lang "status.sub"}}</p>
 </div>
 
-<div class="notice {{if .Operational}}ok{{else}}bad{{end}}" role="status">
-  <strong>{{if .Operational}}{{t .Lang "status.all.ok"}}{{else}}{{t .Lang "status.all.bad"}}{{end}}</strong>
-  {{if .CountsOK}}
-    <span class="sub">{{if eq .TotalPlayers 1}}{{t .Lang "status.players.one"}}{{else}}{{.TotalPlayers}} {{t .Lang "status.players.many"}}{{end}}</span>
-  {{end}}
+<div class="card mb-8 p-4 sm:p-5 {{if .Operational}}border-ok-line bg-ok-weak{{else}}border-bad-line bg-bad-weak{{end}}" role="status">
+  <p class="m-0 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <strong class="text-lg">{{if .Operational}}{{t .Lang "status.all.ok"}}{{else}}{{t .Lang "status.all.bad"}}{{end}}</strong>
+    {{if .CountsOK}}<span class="text-muted">{{if eq .TotalPlayers 1}}{{t .Lang "status.players.one"}}{{else}}{{.TotalPlayers}} {{t .Lang "status.players.many"}}{{end}}</span>{{end}}
+  </p>
 </div>
 
-<h2>{{t .Lang "status.servers"}}</h2>
-<ul class="rows">
+<h2 class="mb-3 text-xs font-bold uppercase tracking-widest text-muted">{{t .Lang "status.servers"}}</h2>
+<ul class="card mb-9 list-none divide-y divide-line p-0">
   {{range .Servers}}
-  <li>
-    <span class="name">{{.Name}}</span>
-    {{if .Checkable}}
-      <span class="badge {{if .Up}}ok{{else}}bad{{end}}">{{if .Up}}{{t $.Lang "status.ok"}}{{else}}{{t $.Lang "status.down"}}{{end}}</span>
-    {{else}}
-      <span class="badge">{{t $.Lang "status.unchecked"}}</span>
-    {{end}}
-    <span class="sub">{{if eq .Players 1}}{{t $.Lang "status.players.one"}}{{else}}{{.Players}} {{t $.Lang "status.players.many"}}{{end}}</span>
-    {{if .Note}}<p class="hint">{{.Note}}</p>{{end}}
+  <li class="p-4">
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <span class="font-semibold break-anywhere">{{.Name}}</span>
+      {{if .Checkable}}
+        <span class="badge {{if .Up}}ok{{else}}bad{{end}}">{{if .Up}}{{t $.Lang "status.ok"}}{{else}}{{t $.Lang "status.down"}}{{end}}</span>
+      {{else}}
+        <span class="badge">{{t $.Lang "status.unchecked"}}</span>
+      {{end}}
+      <span class="text-sm text-muted sm:ml-auto">{{if eq .Players 1}}{{t $.Lang "status.players.one"}}{{else}}{{.Players}} {{t $.Lang "status.players.many"}}{{end}}</span>
+    </div>
+    {{if .Note}}<p class="mt-2 mb-0 text-sm text-muted">{{.Note}}</p>{{end}}
   </li>
   {{end}}
 </ul>
 
-<h2>{{t .Lang "status.networks"}}</h2>
-<ul class="rows">
+<h2 class="mb-3 text-xs font-bold uppercase tracking-widest text-muted">{{t .Lang "status.networks"}}</h2>
+<ul class="card mb-9 list-none divide-y divide-line p-0">
   {{range .Networks}}
-  <li>
-    <span class="name">{{.Name}}</span>
-    <span class="badge {{if .Live}}ok{{end}}">
-      {{if eq .State "live"}}{{t $.Lang "status.net.live"}}{{else if eq .State "building"}}{{t $.Lang "status.net.building"}}{{else}}{{t $.Lang "status.net.planned"}}{{end}}
-    </span>
-    {{if .Live}}<span class="sub">{{if eq .Players 1}}{{t $.Lang "status.players.one"}}{{else}}{{.Players}} {{t $.Lang "status.players.many"}}{{end}}</span>{{end}}
-    {{if .Note}}<p class="hint">{{.Note}}</p>{{end}}
+  <li class="p-4">
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <span class="font-semibold">{{.Name}}</span>
+      <span class="badge {{if .Live}}ok{{end}}">{{if eq .State "live"}}{{t $.Lang "status.net.live"}}{{else if eq .State "building"}}{{t $.Lang "status.net.building"}}{{else}}{{t $.Lang "status.net.planned"}}{{end}}</span>
+      {{if .Live}}<span class="text-sm text-muted sm:ml-auto">{{if eq .Players 1}}{{t $.Lang "status.players.one"}}{{else}}{{.Players}} {{t $.Lang "status.players.many"}}{{end}}</span>{{end}}
+    </div>
+    {{if .Note}}<p class="mt-2 mb-0 text-sm text-muted">{{.Note}}</p>{{end}}
   </li>
   {{end}}
 </ul>
 
 {{if .CountsOK}}
-  <h2>{{t .Lang "status.playing"}}</h2>
+  <h2 class="mb-3 text-xs font-bold uppercase tracking-widest text-muted">{{t .Lang "status.playing"}}</h2>
   {{if .Titles}}
-    <ul class="rows">
+    <ul class="card mb-9 list-none divide-y divide-line p-0">
       {{range .Titles}}
-      <li>
-        <span class="name">{{.Name}}</span>
-        <span class="sub">{{if eq .Players 1}}{{t $.Lang "status.players.one"}}{{else}}{{.Players}} {{t $.Lang "status.players.many"}}{{end}}</span>
+      <li class="flex flex-wrap items-center gap-x-3 gap-y-1 p-4">
+        <span class="font-semibold break-anywhere">{{.Name}}</span>
+        <span class="text-sm text-muted sm:ml-auto">{{if eq .Players 1}}{{t $.Lang "status.players.one"}}{{else}}{{.Players}} {{t $.Lang "status.players.many"}}{{end}}</span>
       </li>
       {{end}}
     </ul>
   {{else}}
-    <p class="empty">{{t .Lang "status.nobody"}}</p>
+    <p class="card mb-9 p-4 text-muted">{{t .Lang "status.nobody"}}</p>
   {{end}}
 {{end}}
 
-<h2>{{t .Lang "status.services"}}</h2>
-<ul class="rows">
-  <li><span class="name">{{t .Lang "status.core"}}</span>
-    <span class="badge {{if .CoreOK}}ok{{else}}bad{{end}}">{{if .CoreOK}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</span></li>
-  <li><span class="name">{{t .Lang "status.db"}}</span>
-    <span class="badge {{if .DBOk}}ok{{else}}bad{{end}}">{{if .DBOk}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</span></li>
-  <li><span class="name">{{t .Lang "status.storage"}}</span>
-    <span class="badge {{if .StorageOK}}ok{{else}}bad{{end}}">{{if .StorageOK}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</span></li>
+<h2 class="mb-3 text-xs font-bold uppercase tracking-widest text-muted">{{t .Lang "status.services"}}</h2>
+<ul class="card list-none divide-y divide-line p-0">
+  <li class="flex flex-wrap items-center gap-3 p-4">
+    <span class="font-semibold">{{t .Lang "status.core"}}</span>
+    <span class="badge {{if .CoreOK}}ok{{else}}bad{{end}} sm:ml-auto">{{if .CoreOK}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</span>
+  </li>
+  <li class="flex flex-wrap items-center gap-3 p-4">
+    <span class="font-semibold">{{t .Lang "status.db"}}</span>
+    <span class="badge {{if .DBOk}}ok{{else}}bad{{end}} sm:ml-auto">{{if .DBOk}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</span>
+  </li>
+  <li class="flex flex-wrap items-center gap-3 p-4">
+    <span class="font-semibold">{{t .Lang "status.storage"}}</span>
+    <span class="badge {{if .StorageOK}}ok{{else}}bad{{end}} sm:ml-auto">{{if .StorageOK}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</span>
+  </li>
 </ul>
 
-<p class="hint">{{t .Lang "status.elsewhere"}}</p>
+<p class="mt-6 max-w-prose text-sm text-muted">{{t .Lang "status.elsewhere"}}</p>
 {{template "footer" .}}

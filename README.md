@@ -79,7 +79,34 @@ the core's contracts move.
   `/metrics` is Prometheus text; `/debug/pprof/` is mounted on the same port.
   Keep both off the public internet (port plan rule 4).
 
-### Status page
+### Styling
+
+The stylesheet is built by Tailwind from `web/src/input.css`; run
+`./scripts/css.sh` after changing a template or the classes you just wrote will
+not exist in `web/static/site.css`.
+
+Tailwind's **standalone binary** is used on purpose: no node, no package.json,
+no lockfile, so the only thing this repository gains from Tailwind is a
+stylesheet. The built CSS is committed, which is why the container image still
+builds with nothing but Go.
+
+The palette stays as plain custom properties that flip with the reader's system
+setting, mapped onto Tailwind's colour utilities with `@theme inline`. So
+`bg-paper` and `text-ink` follow light and dark on their own, no template
+carries a `dark:` variant, and those values remain the single source shared
+with the console tool and the app.
+
+To look at a page at a phone's width without deploying:
+
+```sh
+PREVIEW_DIR=/tmp/preview go test -count=1 ./internal/pages/ -run WritePreview
+cp web/static/site.css web/static/icon.svg /tmp/preview/
+chromium --headless --window-size=390,900 --screenshot=/tmp/shot.png file:///tmp/preview/status.html
+```
+
+That renders every page, signed-in ones included, from the test harness.
+
+## Status page
 
 `/status` shows game servers, console networks and who is playing; every server
 is asked its own `/health`. Set `PHOTON_HEALTH_URL` or `STARDEW_HEALTH_URL` to

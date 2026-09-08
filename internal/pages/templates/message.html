@@ -1,6 +1,6 @@
 {{template "header" .}}
-<div class="auth">
-  <p class="notice" role="status">{{.Message}}</p>
-  <p class="actions"><a class="btn primary" href="/login">{{t .Lang "nav.signin"}}</a></p>
+<div class="mx-auto w-full max-w-sm">
+  <p class="card p-4" role="status">{{.Message}}</p>
+  <p class="mt-5"><a class="btn primary" href="/login">{{t .Lang "nav.signin"}}</a></p>
 </div>
 {{template "footer" .}}

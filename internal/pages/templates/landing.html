@@ -1,8 +1,11 @@
 {{template "header" .}}
-<section class="hero">
-  <h1>{{t .Lang "landing.head"}}</h1>
-  <p>{{t .Lang "landing.blurb"}}</p>
-  <p class="actions">
+{{/* One column on a phone, two or three where there is room. Every grid here
+     is `grid-cols-1` first and widens at sm/md — the narrow case is the design,
+     not a fallback. */}}
+<section class="mb-12">
+  <h1 class="max-w-2xl">{{t .Lang "landing.head"}}</h1>
+  <p class="max-w-prose text-lg text-ink-2">{{t .Lang "landing.blurb"}}</p>
+  <div class="mt-6 flex flex-wrap gap-3">
   {{if .User}}
     <a class="btn primary" href="/account">{{t .Lang "nav.account"}}</a>
   {{else}}
@@ -10,47 +13,65 @@
     <a class="btn" href="/login">{{t .Lang "nav.signin"}}</a>
     <a class="btn" href="/downloads">{{t .Lang "landing.setup"}}</a>
   {{end}}
-  </p>
+  </div>
 </section>
 
-<section aria-labelledby="what">
-  <div class="section-head">
-    <h2 id="what">{{t .Lang "landing.what"}}</h2>
-    <p>{{t .Lang "landing.what.sub"}}</p>
+<section aria-labelledby="what" class="mb-12">
+  <h2 id="what">{{t .Lang "landing.what"}}</h2>
+  <p class="max-w-prose text-muted">{{t .Lang "landing.what.sub"}}</p>
+  <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <article class="card p-5"><h3>{{t .Lang "landing.f1.title"}}</h3><p class="mb-0 text-ink-2">{{t .Lang "landing.f1.body"}}</p></article>
+    <article class="card p-5"><h3>{{t .Lang "landing.f2.title"}}</h3><p class="mb-0 text-ink-2">{{t .Lang "landing.f2.body"}}</p></article>
+    <article class="card p-5"><h3>{{t .Lang "landing.f3.title"}}</h3><p class="mb-0 text-ink-2">{{t .Lang "landing.f3.body"}}</p></article>
   </div>
-  <div class="grid">
-    <article class="card"><h3>{{t .Lang "landing.f1.title"}}</h3><p>{{t .Lang "landing.f1.body"}}</p></article>
-    <article class="card"><h3>{{t .Lang "landing.f2.title"}}</h3><p>{{t .Lang "landing.f2.body"}}</p></article>
-    <article class="card"><h3>{{t .Lang "landing.f3.title"}}</h3><p>{{t .Lang "landing.f3.body"}}</p></article>
-  </div>
-  <p class="actions"><a class="btn" href="/features">{{t .Lang "landing.allfeatures"}}</a></p>
+  <p class="mt-5"><a class="btn" href="/features">{{t .Lang "landing.allfeatures"}}</a></p>
 </section>
 
-<section aria-labelledby="how">
-  <div class="section-head">
-    <h2 id="how">{{t .Lang "landing.how"}}</h2>
-    <p>{{t .Lang "landing.how.sub"}}</p>
-  </div>
-  <div class="steps">
-    <article class="step"><h3>{{t .Lang "landing.s1.title"}}</h3><p>{{t .Lang "landing.s1.body"}}</p></article>
-    <article class="step"><h3>{{t .Lang "landing.s2.title"}}</h3><p>{{t .Lang "landing.s2.body"}}</p></article>
-    <article class="step"><h3>{{t .Lang "landing.s3.title"}}</h3><p>{{t .Lang "landing.s3.body"}}</p></article>
-    <article class="step"><h3>{{t .Lang "landing.s4.title"}}</h3><p>{{t .Lang "landing.s4.body"}}</p></article>
-  </div>
+<section aria-labelledby="how" class="mb-12">
+  <h2 id="how">{{t .Lang "landing.how"}}</h2>
+  <p class="max-w-prose text-muted">{{t .Lang "landing.how.sub"}}</p>
+  <ol class="mt-5 grid list-none gap-4 p-0 sm:grid-cols-2">
+    <li class="card p-5"><h3>{{t .Lang "landing.s1.title"}}</h3><p class="mb-0 text-ink-2">{{t .Lang "landing.s1.body"}}</p></li>
+    <li class="card p-5"><h3>{{t .Lang "landing.s2.title"}}</h3><p class="mb-0 text-ink-2">{{t .Lang "landing.s2.body"}}</p></li>
+    <li class="card p-5"><h3>{{t .Lang "landing.s3.title"}}</h3><p class="mb-0 text-ink-2">{{t .Lang "landing.s3.body"}}</p></li>
+    <li class="card p-5"><h3>{{t .Lang "landing.s4.title"}}</h3><p class="mb-0 text-ink-2">{{t .Lang "landing.s4.body"}}</p></li>
+  </ol>
 </section>
 
 <section aria-labelledby="titles-h" id="titles">
-  <div class="section-head">
-    <h2 id="titles-h">{{t .Lang "landing.titles"}}</h2>
-    <p>{{t .Lang "landing.titles.sub"}}</p>
-  </div>
+  <h2 id="titles-h">{{t .Lang "landing.titles"}}</h2>
+  <p class="max-w-prose text-muted">{{t .Lang "landing.titles.sub"}}</p>
 {{with .Titles}}{{if .}}
-  <div class="table-wrap">
-  <table>
-    <thead><tr><th scope="col">{{t $.Lang "landing.col.title"}}</th><th scope="col">{{t $.Lang "landing.col.platform"}}</th><th scope="col">{{t $.Lang "landing.col.status"}}</th></tr></thead>
-    <tbody>{{range .}}<tr><td>{{.Name}}</td><td><span class="cl">{{t $.Lang "landing.col.platform"}}: </span>{{.Platform}}</td><td><span class="cl">{{t $.Lang "landing.col.status"}}: </span><span class="badge">{{.Status}}</span></td></tr>{{end}}</tbody>
+  {{/* A three-column table does not fit a phone, so narrow gets one card per
+       title with its own labels and wide gets the table. Same markup, no
+       horizontal scroll, and the labels stay in the string catalogue. */}}
+  <ul class="mt-5 card list-none divide-y divide-line p-0 md:hidden">
+    {{range .}}
+    <li class="flex flex-wrap items-center gap-x-3 gap-y-1 p-4">
+      <span class="font-semibold break-anywhere">{{.Name}}</span>
+      <span class="badge ml-auto">{{.Status}}</span>
+      <span class="w-full text-sm text-muted">{{.Platform}}</span>
+    </li>
+    {{end}}
+  </ul>
+  <table class="mt-5 hidden w-full border-collapse text-left md:table">
+    <thead>
+      <tr class="border-b border-line text-sm text-muted">
+        <th scope="col" class="py-2 pr-4 font-medium">{{t $.Lang "landing.col.title"}}</th>
+        <th scope="col" class="py-2 pr-4 font-medium">{{t $.Lang "landing.col.platform"}}</th>
+        <th scope="col" class="py-2 font-medium">{{t $.Lang "landing.col.status"}}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range .}}
+      <tr class="border-b border-line last:border-0">
+        <td class="py-3 pr-4 font-medium">{{.Name}}</td>
+        <td class="py-3 pr-4 text-ink-2">{{.Platform}}</td>
+        <td class="py-3"><span class="badge">{{.Status}}</span></td>
+      </tr>
+      {{end}}
+    </tbody>
   </table>
-  </div>
-{{else}}<p class="empty">{{t $.Lang "landing.titles.none"}}</p>{{end}}{{end}}
+{{else}}<p class="mt-5 card p-4 text-muted">{{t $.Lang "landing.titles.none"}}</p>{{end}}{{end}}
 </section>
 {{template "footer" .}}

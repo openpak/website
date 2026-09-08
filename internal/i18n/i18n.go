@@ -11,6 +11,7 @@ var languages = map[string]Catalogue{
 	"en": {
 		"site.name":                 "OpenPak",
 		"site.tagline":              "The community account network for open console play.",
+		"nav.menu":                  "Menu",
 		"nav.skip":                  "Skip to content",
 		"nav.account":               "Overview",
 		"nav.status":                "Status",

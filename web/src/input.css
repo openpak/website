@@ -1,0 +1,298 @@
+/* The site's stylesheet, built by Tailwind.
+ *
+ * The palette stays where it was — plain custom properties that flip with the
+ * reader's system setting — and Tailwind's colour utilities are mapped onto
+ * them with @theme inline. That way `bg-paper` and `text-ink` follow light and
+ * dark on their own, and no template carries a `dark:` variant for something
+ * that is really one design in two palettes. It also keeps these values the
+ * single source shared with the console tool and the app.
+ */
+@import "tailwindcss";
+@source "../../internal/pages/templates";
+
+:root {
+  color-scheme: light dark;
+
+  --paper: #ffffff;
+  --paper-2: #f7f7f8;
+  --raised: #ffffff;
+  --ink: #16161a;
+  --ink-2: #3d3f47;
+  --muted: #6b6e79;
+  --line: #e4e4e8;
+  --line-2: #c9cad1;
+
+  /* The logo's indigo, so the site and the console tool are visibly one product. */
+  --accent: #4f46e5;
+  --accent-weak: #eef0ff;
+  --accent-line: #c7ccfb;
+  --ok: #1a7f4b;
+  --ok-weak: #e8f5ee;
+  --ok-line: #bfe0cd;
+  --bad: #b3261e;
+  --bad-weak: #fbeceb;
+  --bad-line: #eec4c1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #101114;
+    --paper-2: #191a1f;
+    --raised: #1c1e24;
+    --ink: #e9eaee;
+    --ink-2: #b7bac2;
+    --muted: #8a8e99;
+    --line: #26282e;
+    --line-2: #3b3e47;
+
+    --accent: #818cf8;
+    --accent-weak: #1c2040;
+    --accent-line: #343a6b;
+    --ok: #4ec98a;
+    --ok-weak: #12251b;
+    --ok-line: #2c4d3a;
+    --bad: #ff8079;
+    --bad-weak: #2a1615;
+    --bad-line: #57302c;
+  }
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-raised: var(--raised);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-accent: var(--accent);
+  --color-accent-weak: var(--accent-weak);
+  --color-accent-line: var(--accent-line);
+  --color-ok: var(--ok);
+  --color-ok-weak: var(--ok-weak);
+  --color-ok-line: var(--ok-line);
+  --color-bad: var(--bad);
+  --color-bad-weak: var(--bad-weak);
+  --color-bad-line: var(--bad-line);
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --radius-card: 12px;
+}
+
+@layer base {
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    /* 16px floor: below it iOS zooms on focus and leaves the page scrolled
+       sideways, which is a layout bug a reader cannot undo. */
+    font-size: max(1rem, 16px);
+  }
+  /* Long unbroken strings — friend codes, title ids, tokens — wrap instead of
+     pushing the page sideways. */
+  code, .break-anywhere { overflow-wrap: anywhere; }
+
+  /* Typography once, here, rather than the same three classes repeated on
+     every heading in every template. Preflight removes the browser's defaults,
+     so without this a content page is a wall of identical text. Utilities on a
+     specific heading still win — the base layer has the lowest priority.
+     Sizes are fluid: a 30px page title on a 390px screen wraps to three lines. */
+  main h1 { font-size: clamp(1.6rem, 5vw, 1.9rem); font-weight: 650; line-height: 1.2; letter-spacing: -0.02em; margin: 0 0 0.35em; }
+  main h2 { font-size: clamp(1.15rem, 3.6vw, 1.3rem); font-weight: 650; line-height: 1.3; letter-spacing: -0.015em; margin: 2.2rem 0 0.6rem; }
+  main h3 { font-size: 1rem; font-weight: 600; margin: 0 0 0.4rem; }
+  main p { margin: 0 0 1rem; }
+  main a:not(.btn) { color: var(--accent); text-underline-offset: 2px; }
+  main ul:not([class]) { margin: 0 0 1rem; padding-left: 1.25rem; }
+  main ul:not([class]) li { margin-bottom: 0.4rem; }
+  main ol { margin: 0 0 1rem; padding-left: 1.3rem; }
+  main ol li { margin-bottom: 0.5rem; }
+  /* A heading that opens a page should not carry the gap meant to separate
+     one section from the previous one. */
+  main > h2:first-child, .page-head + h2 { margin-top: 0; }
+}
+
+/* Repeated shapes, so a template says what a thing is rather than restating
+   its whole appearance every time it appears. */
+@layer components {
+  .card {
+    background: var(--raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.15rem 0.6rem; border-radius: 999px;
+    font-size: 0.8rem; font-weight: 600; white-space: nowrap;
+    background: var(--paper-2); border: 1px solid var(--line); color: var(--ink-2);
+  }
+  .badge::before {
+    content: ""; width: 0.45rem; height: 0.45rem; border-radius: 50%;
+    background: currentColor;
+  }
+  .badge.ok  { background: var(--ok-weak);  border-color: var(--ok-line);  color: var(--ok); }
+  .badge.bad { background: var(--bad-weak); border-color: var(--bad-line); color: var(--bad); }
+  /* Touch targets: 44px is the smallest thing a finger hits reliably. */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 44px; padding: 0.6rem 1.1rem; border-radius: 0.5rem;
+    font-weight: 600; text-decoration: none; cursor: pointer;
+    background: var(--paper); color: var(--ink); border: 1px solid var(--line-2);
+  }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* Preflight strips buttons back to bare text. Every button on this site is
+     an action, so they all get the control's appearance without each template
+     having to say so; .btn stays for links that act like buttons. */
+  main button, .top button {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 44px; padding: 0.55rem 1rem; border-radius: 0.5rem;
+    font: inherit; font-weight: 600; cursor: pointer;
+    background: var(--paper); color: var(--ink); border: 1px solid var(--line-2);
+  }
+  main button:hover, .top button:hover { background: var(--paper-2); }
+  main button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  main button.primary:hover { filter: brightness(1.05); }
+  main button.danger { color: var(--bad); border-color: var(--bad-line); }
+  /* Row actions are secondary to the row they sit in: smaller, quieter, but
+     still a finger's width tall. */
+  .rows button, main button.small {
+    min-height: 40px; padding: 0.4rem 0.75rem;
+    font-size: 0.88rem; font-weight: 500; color: var(--ink-2);
+  }
+  .field {
+    width: 100%; min-height: 44px; font: inherit; font-size: max(1rem, 16px);
+    color: var(--ink); background: var(--paper);
+    border: 1px solid var(--line-2); border-radius: 0.5rem; padding: 0.6rem 0.75rem;
+  }
+  .field:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-weak);
+  }
+  /* Forms: one shape, five pages. The controls are styled through the wrapper
+     rather than by a class on each input — a sign-in form should not carry
+     forty utility classes to say "a label above a box". */
+  .form-stack { display: grid; gap: 0.35rem; }
+  .form-stack label { font-size: 0.92rem; color: var(--ink-2); }
+  .form-stack label:not(:first-of-type) { margin-top: 0.9rem; }
+  .form-stack input, .form-stack select, .form-stack textarea {
+    width: 100%; min-height: 44px; font: inherit; font-size: max(1rem, 16px);
+    color: var(--ink); background: var(--paper);
+    border: 1px solid var(--line-2); border-radius: 0.5rem; padding: 0.6rem 0.75rem;
+  }
+  .form-stack input:focus, .form-stack select:focus, .form-stack textarea:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-weak);
+  }
+  .form-stack button { margin-top: 1.2rem; width: 100%; }
+  .form-stack .hint { margin: 0.5rem 0 0; font-size: 0.88rem; color: var(--muted); }
+
+  /* The handful of shapes the content pages already use, rebuilt mobile-first.
+     Converting forty table rows into utility classes would have been churn
+     with no reader-visible gain; what those pages needed was for their own
+     vocabulary to behave on a phone, which is this. New work uses utilities.  */
+  .page-head { margin-bottom: 1.75rem; }
+  .page-head p { color: var(--muted); max-width: 44rem; margin: 0; }
+  .section-head { margin-bottom: 0.9rem; }
+  .section-head p { color: var(--muted); margin: 0.15rem 0 0; }
+  .hint { font-size: 0.88rem; color: var(--muted); }
+  .empty { color: var(--muted); }
+  .muted { color: var(--muted); }
+  .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 1.25rem 0 0; }
+  .grid { display: grid; gap: 1rem; grid-template-columns: 1fr; }
+  .steps { display: grid; gap: 1rem; grid-template-columns: 1fr; }
+  .notice {
+    background: var(--raised); border: 1px solid var(--line);
+    border-radius: var(--radius-card); padding: 1rem;
+  }
+  .notice.ok  { background: var(--ok-weak);  border-color: var(--ok-line); }
+  .notice.bad { background: var(--bad-weak); border-color: var(--bad-line); }
+
+  /* Lists of things with a state on the right. On a phone the state wraps
+     under the name instead of squeezing it. */
+  .rows { list-style: none; margin: 0; padding: 0; }
+  .rows li {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.8rem;
+    padding: 0.9rem 0; border-bottom: 1px solid var(--line);
+  }
+  .rows li:last-child { border-bottom: 0; }
+  .rows .name { font-weight: 600; }
+  .rows .sub { color: var(--muted); font-size: 0.88rem; }
+  .rows li > p { flex-basis: 100%; margin: 0.15rem 0 0; color: var(--muted); font-size: 0.88rem; }
+
+  /* Two-column feature tables become stacked records on a phone: a table that
+     has to hold a description and a state cannot do it in 390px. Each cell
+     carries its own label in the markup (.cl) so labels stay translatable. */
+  .cl { display: none; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-weight: 500; color: var(--muted); font-size: 0.88rem; }
+  td .sub { display: block; color: var(--muted); font-size: 0.88rem; margin-top: 0.15rem; }
+  .table-wrap { overflow-x: auto; }
+
+  @media (min-width: 40rem) {
+    .grid { grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+    .steps { grid-template-columns: repeat(2, 1fr); }
+    th, td { padding: 0.7rem 1rem 0.7rem 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+    tr:last-child td { border-bottom: 0; }
+  }
+  @media (max-width: 39.99rem) {
+    thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    table, tbody, tr, td { display: block; width: auto; }
+    tr { padding: 0.9rem 0; border-bottom: 1px solid var(--line); }
+    tr:last-child { border-bottom: 0; }
+    td { padding: 0.1rem 0; }
+    .cl { display: inline; color: var(--muted); }
+  }
+
+  .card > .rows li:first-child { padding-top: 0; }
+
+  /* The account page's own shapes. */
+  .identity { display: flex; align-items: center; gap: 0.9rem; }
+  .identity h1 { margin: 0; overflow-wrap: anywhere; }
+  .identity p { margin: 0.1rem 0 0; color: var(--muted); font-size: 0.9rem; overflow-wrap: anywhere; }
+  .avatar {
+    width: 3rem; height: 3rem; border-radius: 50%; object-fit: cover; display: block;
+    border: 1px solid var(--line);
+  }
+  .avatar.blank {
+    display: grid; place-items: center; background: var(--accent-weak);
+    color: var(--accent); font-weight: 700; text-transform: uppercase;
+  }
+  .avatar-edit { display: block; flex: none; }
+  .code {
+    display: inline-block; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 1.05rem; letter-spacing: 0.02em;
+    background: var(--paper-2); border: 1px solid var(--line);
+    border-radius: 0.5rem; padding: 0.5rem 0.8rem; overflow-wrap: anywhere;
+  }
+  /* An input and its button: stacked on a phone, side by side when there is
+     room. A 44px-tall field beside a button is unusable at 390px. */
+  .row-form { display: flex; flex-direction: column; gap: 0.6rem; max-width: 26rem; }
+  .row-form input {
+    width: 100%; min-height: 44px; font: inherit; font-size: max(1rem, 16px);
+    color: var(--ink); background: var(--paper);
+    border: 1px solid var(--line-2); border-radius: 0.5rem; padding: 0.6rem 0.75rem;
+  }
+  .row-form input:focus {
+    outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-weak);
+  }
+  .row-form button { min-height: 44px; width: 100%; }
+  .row-form + .hint { margin-top: 0.7rem; }
+  @media (min-width: 30rem) { .row-form button { width: auto; } }
+  @media (min-width: 30rem) {
+    .row-form { flex-direction: row; align-items: center; }
+    .row-form input { flex: 1 1 auto; }
+    .row-form button { flex: none; }
+  }
+  /* Row actions wrap under the name rather than crushing it. */
+  .rows form.inline { display: inline; }
+  .rows li .actions-inline { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-left: auto; }
+
+  select.field, .form-stack select {
+    appearance: none; padding-right: 2.2rem;
+    background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+                      linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position: right 1.1rem center, right 0.8rem center;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+  }
+}
