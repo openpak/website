@@ -60,6 +60,7 @@ func (f *fakeCore) ListSessions(_ context.Context, sid string) ([]core.Session, 
 }
 func (f *fakeCore) RevokeSession(_ context.Context, _, _ string) error     { return nil }
 func (f *fakeCore) ChangePassword(_ context.Context, _, _, _ string) error { return nil }
+func (f *fakeCore) UpdateProfile(_ context.Context, _, _, _ string) error  { return nil }
 func (f *fakeCore) RegisterWithProfile(ctx context.Context, email, password, displayName, _, _ string) error {
 	return f.Register(ctx, email, password, displayName)
 }

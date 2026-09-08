@@ -349,7 +349,7 @@ func TestAvatarUploadMultipartCSRF(t *testing.T) {
 func TestChangePasswordJourney(t *testing.T) {
 	s, fc, _ := newTestServer(t)
 	fc.accounts["a@x.test"] = "password-A-1"
-	fc.verified["a@x.test"] = true      // login refuses unverified accounts
+	fc.verified["a@x.test"] = true // login refuses unverified accounts
 	rec := login(t, s, "a@x.test", "password-A-1")
 
 	attempt := func(current, next, confirm string) string {
@@ -374,5 +374,37 @@ func TestChangePasswordJourney(t *testing.T) {
 	}
 	if fc.accounts["a@x.test"] != "password-B-2" {
 		t.Error("password was not rotated")
+	}
+}
+
+// An account created before registration asked for a country and a date of birth holds
+// neither, and the console's user object carries whatever the account holds. The account page
+// is the only way to fill them in, so the round trip has to work — and blank has to stay
+// allowed, because nothing downstream substitutes a value for what is missing.
+func TestProfileCountryAndBirthdayCanBeSaved(t *testing.T) {
+	s, fc, _ := newTestServer(t)
+	fc.accounts["a@x.test"] = "password-A-1"
+	fc.verified["a@x.test"] = true
+	rec := login(t, s, "a@x.test", "password-A-1")
+
+	save := func(country, birthday string) string {
+		body := url.Values{"country": {country}, "birthday": {birthday}}
+		return authedRequest(s, rec, http.MethodPost, "/account/profile", &body).Header().Get("Location")
+	}
+
+	if got := save("IE", "1990-01-01"); !strings.Contains(got, "profile-saved") {
+		t.Errorf("saving a profile redirected to %q", got)
+	}
+	if fc.profile != [2]string{"IE", "1990-01-01"} {
+		t.Errorf("core received %v", fc.profile)
+	}
+	if got := save("", ""); !strings.Contains(got, "profile-saved") {
+		t.Errorf("clearing the profile redirected to %q", got)
+	}
+	if fc.profile != [2]string{"", ""} {
+		t.Errorf("blank values were not passed through: %v", fc.profile)
+	}
+	if got := save("IE", "not-a-date"); !strings.Contains(got, "profile-failed") {
+		t.Errorf("a bad date redirected to %q", got)
 	}
 }

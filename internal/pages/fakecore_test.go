@@ -20,6 +20,7 @@ type fakeCore struct {
 	sessions    map[string]string // coreSessionID -> email
 	friends     []friendRow
 	blocks      [][2]string
+	profile     [2]string         // country, birthday as last saved
 	links       map[string]string // accountID -> subject (switch)
 	subjectToAc map[string]string // subject -> accountID
 }
@@ -92,6 +93,16 @@ func (f *fakeCore) ChangePassword(_ context.Context, _, current, next string) er
 		return core.ErrInvalidCredentials
 	}
 	f.accounts["a@x.test"] = next
+	return nil
+}
+func (f *fakeCore) UpdateProfile(_ context.Context, _, country, birthday string) error {
+	// Mirror the core's own rule: an ISO date or nothing.
+	if birthday != "" {
+		if _, err := time.Parse("2006-01-02", birthday); err != nil {
+			return core.ErrNotFound
+		}
+	}
+	f.profile = [2]string{country, birthday}
 	return nil
 }
 func (f *fakeCore) ForgotPassword(_ context.Context, _ string) error { return nil }

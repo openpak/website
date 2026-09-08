@@ -120,6 +120,10 @@ func flashText(code string) string {
 		return i18n.T("en", "account.password.mismatch")
 	case "password-failed":
 		return i18n.T("en", "account.password.failed")
+	case "profile-saved":
+		return i18n.T("en", "account.profile.ok")
+	case "profile-failed":
+		return i18n.T("en", "account.profile.failed")
 	default:
 		return ""
 	}
@@ -224,6 +228,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /reset-password", s.handleResetSubmit)
 	mux.HandleFunc("GET /account", s.handleAccount)
 	mux.HandleFunc("POST /account/password", s.handleChangePassword)
+	mux.HandleFunc("POST /account/profile", s.handleUpdateProfile)
 	mux.HandleFunc("POST /account/sessions/revoke", s.handleRevokeSession)
 	mux.HandleFunc("POST /account/link/revoke", s.handleUnlink)
 	mux.HandleFunc("POST /account/avatar", s.handleAvatarUpload)

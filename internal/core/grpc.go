@@ -105,7 +105,8 @@ func (g *GRPC) GetAccount(ctx context.Context, accountID string) (Account, error
 	if err != nil {
 		return Account{}, mapGRPC(err)
 	}
-	return Account{ID: resp.GetAccountId(), DisplayName: resp.GetDisplayName()}, nil
+	return Account{ID: resp.GetAccountId(), DisplayName: resp.GetDisplayName(),
+		Country: resp.GetCountry(), Birthday: resp.GetBirthday()}, nil
 }
 
 // --- Social ---

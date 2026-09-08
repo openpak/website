@@ -112,6 +112,24 @@
   {{else}}<p class="empty">{{t .Lang "account.links.none"}}</p>{{end}}
 </section>
 
+<section aria-labelledby="profile-h">
+  <div class="section-head">
+    <h2 id="profile-h">{{t .Lang "account.profile.title"}}</h2>
+    <p>{{t .Lang "account.profile.hint"}}</p>
+  </div>
+  <form method="post" action="/account/profile" class="stack">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <label for="profile-country">{{t .Lang "auth.country"}}</label>
+    <select id="profile-country" name="country" autocomplete="country">
+      <option value="">{{t .Lang "account.profile.unset"}}</option>
+      {{$c := .Country}}{{range .Countries}}<option value="{{.Code}}"{{if eq .Code $c}} selected{{end}}>{{.Name}}</option>{{end}}
+    </select>
+    <label for="profile-birthday">{{t .Lang "auth.birthday"}}</label>
+    <input id="profile-birthday" name="birthday" type="date" value="{{.Birthday}}" max="{{.MaxBirthday}}" autocomplete="bday">
+    <button type="submit">{{t .Lang "account.profile.submit"}}</button>
+  </form>
+</section>
+
 <section aria-labelledby="pw-h">
   <div class="section-head">
     <h2 id="pw-h">{{t .Lang "account.password.title"}}</h2>

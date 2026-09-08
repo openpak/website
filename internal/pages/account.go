@@ -26,6 +26,10 @@ type accountView struct {
 	AvatarURL      string
 	AvatarPending  bool
 	Presets        []string
+	Country        string
+	Birthday       string
+	Countries      []country
+	MaxBirthday    string
 	friendsData
 }
 
@@ -59,6 +63,14 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 	view.Sessions = sessions
 	view.friendsData = s.loadFriends(ctx, v.AccountID)
 	view.Presets = media.PresetIDs
+	// The console's user object carries both, and accounts made before registration asked for
+	// them hold neither; the form below is the only way to fill them in.
+	view.Countries, view.MaxBirthday = countries, time.Now().Format("2006-01-02")
+	if acct, err := s.Identity.GetAccount(ctx, v.AccountID); err == nil {
+		view.Country, view.Birthday = acct.Country, acct.Birthday
+	} else {
+		s.log.Error("get account", "err", err)
+	}
 
 	// Avatar existence check is cheap and local.
 	if s.Media != nil {
@@ -89,6 +101,23 @@ func (s *Server) handleChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	redirectMsg(w, r, "/account", "password-changed")
+}
+
+// handleUpdateProfile saves the country and date of birth. Both are optional here: an account
+// that holds neither is valid, and nothing downstream substitutes a value for what is missing.
+func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request) {
+	v, ok := s.postGuard(w, r)
+	if !ok {
+		return
+	}
+	country := strings.TrimSpace(r.PostFormValue("country"))
+	birthday := strings.TrimSpace(r.PostFormValue("birthday"))
+	if err := s.Core.UpdateProfile(r.Context(), v.CoreSessionID, country, birthday); err != nil {
+		s.log.Error("update profile", "err", err)
+		redirectMsg(w, r, "/account", "profile-failed")
+		return
+	}
+	redirectMsg(w, r, "/account", "profile-saved")
 }
 
 func (s *Server) handleRevokeSession(w http.ResponseWriter, r *http.Request) {
