@@ -137,6 +137,11 @@ var languages = map[string]Catalogue{
 		"account.profile.unset":     "Not set",
 		"status.pill.one":           "1 player",
 		"status.pill.many":          "players",
+		// Online and playing are different facts. Someone signed in with nothing
+		// running is online and is playing nothing, and one word for both would
+		// overstate the busier number every time.
+		"status.pill.online.one":    "1 online",
+		"status.pill.online.many":   "online",
 		"status.servers":            "Game servers",
 		"status.networks":           "Console networks",
 		"status.unchecked":          "Not checked",

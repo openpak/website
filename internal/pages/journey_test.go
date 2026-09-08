@@ -445,10 +445,14 @@ func TestStatusPageShowsWhoIsPlaying(t *testing.T) {
 	if !strings.Contains(body, "0100DEADBEEF0000") {
 		t.Error("an unknown title should still be listed, by id")
 	}
-	// The pill is the short form now; what matters is that the total reaches
-	// the page rather than the exact phrasing.
-	if !strings.Contains(body, "3 players") {
-		t.Errorf("total missing from the page")
+	// The headline total is who is *online*, which includes anyone signed in
+	// with nothing running. Who is *playing* is the section further down, and
+	// calling both "players" would overstate the busier of the two every time.
+	if !strings.Contains(body, "3 online") {
+		t.Errorf("the online total is missing from the page")
+	}
+	if !strings.Contains(body, "players") {
+		t.Error("the titles being played should still count players")
 	}
 	// A game server is listed whether or not anybody is on it: "nobody is
 	// playing" and "it is not running" are different answers.
