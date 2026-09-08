@@ -174,7 +174,29 @@ func PresetImage(presetID string, size int) ([]byte, error) {
 
 // ConsoleAvatar returns the JPEG bytes for the console path.
 func (s *Service) ConsoleAvatar(ctx context.Context, accountID string) ([]byte, error) {
-	return s.store.Get(ctx, ConsoleKey(accountID))
+	if b, err := s.store.Get(ctx, ConsoleKey(accountID)); err == nil {
+		return b, nil
+	}
+	// No console upload: give back whatever the account does have, as JPEG.
+	// A Switch asks for one image format and the site keeps another, and that
+	// difference is not the console's problem.
+	png, err := s.Avatar(ctx, accountID, SizeSmall)
+	if err != nil {
+		return jpegOf(drawPreset(PresetForAccount(accountID), SizeSmall))
+	}
+	img, _, err := image.Decode(bytes.NewReader(png))
+	if err != nil {
+		return nil, ErrInvalid
+	}
+	return jpegOf(img)
+}
+
+func jpegOf(img image.Image) ([]byte, error) {
+	var buf bytes.Buffer
+	if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: 88}); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 func validAccountID(id string) bool {
