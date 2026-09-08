@@ -14,9 +14,11 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"os"
 	"sort"
 	"time"
 
+	"github.com/openpak/website/internal/adapter"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/ratelimit"
@@ -30,12 +32,15 @@ const TokenTTL = 30 * 24 * time.Hour
 
 // Server hosts the /api/v1 routes.
 type Server struct {
-	Core       core.HTTP
-	Identity   core.Identity
-	Social     core.Social
-	Links      core.Links
-	Invites    core.InvitationsView
-	Media      *media.Service
+	Core     core.HTTP
+	Identity core.Identity
+	Social   core.Social
+	Links    core.Links
+	Invites  core.InvitationsView
+	Media    *media.Service
+	// Adapter answers the console-shaped questions the core cannot: the friend
+	// code is minted by the Switch adapter and lives only there.
+	Adapter    *adapter.Client
 	MediaLimit *ratelimit.Limiter
 	DB         store.Store
 	Sessions   *session.Manager
@@ -49,6 +54,7 @@ func New(c core.HTTP, id core.Identity, soc core.Social, lnk core.Links, inv cor
 	return &Server{
 		Core: c, Identity: id, Social: soc, Links: lnk, Invites: inv, DB: db, Sessions: sess,
 		Media:      md,
+		Adapter:    adapter.New(os.Getenv("ADAPTER_INTERNAL_URL"), os.Getenv("NX_INTERNAL_KEY")),
 		Auth:       ratelimit.New(10, time.Minute),
 		PerToken:   ratelimit.New(120, time.Minute),
 		MediaLimit: ratelimit.New(5, time.Hour),
@@ -226,7 +232,12 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request, tok store.APIT
 		resp["avatar_url"] = "/media/avatars/" + tok.AccountID + "/256"
 	}
 	if link, err := s.Links.ActiveLinkByAccount(r.Context(), "switch", tok.AccountID); err == nil {
-		resp["friend_code"] = friendCode(link.SubjectID)
+		// The link subject is the console's user id, not a friend code. Ask
+		// the adapter, which mints the codes; show none rather than dressing
+		// up a hex id as one.
+		if code := s.Adapter.FriendCode(r.Context(), tok.AccountID); code != "" {
+			resp["friend_code"] = code
+		}
 		resp["linked_platforms"] = []map[string]string{
 			{"namespace": "switch", "link_id": link.LinkID},
 		}

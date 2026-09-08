@@ -51,9 +51,13 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 	// Friend code: read-only projection of the adapter-owned link subject
 	// (CR-3 interim). Absence is normal for accounts without a console.
 	if link, err := s.Links.ActiveLinkByAccount(ctx, "switch", v.AccountID); err == nil {
-		view.HasFriendCode = true
-		view.FriendCode = fmtFriendCode(link.SubjectID)
-		view.Links = append(view.Links, linkRow{Namespace: "Switch", Subject: view.FriendCode, LinkID: link.LinkID})
+		// The subject is the console's own user id. The friend code is a
+		// separate thing the adapter mints -- twelve digits, unique, the one
+		// people read out to each other -- so ask for it rather than
+		// formatting the id into something that merely looks like one.
+		view.FriendCode = s.Adapter.FriendCode(ctx, v.AccountID)
+		view.HasFriendCode = view.FriendCode != ""
+		view.Links = append(view.Links, linkRow{Namespace: "Switch", Subject: link.SubjectID, LinkID: link.LinkID})
 	}
 
 	sessions, err := s.Core.ListSessions(ctx, v.CoreSessionID)

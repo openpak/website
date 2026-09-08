@@ -22,6 +22,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/openpak/website/internal/adapter"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/media"
@@ -32,14 +33,16 @@ import (
 
 // Server wires the page handlers.
 type Server struct {
-	Core       core.HTTP
-	Identity   core.Identity
-	Social     core.Social
-	Links      core.Links
-	Events     core.Events
-	Invites    core.InvitationsView
-	DB         store.Store
-	Media      *media.Service
+	Core     core.HTTP
+	Identity core.Identity
+	Social   core.Social
+	Links    core.Links
+	Events   core.Events
+	Invites  core.InvitationsView
+	DB       store.Store
+	Media    *media.Service
+	// Adapter answers what only the Switch adapter knows: the friend code.
+	Adapter    *adapter.Client
 	Sessions   *session.Manager
 	Production bool
 	// AdminAccountIDs mirrors the admin allowlist so the portal can show
@@ -53,7 +56,8 @@ type Server struct {
 
 // New compiles templates and returns the server.
 func New(tpl *template.Template, log *slog.Logger) *Server {
-	return &Server{tmpl: tpl, log: log}
+	return &Server{tmpl: tpl, log: log,
+		Adapter: adapter.New(os.Getenv("ADAPTER_INTERNAL_URL"), os.Getenv("NX_INTERNAL_KEY"))}
 }
 
 // viewer is the signed-in identity for one request.
@@ -483,6 +487,8 @@ func normalizeEmail(s string) string {
 // fmtFriendCode renders a link subject as SW- plus dash-separated groups of
 // four when the adapter stored 12 or 16 hex digits (both are in the wild;
 // the subject is adapter-owned, CR-3). Anything else is shown verbatim.
+// Deprecated: a link subject is a console user id, not a friend code. Kept
+// only for the Wii U/3DS namespaces whose subjects really are hex ids.
 func fmtFriendCode(subject string) string {
 	hex := make([]rune, 0, 16)
 	for _, c := range subject {

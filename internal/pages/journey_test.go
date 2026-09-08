@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/openpak/website/internal/adapter"
 	"github.com/openpak/website/internal/core"
 	"testing"
 
@@ -122,13 +123,28 @@ func TestW1Journey(t *testing.T) {
 	fc.links["acct-a@x.test"] = "0123456789ab"
 	fc.subjectToAc["0123456789ab"] = "acct-a@x.test"
 
-	// Account page shows the friend code from the switch link.
+	// The friend code comes from the adapter that mints it, not from the link
+	// subject: that subject is the console's user id, and formatting it as
+	// SW-xxxx-xxxx-xxxx showed people a hex string no console would accept.
+	stub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("account_id") != "acct-a@x.test" {
+			http.NotFound(w, r)
+			return
+		}
+		_, _ = w.Write([]byte(`{"friend_code":"SW-1000-0000-0002"}`))
+	}))
+	defer stub.Close()
+	s.Adapter = adapter.New(stub.URL, "")
+
 	req := httptest.NewRequest(http.MethodGet, "/account", nil)
 	req.AddCookie(cookie)
 	rec = httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
-	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "SW-0123-4567-89ab") {
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "SW-1000-0000-0002") {
 		t.Fatalf("account: %d (friend code missing?)", rec.Code)
+	}
+	if strings.Contains(rec.Body.String(), "SW-0123-4567-89ab") {
+		t.Error("the console's user id is still being rendered as a friend code")
 	}
 
 	// Journey 1 ends by revoking the console-created link.
