@@ -445,7 +445,9 @@ func TestStatusPageShowsWhoIsPlaying(t *testing.T) {
 	if !strings.Contains(body, "0100DEADBEEF0000") {
 		t.Error("an unknown title should still be listed, by id")
 	}
-	if !strings.Contains(body, "3 players online") {
+	// The pill is the short form now; what matters is that the total reaches
+	// the page rather than the exact phrasing.
+	if !strings.Contains(body, "3 players") {
 		t.Errorf("total missing from the page")
 	}
 	// A game server is listed whether or not anybody is on it: "nobody is
@@ -455,9 +457,13 @@ func TestStatusPageShowsWhoIsPlaying(t *testing.T) {
 			t.Errorf("%q missing from the status page", want)
 		}
 	}
-	// Networks nobody has written yet must not read as healthy.
+	// Networks nobody has written yet must not read as healthy: the row is
+	// amber or grey, never the green used for something that works.
 	if !strings.Contains(body, "Planned") || !strings.Contains(body, "Being built") {
 		t.Error("unfinished networks should say so rather than show as online")
+	}
+	if !strings.Contains(body, "state-row warn") || !strings.Contains(body, "state-row idle") {
+		t.Error("being-built should tint amber and planned grey")
 	}
 	// Both game servers have health endpoints now, so both are really checked;
 	// unreachable in a test means "down", which is the honest answer here.

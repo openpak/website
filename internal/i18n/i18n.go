@@ -135,6 +135,8 @@ var languages = map[string]Catalogue{
 		"account.profile.ok":        "Saved.",
 		"account.profile.failed":    "That could not be saved. Check the date and try again.",
 		"account.profile.unset":     "Not set",
+		"status.pill.one":           "1 player",
+		"status.pill.many":          "players",
 		"status.servers":            "Game servers",
 		"status.networks":           "Console networks",
 		"status.unchecked":          "Not checked",

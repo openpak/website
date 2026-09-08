@@ -32,6 +32,9 @@
   --bad: #b3261e;
   --bad-weak: #fbeceb;
   --bad-line: #eec4c1;
+  --warn: #8a5a00;
+  --warn-weak: #fdf4e3;
+  --warn-line: #eddcb4;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -54,6 +57,9 @@
     --bad: #ff8079;
     --bad-weak: #2a1615;
     --bad-line: #57302c;
+    --warn: #e5b169;
+    --warn-weak: #241c10;
+    --warn-line: #4d3d24;
   }
 }
 
@@ -75,6 +81,9 @@
   --color-bad: var(--bad);
   --color-bad-weak: var(--bad-weak);
   --color-bad-line: var(--bad-line);
+  --color-warn: var(--warn);
+  --color-warn-weak: var(--warn-weak);
+  --color-warn-line: var(--warn-line);
 
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --radius-card: 12px;
@@ -244,6 +253,37 @@
   }
 
   .card > .rows li:first-child { padding-top: 0; }
+
+  /* One row per thing, shaped like the banner above it: the tint says how it
+     is, the pill says what it is. Four states, and grey means "nothing is
+     claimed here" rather than a fifth colour nobody can read. */
+  .state-row {
+    display: flex; align-items: center; gap: 0.75rem 1rem;
+    padding: 0.9rem 1rem; border-radius: var(--radius-card);
+    border: 1px solid var(--line); background: var(--raised);
+  }
+  .state-row + .state-row { margin-top: 0.6rem; }
+  .state-row .name { font-weight: 600; overflow-wrap: anywhere; }
+  .state-row .note { margin: 0.15rem 0 0; font-size: 0.88rem; color: var(--muted); }
+  .state-row .pill {
+    margin-left: auto; flex: none; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.3rem 0.7rem; border-radius: 999px;
+    font-size: 0.85rem; font-weight: 600;
+    background: var(--paper-2); border: 1px solid var(--line); color: var(--ink-2);
+  }
+  .state-row .pill::before {
+    content: ""; width: 0.45rem; height: 0.45rem; border-radius: 50%;
+    background: currentColor; flex: none;
+  }
+  .state-row.ok   { background: var(--ok-weak);   border-color: var(--ok-line); }
+  .state-row.warn { background: var(--warn-weak); border-color: var(--warn-line); }
+  .state-row.bad  { background: var(--bad-weak);  border-color: var(--bad-line); }
+  .state-row.idle { background: var(--paper-2);   border-color: var(--line); }
+  .state-row.ok   .pill { background: transparent; border-color: var(--ok-line);   color: var(--ok); }
+  .state-row.warn .pill { background: transparent; border-color: var(--warn-line); color: var(--warn); }
+  .state-row.bad  .pill { background: transparent; border-color: var(--bad-line);  color: var(--bad); }
+  .state-row.idle .pill { background: transparent; border-color: var(--line-2);    color: var(--muted); }
 
   /* The account page's own shapes. */
   .identity { display: flex; align-items: center; gap: 0.9rem; }
