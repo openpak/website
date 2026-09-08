@@ -174,7 +174,17 @@ func (s *Server) auth(next func(http.ResponseWriter, *http.Request, store.APITok
 		}
 		// Re-validate the bound core session: revocation (logout, ban,
 		// password reset) ends the bearer immediately.
+		//
+		// Only the core actually saying "that session is gone" may revoke.
+		// A transport error or a 5xx means the core could not answer, and
+		// revoking on that signs a phone out permanently for a restart it
+		// never saw — which is exactly what happened on 2026-09-08.
 		if _, err := s.Core.ListSessions(r.Context(), tok.CoreSessionID); err != nil {
+			if !errors.Is(err, core.ErrSessionInvalid) {
+				s.log.Error("api: core unreachable while validating a bearer", "err", err)
+				writeError(w, http.StatusServiceUnavailable, "the account service is not answering; try again")
+				return
+			}
 			_ = s.DB.RevokeAPIToken(r.Context(), tok.ID)
 			writeError(w, http.StatusUnauthorized, "invalid or expired token")
 			return
@@ -232,7 +242,17 @@ func (s *Server) handleSessions(w http.ResponseWriter, r *http.Request, tok stor
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"sessions": sessions})
+	// core.Session carries no json tags, so marshalling it directly served
+	// Go field names (ID, CreatedAt) and every client read an empty session.
+	out := make([]map[string]any, 0, len(sessions))
+	for _, sess := range sessions {
+		out = append(out, map[string]any{
+			"id":         sess.ID,
+			"created_at": sess.CreatedAt,
+			"expires_at": sess.ExpiresAt,
+		})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"sessions": out})
 }
 
 func (s *Server) handleRevokeSession(w http.ResponseWriter, r *http.Request, tok store.APIToken) {

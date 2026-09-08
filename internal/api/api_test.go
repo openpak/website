@@ -33,6 +33,7 @@ type fakeCore struct {
 	networkPlayers map[string]int
 	totalPlayers   int
 	profile        [3]string // country, birthday, display name as last saved
+	down           error     // when set, the core answers nothing at all
 }
 
 func newFakeCore() *fakeCore {
@@ -61,6 +62,9 @@ func (f *fakeCore) Logout(_ context.Context, sid string) error {
 	return nil
 }
 func (f *fakeCore) ListSessions(_ context.Context, sid string) ([]core.Session, error) {
+	if f.down != nil {
+		return nil, f.down
+	}
 	if _, ok := f.sessions[sid]; !ok {
 		return nil, core.ErrSessionInvalid
 	}
@@ -522,5 +526,59 @@ func TestInternalAvatarRefusesWithoutTheKey(t *testing.T) {
 	rec := doRaw(t, s, http.MethodPost, "/internal/avatar", "Bearer shared-secret-value", img)
 	if rec.Code == http.StatusUnauthorized {
 		t.Error("the right credential was refused")
+	}
+}
+
+
+// A core that cannot answer must not cost anyone their sign-in. On 2026-09-08
+// a phone was signed out permanently by one failed call: the middleware
+// revoked the bearer for any error, including "the core is restarting".
+func TestCoreOutageDoesNotRevokeTheBearer(t *testing.T) {
+	s, fc, _ := newTestAPI(t)
+
+	rec := do(t, s, http.MethodPost, "/api/v1/token", "", tokenRequest{Email: "a@x.test", Password: "password-A-1"})
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("mint: %d %s", rec.Code, rec.Body.String())
+	}
+	var minted struct {
+		Token string `json:"token"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &minted)
+
+	fc.down = errors.New("dial tcp: connection refused")
+	if rec = do(t, s, http.MethodGet, "/api/v1/me", minted.Token, nil); rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("core down should be 503, got %d %s", rec.Code, rec.Body.String())
+	}
+
+	// The outage passes; the same bearer still works.
+	fc.down = nil
+	if rec = do(t, s, http.MethodGet, "/api/v1/me", minted.Token, nil); rec.Code != http.StatusOK {
+		t.Fatalf("bearer must survive an outage, got %d %s", rec.Code, rec.Body.String())
+	}
+}
+
+// The sessions list is JSON for a phone, not a Go struct dump: a client
+// reading "id" must not get an empty string because the field is called "ID".
+func TestSessionsAreSnakeCase(t *testing.T) {
+	s, _, _ := newTestAPI(t)
+
+	rec := do(t, s, http.MethodPost, "/api/v1/token", "", tokenRequest{Email: "a@x.test", Password: "password-A-1"})
+	var minted struct {
+		Token string `json:"token"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &minted)
+
+	rec = do(t, s, http.MethodGet, "/api/v1/me/sessions", minted.Token, nil)
+	var got struct {
+		Sessions []struct {
+			ID        string `json:"id"`
+			CreatedAt string `json:"created_at"`
+		} `json:"sessions"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(got.Sessions) != 1 || got.Sessions[0].ID == "" || got.Sessions[0].CreatedAt == "" {
+		t.Fatalf("session fields did not survive the wire: %s", rec.Body.String())
 	}
 }
