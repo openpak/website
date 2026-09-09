@@ -532,7 +532,6 @@ func TestInternalAvatarRefusesWithoutTheKey(t *testing.T) {
 	}
 }
 
-
 // A core that cannot answer must not cost anyone their sign-in. On 2026-09-08
 // a phone was signed out permanently by one failed call: the middleware
 // revoked the bearer for any error, including "the core is restarting".
@@ -585,7 +584,6 @@ func TestSessionsAreSnakeCase(t *testing.T) {
 		t.Fatalf("session fields did not survive the wire: %s", rec.Body.String())
 	}
 }
-
 
 // The console's picture reaches the site through /internal/avatar, and the
 // site's caches key off the media row, not the file. Writing bytes without

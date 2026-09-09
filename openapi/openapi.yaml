@@ -214,6 +214,70 @@ paths:
                   saved: { type: boolean }
         "400": { description: The core rejected a value; the message says which. }
         "401": { $ref: "#/components/responses/Unauthorized" }
+  /regions:
+    get:
+      summary: The region nodes a room may be served from
+      security: []
+      description: |
+        Public. Approved federation nodes that announced within the last few
+        minutes, with the addresses they run (`services`, e.g. `photon`,
+        `npln_relay`, `turn`) and how many people are on them. Matchmaking
+        stays at home; a host's room is placed on the node for their country
+        and joiners are sent there by the room itself.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  regions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string, examples: ["au-sydney"] }
+                        name: { type: string }
+                        country: { type: string, examples: ["AU"] }
+                        services:
+                          type: object
+                          additionalProperties: { type: string }
+                        players: { type: integer }
+                        last_seen_unix: { type: integer }
+        "503": { description: Federation is not configured on this deployment. }
+  /federation/announce:
+    post:
+      summary: A region node announces its addresses
+      security: []
+      description: |
+        Called by a node about once a minute with its own key as the bearer
+        (`Authorization: Bearer opnode_...`). Replaces the node's advertised
+        services and marks it seen. A node that stops announcing drops out of
+        `/regions` after three minutes; an unapproved node is accepted here
+        and listed nowhere.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                services:
+                  type: object
+                  additionalProperties: { type: string }
+                  examples: [{ photon: "203.0.113.9:22002", npln_relay: "203.0.113.9:21010" }]
+      responses:
+        "200":
+          description: Recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  node_id: { type: string }
+                  approved: { type: boolean }
+        "401": { description: No node key, or one the core does not know. }
   /avatars:
     get:
       summary: The built-in avatars

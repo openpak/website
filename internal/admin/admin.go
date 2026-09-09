@@ -22,12 +22,14 @@ import (
 
 // Server hosts the admin surface.
 type Server struct {
-	Core     core.Events
-	DB       store.Store
-	Sessions sessionView
-	AdminIDs []string
-	tmpl     *template.Template
-	log      *slog.Logger
+	// Federation is set by main; nil hides the region page's actions.
+	Federation core.Federation
+	Core       core.Events
+	DB         store.Store
+	Sessions   sessionView
+	AdminIDs   []string
+	tmpl       *template.Template
+	log        *slog.Logger
 }
 
 // sessionView is the minimal session interface admin needs (avoids an
@@ -102,6 +104,9 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/events", s.handleEvents)
 	mux.HandleFunc("GET /admin/users", s.handleUsers)
 	mux.HandleFunc("GET /admin/reports", s.handleReports)
+	mux.HandleFunc("GET /admin/nodes", s.handleNodes)
+	mux.HandleFunc("POST /admin/nodes", s.handleNodeCreate)
+	mux.HandleFunc("POST /admin/nodes/{id}/approve", s.handleNodeApprove)
 }
 
 func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {

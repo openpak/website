@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/openpak/website/internal/adapter"
@@ -37,7 +38,9 @@ type Server struct {
 	Social   core.Social
 	Links    core.Links
 	Invites  core.InvitationsView
-	Media    *media.Service
+	// Federation is set by main; nil answers 503 on the region routes.
+	Federation core.Federation
+	Media      *media.Service
 	// Adapter answers the console-shaped questions the core cannot: the friend
 	// code is minted by the Switch adapter and lives only there.
 	Adapter    *adapter.Client
@@ -92,6 +95,12 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	// else so the contract test sees it; a route added straight on the mux
 	// would slip past that check unnoticed.
 	g("/status", s.handleStatus)
+	// Public: the region nodes a room may be served from. The status page, the
+	// app, and the matchmaking servers all read this one list.
+	g("/regions", s.handleRegions)
+	// A node's minute-by-minute announce, with its own key as the bearer. The
+	// core's gRPC stays internal; this is the one door in.
+	h("/federation/announce", s.handleAnnounce)
 
 	s.registerInternal(mux)
 	h("/me/avatar", s.auth(s.handleChooseAvatar))
@@ -662,4 +671,63 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		"titles":         rows,
 		"networks":       nets,
 	})
+}
+
+func nodeJSON(n core.Node) map[string]any {
+	var seen int64
+	if !n.LastSeen.IsZero() {
+		seen = n.LastSeen.Unix()
+	}
+	return map[string]any{"id": n.ID, "name": n.Name, "country": n.Country, "services": n.Services, "players": n.Players, "last_seen_unix": seen}
+}
+
+// handleRegions is cached for a moment because every matchmaking server polls
+// it and the answer changes once a minute at most.
+func (s *Server) handleRegions(w http.ResponseWriter, r *http.Request) {
+	if s.Federation == nil {
+		writeError(w, http.StatusServiceUnavailable, "federation not configured")
+		return
+	}
+	nodes, err := s.Federation.ListNodes(r.Context())
+	if err != nil {
+		s.log.Error("regions", "err", err)
+		writeError(w, http.StatusBadGateway, "regions unavailable")
+		return
+	}
+	out := make([]map[string]any, 0, len(nodes))
+	for _, n := range nodes {
+		out = append(out, nodeJSON(n))
+	}
+	w.Header().Set("Cache-Control", "public, max-age=15")
+	writeJSON(w, http.StatusOK, map[string]any{"regions": out})
+}
+
+func (s *Server) handleAnnounce(w http.ResponseWriter, r *http.Request) {
+	if s.Federation == nil {
+		writeError(w, http.StatusServiceUnavailable, "federation not configured")
+		return
+	}
+	key, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
+	if !ok || !strings.HasPrefix(key, "opnode_") {
+		writeError(w, http.StatusUnauthorized, "node key required")
+		return
+	}
+	var in struct {
+		Services map[string]string `json:"services"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8192)).Decode(&in); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON")
+		return
+	}
+	id, approved, err := s.Federation.AnnounceAs(r.Context(), key, in.Services)
+	if err != nil {
+		if strings.Contains(err.Error(), "credentials rejected") {
+			writeError(w, http.StatusUnauthorized, "unknown node key")
+			return
+		}
+		s.log.Error("announce", "err", err)
+		writeError(w, http.StatusBadGateway, "announce failed")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"node_id": id, "approved": approved})
 }

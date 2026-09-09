@@ -17,7 +17,10 @@ import (
 
 // The account core's interceptor reads the internal credential from the
 // gRPC "authorization" metadata as a Bearer value.
-const authMetadataKey = "authorization"
+const (
+	authMetadataKey    = "authorization"
+	nodeKeyMetadataKey = "x-internal-key"
+)
 
 // GRPC is the website's client for the core's internal gRPC contracts:
 // Identity, Links, Social, Events (and the Invitations read view, pending
@@ -31,6 +34,10 @@ func DialGRPC(addr, internalKey string) (*GRPC, error) {
 	conn, err := grpc.NewClient(addr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithUnaryInterceptor(func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+			// A call that already carries a credential (a node's announce) keeps it.
+			if md, ok := metadata.FromOutgoingContext(ctx); ok && len(md.Get(nodeKeyMetadataKey)) > 0 {
+				return invoker(ctx, method, req, reply, cc, opts...)
+			}
 			return invoker(metadata.AppendToOutgoingContext(ctx, authMetadataKey, "Bearer "+internalKey), method, req, reply, cc, opts...)
 		}),
 	)
@@ -329,10 +336,75 @@ func (g *GRPC) Presence(ctx context.Context, accountIDs []string) (map[string]Pr
 	out := make(map[string]Presence, len(resp.GetPresence()))
 	for _, p := range resp.GetPresence() {
 		out[p.GetAccountId()] = Presence{
+			NodeID:    p.GetNodeId(),
 			Namespace: p.GetNamespace(),
 			TitleID:   p.GetTitleId(),
 			Since:     time.Unix(p.GetSinceUnix(), 0).UTC(),
 		}
 	}
 	return out, nil
+}
+
+// --- Federation ---
+
+func (g *GRPC) ListNodes(ctx context.Context) ([]Node, error) {
+	resp, err := accountv1.NewFederationClient(g.conn).ListNodes(ctx, &accountv1.ListNodesRequest{})
+	if err != nil {
+		return nil, mapGRPC(err)
+	}
+	nodes := toNodes(resp.GetNodes())
+	counts, err := accountv1.NewSessionsClient(g.conn).GetPlayerCounts(ctx, &accountv1.GetPlayerCountsRequest{})
+	if err != nil {
+		return nil, mapGRPC(err)
+	}
+	byNode := map[string]int{}
+	for _, n := range counts.GetNodes() {
+		byNode[n.GetNodeId()] = int(n.GetPlayers())
+	}
+	for i := range nodes {
+		nodes[i].Players = byNode[nodes[i].ID]
+	}
+	return nodes, nil
+}
+
+func (g *GRPC) ListAllNodes(ctx context.Context) ([]Node, error) {
+	resp, err := accountv1.NewFederationClient(g.conn).ListAllNodes(ctx, &accountv1.ListNodesRequest{})
+	if err != nil {
+		return nil, mapGRPC(err)
+	}
+	return toNodes(resp.GetNodes()), nil
+}
+
+func (g *GRPC) CreateNode(ctx context.Context, id, name, country string) (string, error) {
+	resp, err := accountv1.NewFederationClient(g.conn).CreateNode(ctx, &accountv1.CreateNodeRequest{NodeId: id, Name: name, Country: country})
+	if err != nil {
+		return "", mapGRPC(err)
+	}
+	return resp.GetKey(), nil
+}
+
+func (g *GRPC) SetNodeApproved(ctx context.Context, id string, approved bool) error {
+	_, err := accountv1.NewFederationClient(g.conn).SetNodeApproved(ctx, &accountv1.SetNodeApprovedRequest{NodeId: id, Approved: approved})
+	return mapGRPC(err)
+}
+
+func (g *GRPC) AnnounceAs(ctx context.Context, nodeKey string, services map[string]string) (string, bool, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, nodeKeyMetadataKey, nodeKey)
+	resp, err := accountv1.NewFederationClient(g.conn).Announce(ctx, &accountv1.AnnounceRequest{Services: services})
+	if err != nil {
+		return "", false, mapGRPC(err)
+	}
+	return resp.GetNodeId(), resp.GetApproved(), nil
+}
+
+func toNodes(in []*accountv1.Node) []Node {
+	out := make([]Node, 0, len(in))
+	for _, n := range in {
+		var seen time.Time
+		if n.GetLastSeenUnix() > 0 {
+			seen = time.Unix(n.GetLastSeenUnix(), 0)
+		}
+		out = append(out, Node{ID: n.GetNodeId(), Name: n.GetName(), Country: n.GetCountry(), Services: n.GetServices(), LastSeen: seen, Approved: n.GetApproved()})
+	}
+	return out
 }

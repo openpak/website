@@ -1,0 +1,40 @@
+{{template "header" .}}
+<div class="page-head"><h1>{{t .Lang "admin.nodes"}}</h1><p>{{t .Lang "admin.nodes.sub"}}</p></div>
+{{if .Error}}<p class="notice bad" role="alert">{{.Error}}</p>{{end}}
+{{if .Key}}
+<div class="card">
+  <p>{{t .Lang "admin.nodes.key"}}</p>
+  <p><code class="wrap">{{.Key}}</code></p>
+</div>
+{{end}}
+{{if not .Nodes}}<p class="muted">{{t .Lang "admin.nodes.none"}}</p>{{end}}
+{{range .Nodes}}
+<div class="state-row {{if and .Approved .Fresh}}ok{{else if .Approved}}muted{{else}}warn{{end}}">
+  <div>
+    <strong>{{.Name}}</strong> <span class="muted">{{.ID}} · {{.Country}}</span>
+    <div class="muted">{{.Seen}}{{range $k, $v := .Services}} · {{$k}} {{$v}}{{end}}</div>
+  </div>
+  <form method="post" action="/admin/nodes/{{.ID}}/approve">
+    {{if .Approved}}
+    <input type="hidden" name="approved" value="false">
+    <span class="pill">● {{t $.Lang "admin.nodes.approved"}}</span>
+    <button type="submit">{{t $.Lang "admin.nodes.revoke"}}</button>
+    {{else}}
+    <input type="hidden" name="approved" value="true">
+    <span class="pill">● {{t $.Lang "admin.nodes.waiting"}}</span>
+    <button type="submit" class="primary">{{t $.Lang "admin.nodes.approve"}}</button>
+    {{end}}
+  </form>
+</div>
+{{end}}
+<h2>{{t .Lang "admin.nodes.new"}}</h2>
+<form method="post" action="/admin/nodes" class="stack">
+  <label for="id">{{t .Lang "admin.nodes.id"}}</label>
+  <input id="id" name="id" type="text" required pattern="[a-z0-9][a-z0-9-]{1,31}" maxlength="32">
+  <label for="name">{{t .Lang "admin.nodes.name"}}</label>
+  <input id="name" name="name" type="text" required maxlength="64">
+  <label for="country">{{t .Lang "admin.nodes.country"}}</label>
+  <input id="country" name="country" type="text" required minlength="2" maxlength="2" style="text-transform:uppercase">
+  <button type="submit" class="primary">{{t .Lang "admin.nodes.create"}}</button>
+</form>
+{{template "footer" .}}

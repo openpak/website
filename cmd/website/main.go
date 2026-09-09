@@ -101,6 +101,7 @@ func run(log *slog.Logger) error {
 	pageSrv.MediaLimit = ratelimit.New(5, time.Hour)
 
 	apiSrv := api.New(coreHTTP, coreGRPC, coreGRPC, coreGRPC, coreGRPC, db, sessions, mediaSvc, log)
+	apiSrv.Federation = coreGRPC
 
 	// Push. Absent credentials is a supported configuration: the site runs, the
 	// app can still register a token, and nothing is delivered until a service
@@ -115,6 +116,7 @@ func run(log *slog.Logger) error {
 		log.Info("push: notifier started")
 	}
 	adminSrv := admin.New(tmpl, coreGRPC, db, sessions, cfg.AdminAccountIDs, log)
+	adminSrv.Federation = coreGRPC
 
 	mux := http.NewServeMux()
 	pageSrv.RegisterRoutes(mux)

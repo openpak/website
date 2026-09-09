@@ -170,6 +170,33 @@ type Presence struct {
 	Namespace string
 	TitleID   string
 	Since     time.Time
+	NodeID    string // federation node the session came through; "home" for the core's own
+}
+
+// Node is a federation region: a relay tier somewhere that announces its
+// addresses. Matchmaking hands them out per room, so a joiner lands where
+// the host's room lives.
+type Node struct {
+	ID       string
+	Name     string
+	Country  string
+	Services map[string]string
+	LastSeen time.Time
+	Approved bool
+	Players  int
+}
+
+// Federation is the node register in the core.
+type Federation interface {
+	// ListNodes is what may be handed out: approved and recently seen, with
+	// live player counts.
+	ListNodes(ctx context.Context) ([]Node, error)
+	ListAllNodes(ctx context.Context) ([]Node, error)
+	CreateNode(ctx context.Context, id, name, country string) (key string, err error)
+	SetNodeApproved(ctx context.Context, id string, approved bool) error
+	// AnnounceAs relays a node's own announce, authenticated with the node's
+	// key rather than the website's.
+	AnnounceAs(ctx context.Context, nodeKey string, services map[string]string) (nodeID string, approved bool, err error)
 }
 
 // ErrIs reports whether err wraps target.
