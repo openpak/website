@@ -159,7 +159,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "NEX 4.6.0, single listener carrying both streams. Delisted title (service ended 2021) — only playable at all through a replacement network. Implemented (servers/super-mario-bros-35). Not console-verified. Publisher: Nintendo."
+    "notes": "NEX 4.6.0, single listener carrying both streams. Delisted title (service ended 2021) \u2014 only playable at all through a replacement network. Implemented (servers/super-mario-bros-35). Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -177,7 +177,7 @@
     "category": "Third-party network",
     "backend": "Demonware",
     "status": "requestable",
-    "notes": "Research verdict only, no code. Auth+matchmaking over Demonware (racing itself is peer-to-peer), which is plausible and squarely what OpenPak does, but unproven and possibly unnecessary — the open question is whether an OpenPak console needs us for it at all. Publisher: Activision."
+    "notes": "Research verdict only, no code. Auth+matchmaking over Demonware (racing itself is peer-to-peer), which is plausible and squarely what OpenPak does, but unproven and possibly unnecessary \u2014 the open question is whether an OpenPak console needs us for it at all. Publisher: Activision."
   },
   {
     "kind": "title",
@@ -185,8 +185,8 @@
     "console": "Switch",
     "category": "Third-party network",
     "backend": "Epic/EOS",
-    "status": "not-feasible",
-    "notes": "Epic-hosted authoritative Unity servers plus Epic auth that validates upstream. OpenPak cannot make Epic accept an OpenPak console, and there is no server to re-host. Investigated, blocked. Publisher: Epic/Mediatonic."
+    "status": "requestable",
+    "notes": "Third-party network; becomes a candidate once its DNS is forwarded to OpenPak. Server-side scope TBD."
   },
   {
     "kind": "title",
@@ -194,8 +194,8 @@
     "console": "Switch",
     "category": "Third-party network",
     "backend": "Xbox / Demonware",
-    "status": "not-feasible",
-    "notes": "Parked until an Xbox-network adapter exists; the protocol cannot be known without a capture. Repository intentionally holds no code. Publisher: Mojang/Microsoft."
+    "status": "requestable",
+    "notes": "Third-party network; becomes a candidate once its DNS is forwarded to OpenPak. Server-side scope TBD."
   },
   {
     "kind": "title",
@@ -203,8 +203,8 @@
     "console": "Switch",
     "category": "Third-party network",
     "backend": "Blaze/EA",
-    "status": "not-feasible",
-    "notes": "Blocked on an authoritative Blaze game server we cannot restore. Research only, no code, no port block. Publisher: EA."
+    "status": "requestable",
+    "notes": "Third-party network; becomes a candidate once its DNS is forwarded to OpenPak. Server-side scope TBD."
   },
   {
     "kind": "title",
@@ -519,7 +519,7 @@
     "category": "Console network",
     "backend": "PSN",
     "status": "planned",
-    "notes": "No adapter yet. Plan: a Go server wire-compatible with RPCN (AGPL, Rust) so stock RPCS3 connects — emulator-first. Per-title servers to federate rather than rebuild: ProjectLighthouse (LBP, AGPL), MultiServer3 (GPL-3.0). Hardware waits on Phony Network or own RE."
+    "notes": "No adapter yet. Plan: a Go server wire-compatible with RPCN (AGPL, Rust) so stock RPCS3 connects \u2014 emulator-first. Per-title servers to federate rather than rebuild: ProjectLighthouse (LBP, AGPL), MultiServer3 (GPL-3.0). Hardware waits on Phony Network or own RE."
   },
   {
     "kind": "feature",
@@ -534,7 +534,7 @@
     "kind": "title",
     "name": "Dragon Ball FighterZ",
     "console": "Switch",
-    "category": "Fighting — versus",
+    "category": "Fighting \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Bandai Namco. online ranked/casual versus; backend unconfirmed."
@@ -543,7 +543,7 @@
     "kind": "title",
     "name": "Ultra Street Fighter II: The Final Challengers",
     "console": "Switch",
-    "category": "Fighting — versus",
+    "category": "Fighting \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Capcom. online versus; backend unconfirmed."
@@ -552,7 +552,7 @@
     "kind": "title",
     "name": "Mortal Kombat 11",
     "console": "Switch",
-    "category": "Fighting — versus",
+    "category": "Fighting \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Warner Bros.. online versus/king of the hill; backend unconfirmed."
@@ -561,7 +561,7 @@
     "kind": "title",
     "name": "Mortal Kombat 1",
     "console": "Switch",
-    "category": "Fighting — versus",
+    "category": "Fighting \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Warner Bros.. online versus; backend unconfirmed."
@@ -570,7 +570,7 @@
     "kind": "title",
     "name": "Brawlhalla",
     "console": "Switch",
-    "category": "Fighting — versus",
+    "category": "Fighting \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Ubisoft. free-to-play online platform fighter; backend unconfirmed."
@@ -579,7 +579,7 @@
     "kind": "title",
     "name": "Nickelodeon All-Star Brawl 2",
     "console": "Switch",
-    "category": "Fighting — versus",
+    "category": "Fighting \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: GameMill. online versus; backend unconfirmed."
@@ -588,7 +588,7 @@
     "kind": "title",
     "name": "BlazBlue: Cross Tag Battle",
     "console": "Switch",
-    "category": "Fighting — versus",
+    "category": "Fighting \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Arc System Works. online versus; backend unconfirmed."
@@ -597,7 +597,7 @@
     "kind": "title",
     "name": "Power Rangers: Battle for the Grid",
     "console": "Switch",
-    "category": "Fighting — versus",
+    "category": "Fighting \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: nWay. online cross-play versus; backend unconfirmed."
@@ -606,7 +606,7 @@
     "kind": "title",
     "name": "Samurai Shodown",
     "console": "Switch",
-    "category": "Fighting — versus",
+    "category": "Fighting \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: SNK. online versus; backend unconfirmed."
@@ -615,7 +615,7 @@
     "kind": "title",
     "name": "Naruto x Boruto Ultimate Ninja Storm Connections",
     "console": "Switch",
-    "category": "Fighting — versus",
+    "category": "Fighting \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Bandai Namco. online versus; backend unconfirmed."
@@ -624,7 +624,7 @@
     "kind": "title",
     "name": "Rivals of Aether",
     "console": "Switch",
-    "category": "Fighting — versus",
+    "category": "Fighting \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Dan Fornace. online platform fighter; backend unconfirmed."
@@ -633,7 +633,7 @@
     "kind": "title",
     "name": "Under Night In-Birth Exe:Late[cl-r]",
     "console": "Switch",
-    "category": "Fighting — versus",
+    "category": "Fighting \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Arc System Works. online versus; backend unconfirmed."
@@ -651,7 +651,7 @@
     "kind": "title",
     "name": "Team Sonic Racing",
     "console": "Switch",
-    "category": "Racing — versus",
+    "category": "Racing \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Sega. online team racing; backend unconfirmed."
@@ -660,7 +660,7 @@
     "kind": "title",
     "name": "Fast RMX",
     "console": "Switch",
-    "category": "Racing — versus",
+    "category": "Racing \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Shin'en. online racing; backend unconfirmed."
@@ -669,7 +669,7 @@
     "kind": "title",
     "name": "Cruis'n Blast",
     "console": "Switch",
-    "category": "Racing — versus",
+    "category": "Racing \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: GameMill/Raw Thrills. online racing (post-launch); backend unconfirmed."
@@ -678,7 +678,7 @@
     "kind": "title",
     "name": "Disney Speedstorm",
     "console": "Switch",
-    "category": "Racing — versus",
+    "category": "Racing \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Gameloft. free-to-play online racing; backend unconfirmed."
@@ -687,7 +687,7 @@
     "kind": "title",
     "name": "Nickelodeon Kart Racers 3: Slime Speedway",
     "console": "Switch",
-    "category": "Racing — versus",
+    "category": "Racing \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: GameMill. online racing; backend unconfirmed."
@@ -696,7 +696,7 @@
     "kind": "title",
     "name": "Hotshot Racing",
     "console": "Switch",
-    "category": "Racing — versus",
+    "category": "Racing \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Curve Games. online racing; backend unconfirmed."
@@ -705,7 +705,7 @@
     "kind": "title",
     "name": "Chocobo GP",
     "console": "Switch",
-    "category": "Racing — versus",
+    "category": "Racing \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Square Enix. online racing; online service shut down 2023; backend unconfirmed."
@@ -714,7 +714,7 @@
     "kind": "title",
     "name": "Redout 2",
     "console": "Switch",
-    "category": "Racing — versus",
+    "category": "Racing \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Saber Interactive. online racing; backend unconfirmed."
@@ -741,7 +741,7 @@
     "kind": "title",
     "name": "Overwatch 2",
     "console": "Switch",
-    "category": "Shooter — versus",
+    "category": "Shooter \u2014 versus",
     "backend": "Battle.net",
     "status": "requestable",
     "notes": "Publisher: Blizzard. online hero shooter; Blizzard Battle.net."
@@ -750,7 +750,7 @@
     "kind": "title",
     "name": "Paladins",
     "console": "Switch",
-    "category": "Shooter — versus",
+    "category": "Shooter \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Hi-Rez. free-to-play hero shooter; backend unconfirmed."
@@ -759,7 +759,7 @@
     "kind": "title",
     "name": "Rogue Company",
     "console": "Switch",
-    "category": "Shooter — versus",
+    "category": "Shooter \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Hi-Rez. online team shooter; backend unconfirmed."
@@ -768,7 +768,7 @@
     "kind": "title",
     "name": "Warface: Clutch",
     "console": "Switch",
-    "category": "Shooter — versus/co-op",
+    "category": "Shooter \u2014 versus/co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: My.Games. free-to-play shooter, PvP + co-op; backend unconfirmed."
@@ -777,7 +777,7 @@
     "kind": "title",
     "name": "DOOM Eternal",
     "console": "Switch",
-    "category": "Shooter — versus",
+    "category": "Shooter \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Bethesda/id. Battlemode online versus; backend unconfirmed."
@@ -786,7 +786,7 @@
     "kind": "title",
     "name": "Borderlands 3",
     "console": "Switch",
-    "category": "Shooter — co-op",
+    "category": "Shooter \u2014 co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: 2K/Gearbox. online co-op looter-shooter; backend unconfirmed."
@@ -795,7 +795,7 @@
     "kind": "title",
     "name": "Wolfenstein: Youngblood",
     "console": "Switch",
-    "category": "Shooter — co-op",
+    "category": "Shooter \u2014 co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Bethesda. online co-op; backend unconfirmed."
@@ -804,7 +804,7 @@
     "kind": "title",
     "name": "Payday 2",
     "console": "Switch",
-    "category": "Shooter — co-op",
+    "category": "Shooter \u2014 co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Starbreeze. 4-player online co-op heists; backend unconfirmed."
@@ -912,7 +912,7 @@
     "kind": "title",
     "name": "EA Sports FC 24",
     "console": "Switch",
-    "category": "Sports — versus",
+    "category": "Sports \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: EA. online friendlies/versus; backend unconfirmed (EA/Blaze?)."
@@ -921,7 +921,7 @@
     "kind": "title",
     "name": "NBA 2K24",
     "console": "Switch",
-    "category": "Sports — versus",
+    "category": "Sports \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: 2K. online versus; backend unconfirmed."
@@ -930,7 +930,7 @@
     "kind": "title",
     "name": "Super Mega Baseball 4",
     "console": "Switch",
-    "category": "Sports — versus/co-op",
+    "category": "Sports \u2014 versus/co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: EA. online versus and co-op; backend unconfirmed."
@@ -939,7 +939,7 @@
     "kind": "title",
     "name": "Windjammers 2",
     "console": "Switch",
-    "category": "Sports — versus",
+    "category": "Sports \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Dotemu. online versus; backend unconfirmed."
@@ -948,7 +948,7 @@
     "kind": "title",
     "name": "Captain Tsubasa: Rise of New Champions",
     "console": "Switch",
-    "category": "Sports — versus",
+    "category": "Sports \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Bandai Namco. online football versus; backend unconfirmed."
@@ -957,7 +957,7 @@
     "kind": "title",
     "name": "Golf With Your Friends",
     "console": "Switch",
-    "category": "Sports — versus",
+    "category": "Sports \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Team17. online multiplayer golf; backend unconfirmed."
@@ -966,7 +966,7 @@
     "kind": "title",
     "name": "Diablo III: Eternal Collection",
     "console": "Switch",
-    "category": "RPG — co-op",
+    "category": "RPG \u2014 co-op",
     "backend": "Battle.net",
     "status": "requestable",
     "notes": "Publisher: Blizzard. online co-op action-RPG; Blizzard Battle.net."
@@ -975,7 +975,7 @@
     "kind": "title",
     "name": "Diablo II: Resurrected",
     "console": "Switch",
-    "category": "RPG — co-op",
+    "category": "RPG \u2014 co-op",
     "backend": "Battle.net",
     "status": "requestable",
     "notes": "Publisher: Blizzard. online co-op; Blizzard Battle.net."
@@ -984,7 +984,7 @@
     "kind": "title",
     "name": "Monster Hunter Stories 2: Wings of Ruin",
     "console": "Switch",
-    "category": "RPG — versus/co-op",
+    "category": "RPG \u2014 versus/co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Capcom. online co-op expeditions and versus; backend unconfirmed."
@@ -1002,16 +1002,16 @@
     "kind": "title",
     "name": "Final Fantasy Crystal Chronicles Remastered",
     "console": "Switch",
-    "category": "RPG — co-op",
+    "category": "RPG \u2014 co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Square Enix. online co-op; online service ended 2024; backend unconfirmed."
   },
   {
     "kind": "title",
-    "name": "Divinity: Original Sin 2 — Definitive Edition",
+    "name": "Divinity: Original Sin 2 \u2014 Definitive Edition",
     "console": "Switch",
-    "category": "RPG — co-op",
+    "category": "RPG \u2014 co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Larian. online co-op, cross-play with PC; backend unconfirmed."
@@ -1047,7 +1047,7 @@
     "kind": "title",
     "name": "Torchlight III",
     "console": "Switch",
-    "category": "RPG — co-op",
+    "category": "RPG \u2014 co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Perfect World. online co-op action-RPG; backend unconfirmed."
@@ -1056,7 +1056,7 @@
     "kind": "title",
     "name": "Portal Knights",
     "console": "Switch",
-    "category": "RPG — co-op",
+    "category": "RPG \u2014 co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: 505 Games. online co-op sandbox RPG; backend unconfirmed."
@@ -1065,7 +1065,7 @@
     "kind": "title",
     "name": "Dragon Marked for Death",
     "console": "Switch",
-    "category": "RPG — co-op",
+    "category": "RPG \u2014 co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Inti Creates. 4-player online co-op; backend unconfirmed."
@@ -1074,7 +1074,7 @@
     "kind": "title",
     "name": "Bloodstained: Ritual of the Night",
     "console": "Switch",
-    "category": "RPG — co-op/versus",
+    "category": "RPG \u2014 co-op/versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: 505 Games. online co-op and versus modes; backend unconfirmed."
@@ -1281,7 +1281,7 @@
     "kind": "title",
     "name": "Don't Starve Together",
     "console": "Switch",
-    "category": "Survival — co-op",
+    "category": "Survival \u2014 co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Klei. online co-op survival; backend unconfirmed."
@@ -1290,7 +1290,7 @@
     "kind": "title",
     "name": "ARK: Survival Evolved",
     "console": "Switch",
-    "category": "Survival — co-op",
+    "category": "Survival \u2014 co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Studio Wildcard. online survival; backend unconfirmed."
@@ -1308,7 +1308,7 @@
     "kind": "title",
     "name": "Dragon Quest Builders 2",
     "console": "Switch",
-    "category": "Sandbox — co-op",
+    "category": "Sandbox \u2014 co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Square Enix. online co-op building; backend unconfirmed."
@@ -1317,7 +1317,7 @@
     "kind": "title",
     "name": "The Survivalists",
     "console": "Switch",
-    "category": "Survival — co-op",
+    "category": "Survival \u2014 co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Team17. online co-op survival; backend unconfirmed."
@@ -1326,7 +1326,7 @@
     "kind": "title",
     "name": "Farming Simulator 23",
     "console": "Switch",
-    "category": "Simulation — co-op",
+    "category": "Simulation \u2014 co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Giants Software. online co-op farming; backend unconfirmed."
@@ -1335,7 +1335,7 @@
     "kind": "title",
     "name": "PowerWash Simulator",
     "console": "Switch",
-    "category": "Simulation — co-op",
+    "category": "Simulation \u2014 co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Square Enix/FuturLab. online co-op; backend unconfirmed."
@@ -1353,7 +1353,7 @@
     "kind": "title",
     "name": "Sid Meier's Civilization VI",
     "console": "Switch",
-    "category": "Strategy — versus",
+    "category": "Strategy \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: 2K/Firaxis. online multiplayer 4X; backend unconfirmed."
@@ -1362,7 +1362,7 @@
     "kind": "title",
     "name": "Wargroove 2",
     "console": "Switch",
-    "category": "Strategy — versus/co-op",
+    "category": "Strategy \u2014 versus/co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Chucklefish. online versus and co-op; backend unconfirmed."
@@ -1371,7 +1371,7 @@
     "kind": "title",
     "name": "Advance Wars 1+2: Re-Boot Camp",
     "console": "Switch",
-    "category": "Strategy — versus",
+    "category": "Strategy \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Nintendo. online versus; backend unconfirmed."
@@ -1389,7 +1389,7 @@
     "kind": "title",
     "name": "Worms W.M.D",
     "console": "Switch",
-    "category": "Strategy — versus",
+    "category": "Strategy \u2014 versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Team17. online turn-based versus; backend unconfirmed."

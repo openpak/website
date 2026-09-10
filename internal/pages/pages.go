@@ -277,29 +277,19 @@ func (s *Server) handleLanding(w http.ResponseWriter, r *http.Request) {
 
 // handleFeatures is the honest feature matrix: every network feature and its
 // real status (working/broken/partial/planned/…), seeded from the catalog.
-// Signed-in viewers can vote on what to build next; `?sort=votes` scoreboards it.
+// Display-only — voting is for games, so there are no vote controls here.
 func (s *Server) handleFeatures(w http.ResponseWriter, r *http.Request) {
 	v := s.viewerOf(w, r)
 	d := s.data(r, v, i18n.T("en", "features.title"))
-	var accountID string
-	if v != nil {
-		accountID = v.AccountID
-	}
-	reqs, err := s.DB.ListRequests(r.Context(), "feature", accountID)
+	reqs, err := s.DB.ListRequests(r.Context(), "feature", "")
 	if err != nil {
 		s.log.Error("list requests", "err", err)
-	}
-	byVotes := r.URL.Query().Get("sort") == "votes"
-	if byVotes {
-		reqs = mostRequested(reqs)
 	}
 	type featuresPage struct {
 		baseData
 		Features []store.Request
-		ByVotes  bool
-		Back     string
 	}
-	s.render(w, http.StatusOK, "features.html", featuresPage{d, reqs, byVotes, backPath("/features", byVotes)})
+	s.render(w, http.StatusOK, "features.html", featuresPage{d, reqs})
 }
 
 // handleVote toggles the viewer's vote on one request and returns them to the

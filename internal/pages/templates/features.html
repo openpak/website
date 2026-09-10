@@ -7,41 +7,18 @@
 <section aria-labelledby="feat-h">
   <div class="section-head"><h2 id="feat-h" class="sr-only">{{t .Lang "features.title"}}</h2></div>
 
-  {{if not .User}}<p class="mb-4 card p-4 text-sm text-muted">{{t .Lang "requests.scoreboard"}}</p>{{end}}
-
-  <div class="mb-4 flex flex-wrap gap-2">
-    <a class="btn text-sm {{if not .ByVotes}}primary{{end}}" href="/features">{{t .Lang "requests.bystatus"}}</a>
-    <a class="btn text-sm {{if .ByVotes}}primary{{end}}" href="/features?sort=votes">{{t .Lang "requests.top"}}</a>
-  </div>
-
   {{with .Features}}
   <div class="table-wrap">
   <table>
     <thead><tr>
       <th scope="col">{{t $.Lang "features.col.feature"}}</th>
       <th scope="col">{{t $.Lang "features.col.state"}}</th>
-      <th scope="col">{{t $.Lang "features.col.votes"}}</th>
     </tr></thead>
     <tbody>
       {{range .}}
       <tr>
         <td><b>{{.Name}}</b><br><span class="sub">{{.Category}} · {{.Console}}</span></td>
         <td><span class="cl">{{t $.Lang "features.col.state"}}: </span><span class="badge">{{.Status}}</span></td>
-        <td>
-          {{if $.User}}
-          <form method="post" action="/request/vote">
-            <input type="hidden" name="csrf" value="{{$.CSRF}}">
-            <input type="hidden" name="id" value="{{.ID}}">
-            <input type="hidden" name="back" value="{{$.Back}}">
-            <button type="submit" class="btn text-sm {{if .Voted}}primary{{end}}"
-              aria-pressed="{{if .Voted}}true{{else}}false{{end}}">
-              {{if .Voted}}{{t $.Lang "requests.voted"}}{{else}}{{t $.Lang "requests.vote"}}{{end}} · {{.Votes}}
-            </button>
-          </form>
-          {{else}}
-          <span class="text-sm text-muted" title="{{t $.Lang "requests.signin"}}">{{.Votes}} {{t $.Lang "requests.votes"}}</span>
-          {{end}}
-        </td>
       </tr>
       {{end}}
     </tbody>

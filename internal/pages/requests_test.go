@@ -14,39 +14,30 @@ import (
 type featuresPage struct {
 	baseData
 	Features []store.Request
-	ByVotes  bool
-	Back     string
 }
 
-// features.html is data-driven now; render it both ways so a scope bug fails a
-// test rather than the page.
-func TestFeaturesPageRenders(t *testing.T) {
+// The feature matrix is display-only: honest status, and NO vote UI (voting is
+// for games). Render it signed in to prove the vote controls are gone.
+func TestFeaturesPageIsDisplayOnly(t *testing.T) {
 	tmpl, err := LoadTemplates()
 	if err != nil {
 		t.Fatal(err)
 	}
 	rows := []store.Request{{ID: 4, Name: "Cloud saves (SCSI)", Category: "Content", Console: "Switch", Status: "planned", Votes: 2}}
 
-	out := featuresPage{baseData{Lang: "en", Path: "/features"}, rows, false, "/features"}
 	var b bytes.Buffer
-	if err := tmpl.ExecuteTemplate(&b, "features.html", out); err != nil {
-		t.Fatalf("features.html (signed out) failed: %v", err)
+	pg := featuresPage{baseData{Lang: "en", Path: "/features", User: &viewUser{ID: "acct-a"}, CSRF: "tok"}, rows}
+	if err := tmpl.ExecuteTemplate(&b, "features.html", pg); err != nil {
+		t.Fatalf("features.html failed: %v", err)
 	}
-	for _, want := range []string{"Cloud saves (SCSI)", "planned", "Sign in to vote"} {
+	for _, want := range []string{"Cloud saves (SCSI)", "planned"} {
 		if !bytes.Contains(b.Bytes(), []byte(want)) {
-			t.Errorf("signed-out features.html missing %q", want)
+			t.Errorf("features.html missing %q", want)
 		}
 	}
-
-	in := out
-	in.baseData = baseData{Lang: "en", Path: "/features", User: &viewUser{ID: "acct-a"}, CSRF: "tok"}
-	b.Reset()
-	if err := tmpl.ExecuteTemplate(&b, "features.html", in); err != nil {
-		t.Fatalf("features.html (signed in) failed: %v", err)
-	}
-	for _, want := range []string{`action="/request/vote"`, `name="id" value="4"`} {
-		if !bytes.Contains(b.Bytes(), []byte(want)) {
-			t.Errorf("signed-in features.html missing %q", want)
+	for _, forbidden := range []string{`action="/request/vote"`, "Sign in to vote", "?sort=votes"} {
+		if bytes.Contains(b.Bytes(), []byte(forbidden)) {
+			t.Errorf("features.html must not show vote UI, found %q", forbidden)
 		}
 	}
 }

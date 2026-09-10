@@ -24,6 +24,17 @@ func titleName(id string) string {
 	return id
 }
 
+// votable reports whether a title can be voted on: only games that are not yet
+// playable. A live or beta title is already available, so there is nothing to
+// request — those rows show their status only, no count and no button.
+func votable(status string) bool {
+	switch status {
+	case "requestable", "alpha", "planned":
+		return true
+	}
+	return false
+}
+
 // popularNames is the handful shown on the landing page. Only titles that are
 // actually in the catalogue appear — this list just decides the order and which
 // few to feature, never invents a game the network does not serve.

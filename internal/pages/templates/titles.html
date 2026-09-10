@@ -40,11 +40,13 @@
   {{with .Titles}}
   <ul id="titles-list" class="card list-none divide-y divide-line p-0">
     {{range .}}
-    <li class="titles-row flex flex-wrap items-center gap-x-3 gap-y-1 p-4"
+    <li class="titles-row flex items-center gap-3 p-4"
         data-name="{{.Name}}" data-console="{{.Console}}" data-status="{{.Status}}">
       <span class="font-semibold break-anywhere">{{.Name}}</span>
-      <span class="badge">{{.Status}}</span>
-      <span class="ml-auto">
+      <span class="badge shrink-0">{{.Status}}</span>
+      <span class="shrink-0 text-sm text-muted">{{.Console}}</span>
+      {{if votable .Status}}
+      <span class="ml-auto shrink-0">
         {{if $.User}}
         <form method="post" action="/request/vote">
           <input type="hidden" name="csrf" value="{{$.CSRF}}">
@@ -59,7 +61,7 @@
         <span class="text-sm text-muted" title="{{t $.Lang "requests.signin"}}">{{.Votes}} {{t $.Lang "requests.votes"}}</span>
         {{end}}
       </span>
-      <span class="w-full text-sm text-muted">{{.Console}}</span>
+      {{end}}
     </li>
     {{end}}
   </ul>
