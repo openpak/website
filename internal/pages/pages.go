@@ -32,6 +32,7 @@ import (
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/store"
+	"github.com/openpak/website/internal/wfc"
 )
 
 // Server wires the page handlers.
@@ -46,6 +47,8 @@ type Server struct {
 	Media    *media.Service
 	// Adapter answers what only the Switch adapter knows: the friend code.
 	Adapter *adapter.Client
+	// WFC resolves Wii/DS friend codes for the link flow; nil hides the form.
+	WFC *wfc.Client
 	// Saves is the cloud saves service; nil renders the page as "not available".
 	Saves      *saves.Client
 	Sessions   *session.Manager
@@ -62,7 +65,8 @@ type Server struct {
 // New compiles templates and returns the server.
 func New(tpl *template.Template, log *slog.Logger) *Server {
 	return &Server{tmpl: tpl, log: log,
-		Adapter: adapter.New(os.Getenv("ADAPTER_INTERNAL_URL"), os.Getenv("NX_INTERNAL_KEY"))}
+		Adapter: adapter.New(os.Getenv("ADAPTER_INTERNAL_URL"), os.Getenv("NX_INTERNAL_KEY")),
+		WFC:     wfc.New(os.Getenv("WFC_API_URL"), os.Getenv("WFC_API_SECRET"))}
 }
 
 // viewer is the signed-in identity for one request.
@@ -123,6 +127,12 @@ func flashText(code string) string {
 		return i18n.T("en", "friends.request.unknown")
 	case "fself":
 		return i18n.T("en", "friends.request.self")
+	case "wfc-linked":
+		return i18n.T("en", "account.links.wfc.ok")
+	case "wfc-notfound":
+		return i18n.T("en", "account.links.wfc.notfound")
+	case "wfc-taken":
+		return i18n.T("en", "account.links.wfc.taken")
 	case "password-changed":
 		return i18n.T("en", "account.password.ok")
 	case "password-mismatch":
@@ -260,6 +270,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /account/profile", s.handleUpdateProfile)
 	mux.HandleFunc("POST /account/sessions/revoke", s.handleRevokeSession)
 	mux.HandleFunc("POST /account/link/revoke", s.handleUnlink)
+	mux.HandleFunc("POST /account/link/wfc", s.handleLinkWFC)
 	mux.HandleFunc("POST /account/avatar", s.handleAvatarUpload)
 	mux.HandleFunc("GET /media/avatars/{accountID}/{size}", s.handleAvatarServe)
 	mux.HandleFunc("GET /account/friends", s.handleFriends)

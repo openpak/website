@@ -13,6 +13,7 @@ import (
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/store"
+	"github.com/openpak/website/internal/wfc"
 )
 
 // accountView is the profile page model (WEB-02, WEB-03).
@@ -21,6 +22,7 @@ type accountView struct {
 	FriendCode     string
 	HasFriendCode  bool
 	Links          []linkRow
+	CanLinkWFC     bool // a Wii/DS server is configured, so the friend-code form is shown
 	Sessions       []core.Session
 	CurrentSession string
 	AvatarURL      string
@@ -59,6 +61,12 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 		view.HasFriendCode = view.FriendCode != ""
 		view.Links = append(view.Links, linkRow{Namespace: "Switch", Subject: link.SubjectID, LinkID: link.LinkID})
 	}
+
+	// Wii and DS cannot link themselves; the website did it from a friend code (handleLinkWFC).
+	if link, err := s.Links.ActiveLinkByAccount(ctx, "wfc", v.AccountID); err == nil {
+		view.Links = append(view.Links, linkRow{Namespace: "Wii / DS", Subject: link.SubjectID, LinkID: link.LinkID})
+	}
+	view.CanLinkWFC = s.WFC != nil
 
 	sessions, err := s.Core.ListSessions(ctx, v.CoreSessionID)
 	if err != nil {
@@ -165,6 +173,41 @@ func (s *Server) handleUnlink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	redirectMsg(w, r, "/account", "saved")
+}
+
+// handleLinkWFC links a Wii or DS from a friend code the player read off a game. WFC has no
+// login and no way to type a code on the console, so this is the only link path; the core
+// holds the link ("wfc", console user id) and nn-wfc stores nothing.
+func (s *Server) handleLinkWFC(w http.ResponseWriter, r *http.Request) {
+	v, ok := s.postGuard(w, r)
+	if !ok {
+		return
+	}
+	if s.WFC == nil {
+		http.Error(w, "Wii/DS linking is not available", http.StatusServiceUnavailable)
+		return
+	}
+	profile, err := s.WFC.Resolve(r.Context(), r.PostFormValue("friend_code"))
+	switch {
+	case errors.Is(err, wfc.ErrNotFound):
+		redirectMsg(w, r, "/account", "wfc-notfound")
+		return
+	case err != nil:
+		s.log.Error("wfc resolve", "err", err)
+		http.Error(w, "could not reach the Wii/DS server", http.StatusBadGateway)
+		return
+	}
+	subject := strconv.FormatUint(profile.UserID, 10)
+	err = s.Links.Link(r.Context(), v.AccountID, "wfc", subject, "wfc:"+v.AccountID+":"+subject)
+	switch {
+	case err == nil:
+		redirectMsg(w, r, "/account", "wfc-linked")
+	case errors.Is(err, core.ErrConflict):
+		redirectMsg(w, r, "/account", "wfc-taken")
+	default:
+		s.log.Error("wfc link", "err", err)
+		http.Error(w, "could not link", http.StatusInternalServerError)
+	}
 }
 
 func (s *Server) handleAvatarUpload(w http.ResponseWriter, r *http.Request) {

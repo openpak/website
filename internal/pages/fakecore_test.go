@@ -2,6 +2,7 @@ package pages
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -27,6 +28,7 @@ type fakeCore struct {
 	networkPlayers map[string]int
 	totalPlayers   int
 	links          map[string]string // accountID -> subject (switch)
+	wfcLinks       map[string]string // accountID -> subject (wfc, linked from the website)
 	subjectToAc    map[string]string // subject -> accountID
 }
 
@@ -42,6 +44,7 @@ func newFakeCore() *fakeCore {
 		verified:    map[string]bool{},
 		sessions:    map[string]string{},
 		links:       map[string]string{},
+		wfcLinks:    map[string]string{},
 		subjectToAc: map[string]string{},
 	}
 }
@@ -229,12 +232,31 @@ func (f *fakeCore) Unblock(_ context.Context, blocker, blocked string) error {
 	return nil
 }
 
-func (f *fakeCore) ActiveLinkByAccount(_ context.Context, _, accountID string) (core.Link, error) {
+func (f *fakeCore) ActiveLinkByAccount(_ context.Context, namespace, accountID string) (core.Link, error) {
+	if namespace == "wfc" {
+		sub, ok := f.wfcLinks[accountID]
+		if !ok {
+			return core.Link{}, core.ErrNotFound
+		}
+		return core.Link{LinkID: "wlink-" + accountID, Namespace: namespace, SubjectID: sub}, nil
+	}
 	sub, ok := f.links[accountID]
 	if !ok {
 		return core.Link{}, core.ErrNotFound
 	}
 	return core.Link{LinkID: "link-" + accountID, SubjectID: sub}, nil
+}
+func (f *fakeCore) Link(_ context.Context, accountID, namespace, subjectID, _ string) error {
+	if namespace != "wfc" {
+		return errors.New("fake: only wfc links are created from the website")
+	}
+	for other, sub := range f.wfcLinks {
+		if sub == subjectID && other != accountID {
+			return core.ErrConflict
+		}
+	}
+	f.wfcLinks[accountID] = subjectID
+	return nil
 }
 func (f *fakeCore) AccountBySubject(_ context.Context, _, subject string) (string, error) {
 	id, ok := f.subjectToAc[subject]

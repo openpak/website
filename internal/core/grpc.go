@@ -240,6 +240,18 @@ func (g *GRPC) Unlink(ctx context.Context, linkID, idempotencyKey string) error 
 	return mapGRPC(err)
 }
 
+// Link reserves and activates a subject for an account (Links.ReserveLink + ActivateLink).
+func (g *GRPC) Link(ctx context.Context, accountID, namespace, subjectID, idempotencyKey string) error {
+	c := accountv1.NewLinksClient(g.conn)
+	res, err := c.ReserveLink(ctx, &accountv1.ReserveLinkRequest{
+		AccountId: accountID, Namespace: namespace, SubjectId: subjectID, IdempotencyKey: idempotencyKey})
+	if err != nil {
+		return mapGRPC(err)
+	}
+	_, err = c.ActivateLink(ctx, &accountv1.ActivateLinkRequest{LinkId: res.GetLinkId(), IdempotencyKey: "activate:" + res.GetLinkId()})
+	return mapGRPC(err)
+}
+
 // --- Events ---
 
 func (g *GRPC) Poll(ctx context.Context, sinceVersion uint64, limit int32) ([]Event, uint64, error) {

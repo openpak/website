@@ -163,7 +163,8 @@ func (f *fakeCore) AccountBySubject(_ context.Context, _, subject string) (strin
 	}
 	return id, nil
 }
-func (f *fakeCore) Unlink(_ context.Context, _, _ string) error { return nil }
+func (f *fakeCore) Unlink(_ context.Context, _, _ string) error     { return nil }
+func (f *fakeCore) Link(_ context.Context, _, _, _, _ string) error { return nil }
 
 type apiDeps struct {
 	Core     core.HTTP

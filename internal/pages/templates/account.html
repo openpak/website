@@ -108,6 +108,17 @@
       </form></li>{{end}}
   </ul>
   {{else}}<p class="empty">{{t .Lang "account.links.none"}}</p>{{end}}
+  {{if .CanLinkWFC}}
+  <form method="post" action="/account/link/wfc" class="stack">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <label for="friend_code">{{t .Lang "account.links.wfc"}}</label>
+    <p class="hint">{{t .Lang "account.links.wfc.help"}}</p>
+    <div class="row">
+      <input id="friend_code" name="friend_code" inputmode="numeric" pattern="[0-9 -]{12,14}" placeholder="1234-5678-9012" required>
+      <button type="submit" class="small">{{t .Lang "account.links.wfc.submit"}}</button>
+    </div>
+  </form>
+  {{end}}
 </section>
 
 <section aria-labelledby="profile-h">

@@ -129,6 +129,10 @@ type Links interface {
 	// Unlink revokes the account's console link (journey 1: revoke the
 	// console-created link). IdempotencyKey must be unique per attempt.
 	Unlink(ctx context.Context, linkID, idempotencyKey string) error
+	// Link claims subjectID in namespace for the account and activates it: the website-side
+	// link for consoles that cannot link themselves (Wii and DS, namespace "wfc"). A subject
+	// already held by another account is ErrConflict.
+	Link(ctx context.Context, accountID, namespace, subjectID, idempotencyKey string) error
 }
 
 // Events is the core's durable invalidation stream, surfaced read-only to
