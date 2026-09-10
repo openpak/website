@@ -225,6 +225,19 @@ func (m *Memory) SeedRequests(_ context.Context, reqs []Request) error {
 func (m *Memory) ToggleVote(_ context.Context, requestID int64, accountID string) (bool, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	var found *Request
+	for i := range m.requests {
+		if m.requests[i].ID == requestID {
+			found = &m.requests[i]
+			break
+		}
+	}
+	if found == nil {
+		return false, ErrNotFound
+	}
+	if !found.Votable() {
+		return false, ErrNotVotable
+	}
 	if m.votes == nil {
 		m.votes = map[int64]map[string]bool{}
 	}

@@ -45,7 +45,7 @@
       <span class="font-semibold break-anywhere">{{.Name}}</span>
       <span class="badge shrink-0">{{.Status}}</span>
       <span class="shrink-0 text-sm text-muted">{{.Console}}</span>
-      {{if votable .Status}}
+      {{if .Votable}}
       <span class="ml-auto shrink-0">
         {{if $.User}}
         <form method="post" action="/request/vote">

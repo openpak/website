@@ -681,7 +681,15 @@ func (s *Server) handleVoteRequest(w http.ResponseWriter, r *http.Request, tok s
 		return
 	}
 	if _, err := s.DB.ToggleVote(r.Context(), id, tok.AccountID); err != nil {
-		writeError(w, http.StatusBadRequest, "no such request")
+		switch {
+		case errors.Is(err, store.ErrNotVotable):
+			writeError(w, http.StatusConflict, "this request is not votable")
+		case errors.Is(err, store.ErrNotFound):
+			writeError(w, http.StatusBadRequest, "no such request")
+		default:
+			s.log.Error("api: toggle vote", "err", err)
+			writeError(w, http.StatusInternalServerError, "internal error")
+		}
 		return
 	}
 	votes, voted, err := s.DB.RequestVotes(r.Context(), id, tok.AccountID)

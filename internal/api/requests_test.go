@@ -106,4 +106,14 @@ func TestRequestsListAndVote(t *testing.T) {
 	if vr.Votes != 0 || vr.Voted {
 		t.Fatalf("unvote response: %+v, want votes=0 voted=false", vr)
 	}
+
+	// Voting a feature (never votable) is refused server-side with 409.
+	feats, _ := db.ListRequests(ctx, "feature", "")
+	featPath := "/api/v1/requests/" + strconv.FormatInt(feats[0].ID, 10) + "/vote"
+	if rec := do(t, s, http.MethodPost, featPath, bearer, nil); rec.Code != http.StatusConflict {
+		t.Fatalf("feature vote: %d, want 409; body=%s", rec.Code, rec.Body.String())
+	}
+	if v, _, _ := db.RequestVotes(ctx, feats[0].ID, "acct-a"); v != 0 {
+		t.Errorf("refused feature vote still recorded %d votes", v)
+	}
 }

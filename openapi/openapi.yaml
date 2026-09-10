@@ -342,6 +342,7 @@ paths:
                   voted: { type: boolean }
         "400": { description: Missing or unknown request id. }
         "401": { $ref: "#/components/responses/Unauthorized" }
+        "409": { description: "The request is not votable (a live/beta game, or a feature); no vote is recorded." }
         "429": { $ref: "#/components/responses/RateLimited" }
   /avatars:
     get:

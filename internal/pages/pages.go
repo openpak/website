@@ -305,7 +305,11 @@ func (s *Server) handleVote(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, back, http.StatusSeeOther)
 		return
 	}
-	if _, err := s.DB.ToggleVote(r.Context(), id, v.AccountID); err != nil {
+	// A vote on a non-votable id (live/beta game, or a feature) is silently
+	// dropped: the UI never offers the button, so this only fires on a stale
+	// page or a crafted request, and it is not an error worth logging.
+	if _, err := s.DB.ToggleVote(r.Context(), id, v.AccountID); err != nil &&
+		!errors.Is(err, store.ErrNotVotable) && !errors.Is(err, store.ErrNotFound) {
 		s.log.Error("toggle vote", "err", err)
 	}
 	http.Redirect(w, r, back, http.StatusSeeOther)

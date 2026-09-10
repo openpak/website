@@ -33,8 +33,8 @@ func renderTitles(t *testing.T, pg titlesPage) string {
 // beta title does not — just its status. Render both, signed in and out, so a
 // scope bug or a gating regression fails a test, not production.
 func TestTitlesVoteGating(t *testing.T) {
-	votableRow := []store.Request{{ID: 7, Name: "Tetris 99", Console: "Switch", Status: "requestable", Votes: 3, Voted: true}}
-	betaRow := []store.Request{{ID: 8, Name: "Mario Kart 8 Deluxe", Console: "Switch", Status: "beta", Votes: 0}}
+	votableRow := []store.Request{{ID: 7, Kind: "title", Name: "Tetris 99", Console: "Switch", Status: "requestable", Votes: 3, Voted: true}}
+	betaRow := []store.Request{{ID: 8, Kind: "title", Name: "Mario Kart 8 Deluxe", Console: "Switch", Status: "beta", Votes: 0}}
 
 	// Signed out, votable: a count and a sign-in affordance, no form.
 	out := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles"}, votableRow, []string{"Switch"}, []string{"requestable"}, false, "/titles"})
@@ -78,19 +78,6 @@ func TestMostRequestedOrdersByVotes(t *testing.T) {
 	for i, n := range want {
 		if got[i].Name != n {
 			t.Errorf("position %d: got %q, want %q", i, got[i].Name, n)
-		}
-	}
-}
-
-func TestVotableStatuses(t *testing.T) {
-	for _, s := range []string{"requestable", "alpha", "planned"} {
-		if !votable(s) {
-			t.Errorf("%q should be votable", s)
-		}
-	}
-	for _, s := range []string{"live", "beta", "working", "partial", "broken", ""} {
-		if votable(s) {
-			t.Errorf("%q should not be votable", s)
 		}
 	}
 }

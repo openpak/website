@@ -4,7 +4,16 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
+	"errors"
+
+	"github.com/jackc/pgx/v5"
 )
+
+// ErrNotVotable is returned when a vote targets a request that cannot be voted
+// on: any feature, or a game that is already playable (live/beta). Votes are a
+// signal for what to build next, so counting them on finished work would only
+// pollute the scoreboard.
+var ErrNotVotable = errors.New("store: request is not votable")
 
 // catalogJSON is the honest status source of truth (docs/catalog/catalog.json).
 // Embedded, not read from disk: the container build copies only the repo, so
@@ -27,6 +36,21 @@ type Request struct {
 	Sort     int // catalog order; lower first
 	Votes    int
 	Voted    bool // did the querying account vote for this one
+}
+
+// Votable reports whether this request accepts votes: only games (kind=title)
+// that are not yet playable — requestable, alpha or planned. Live and beta
+// games are already available, and features are display-only. This is the one
+// definition of the rule; the UI and the vote handlers both read it.
+func (r Request) Votable() bool {
+	if r.Kind != "title" {
+		return false
+	}
+	switch r.Status {
+	case "requestable", "alpha", "planned":
+		return true
+	}
+	return false
 }
 
 // CatalogRequests parses the embedded catalog. Sort follows catalog order,
@@ -106,6 +130,19 @@ func (s *PG) ListRequests(ctx context.Context, kind, viewerAccountID string) ([]
 // Idempotent per account: a second identical click removes the vote. A double
 // submit that races is absorbed by the DELETE/ON CONFLICT.
 func (s *PG) ToggleVote(ctx context.Context, requestID int64, accountID string) (bool, error) {
+	// The votable rule is enforced here, not just in the UI: a direct API call
+	// or a stale client must not inflate a live/beta title or a feature.
+	var r Request
+	err := s.pool.QueryRow(ctx, `SELECT kind, status FROM requests WHERE id=$1`, requestID).Scan(&r.Kind, &r.Status)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, ErrNotFound
+	}
+	if err != nil {
+		return false, err
+	}
+	if !r.Votable() {
+		return false, ErrNotVotable
+	}
 	ct, err := s.pool.Exec(ctx, `DELETE FROM request_votes WHERE request_id=$1 AND account_id=$2`, requestID, accountID)
 	if err != nil {
 		return false, err
