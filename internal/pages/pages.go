@@ -29,6 +29,7 @@ import (
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/ratelimit"
+	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/store"
 )
@@ -44,7 +45,9 @@ type Server struct {
 	DB       store.Store
 	Media    *media.Service
 	// Adapter answers what only the Switch adapter knows: the friend code.
-	Adapter    *adapter.Client
+	Adapter *adapter.Client
+	// Saves is the cloud saves service; nil renders the page as "not available".
+	Saves      *saves.Client
 	Sessions   *session.Manager
 	Production bool
 	// AdminAccountIDs mirrors the admin allowlist so the portal can show
@@ -130,6 +133,24 @@ func flashText(code string) string {
 		return i18n.T("en", "account.profile.ok")
 	case "profile-failed":
 		return i18n.T("en", "account.profile.failed")
+	case "storage-saved":
+		return i18n.T("en", "saves.storage.ok")
+	case "storage-warning":
+		return i18n.T("en", "saves.storage.warning")
+	case "storage-failed":
+		return i18n.T("en", "saves.storage.failed")
+	case "storage-disconnected":
+		return i18n.T("en", "saves.storage.disconnected")
+	case "storage-moving":
+		return i18n.T("en", "saves.storage.moving")
+	case "saves-saved":
+		return i18n.T("en", "msg.saved")
+	case "saves-restored":
+		return i18n.T("en", "saves.restored")
+	case "saves-deleted":
+		return i18n.T("en", "saves.deleted")
+	case "saves-failed":
+		return i18n.T("en", "saves.failed")
 	default:
 		return ""
 	}
@@ -249,6 +270,14 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /account/friends/block", s.handleFriendBlock)
 	mux.HandleFunc("POST /account/friends/unblock", s.handleFriendUnblock)
 	mux.HandleFunc("GET /account/invitations", s.handleInvitations)
+	mux.HandleFunc("GET /account/saves", s.handleSaves)
+	mux.HandleFunc("POST /account/saves/storage", s.handleSavesStorage)
+	mux.HandleFunc("POST /account/saves/storage/disconnect", s.handleSavesDisconnect)
+	mux.HandleFunc("POST /account/saves/storage/move", s.handleSavesMove)
+	mux.HandleFunc("POST /account/saves/pin", s.handleSavesPin)
+	mux.HandleFunc("POST /account/saves/restore", s.handleSavesRestore)
+	mux.HandleFunc("POST /account/saves/delete", s.handleSavesDelete)
+	mux.HandleFunc("GET /account/saves/download/{id}", s.handleSavesDownload)
 	mux.HandleFunc("GET /features", s.handleFeatures)
 	mux.HandleFunc("GET /downloads", s.handleDownloads)
 	mux.HandleFunc("GET /status", s.handleStatus)

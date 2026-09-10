@@ -1,6 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-  <rect x="1.5" y="7" width="21" height="10" rx="2.5"/>
-  <rect x="7.5" y="9.5" width="9" height="5" rx="0.8"/>
-  <circle cx="4.5" cy="12" r="1" fill="#6b7280" stroke="none"/>
-  <circle cx="19.5" cy="12" r="1" fill="#6b7280" stroke="none"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="#8B5CF6" fill-rule="evenodd" d="M4.0,6.8h16.0a2.8,2.8 0 0 1 2.8,2.8v4.800000000000001a2.8,2.8 0 0 1 -2.8,2.8h-16.0a2.8,2.8 0 0 1 -2.8,-2.8v-4.800000000000001a2.8,2.8 0 0 1 2.8,-2.8zM8.1,9.2h7.799999999999999a0.7,0.7 0 0 1 0.7,0.7v4.199999999999999a0.7,0.7 0 0 1 -0.7,0.7h-7.799999999999999a0.7,0.7 0 0 1 -0.7,-0.7v-4.199999999999999a0.7,0.7 0 0 1 0.7,-0.7zM3.8500000000000005,10.2h1.1v1.25h1.25v1.1h-1.25v1.25h-1.1v-1.25h-1.25v-1.1h1.25zM18.650000000000002,10.8a0.95,0.95 0 1 0 1.9,0a0.95,0.95 0 1 0 -1.9,0zM18.650000000000002,13.2a0.95,0.95 0 1 0 1.9,0a0.95,0.95 0 1 0 -1.9,0z"/></svg>

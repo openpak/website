@@ -32,6 +32,7 @@
       <nav aria-label="Main" class="hidden md:flex items-center gap-1 ml-4">
         {{if .User}}
           <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/account"}}font-semibold text-ink{{end}}" href="/account" {{if eq .Path "/account"}}aria-current="page"{{end}}>{{t .Lang "nav.account"}}</a>
+          <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/account/saves"}}font-semibold text-ink{{end}}" href="/account/saves" {{if eq .Path "/account/saves"}}aria-current="page"{{end}}>{{t .Lang "nav.saves"}}</a>
           {{if .Admin}}<a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink" href="/admin">{{t .Lang "admin.title"}}</a>{{end}}
         {{end}}
         <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/titles"}}font-semibold text-ink{{end}}" href="/titles" {{if eq .Path "/titles"}}aria-current="page"{{end}}>{{t .Lang "nav.titles"}}</a>
@@ -61,6 +62,7 @@
           <nav aria-label="Main" class="absolute right-0 z-20 mt-2 w-56 card p-2 shadow-lg">
             {{if .User}}
               <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/account">{{t .Lang "nav.account"}}</a>
+              <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/account/saves">{{t .Lang "nav.saves"}}</a>
               {{if .Admin}}<a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/admin">{{t .Lang "admin.title"}}</a>{{end}}
             {{end}}
             <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/titles">{{t .Lang "nav.titles"}}</a>

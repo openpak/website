@@ -24,6 +24,7 @@ import (
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/ratelimit"
+	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/store"
 )
@@ -45,6 +46,7 @@ type Server struct {
 	// Adapter answers the console-shaped questions the core cannot: the friend
 	// code is minted by the Switch adapter and lives only there.
 	Adapter    *adapter.Client
+	Saves      *saves.Client
 	MediaLimit *ratelimit.Limiter
 	DB         store.Store
 	Sessions   *session.Manager
@@ -78,6 +80,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	g("/me/sessions", s.auth(s.handleSessions)) // GET /api/v1/me/sessions
 	d("/me/sessions/{id}", s.auth(s.handleRevokeSession))
 	g("/me/friends", s.auth(s.handleFriends)) // GET /api/v1/me/friends
+	s.registerSaves(mux)
 	g("/me/friends/requests", s.auth(s.handleRequests))
 	h("/me/friends/requests", s.auth(s.handleSendRequest)) // POST: add by friend code
 	h("/me/friends/requests/accept", s.auth(s.handleAccept))

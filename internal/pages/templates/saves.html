@@ -1,0 +1,109 @@
+{{template "header" .}}
+<div class="page-head">
+  <h1>{{t .Lang "saves.title"}}</h1>
+  <p>{{t .Lang "saves.sub"}}</p>
+</div>
+{{if .Detail}}<p class="card mb-9 p-4 text-sm" role="status">{{.Detail}}</p>{{end}}
+
+{{if not .Available}}
+<p class="empty">{{t .Lang "saves.unavailable"}}</p>
+{{else}}
+
+<section aria-labelledby="use-h" class="mb-9">
+  <div class="section-head">
+    <h2 id="use-h">{{t .Lang "saves.usage"}}</h2>
+    <p>{{if .Storage.Connected}}{{t .Lang "saves.usage.own"}}{{else}}{{t .Lang "saves.usage.allowance"}}{{end}}</p>
+  </div>
+  {{if not .Storage.Connected}}
+  <div class="state-row {{if ge .Percent 90}}warn{{else}}ok{{end}}">
+    <span class="name">{{.UsedText}} / {{.LimitText}}</span>
+    <span class="pill">{{.Percent}}%</span>
+  </div>
+  <progress class="w-full" max="100" value="{{.Percent}}" aria-label="{{t .Lang "saves.usage"}}"></progress>
+  {{else}}
+  <div class="state-row ok">
+    <span class="name">{{.Storage.Bucket}} · {{.Storage.Endpoint}}</span>
+    <span class="pill">{{t .Lang "saves.storage.connected"}}</span>
+  </div>
+  {{end}}
+</section>
+
+<section aria-labelledby="sv-h" class="mb-9">
+  <div class="section-head">
+    <h2 id="sv-h">{{t .Lang "saves.list"}}</h2>
+    <p>{{t .Lang "saves.list.sub"}}</p>
+  </div>
+  {{if .Saves}}
+  {{range .Saves}}
+  <h3 class="mb-3 text-xs font-bold uppercase tracking-widest text-muted">{{.Platform}} · <code>{{.TitleID}}</code></h3>
+  <ul class="rows mb-9">
+    {{range .Versions}}<li>
+      <span class="name">{{t $.Lang "saves.version"}} {{.Number}}{{if .Pinned}} · {{t $.Lang "saves.pinned"}}{{end}}</span>
+      <span class="sub">{{.SizeText}} · {{.When}}{{if .Device}} · {{.Device}}{{end}}{{if ne .Backend "local"}} · {{t $.Lang "saves.own"}}{{end}}</span>
+      {{if .Conflict}}<span class="badge warn">{{t $.Lang "saves.conflict"}}</span>{{end}}
+      <form method="post" action="/account/saves/pin" class="inline">
+        <input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="version" value="{{.ID}}"><input type="hidden" name="pinned" value="{{if .Pinned}}0{{else}}1{{end}}">
+        <button type="submit" class="small">{{if .Pinned}}{{t $.Lang "saves.unpin"}}{{else}}{{t $.Lang "saves.pin"}}{{end}}</button></form>
+      <form method="post" action="/account/saves/restore" class="inline">
+        <input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="version" value="{{.ID}}">
+        <button type="submit" class="small">{{t $.Lang "saves.restore"}}</button></form>
+      {{if .Single}}<a class="btn small" href="/account/saves/download/{{.ID}}">{{t $.Lang "saves.download"}}</a>{{end}}
+      <form method="post" action="/account/saves/delete" class="inline" onsubmit="return confirm(this.dataset.q)" data-q="{{t $.Lang "saves.delete.confirm"}}">
+        <input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="version" value="{{.ID}}">
+        <button type="submit" class="small danger">{{t $.Lang "saves.delete"}}</button></form>
+    </li>{{end}}
+  </ul>
+  {{end}}
+  {{else}}<p class="empty">{{t .Lang "saves.none"}}</p>{{end}}
+</section>
+
+<section aria-labelledby="st-h" id="storage">
+  <div class="section-head">
+    <h2 id="st-h">{{t .Lang "saves.storage"}}</h2>
+    <p>{{t .Lang "saves.storage.sub"}}</p>
+  </div>
+  {{if .Storage.Connected}}
+  <div class="state-row {{.TestState}} mb-3">
+    <span class="name">{{.Storage.Bucket}} · {{.Storage.Endpoint}}</span>
+    <span class="pill">{{if .Storage.LastTestAt}}{{t .Lang "saves.storage.tested"}} {{.Storage.LastTestAt.UTC.Format "2006-01-02 15:04"}}{{else}}{{t .Lang "saves.storage.untested"}}{{end}}</span>
+  </div>
+  {{if .Storage.LastError}}<p class="hint">{{.Storage.LastError}}</p>{{end}}
+  {{if .Storage.MoveState}}<p class="hint">{{t .Lang "saves.storage.move.state"}}: {{.Storage.MoveState}}</p>{{end}}
+  <div class="mb-9">
+    {{if gt .Usage.AllowanceUsed 0}}
+    <form method="post" action="/account/saves/storage/move" class="inline">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <button type="submit" class="btn primary">{{t .Lang "saves.storage.move"}} ({{.UsedText}})</button></form>
+    {{end}}
+    <form method="post" action="/account/saves/storage/disconnect" class="inline" onsubmit="return confirm(this.dataset.q)" data-q="{{t .Lang "saves.storage.disconnect.confirm"}}">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <button type="submit" class="btn danger">{{t .Lang "saves.storage.disconnect"}}</button></form>
+  </div>
+  {{end}}
+
+  <form method="post" action="/account/saves/storage" class="form-stack" autocomplete="off">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <label for="endpoint">{{t .Lang "saves.storage.endpoint"}}</label>
+    <input id="endpoint" name="endpoint" type="text" required value="{{.Storage.Endpoint}}" placeholder="s3.eu-west-1.amazonaws.com" autocapitalize="off" spellcheck="false">
+    <label for="region">{{t .Lang "saves.storage.region"}}</label>
+    <input id="region" name="region" type="text" value="{{.Storage.Region}}" placeholder="auto" autocapitalize="off" spellcheck="false">
+    <label for="bucket">{{t .Lang "saves.storage.bucket"}}</label>
+    <input id="bucket" name="bucket" type="text" required value="{{.Storage.Bucket}}" autocapitalize="off" spellcheck="false">
+    <label for="prefix">{{t .Lang "saves.storage.prefix"}}</label>
+    <input id="prefix" name="prefix" type="text" value="{{.Storage.Prefix}}" placeholder="openpak" autocapitalize="off" spellcheck="false">
+    <label for="access_key">{{t .Lang "saves.storage.access"}}</label>
+    <input id="access_key" name="access_key" type="text" required value="{{.Storage.AccessKey}}" autocapitalize="off" spellcheck="false">
+    <label for="secret_key">{{t .Lang "saves.storage.secret"}}</label>
+    <input id="secret_key" name="secret_key" type="password" {{if not .Storage.Connected}}required{{end}} autocomplete="new-password">
+    <p class="hint">{{t .Lang "saves.storage.secret.hint"}}</p>
+    <label><input type="checkbox" name="path_style" {{if or .Storage.PathStyle (not .Storage.Connected)}}checked{{end}}> {{t .Lang "saves.storage.pathstyle"}}</label>
+    <label><input type="checkbox" name="insecure" {{if .Storage.Insecure}}checked{{end}}> {{t .Lang "saves.storage.insecure"}}</label>
+    <button type="submit" class="btn primary">{{t .Lang "saves.storage.save"}}</button>
+  </form>
+  <p class="hint">{{t .Lang "saves.storage.presets"}}</p>
+  <ul class="rows">
+    {{range .Presets}}<li><span class="name">{{.Name}}</span><span class="sub"><code>{{.Endpoint}}</code> · {{.Region}}{{if .Hint}} · {{.Hint}}{{end}}</span></li>{{end}}
+  </ul>
+</section>
+{{end}}
+{{template "footer" .}}

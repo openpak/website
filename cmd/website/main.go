@@ -22,6 +22,7 @@ import (
 	"github.com/openpak/website/internal/pages"
 	"github.com/openpak/website/internal/push"
 	"github.com/openpak/website/internal/ratelimit"
+	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/store"
 )
@@ -99,9 +100,15 @@ func run(log *slog.Logger) error {
 	pageSrv.AdminAccountIDs = cfg.AdminAccountIDs
 	pageSrv.AuthLimit = ratelimit.New(20, time.Minute)
 	pageSrv.MediaLimit = ratelimit.New(5, time.Hour)
+	savesCli := saves.New(os.Getenv("SAVES_URL"), os.Getenv("SAVES_INTERNAL_KEY"))
+	if savesCli == nil {
+		log.Info("saves: SAVES_URL not set; the saves page says so and the API answers 503")
+	}
+	pageSrv.Saves = savesCli
 
 	apiSrv := api.New(coreHTTP, coreGRPC, coreGRPC, coreGRPC, coreGRPC, db, sessions, mediaSvc, log)
 	apiSrv.Federation = coreGRPC
+	apiSrv.Saves = savesCli
 
 	// Push. Absent credentials is a supported configuration: the site runs, the
 	// app can still register a token, and nothing is delivered until a service
