@@ -13,7 +13,9 @@ type Memory struct {
 	mu          sync.Mutex
 	cfg         SiteConfig
 	tokens      map[string]APIToken // by hash
-	titles      []Title
+	requests    []Request
+	votes       map[int64]map[string]bool // request id -> account id -> voted
+	nextReqID   int64
 	audit       []AuditEntry
 	auditSeq    int64
 	media       map[[2]string]MediaRecord
@@ -172,20 +174,69 @@ func (m *Memory) GetMedia(ctx context.Context, accountID, kind string) (MediaRec
 	return rec, nil
 }
 
-func (m *Memory) ListTitles(ctx context.Context) ([]Title, error) {
+func (m *Memory) ListRequests(_ context.Context, kind, viewerAccountID string) ([]Request, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return append([]Title(nil), m.titles...), nil
+	var out []Request
+	for _, r := range m.requests {
+		if kind != "" && r.Kind != kind {
+			continue
+		}
+		r.Votes = len(m.votes[r.ID])
+		r.Voted = viewerAccountID != "" && m.votes[r.ID][viewerAccountID]
+		out = append(out, r)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Sort != out[j].Sort {
+			return out[i].Sort < out[j].Sort
+		}
+		return out[i].Name < out[j].Name
+	})
+	return out, nil
 }
 
-func (m *Memory) SeedTitles(ctx context.Context, titles []Title) error {
+// SeedRequests upserts by (kind, name), preserving ids and votes.
+func (m *Memory) SeedRequests(_ context.Context, reqs []Request) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if len(m.titles) > 0 {
-		return nil
+	if m.votes == nil {
+		m.votes = map[int64]map[string]bool{}
 	}
-	m.titles = append(m.titles, titles...)
+	byKey := map[[2]string]int{}
+	for i, r := range m.requests {
+		byKey[[2]string{r.Kind, r.Name}] = i
+	}
+	for _, r := range reqs {
+		key := [2]string{r.Kind, r.Name}
+		if i, ok := byKey[key]; ok {
+			id := m.requests[i].ID
+			r.ID = id
+			m.requests[i] = r
+			continue
+		}
+		m.nextReqID++
+		r.ID = m.nextReqID
+		m.requests = append(m.requests, r)
+		byKey[key] = len(m.requests) - 1
+	}
 	return nil
+}
+
+func (m *Memory) ToggleVote(_ context.Context, requestID int64, accountID string) (bool, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.votes == nil {
+		m.votes = map[int64]map[string]bool{}
+	}
+	if m.votes[requestID] == nil {
+		m.votes[requestID] = map[string]bool{}
+	}
+	if m.votes[requestID][accountID] {
+		delete(m.votes[requestID], accountID)
+		return false, nil
+	}
+	m.votes[requestID][accountID] = true
+	return true, nil
 }
 
 func (m *Memory) SavePushToken(_ context.Context, accountID, token, platform string) error {

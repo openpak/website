@@ -18,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -221,6 +222,7 @@ func (s *Server) Handler() http.Handler {
 func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /{$}", s.handleLanding)
 	mux.HandleFunc("GET /titles", s.handleTitles)
+	mux.HandleFunc("POST /request/vote", s.handleVote)
 	mux.HandleFunc("GET /register", s.handleRegisterForm)
 	mux.HandleFunc("POST /register", s.handleRegisterSubmit)
 	mux.HandleFunc("GET /verify", s.handleVerify)
@@ -261,24 +263,73 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 func (s *Server) handleLanding(w http.ResponseWriter, r *http.Request) {
 	v := s.viewerOf(w, r)
 	d := s.data(r, v, "Home")
-	titles, err := s.DB.ListTitles(r.Context())
+	titles, err := s.DB.ListRequests(r.Context(), "title", "")
 	if err != nil {
-		s.log.Error("list titles", "err", err)
+		s.log.Error("list requests", "err", err)
 	}
 	type landing struct {
 		baseData
-		Titles     []store.Title
+		Titles      []store.Request
 		TitlesTotal int
 	}
 	s.render(w, http.StatusOK, "landing.html", landing{d, popularTitles(titles), len(titles)})
 }
 
-// handleFeatures and handleDownloads are static content pages: what the
-// network does today, and how to get onto it. Both state availability
-// honestly rather than advertising what has not shipped.
+// handleFeatures is the honest feature matrix: every network feature and its
+// real status (working/broken/partial/planned/…), seeded from the catalog.
+// Signed-in viewers can vote on what to build next; `?sort=votes` scoreboards it.
 func (s *Server) handleFeatures(w http.ResponseWriter, r *http.Request) {
 	v := s.viewerOf(w, r)
-	s.render(w, http.StatusOK, "features.html", s.data(r, v, i18n.T("en", "features.title")))
+	d := s.data(r, v, i18n.T("en", "features.title"))
+	var accountID string
+	if v != nil {
+		accountID = v.AccountID
+	}
+	reqs, err := s.DB.ListRequests(r.Context(), "feature", accountID)
+	if err != nil {
+		s.log.Error("list requests", "err", err)
+	}
+	byVotes := r.URL.Query().Get("sort") == "votes"
+	if byVotes {
+		reqs = mostRequested(reqs)
+	}
+	type featuresPage struct {
+		baseData
+		Features []store.Request
+		ByVotes  bool
+		Back     string
+	}
+	s.render(w, http.StatusOK, "features.html", featuresPage{d, reqs, byVotes, backPath("/features", byVotes)})
+}
+
+// handleVote toggles the viewer's vote on one request and returns them to the
+// page they voted from. Session-gated and CSRF-checked by postGuard.
+func (s *Server) handleVote(w http.ResponseWriter, r *http.Request) {
+	v, ok := s.postGuard(w, r)
+	if !ok {
+		return
+	}
+	back := safeBack(r.PostFormValue("back"))
+	id, err := strconv.ParseInt(r.PostFormValue("id"), 10, 64)
+	if err != nil {
+		http.Redirect(w, r, back, http.StatusSeeOther)
+		return
+	}
+	if _, err := s.DB.ToggleVote(r.Context(), id, v.AccountID); err != nil {
+		s.log.Error("toggle vote", "err", err)
+	}
+	http.Redirect(w, r, back, http.StatusSeeOther)
+}
+
+// safeBack allows only the two pages that carry vote buttons, optionally in the
+// scoreboard view — never an arbitrary URL, so the form cannot open-redirect.
+func safeBack(back string) string {
+	switch back {
+	case "/titles", "/titles?sort=votes", "/features", "/features?sort=votes":
+		return back
+	default:
+		return "/titles"
+	}
 }
 
 func (s *Server) handleDownloads(w http.ResponseWriter, r *http.Request) {

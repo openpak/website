@@ -78,6 +78,32 @@ var migrations = map[string]string{
 		version bigint NOT NULL
 	);
 	INSERT INTO push_cursor(id, version) VALUES (1, 0) ON CONFLICT (id) DO NOTHING;`,
+
+	// Requests + votes. A request is a votable item — a title or a network
+	// feature — seeded from the catalog. request_votes is the vote ledger, one
+	// row per (request, account); a count over it is the score. ON DELETE
+	// CASCADE keeps the ledger clean if a request is ever removed, but reseeding
+	// never deletes a request, so votes persist across every reseed.
+	"0003_requests": `CREATE TABLE IF NOT EXISTS requests (
+		id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+		kind text NOT NULL,
+		name text NOT NULL,
+		console text NOT NULL DEFAULT '',
+		category text NOT NULL DEFAULT '',
+		backend text NOT NULL DEFAULT '',
+		status text NOT NULL DEFAULT '',
+		notes text NOT NULL DEFAULT '',
+		sort int NOT NULL DEFAULT 0,
+		UNIQUE (kind, name)
+	);
+
+	CREATE TABLE IF NOT EXISTS request_votes (
+		request_id bigint NOT NULL REFERENCES requests(id) ON DELETE CASCADE,
+		account_id text NOT NULL,
+		created_at timestamptz NOT NULL DEFAULT now(),
+		PRIMARY KEY (request_id, account_id)
+	);
+	CREATE INDEX IF NOT EXISTS request_votes_account_idx ON request_votes(account_id);`,
 }
 
 // Ping verifies database connectivity (status page).
@@ -252,47 +278,6 @@ func (s *PG) GetMedia(ctx context.Context, accountID, kind string) (MediaRecord,
 		return m, ErrNotFound
 	}
 	return m, err
-}
-
-// ListTitles returns the supported-titles table.
-func (s *PG) ListTitles(ctx context.Context) ([]Title, error) {
-	rows, err := s.pool.Query(ctx, `SELECT name, platform, status FROM titles ORDER BY name`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var out []Title
-	for rows.Next() {
-		var t Title
-		if err := rows.Scan(&t.Name, &t.Platform, &t.Status); err != nil {
-			return nil, err
-		}
-		out = append(out, t)
-	}
-	return out, rows.Err()
-}
-
-// SeedTitles inserts default rows if the table is empty (bootstrap only).
-func (s *PG) SeedTitles(ctx context.Context, titles []Title) error {
-	var n int
-	if err := s.pool.QueryRow(ctx, `SELECT count(*) FROM titles`).Scan(&n); err != nil {
-		return err
-	}
-	if n > 0 {
-		return nil
-	}
-	tx, err := s.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(ctx)
-	for _, t := range titles {
-		if _, err := tx.Exec(ctx, `INSERT INTO titles(name, platform, status) VALUES($1,$2,$3)
-			ON CONFLICT DO NOTHING`, t.Name, t.Platform, t.Status); err != nil {
-			return err
-		}
-	}
-	return tx.Commit(ctx)
 }
 
 // SavePushToken records an app install for this account. The token is the key:

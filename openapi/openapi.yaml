@@ -278,6 +278,69 @@ paths:
                   node_id: { type: string }
                   approved: { type: boolean }
         "401": { description: No node key, or one the core does not know. }
+  /requests:
+    get:
+      summary: The votable catalogue (titles and network features)
+      description: |
+        The same request/vote scoreboard the website shows. Each item carries a
+        live vote count and whether the caller has voted. Filter with `kind`.
+      parameters:
+        - name: kind
+          in: query
+          required: false
+          schema: { type: string, enum: [title, feature] }
+          description: Restrict to titles or features; omit for both.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requests:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: integer }
+                        kind: { type: string, examples: ["title"] }
+                        name: { type: string, examples: ["Tetris 99"] }
+                        console: { type: string, examples: ["Switch"] }
+                        category: { type: string }
+                        backend: { type: string }
+                        status: { type: string, examples: ["requestable"] }
+                        notes: { type: string }
+                        votes: { type: integer }
+                        voted: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /requests/vote:
+    post:
+      summary: Toggle the caller's vote on a request
+      description: |
+        Idempotent per account: voting an item you already voted for removes the
+        vote. Returns the new state.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  voted: { type: boolean }
+        "400": { description: Missing or unknown request id. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "429": { $ref: "#/components/responses/RateLimited" }
   /avatars:
     get:
       summary: The built-in avatars

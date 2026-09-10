@@ -89,6 +89,9 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	d("/me/push", s.auth(s.handleForgetPush))
 	h("/me/profile", s.auth(s.handleUpdateProfile))
 	g("/avatars", s.auth(s.handleAvatarChoices))
+	// Requests + votes: the same scoreboard the website shows, for the app.
+	g("/requests", s.auth(s.handleListRequests))
+	h("/requests/vote", s.auth(s.handleVoteRequest))
 	// Public: no bearer. A status endpoint that needed an account could not be
 	// read by the thing most likely to want it — someone whose sign-in is the
 	// part that is broken. Registered through the same helper as everything
@@ -641,6 +644,44 @@ func (s *Server) handleChooseAvatar(w http.ResponseWriter, r *http.Request, tok 
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"saved": true})
+}
+
+// handleListRequests: GET /api/v1/requests?kind=title|feature → the votable
+// catalogue with each item's vote count and whether the caller voted.
+func (s *Server) handleListRequests(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	kind := r.URL.Query().Get("kind") // "" = all
+	reqs, err := s.DB.ListRequests(r.Context(), kind, tok.AccountID)
+	if err != nil {
+		s.log.Error("api: list requests", "err", err)
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	out := make([]map[string]any, 0, len(reqs))
+	for _, q := range reqs {
+		out = append(out, map[string]any{
+			"id": q.ID, "kind": q.Kind, "name": q.Name, "console": q.Console,
+			"category": q.Category, "backend": q.Backend, "status": q.Status,
+			"notes": q.Notes, "votes": q.Votes, "voted": q.Voted,
+		})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"requests": out})
+}
+
+// handleVoteRequest: POST /api/v1/requests/vote {"id": N} → toggles the caller's
+// vote, returning the new state. Idempotent: voting twice removes the vote.
+func (s *Server) handleVoteRequest(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	var req struct {
+		ID int64 `json:"id"`
+	}
+	if !decodeSmall(w, r, &req) {
+		return
+	}
+	voted, err := s.DB.ToggleVote(r.Context(), req.ID, tok.AccountID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "no such request")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"voted": voted})
 }
 
 // handleStatus is the machine-readable half of the status page: who is online,

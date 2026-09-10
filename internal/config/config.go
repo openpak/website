@@ -36,7 +36,7 @@ type Config struct {
 	FCMCredentialsFile string
 
 	MediaDir   string // filesystem storage root for avatars
-	SeedTitles bool   // seed the supported-titles table with defaults on boot
+	SeedTitles bool   // WEBSITE_SEED_TITLES: upsert requests from the catalog on boot
 }
 
 // Load reads the environment and validates required fields.

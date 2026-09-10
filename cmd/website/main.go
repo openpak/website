@@ -26,38 +26,6 @@ import (
 	"github.com/openpak/website/internal/store"
 )
 
-// defaultTitles seeds the supported-titles table on first boot when
-// WEBSITE_SEED_TITLES is set. Ship honest placeholders only.
-var defaultTitles = []store.Title{
-	// Deployed and running on the network; not yet verified end-to-end against a
-	// retail console, so "beta" rather than "supported". Alphabetical.
-	{Name: "Animal Crossing: New Horizons", Platform: "Switch", Status: "beta"},
-	{Name: "ARMS", Platform: "Switch", Status: "beta"},
-	{Name: "Luigi's Mansion 3", Platform: "Switch", Status: "beta"},
-	{Name: "Mario Golf: Super Rush", Platform: "Switch", Status: "beta"},
-	{Name: "Mario Kart 8 Deluxe", Platform: "Switch", Status: "beta"},
-	{Name: "Mario Party Superstars", Platform: "Switch", Status: "beta"},
-	{Name: "Mario Strikers: Battle League", Platform: "Switch", Status: "beta"},
-	{Name: "Mario Tennis Aces", Platform: "Switch", Status: "beta"},
-	{Name: "Minecraft", Platform: "Switch", Status: "beta"},
-	{Name: "Monster Hunter Generations Ultimate", Platform: "Switch", Status: "beta"},
-	{Name: "Outbound", Platform: "Switch", Status: "beta"},
-	{Name: "Splatoon 2", Platform: "Switch", Status: "beta"},
-	{Name: "Splatoon 3", Platform: "Switch", Status: "beta"},
-	{Name: "Stardew Valley", Platform: "Switch", Status: "beta"},
-	{Name: "Super Mario Bros. 35", Platform: "Switch", Status: "beta"},
-	{Name: "Super Mario Maker 2", Platform: "Switch", Status: "beta"},
-	{Name: "Super Mario Odyssey", Platform: "Switch", Status: "beta"},
-	{Name: "Super Smash Bros. Ultimate", Platform: "Switch", Status: "beta"},
-	// In progress -- third-party networks (Innersloth, Epic/Mediatonic, EA, Demonware) being
-	// brought up; not yet playable, shown so people can see what is coming. Alphabetical.
-	{Name: "Among Us", Platform: "Switch", Status: "alpha"},
-	{Name: "Crash Team Racing Nitro-Fueled", Platform: "Switch", Status: "alpha"},
-	{Name: "Fall Guys", Platform: "Switch", Status: "alpha"},
-	{Name: "Minecraft Dungeons", Platform: "Switch", Status: "alpha"},
-	{Name: "Plants vs. Zombies: Battle for Neighborville", Platform: "Switch", Status: "alpha"},
-}
-
 func main() {
 	log := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	if err := run(log); err != nil {
@@ -81,8 +49,14 @@ func run(log *slog.Logger) error {
 	}
 	defer db.Close()
 	if cfg.SeedTitles {
-		if err := db.SeedTitles(ctx, defaultTitles); err != nil {
-			log.Warn("seed titles", "err", err)
+		reqs, err := store.CatalogRequests()
+		if err != nil {
+			return err
+		}
+		// Upsert, never truncate: statuses and notes refresh from the catalog,
+		// but votes (user data) are left untouched.
+		if err := db.SeedRequests(ctx, reqs); err != nil {
+			log.Warn("seed requests", "err", err)
 		}
 	}
 

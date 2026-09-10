@@ -1,0 +1,533 @@
+[
+  {
+    "kind": "title",
+    "name": "Outbound",
+    "console": "Switch",
+    "category": "Third-party network (Photon)",
+    "backend": "Epic/Photon (Fusion)",
+    "status": "live",
+    "notes": "End-to-end works: a console hosts, Citron joins. servers/outbound + servers/photon deployed; website serves it. Pinned to build 0.6.0 and needs a real Fusion Shared-mode server (host Fusion's own Simulation.Server headless, not a relay). Publisher: independent."
+  },
+  {
+    "kind": "title",
+    "name": "Stardew Valley",
+    "console": "Switch",
+    "category": "NPLN title",
+    "backend": "NPLN",
+    "status": "live",
+    "notes": "Deployed (servers/stardew-valley, ~19k LOC, tenant 21010/22200) and the only title besides Outbound the website actually serves. Online play needs a per-build online-compatibility/cert-acceptance patch on emulator/CFW. Publisher: ConcernedApe."
+  },
+  {
+    "kind": "title",
+    "name": "Splatoon 3",
+    "console": "Switch",
+    "category": "NPLN title",
+    "backend": "NPLN",
+    "status": "beta",
+    "notes": "Largest title on the list (~19k LOC, servers/splatoon-3, tenant 21012/22210). Session layer relays (Pia peer-to-peer + coturn), it does not simulate. Blocked on a per-build certificate-acceptance patch: until it is set the client abandons its own call and no server work is observable. Not console-verified. Publisher: Nintendo."
+  },
+  {
+    "kind": "title",
+    "name": "Mario Kart 8 Deluxe",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "NEX 4.0.0 (ws). Implemented on the shared NEX host (servers/mario-kart-8-deluxe), image-shippable, health-wired. Not console-verified. Publisher: Nintendo."
+  },
+  {
+    "kind": "title",
+    "name": "Super Smash Bros. Ultimate",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "Implemented on the shared NEX host (servers/super-smash-bros-ultimate). Not console-verified. Publisher: Nintendo."
+  },
+  {
+    "kind": "title",
+    "name": "Animal Crossing: New Horizons",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "OpenPak confirms NEX. Implemented (servers/animal-crossing-new-horizons). Not console-verified. Publisher: Nintendo."
+  },
+  {
+    "kind": "title",
+    "name": "Super Mario Odyssey",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "Online is Balloon World (DataStore). Implemented (servers/super-mario-odyssey). Not console-verified. Publisher: Nintendo."
+  },
+  {
+    "kind": "title",
+    "name": "Minecraft",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "The Switch NEX session/matchmaking + NAT-traversal layer for friend-list lobbies (ARMS's protocol set minus DataStore). Bedrock/Xbox realms are a separate Xbox-network concern, out of scope here. Implemented (servers/minecraft). Not console-verified. Publisher: Mojang/Microsoft."
+  },
+  {
+    "kind": "title",
+    "name": "Splatoon 2",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "Implemented (servers/splatoon-2, ~1k LOC). Not console-verified. Publisher: Nintendo."
+  },
+  {
+    "kind": "title",
+    "name": "Super Mario Maker 2",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "The DataStore shape-definer (DataStore-heavy: user levels, course world). Implemented (servers/super-mario-maker-2). Not console-verified. Publisher: Nintendo."
+  },
+  {
+    "kind": "title",
+    "name": "ARMS",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "NEX 4.3.5. Needs a DataStore backing (Party Crash ranking). Implemented (servers/arms). Not console-verified. Publisher: Nintendo."
+  },
+  {
+    "kind": "title",
+    "name": "Mario Tennis Aces",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "NEX 4.3.5 (version unverified). Two WSS listeners. Implemented (servers/mario-tennis-aces). Not console-verified. Publisher: Nintendo."
+  },
+  {
+    "kind": "title",
+    "name": "Mario Golf: Super Rush",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "NEX 4.6.5, single WSS listener carrying both streams. Implemented (servers/mario-golf-super-rush). Not console-verified. Publisher: Nintendo."
+  },
+  {
+    "kind": "title",
+    "name": "Mario Party Superstars",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "NEX 4.6.5, two WSS listeners on two ports with a real secure URL. Implemented (servers/mario-party-superstars). Not console-verified. Publisher: Nintendo."
+  },
+  {
+    "kind": "title",
+    "name": "Mario Strikers: Battle League",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "OpenPak confirms NEX, with a DataStore backing. Implemented (servers/mario-strikers). Not console-verified. Publisher: Nintendo."
+  },
+  {
+    "kind": "title",
+    "name": "Luigi's Mansion 3",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "Implemented (servers/luigis-mansion-3). Not console-verified. Publisher: Nintendo."
+  },
+  {
+    "kind": "title",
+    "name": "Monster Hunter Generations Ultimate",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "NEX 4.4.0. Implemented (servers/monster-hunter-generations-ultimate). Not console-verified. Publisher: Capcom."
+  },
+  {
+    "kind": "title",
+    "name": "Super Mario Bros. 35",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "NEX 4.6.0, single listener carrying both streams. Delisted title (service ended 2021) — only playable at all through a replacement network. Implemented (servers/super-mario-bros-35). Not console-verified. Publisher: Nintendo."
+  },
+  {
+    "kind": "title",
+    "name": "Among Us",
+    "console": "Switch",
+    "category": "Third-party network",
+    "backend": "Innersloth (own servers, Hazel/UDP)",
+    "status": "alpha",
+    "notes": "Verdict: depend, do not build. Run Impostor (GPL-3.0) as a separate process; OpenPak supplies the hostname redirect + TLS front (~100 lines Go). Front stub started (servers/among-us, ~74 LOC). Not deployed. Publisher: Innersloth."
+  },
+  {
+    "kind": "title",
+    "name": "Crash Team Racing Nitro-Fueled",
+    "console": "Switch",
+    "category": "Third-party network",
+    "backend": "Demonware",
+    "status": "requestable",
+    "notes": "Research verdict only, no code. Auth+matchmaking over Demonware (racing itself is peer-to-peer), which is plausible and squarely what OpenPak does, but unproven and possibly unnecessary — the open question is whether an OpenPak console needs us for it at all. Publisher: Activision."
+  },
+  {
+    "kind": "title",
+    "name": "Fall Guys",
+    "console": "Switch",
+    "category": "Third-party network",
+    "backend": "Epic/EOS",
+    "status": "not-feasible",
+    "notes": "Epic-hosted authoritative Unity servers plus Epic auth that validates upstream. OpenPak cannot make Epic accept an OpenPak console, and there is no server to re-host. Investigated, blocked. Publisher: Epic/Mediatonic."
+  },
+  {
+    "kind": "title",
+    "name": "Minecraft Dungeons",
+    "console": "Switch",
+    "category": "Third-party network",
+    "backend": "Xbox / Demonware",
+    "status": "not-feasible",
+    "notes": "Parked until an Xbox-network adapter exists; the protocol cannot be known without a capture. Repository intentionally holds no code. Publisher: Mojang/Microsoft."
+  },
+  {
+    "kind": "title",
+    "name": "Plants vs. Zombies: Battle for Neighborville",
+    "console": "Switch",
+    "category": "Third-party network",
+    "backend": "Blaze/EA",
+    "status": "not-feasible",
+    "notes": "Blocked on an authoritative Blaze game server we cannot restore. Research only, no code, no port block. Publisher: EA."
+  },
+  {
+    "kind": "title",
+    "name": "Pokemon Sword / Shield",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX",
+    "status": "requestable",
+    "notes": "Significant online title, not started. Candidate for the request/vote menu. Publisher: Nintendo/The Pokemon Company."
+  },
+  {
+    "kind": "title",
+    "name": "Pokemon Scarlet / Violet",
+    "console": "Switch",
+    "category": "NPLN title",
+    "backend": "NPLN",
+    "status": "requestable",
+    "notes": "NPLN-era; not started. Candidate for the request/vote menu. Publisher: Nintendo/The Pokemon Company."
+  },
+  {
+    "kind": "title",
+    "name": "Pokemon Brilliant Diamond / Shining Pearl",
+    "console": "Switch",
+    "category": "NPLN title",
+    "backend": "NPLN",
+    "status": "requestable",
+    "notes": "NPLN-era; not started. Publisher: Nintendo/The Pokemon Company."
+  },
+  {
+    "kind": "title",
+    "name": "Tetris 99",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX",
+    "status": "requestable",
+    "notes": "Battle-royale online is the whole game; not started. Publisher: Nintendo."
+  },
+  {
+    "kind": "title",
+    "name": "Super Mario Party",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX",
+    "status": "requestable",
+    "notes": "Online play added post-launch; not started. Publisher: Nintendo."
+  },
+  {
+    "kind": "title",
+    "name": "Nintendo Switch Sports",
+    "console": "Switch",
+    "category": "NPLN title",
+    "backend": "NPLN",
+    "status": "requestable",
+    "notes": "NPLN-era; not started. Publisher: Nintendo."
+  },
+  {
+    "kind": "title",
+    "name": "Pokken Tournament DX",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX",
+    "status": "requestable",
+    "notes": "Ranked online fighting; not started. Publisher: Nintendo/Bandai Namco."
+  },
+  {
+    "kind": "title",
+    "name": "Clubhouse Games: 51 Worldwide Classics",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX",
+    "status": "requestable",
+    "notes": "Online multiplayer classics; not started. Publisher: Nintendo."
+  },
+  {
+    "kind": "title",
+    "name": "Monster Hunter Rise",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX (unconfirmed)",
+    "status": "requestable",
+    "notes": "Capcom title; backend not yet confirmed for OpenPak (MHGU used NEX). Not started. Publisher: Capcom."
+  },
+  {
+    "kind": "title",
+    "name": "Rocket League",
+    "console": "Switch",
+    "category": "Third-party network",
+    "backend": "Epic/Psyonix",
+    "status": "requestable",
+    "notes": "Epic-auth like Fall Guys, so likely not-feasible on the same grounds; kept as a request candidate pending investigation. Publisher: Psyonix/Epic."
+  },
+  {
+    "kind": "title",
+    "name": "Warframe",
+    "console": "Switch",
+    "category": "Third-party network",
+    "backend": "Digital Extremes (own servers)",
+    "status": "requestable",
+    "notes": "Own account+servers; not investigated. Publisher: Digital Extremes."
+  },
+  {
+    "kind": "feature",
+    "name": "Accounts",
+    "console": "Switch",
+    "category": "Identity",
+    "backend": "account (core)",
+    "status": "working",
+    "notes": "Console-neutral core: accounts, links, session leases. gRPC+HTTP, Postgres. A retail Switch creates a profile and links it; hardware-proven."
+  },
+  {
+    "kind": "feature",
+    "name": "Console link (six-digit)",
+    "console": "Switch",
+    "category": "Identity",
+    "backend": "nx-baas",
+    "status": "working",
+    "notes": "Hardware-proven on the OpenPak stack (2026-09-07 LAN, 2026-09-08 WAN). Blockers that were fixed: per-SNI certs, push_channels object, nxAccount blob must be present."
+  },
+  {
+    "kind": "feature",
+    "name": "Friends",
+    "console": "Switch",
+    "category": "Social",
+    "backend": "account + nx-baas",
+    "status": "working",
+    "notes": "search -> request -> accept -> list, hardware-proven 2026-09-08. States use the console's words (AUTHORIZED). Friend list is console-local; the same graph is handed to NEX titles for free."
+  },
+  {
+    "kind": "feature",
+    "name": "Presence",
+    "console": "Switch",
+    "category": "Social",
+    "backend": "account (sessions)",
+    "status": "partial",
+    "notes": "The friend graph is served to titles and to the NEX host; live online-status presence rides on session leases but is not console-verified as a standalone feature."
+  },
+  {
+    "kind": "feature",
+    "name": "Invitations",
+    "console": "Switch",
+    "category": "Social",
+    "backend": "account + nx-baas (BAAS/NPNS/Penne)",
+    "status": "partial",
+    "notes": "Delivery works: friends sysmodule -> BAAS (undocumented endpoint) -> NPNS/Penne push. Consume is broken: the game cannot join from an invite on any platform (invite-consume is a dead wire); Citron injects the join in tests, and the native invite applet SIGSEGVs on Citron. Multi-profile delivery still to document."
+  },
+  {
+    "kind": "feature",
+    "name": "Matchmaking",
+    "console": "Switch",
+    "category": "Session",
+    "backend": "Photon / NPLN / NEX",
+    "status": "partial",
+    "notes": "Photon (Outbound, Master->Game handoff) and NPLN (Stardew session documents) matchmaking work live. NEX matchmaking is built on the shared host but not console-verified."
+  },
+  {
+    "kind": "feature",
+    "name": "NAT traversal / relay",
+    "console": "Switch",
+    "category": "Session",
+    "backend": "node / coturn / Photon",
+    "status": "partial",
+    "notes": "Photon Fusion relay (Outbound) and NPLN TURN (Stardew, Pia peer-to-peer carried by coturn when NAT won't) work. NEX gameplay is peer-to-peer (auth returns the secure server, then consoles talk directly). The standalone nat-check helper is empty."
+  },
+  {
+    "kind": "feature",
+    "name": "Region node / federation",
+    "console": "Switch",
+    "category": "Infrastructure",
+    "backend": "node",
+    "status": "beta",
+    "notes": "One compose file: a Photon Game role + coturn per country, announcing rooms to openpak.org once a minute. Holds no durable state. Deployed shape exists; not broadly exercised."
+  },
+  {
+    "kind": "feature",
+    "name": "Cloud saves (SCSI)",
+    "console": "Switch",
+    "category": "Content",
+    "backend": "saves",
+    "status": "planned",
+    "notes": "Repository is empty. Nothing implemented. Console-facing SCSI handlers are to be a Go package the Switch adapter mounts on 21000. See prds/cloud-saves-prd.md."
+  },
+  {
+    "kind": "feature",
+    "name": "BCAT news",
+    "console": "Switch",
+    "category": "Content",
+    "backend": "news",
+    "status": "alpha",
+    "notes": "Platform-neutral news service being built. Patched-console experiment (2026-09-09) retrieved 155 decoded catalog bytes. Unpatched consoles are NO-GO. Plaintext comparison, Find Channels parsing and subscriptions still pending."
+  },
+  {
+    "kind": "feature",
+    "name": "Avatar / CDN",
+    "console": "Switch",
+    "category": "Content",
+    "backend": "nx-baas",
+    "status": "working",
+    "notes": "Default profile picture and avatar CDN served on the console-facing baas name; monitored green on the status page. Used by the console-link flow."
+  },
+  {
+    "kind": "feature",
+    "name": "NSO membership",
+    "console": "Switch",
+    "category": "Identity",
+    "backend": "nx-baas",
+    "status": "working",
+    "notes": "Served, and required for a console to host online. Proven in the end-to-end console-hosts / Citron-joins run."
+  },
+  {
+    "kind": "feature",
+    "name": "dauth / aauth / dcert",
+    "console": "Switch",
+    "category": "Identity",
+    "backend": "nx-baas",
+    "status": "working",
+    "notes": "Device auth served and monitored (dauth challenge is green). The console-link flow depends on it and works. Dragons licence service also served (monitored)."
+  },
+  {
+    "kind": "feature",
+    "name": "Switch eShop access for homebrew / mods",
+    "console": "Switch",
+    "category": "Content",
+    "backend": "mods",
+    "status": "planned",
+    "notes": "mods repository is empty (no README, no code). See prds/mods-prd.md."
+  },
+  {
+    "kind": "feature",
+    "name": "Switch network",
+    "console": "Switch",
+    "category": "Console network",
+    "backend": "nx-baas + servers (NEX/NPLN)",
+    "status": "working",
+    "notes": "The live network: accounts, link, friends, avatar, NSO, device auth and online play against another machine, no Nintendo service in the path. networks.go marks it live."
+  },
+  {
+    "kind": "feature",
+    "name": "Wii U network",
+    "console": "Wii U",
+    "category": "Console network",
+    "backend": "nn-account + nn-friends (NNAS/NEX)",
+    "status": "alpha",
+    "notes": "Go rewrite over the OpenPak core, forked from Pretendo account+friends (AGPL, depend+fork). nn-account M2 in progress, parts still TypeScript. Not deployed. networks.go: building."
+  },
+  {
+    "kind": "feature",
+    "name": "3DS network",
+    "console": "3DS",
+    "category": "Console network",
+    "backend": "nn-account + nn-friends (NNAS/NASC)",
+    "status": "alpha",
+    "notes": "Same Pretendo-derived adapters as Wii U. Being built, not deployed. networks.go: building."
+  },
+  {
+    "kind": "feature",
+    "name": "Wii network",
+    "console": "Wii",
+    "category": "Console network",
+    "backend": "Nintendo WFC / GameSpy",
+    "status": "planned",
+    "notes": "No adapter yet. Reuse base: WiiLink24/wfc-server (Go, open, live, GameSpy-style). Wiimmfi is closed-source."
+  },
+  {
+    "kind": "feature",
+    "name": "Nintendo DS network",
+    "console": "DS",
+    "category": "Console network",
+    "backend": "Nintendo WFC / GameSpy",
+    "status": "planned",
+    "notes": "No adapter yet. Same WiiLink24/wfc-server (Go) covers DS alongside Wii."
+  },
+  {
+    "kind": "feature",
+    "name": "Xbox (original) network",
+    "console": "Xbox",
+    "category": "Console network",
+    "backend": "Xbox Live 1.0",
+    "status": "planned",
+    "notes": "No adapter yet; would be a from-scratch Xbox Live 1.0 reimpl (first-wave repo xbox-live: Kerberos auth, presence, matchmaking). XboxLive.Server (archived) documents the Kerberos AS-REQ/REP; Insignia is closed (client tools only). Emulator-first (xemu)."
+  },
+  {
+    "kind": "feature",
+    "name": "Xbox 360 network",
+    "console": "Xbox 360",
+    "category": "Console network",
+    "backend": "Xbox Live",
+    "status": "planned",
+    "notes": "No adapter yet. Xenia-WebServices (MIT, NestJS) is the only open Xbox Live-like backend; plan is a Go reimpl of its REST API (x360-live), emulator-first via a Xenia netplay fork. Real-hardware stealth servers are out of scope."
+  },
+  {
+    "kind": "feature",
+    "name": "PSP network",
+    "console": "PSP",
+    "category": "Console network",
+    "backend": "PSN / ad-hoc",
+    "status": "planned",
+    "notes": "No adapter yet. Ad-hoc reference: aemu / Pro Online (GPL). Medius-era services via MultiServer3 (GPL-3.0). Emulator-first (PPSSPP)."
+  },
+  {
+    "kind": "feature",
+    "name": "PS2 network",
+    "console": "PS2",
+    "category": "Console network",
+    "backend": "Medius / GameSpy",
+    "status": "planned",
+    "notes": "No adapter yet. Reuse candidates: MultiServer3 (GPL-3.0, Medius/SVO/PS Home), Horizon (MIT, Medius), OpenSpy (GameSpy backend)."
+  },
+  {
+    "kind": "feature",
+    "name": "PS3 network",
+    "console": "PS3",
+    "category": "Console network",
+    "backend": "PSN",
+    "status": "planned",
+    "notes": "No adapter yet. Plan: a Go server wire-compatible with RPCN (AGPL, Rust) so stock RPCS3 connects — emulator-first. Per-title servers to federate rather than rebuild: ProjectLighthouse (LBP, AGPL), MultiServer3 (GPL-3.0). Hardware waits on Phony Network or own RE."
+  },
+  {
+    "kind": "feature",
+    "name": "PS Vita network",
+    "console": "Vita",
+    "category": "Console network",
+    "backend": "PSN",
+    "status": "planned",
+    "notes": "No adapter yet. ProjectLighthouse covers Vita LBP; Phony Network (Pretendo team) is announced for PS3+Vita but has published no code. Emulator/hardware both unproven."
+  }
+]

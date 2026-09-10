@@ -4,48 +4,50 @@
   <p>{{t .Lang "features.sub"}}</p>
 </div>
 
-<section aria-labelledby="acct-h">
-  <div class="section-head"><h2 id="acct-h">{{t .Lang "features.accounts"}}</h2></div>
-  <div class="table-wrap">
-  <table>
-    <thead><tr><th scope="col">{{t .Lang "features.col.feature"}}</th><th scope="col">{{t .Lang "features.col.state"}}</th></tr></thead>
-    <tbody>
-      <tr><td><b>{{t .Lang "features.a1"}}</b><br><span class="sub">{{t .Lang "features.a1.d"}}</span></td><td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge ok">{{t .Lang "features.live"}}</span></td></tr>
-      <tr><td><b>{{t .Lang "features.a2"}}</b><br><span class="sub">{{t .Lang "features.a2.d"}}</span></td><td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge ok">{{t .Lang "features.live"}}</span></td></tr>
-      <tr><td><b>{{t .Lang "features.a3"}}</b><br><span class="sub">{{t .Lang "features.a3.d"}}</span></td><td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge ok">{{t .Lang "features.live"}}</span></td></tr>
-      <tr><td><b>{{t .Lang "features.a4"}}</b><br><span class="sub">{{t .Lang "features.a4.d"}}</span></td><td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge ok">{{t .Lang "features.live"}}</span></td></tr>
-    </tbody>
-  </table>
-  </div>
-</section>
+<section aria-labelledby="feat-h">
+  <div class="section-head"><h2 id="feat-h" class="sr-only">{{t .Lang "features.title"}}</h2></div>
 
-<section aria-labelledby="play-h">
-  <div class="section-head"><h2 id="play-h">{{t .Lang "features.play"}}</h2></div>
-  <div class="table-wrap">
-  <table>
-    <thead><tr><th scope="col">{{t .Lang "features.col.feature"}}</th><th scope="col">{{t .Lang "features.col.state"}}</th></tr></thead>
-    <tbody>
-      <tr><td><b>{{t .Lang "features.p1"}}</b><br><span class="sub">{{t .Lang "features.p1.d"}}</span></td><td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge ok">{{t .Lang "features.live"}}</span></td></tr>
-      <tr><td><b>{{t .Lang "features.p2"}}</b><br><span class="sub">{{t .Lang "features.p2.d"}}</span></td><td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.wip"}}</span></td></tr>
-      <tr><td><b>{{t .Lang "features.p3"}}</b><br><span class="sub">{{t .Lang "features.p3.d"}}</span></td><td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.planned"}}</span></td></tr>
-      <tr><td><b>{{t .Lang "features.p4"}}</b><br><span class="sub">{{t .Lang "features.p4.d"}}</span></td><td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.planned"}}</span></td></tr>
-    </tbody>
-  </table>
-  </div>
-</section>
+  {{if not .User}}<p class="mb-4 card p-4 text-sm text-muted">{{t .Lang "requests.scoreboard"}}</p>{{end}}
 
-<section aria-labelledby="run-h">
-  <div class="section-head"><h2 id="run-h">{{t .Lang "features.running"}}</h2></div>
+  <div class="mb-4 flex flex-wrap gap-2">
+    <a class="btn text-sm {{if not .ByVotes}}primary{{end}}" href="/features">{{t .Lang "requests.bystatus"}}</a>
+    <a class="btn text-sm {{if .ByVotes}}primary{{end}}" href="/features?sort=votes">{{t .Lang "requests.top"}}</a>
+  </div>
+
+  {{with .Features}}
   <div class="table-wrap">
   <table>
-    <thead><tr><th scope="col">{{t .Lang "features.col.feature"}}</th><th scope="col">{{t .Lang "features.col.state"}}</th></tr></thead>
+    <thead><tr>
+      <th scope="col">{{t $.Lang "features.col.feature"}}</th>
+      <th scope="col">{{t $.Lang "features.col.state"}}</th>
+      <th scope="col">{{t $.Lang "features.col.votes"}}</th>
+    </tr></thead>
     <tbody>
-      <tr><td><b>{{t .Lang "features.r1"}}</b><br><span class="sub">{{t .Lang "features.r1.d"}}</span></td><td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge ok">{{t .Lang "features.live"}}</span></td></tr>
-      <tr><td><b>{{t .Lang "features.r2"}}</b><br><span class="sub">{{t .Lang "features.r2.d"}}</span></td><td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge ok">{{t .Lang "features.live"}}</span></td></tr>
-      <tr><td><b>{{t .Lang "features.r3"}}</b><br><span class="sub">{{t .Lang "features.r3.d"}}</span></td><td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.wip"}}</span></td></tr>
+      {{range .}}
+      <tr>
+        <td><b>{{.Name}}</b><br><span class="sub">{{.Category}} · {{.Console}}</span></td>
+        <td><span class="cl">{{t $.Lang "features.col.state"}}: </span><span class="badge">{{.Status}}</span></td>
+        <td>
+          {{if $.User}}
+          <form method="post" action="/request/vote">
+            <input type="hidden" name="csrf" value="{{$.CSRF}}">
+            <input type="hidden" name="id" value="{{.ID}}">
+            <input type="hidden" name="back" value="{{$.Back}}">
+            <button type="submit" class="btn text-sm {{if .Voted}}primary{{end}}"
+              aria-pressed="{{if .Voted}}true{{else}}false{{end}}">
+              {{if .Voted}}{{t $.Lang "requests.voted"}}{{else}}{{t $.Lang "requests.vote"}}{{end}} · {{.Votes}}
+            </button>
+          </form>
+          {{else}}
+          <span class="text-sm text-muted" title="{{t $.Lang "requests.signin"}}">{{.Votes}} {{t $.Lang "requests.votes"}}</span>
+          {{end}}
+        </td>
+      </tr>
+      {{end}}
     </tbody>
   </table>
   </div>
+  {{else}}<p class="mt-5 card p-4 text-muted">{{t $.Lang "features.next.body"}}</p>{{end}}
 </section>
 
 <section aria-labelledby="next-h">

@@ -81,8 +81,9 @@ type Store interface {
 	UpsertMedia(ctx context.Context, m MediaRecord) error
 	GetMedia(ctx context.Context, accountID, kind string) (MediaRecord, error)
 
-	ListTitles(ctx context.Context) ([]Title, error)
-	SeedTitles(ctx context.Context, titles []Title) error
+	ListRequests(ctx context.Context, kind, viewerAccountID string) ([]Request, error)
+	SeedRequests(ctx context.Context, reqs []Request) error
+	ToggleVote(ctx context.Context, requestID int64, accountID string) (bool, error)
 
 	SavePushToken(ctx context.Context, accountID, token, platform string) error
 	DeletePushToken(ctx context.Context, token string) error
@@ -97,13 +98,6 @@ type Store interface {
 type PushToken struct {
 	Token    string
 	Platform string // "fcm" today; the column exists so a second transport needs no migration
-}
-
-// Title is one supported title row for the landing page.
-type Title struct {
-	Name     string
-	Platform string
-	Status   string // "supported" | "beta" | "planned"
 }
 
 // PG is the Postgres-backed Store.

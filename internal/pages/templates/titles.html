@@ -7,6 +7,13 @@
 <section aria-labelledby="titles-h">
   <div class="section-head"><h2 id="titles-h" class="sr-only">{{t .Lang "titles.title"}}</h2></div>
 
+  {{if not .User}}<p class="mb-4 card p-4 text-sm text-muted">{{t .Lang "requests.scoreboard"}}</p>{{end}}
+
+  <div class="mb-4 flex flex-wrap gap-2">
+    <a class="btn text-sm {{if not .ByVotes}}primary{{end}}" href="/titles">{{t .Lang "requests.bystatus"}}</a>
+    <a class="btn text-sm {{if .ByVotes}}primary{{end}}" href="/titles?sort=votes">{{t .Lang "requests.top"}}</a>
+  </div>
+
   <form class="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3" role="search" aria-label="{{t .Lang "titles.title"}}">
     <label class="flex flex-col gap-1 text-sm text-ink-2">
       <span>{{t .Lang "titles.search"}}</span>
@@ -34,10 +41,25 @@
   <ul id="titles-list" class="card list-none divide-y divide-line p-0">
     {{range .}}
     <li class="titles-row flex flex-wrap items-center gap-x-3 gap-y-1 p-4"
-        data-name="{{.Name}}" data-console="{{.Platform}}" data-status="{{.Status}}">
+        data-name="{{.Name}}" data-console="{{.Console}}" data-status="{{.Status}}">
       <span class="font-semibold break-anywhere">{{.Name}}</span>
-      <span class="badge ml-auto">{{.Status}}</span>
-      <span class="w-full text-sm text-muted">{{.Platform}}</span>
+      <span class="badge">{{.Status}}</span>
+      <span class="ml-auto">
+        {{if $.User}}
+        <form method="post" action="/request/vote">
+          <input type="hidden" name="csrf" value="{{$.CSRF}}">
+          <input type="hidden" name="id" value="{{.ID}}">
+          <input type="hidden" name="back" value="{{$.Back}}">
+          <button type="submit" class="btn text-sm {{if .Voted}}primary{{end}}"
+            aria-pressed="{{if .Voted}}true{{else}}false{{end}}">
+            {{if .Voted}}{{t $.Lang "requests.voted"}}{{else}}{{t $.Lang "requests.vote"}}{{end}} · {{.Votes}}
+          </button>
+        </form>
+        {{else}}
+        <span class="text-sm text-muted" title="{{t $.Lang "requests.signin"}}">{{.Votes}} {{t $.Lang "requests.votes"}}</span>
+        {{end}}
+      </span>
+      <span class="w-full text-sm text-muted">{{.Console}}</span>
     </li>
     {{end}}
   </ul>

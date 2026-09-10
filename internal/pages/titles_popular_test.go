@@ -7,7 +7,7 @@ import (
 )
 
 func TestPopularTitles(t *testing.T) {
-	all := []store.Title{
+	all := []store.Request{
 		{Name: "ARMS"},
 		{Name: "Splatoon 3"},
 		{Name: "Mario Kart 8 Deluxe"},

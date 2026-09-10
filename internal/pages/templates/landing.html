@@ -50,7 +50,7 @@
     <li class="flex flex-wrap items-center gap-x-3 gap-y-1 p-4">
       <span class="font-semibold break-anywhere">{{.Name}}</span>
       <span class="badge ml-auto">{{.Status}}</span>
-      <span class="w-full text-sm text-muted">{{.Platform}}</span>
+      <span class="w-full text-sm text-muted">{{.Console}}</span>
     </li>
     {{end}}
   </ul>
@@ -66,7 +66,7 @@
       {{range .}}
       <tr class="border-b border-line last:border-0">
         <td class="py-3 pr-4 font-medium">{{.Name}}</td>
-        <td class="py-3 pr-4 text-ink-2">{{.Platform}}</td>
+        <td class="py-3 pr-4 text-ink-2">{{.Console}}</td>
         <td class="py-3"><span class="badge">{{.Status}}</span></td>
       </tr>
       {{end}}

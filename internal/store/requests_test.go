@@ -1,0 +1,115 @@
+package store
+
+import (
+	"context"
+	"testing"
+)
+
+// idOf finds a seeded request's id by name (memory assigns ids on seed).
+func idOf(t *testing.T, m *Memory, name string) int64 {
+	t.Helper()
+	reqs, _ := m.ListRequests(context.Background(), "", "")
+	for _, r := range reqs {
+		if r.Name == name {
+			return r.ID
+		}
+	}
+	t.Fatalf("no request named %q", name)
+	return 0
+}
+
+func TestCatalogParses(t *testing.T) {
+	reqs, err := CatalogRequests()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(reqs) < 40 {
+		t.Fatalf("catalog has %d entries; expected the full list", len(reqs))
+	}
+	var titles, features int
+	for _, r := range reqs {
+		switch r.Kind {
+		case "title":
+			titles++
+		case "feature":
+			features++
+		default:
+			t.Errorf("unexpected kind %q for %q", r.Kind, r.Name)
+		}
+	}
+	if titles == 0 || features == 0 {
+		t.Fatalf("expected both titles and features, got %d/%d", titles, features)
+	}
+}
+
+func TestVoteToggleOnePerAccountIdempotent(t *testing.T) {
+	ctx := context.Background()
+	m := NewMemory()
+	if err := m.SeedRequests(ctx, []Request{
+		{Kind: "title", Name: "Tetris 99", Status: "requestable", Sort: 1},
+		{Kind: "title", Name: "Rocket League", Status: "requestable", Sort: 2},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	id := idOf(t, m, "Tetris 99")
+
+	// First vote from A: voted=true, count=1.
+	if v, _ := m.ToggleVote(ctx, id, "acct-a"); !v {
+		t.Fatal("first vote should report voted=true")
+	}
+	// B votes too: count=2.
+	if v, _ := m.ToggleVote(ctx, id, "acct-b"); !v {
+		t.Fatal("B's vote should report voted=true")
+	}
+	reqs, _ := m.ListRequests(ctx, "title", "acct-a")
+	for _, r := range reqs {
+		if r.ID == id {
+			if r.Votes != 2 {
+				t.Errorf("votes = %d, want 2", r.Votes)
+			}
+			if !r.Voted {
+				t.Error("A should read voted=true")
+			}
+		}
+	}
+	// A toggles again: unvote → count back to 1, and A no longer voted.
+	if v, _ := m.ToggleVote(ctx, id, "acct-a"); v {
+		t.Fatal("second toggle from A should report voted=false")
+	}
+	reqs, _ = m.ListRequests(ctx, "title", "acct-a")
+	for _, r := range reqs {
+		if r.ID == id {
+			if r.Votes != 1 {
+				t.Errorf("after unvote votes = %d, want 1", r.Votes)
+			}
+			if r.Voted {
+				t.Error("A should read voted=false after unvote")
+			}
+		}
+	}
+}
+
+// Reseeding refreshes status but never wipes votes (they are user data).
+func TestReseedPreservesVotes(t *testing.T) {
+	ctx := context.Background()
+	m := NewMemory()
+	_ = m.SeedRequests(ctx, []Request{{Kind: "title", Name: "Among Us", Status: "alpha", Sort: 1}})
+	id := idOf(t, m, "Among Us")
+	_, _ = m.ToggleVote(ctx, id, "acct-a")
+
+	// Reseed with a new status.
+	_ = m.SeedRequests(ctx, []Request{{Kind: "title", Name: "Among Us", Status: "beta", Sort: 1}})
+	reqs, _ := m.ListRequests(ctx, "title", "acct-a")
+	if len(reqs) != 1 {
+		t.Fatalf("reseed duplicated the row: %d rows", len(reqs))
+	}
+	if reqs[0].Status != "beta" {
+		t.Errorf("status = %q, want refreshed to beta", reqs[0].Status)
+	}
+	if reqs[0].Votes != 1 || !reqs[0].Voted {
+		t.Errorf("reseed lost the vote: votes=%d voted=%v", reqs[0].Votes, reqs[0].Voted)
+	}
+	if reqs[0].ID != id {
+		t.Errorf("reseed changed the id: %d -> %d", id, reqs[0].ID)
+	}
+}
