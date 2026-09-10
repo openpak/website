@@ -89,7 +89,10 @@
   </div>
   {{end}}
 
-  <details class="mb-9" {{if or (not .Storage.Connected) (eq .Storage.Kind "s3")}}open{{end}}>
+  <details class="mb-9" {{if or (eq .Storage.Kind "s3") (eq .Storage.Kind "webdav") (not (or (index .Kinds "gdrive") (index .Kinds "onedrive")))}}open{{end}}>
+    <summary class="btn">{{t .Lang "saves.storage.advanced"}}</summary>
+    <p class="hint mt-6">{{t .Lang "saves.storage.advanced.hint"}}</p>
+  <details class="mb-9" {{if eq .Storage.Kind "s3"}}open{{end}}>
     <summary class="btn">{{t .Lang "saves.storage.s3"}}</summary>
   <form method="post" action="/account/saves/storage" class="form-stack mt-6" autocomplete="off">
     <input type="hidden" name="csrf" value="{{.CSRF}}">
@@ -130,6 +133,7 @@
   </form>
   </details>
 
+  </details>
   <p class="hint">{{t .Lang "saves.storage.presets"}}</p>
   <ul class="rows">
     {{range .Presets}}<li><span class="name">{{.Name}}</span><span class="sub"><code>{{.Endpoint}}</code> · {{.Region}}{{if .Hint}} · {{.Hint}}{{end}}</span></li>{{end}}
