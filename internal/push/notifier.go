@@ -134,6 +134,14 @@ func (n *Notifier) compose(ctx context.Context, e core.Event) (title, body strin
 		return "Friend request", who + " wants to be friends",
 			map[string]string{"type": "friend_request", "account_id": e.SubjectID}
 
+	case "friend_accepted":
+		who := "Someone"
+		if acct, err := n.Identity.GetAccount(ctx, e.SubjectID); err == nil && acct.DisplayName != "" {
+			who = acct.DisplayName
+		}
+		return "Friend request accepted", who + " is now your friend",
+			map[string]string{"type": "friend_accepted", "account_id": e.SubjectID}
+
 	case "invitation_sent":
 		// The event names the invitation, not its sender; the inbox knows who
 		// it is from, and reading it consumes nothing.
