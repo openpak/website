@@ -41,8 +41,8 @@
     </li>
     {{end}}
   </ul>
-  <p id="titles-empty" class="mt-5 card p-4 text-muted" hidden>{{t .Lang "titles.none"}}</p>
-  {{else}}<p class="mt-5 card p-4 text-muted">{{t .Lang "landing.titles.none"}}</p>{{end}}
+  <p id="titles-empty" class="mt-5 card p-4 text-muted" hidden>{{t $.Lang "titles.none"}}</p>
+  {{else}}<p class="mt-5 card p-4 text-muted">{{t $.Lang "landing.titles.none"}}</p>{{end}}
 </section>
 
 <script src="/static/titles.js?v={{.Asset}}"></script>
