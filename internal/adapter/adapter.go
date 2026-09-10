@@ -8,9 +8,11 @@
 package adapter
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -57,4 +59,85 @@ func (c *Client) FriendCode(ctx context.Context, accountID string) string {
 		return ""
 	}
 	return out.FriendCode
+}
+
+// get performs one internal-key GET and decodes JSON into out. A nil client or any failure is
+// an error: unlike FriendCode, these callers must not render a blank instead.
+func (c *Client) get(ctx context.Context, path string, out any) error {
+	if c == nil {
+		return fmt.Errorf("switch adapter not configured")
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+path, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+c.Key)
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("adapter: %s", resp.Status)
+	}
+	return json.NewDecoder(resp.Body).Decode(out)
+}
+
+// Emulator is the Switch identity of an account as an emulator needs it: PID, friend code,
+// the openpak token, and the friend graph with presence. Returned as the adapter sent it.
+func (c *Client) Emulator(ctx context.Context, accountID string) (map[string]any, error) {
+	var out map[string]any
+	err := c.get(ctx, "/internal/switch/emulator?account_id="+url.QueryEscape(accountID), &out)
+	return out, err
+}
+
+// EmulatorFriend performs a friend action for an account by PID or friend code.
+func (c *Client) EmulatorFriend(ctx context.Context, accountID, action string, pid uint64, friendCode string) error {
+	if c == nil {
+		return fmt.Errorf("switch adapter not configured")
+	}
+	body, _ := json.Marshal(map[string]any{"account_id": accountID, "action": action, "pid": pid, "friend_code": friendCode})
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+"/internal/switch/emulator/friend", bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+c.Key)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		var e struct {
+			Error string `json:"error"`
+		}
+		_ = json.NewDecoder(resp.Body).Decode(&e)
+		if e.Error == "" {
+			e.Error = resp.Status
+		}
+		return fmt.Errorf("%s", e.Error)
+	}
+	return nil
+}
+
+// CA is the PEM of the CA the console-facing certificates chain to.
+func (c *Client) CA(ctx context.Context) ([]byte, error) {
+	if c == nil {
+		return nil, fmt.Errorf("switch adapter not configured")
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"/internal/switch/ca", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+c.Key)
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("adapter: %s", resp.Status)
+	}
+	return io.ReadAll(io.LimitReader(resp.Body, 1<<16))
 }

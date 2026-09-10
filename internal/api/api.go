@@ -81,6 +81,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	d("/me/sessions/{id}", s.auth(s.handleRevokeSession))
 	g("/me/friends", s.auth(s.handleFriends)) // GET /api/v1/me/friends
 	s.registerSaves(mux)
+	s.registerEmulator(mux)
 	g("/me/friends/requests", s.auth(s.handleRequests))
 	h("/me/friends/requests", s.auth(s.handleSendRequest)) // POST: add by friend code
 	h("/me/friends/requests/accept", s.auth(s.handleAccept))
