@@ -529,5 +529,887 @@
     "backend": "PSN",
     "status": "planned",
     "notes": "No adapter yet. ProjectLighthouse covers Vita LBP; Phony Network (Pretendo team) is announced for PS3+Vita but has published no code. Emulator/hardware both unproven."
+  },
+  {
+    "kind": "title",
+    "name": "Dragon Ball FighterZ",
+    "console": "Switch",
+    "category": "Fighting — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Bandai Namco. online ranked/casual versus; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Ultra Street Fighter II: The Final Challengers",
+    "console": "Switch",
+    "category": "Fighting — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Capcom. online versus; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Mortal Kombat 11",
+    "console": "Switch",
+    "category": "Fighting — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Warner Bros.. online versus/king of the hill; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Mortal Kombat 1",
+    "console": "Switch",
+    "category": "Fighting — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Warner Bros.. online versus; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Brawlhalla",
+    "console": "Switch",
+    "category": "Fighting — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Ubisoft. free-to-play online platform fighter; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Nickelodeon All-Star Brawl 2",
+    "console": "Switch",
+    "category": "Fighting — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: GameMill. online versus; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "BlazBlue: Cross Tag Battle",
+    "console": "Switch",
+    "category": "Fighting — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Arc System Works. online versus; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Power Rangers: Battle for the Grid",
+    "console": "Switch",
+    "category": "Fighting — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: nWay. online cross-play versus; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Samurai Shodown",
+    "console": "Switch",
+    "category": "Fighting — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: SNK. online versus; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Naruto x Boruto Ultimate Ninja Storm Connections",
+    "console": "Switch",
+    "category": "Fighting — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Bandai Namco. online versus; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Rivals of Aether",
+    "console": "Switch",
+    "category": "Fighting — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Dan Fornace. online platform fighter; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Under Night In-Birth Exe:Late[cl-r]",
+    "console": "Switch",
+    "category": "Fighting — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Arc System Works. online versus; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Dragon Ball Xenoverse 2",
+    "console": "Switch",
+    "category": "Fighting/co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Bandai Namco. online lobbies, co-op raids and versus; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Team Sonic Racing",
+    "console": "Switch",
+    "category": "Racing — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Sega. online team racing; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Fast RMX",
+    "console": "Switch",
+    "category": "Racing — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Shin'en. online racing; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Cruis'n Blast",
+    "console": "Switch",
+    "category": "Racing — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: GameMill/Raw Thrills. online racing (post-launch); backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Disney Speedstorm",
+    "console": "Switch",
+    "category": "Racing — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Gameloft. free-to-play online racing; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Nickelodeon Kart Racers 3: Slime Speedway",
+    "console": "Switch",
+    "category": "Racing — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: GameMill. online racing; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Hotshot Racing",
+    "console": "Switch",
+    "category": "Racing — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Curve Games. online racing; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Chocobo GP",
+    "console": "Switch",
+    "category": "Racing — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Square Enix. online racing; online service shut down 2023; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Redout 2",
+    "console": "Switch",
+    "category": "Racing — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Saber Interactive. online racing; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Fortnite",
+    "console": "Switch",
+    "category": "Shooter/battle royale",
+    "backend": "Epic/EOS",
+    "status": "requestable",
+    "notes": "Publisher: Epic Games. battle royale + creative; Epic Online Services."
+  },
+  {
+    "kind": "title",
+    "name": "Apex Legends",
+    "console": "Switch",
+    "category": "Shooter/battle royale",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: EA/Respawn. battle royale, cross-play; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Overwatch 2",
+    "console": "Switch",
+    "category": "Shooter — versus",
+    "backend": "Battle.net",
+    "status": "requestable",
+    "notes": "Publisher: Blizzard. online hero shooter; Blizzard Battle.net."
+  },
+  {
+    "kind": "title",
+    "name": "Paladins",
+    "console": "Switch",
+    "category": "Shooter — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Hi-Rez. free-to-play hero shooter; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Rogue Company",
+    "console": "Switch",
+    "category": "Shooter — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Hi-Rez. online team shooter; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Warface: Clutch",
+    "console": "Switch",
+    "category": "Shooter — versus/co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: My.Games. free-to-play shooter, PvP + co-op; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "DOOM Eternal",
+    "console": "Switch",
+    "category": "Shooter — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Bethesda/id. Battlemode online versus; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Borderlands 3",
+    "console": "Switch",
+    "category": "Shooter — co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: 2K/Gearbox. online co-op looter-shooter; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Wolfenstein: Youngblood",
+    "console": "Switch",
+    "category": "Shooter — co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Bethesda. online co-op; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Payday 2",
+    "console": "Switch",
+    "category": "Shooter — co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Starbreeze. 4-player online co-op heists; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Pac-Man 99",
+    "console": "Switch",
+    "category": "Battle royale",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Bandai Namco. 99-player battle royale; delisted 2023; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "F-Zero 99",
+    "console": "Switch",
+    "category": "Battle royale",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Nintendo. 99-player online racing (NSO); backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Super Mario Party Jamboree",
+    "console": "Switch",
+    "category": "Party",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Nintendo. online board and minigames; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "WarioWare: Get It Together!",
+    "console": "Switch",
+    "category": "Party/co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Nintendo. online co-op microgames; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Jackbox Party Pack (series)",
+    "console": "Switch",
+    "category": "Party",
+    "backend": "Room-code (web)",
+    "status": "requestable",
+    "notes": "Publisher: Jackbox Games. players join via a room code and phone browser, not console identity."
+  },
+  {
+    "kind": "title",
+    "name": "Uno",
+    "console": "Switch",
+    "category": "Card",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Ubisoft. online card play; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Monopoly Madness",
+    "console": "Switch",
+    "category": "Board",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Ubisoft. online board; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Yu-Gi-Oh! Master Duel",
+    "console": "Switch",
+    "category": "Card",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Konami. online card duels; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Yu-Gi-Oh! Legacy of the Duelist: Link Evolution",
+    "console": "Switch",
+    "category": "Card",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Konami. online card duels; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Trivial Pursuit Live!",
+    "console": "Switch",
+    "category": "Board/trivia",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Ubisoft. online trivia; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Wheel of Fortune / Jeopardy!",
+    "console": "Switch",
+    "category": "Board/trivia",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Ubisoft. online trivia; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "EA Sports FC 24",
+    "console": "Switch",
+    "category": "Sports — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: EA. online friendlies/versus; backend unconfirmed (EA/Blaze?)."
+  },
+  {
+    "kind": "title",
+    "name": "NBA 2K24",
+    "console": "Switch",
+    "category": "Sports — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: 2K. online versus; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Super Mega Baseball 4",
+    "console": "Switch",
+    "category": "Sports — versus/co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: EA. online versus and co-op; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Windjammers 2",
+    "console": "Switch",
+    "category": "Sports — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Dotemu. online versus; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Captain Tsubasa: Rise of New Champions",
+    "console": "Switch",
+    "category": "Sports — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Bandai Namco. online football versus; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Golf With Your Friends",
+    "console": "Switch",
+    "category": "Sports — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Team17. online multiplayer golf; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Diablo III: Eternal Collection",
+    "console": "Switch",
+    "category": "RPG — co-op",
+    "backend": "Battle.net",
+    "status": "requestable",
+    "notes": "Publisher: Blizzard. online co-op action-RPG; Blizzard Battle.net."
+  },
+  {
+    "kind": "title",
+    "name": "Diablo II: Resurrected",
+    "console": "Switch",
+    "category": "RPG — co-op",
+    "backend": "Battle.net",
+    "status": "requestable",
+    "notes": "Publisher: Blizzard. online co-op; Blizzard Battle.net."
+  },
+  {
+    "kind": "title",
+    "name": "Monster Hunter Stories 2: Wings of Ruin",
+    "console": "Switch",
+    "category": "RPG — versus/co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Capcom. online co-op expeditions and versus; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Dragon Quest X Offline / Online",
+    "console": "Switch",
+    "category": "MMO",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Square Enix. Japan-only MMO (online); backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Final Fantasy Crystal Chronicles Remastered",
+    "console": "Switch",
+    "category": "RPG — co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Square Enix. online co-op; online service ended 2024; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Divinity: Original Sin 2 — Definitive Edition",
+    "console": "Switch",
+    "category": "RPG — co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Larian. online co-op, cross-play with PC; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Temtem",
+    "console": "Switch",
+    "category": "MMO",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Humble/Crema. creature-collecting MMO; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Palia",
+    "console": "Switch",
+    "category": "MMO",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Singularity 6. free-to-play cozy MMO; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Pokemon UNITE",
+    "console": "Switch",
+    "category": "MOBA",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: The Pokemon Company/TiMi. free-to-play 5v5 MOBA; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Torchlight III",
+    "console": "Switch",
+    "category": "RPG — co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Perfect World. online co-op action-RPG; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Portal Knights",
+    "console": "Switch",
+    "category": "RPG — co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: 505 Games. online co-op sandbox RPG; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Dragon Marked for Death",
+    "console": "Switch",
+    "category": "RPG — co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Inti Creates. 4-player online co-op; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Bloodstained: Ritual of the Night",
+    "console": "Switch",
+    "category": "RPG — co-op/versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: 505 Games. online co-op and versus modes; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Overcooked! 2",
+    "console": "Switch",
+    "category": "Co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Team17. online co-op cooking; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Moving Out 2",
+    "console": "Switch",
+    "category": "Co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Team17. online co-op; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "It Takes Two",
+    "console": "Switch",
+    "category": "Co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: EA/Hazelight. two-player online co-op (Friend's Pass); backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Human: Fall Flat",
+    "console": "Switch",
+    "category": "Co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Curve Games. online co-op physics puzzles; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Gang Beasts",
+    "console": "Switch",
+    "category": "Versus/co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Boneloaf/Skybound. online versus; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Streets of Rage 4",
+    "console": "Switch",
+    "category": "Co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Dotemu. online co-op beat-'em-up; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Teenage Mutant Ninja Turtles: Shredder's Revenge",
+    "console": "Switch",
+    "category": "Co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Dotemu. 6-player online co-op; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "River City Girls 2",
+    "console": "Switch",
+    "category": "Co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: WayForward/Arc System Works. online co-op beat-'em-up; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Castle Crashers Remastered",
+    "console": "Switch",
+    "category": "Co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: The Behemoth. online co-op; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Risk of Rain 2",
+    "console": "Switch",
+    "category": "Co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Gearbox. online co-op roguelike; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Risk of Rain Returns",
+    "console": "Switch",
+    "category": "Co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Gearbox. online co-op; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Nine Parchments",
+    "console": "Switch",
+    "category": "Co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Frozenbyte. online co-op; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Trine 4: The Nightmare Prince",
+    "console": "Switch",
+    "category": "Co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Frozenbyte. online co-op; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Ultimate Chicken Horse",
+    "console": "Switch",
+    "category": "Versus/co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Clever Endeavour. online party platformer; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Duck Game",
+    "console": "Switch",
+    "category": "Versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Adult Swim Games. online versus; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Boomerang Fu",
+    "console": "Switch",
+    "category": "Versus/co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Cranky Watermelon. online party brawler; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Pico Park",
+    "console": "Switch",
+    "category": "Co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: TECOPARK. online co-op puzzles; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Unrailed!",
+    "console": "Switch",
+    "category": "Co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Indoor Astronaut. online co-op; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Killer Queen Black",
+    "console": "Switch",
+    "category": "Versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Liquid Bit/BumbleBear. 4v4 online versus; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Cake Bash",
+    "console": "Switch",
+    "category": "Versus/co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Coatsink. online party game; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Spelunky 2",
+    "console": "Switch",
+    "category": "Co-op/versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Mossmouth. online co-op and versus; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Terraria",
+    "console": "Switch",
+    "category": "Survival/sandbox",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Re-Logic/505 Games. online co-op/versus sandbox; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Don't Starve Together",
+    "console": "Switch",
+    "category": "Survival — co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Klei. online co-op survival; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "ARK: Survival Evolved",
+    "console": "Switch",
+    "category": "Survival — co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Studio Wildcard. online survival; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "No Man's Sky",
+    "console": "Switch",
+    "category": "Survival/sandbox",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Hello Games. online co-op exploration; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Dragon Quest Builders 2",
+    "console": "Switch",
+    "category": "Sandbox — co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Square Enix. online co-op building; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "The Survivalists",
+    "console": "Switch",
+    "category": "Survival — co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Team17. online co-op survival; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Farming Simulator 23",
+    "console": "Switch",
+    "category": "Simulation — co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Giants Software. online co-op farming; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "PowerWash Simulator",
+    "console": "Switch",
+    "category": "Simulation — co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Square Enix/FuturLab. online co-op; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Disney Dreamlight Valley",
+    "console": "Switch",
+    "category": "Life sim",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Gameloft. online multiplayer (Valley visits); backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Sid Meier's Civilization VI",
+    "console": "Switch",
+    "category": "Strategy — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: 2K/Firaxis. online multiplayer 4X; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Wargroove 2",
+    "console": "Switch",
+    "category": "Strategy — versus/co-op",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Chucklefish. online versus and co-op; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Advance Wars 1+2: Re-Boot Camp",
+    "console": "Switch",
+    "category": "Strategy — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Nintendo. online versus; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Arena of Valor",
+    "console": "Switch",
+    "category": "MOBA",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Tencent/TiMi. free-to-play 5v5 MOBA; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Worms W.M.D",
+    "console": "Switch",
+    "category": "Strategy — versus",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Team17. online turn-based versus; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Just Dance 2024 Edition",
+    "console": "Switch",
+    "category": "Rhythm",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Ubisoft. online World Dance Floor; backend unconfirmed."
+  },
+  {
+    "kind": "title",
+    "name": "Taiko no Tatsujin: Rhythm Festival",
+    "console": "Switch",
+    "category": "Rhythm",
+    "backend": "unconfirmed",
+    "status": "requestable",
+    "notes": "Publisher: Bandai Namco. online ranked versus; backend unconfirmed."
   }
 ]
