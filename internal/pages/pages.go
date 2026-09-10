@@ -220,6 +220,7 @@ func (s *Server) Handler() http.Handler {
 // RegisterRoutes wires the public page routes.
 func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /{$}", s.handleLanding)
+	mux.HandleFunc("GET /titles", s.handleTitles)
 	mux.HandleFunc("GET /register", s.handleRegisterForm)
 	mux.HandleFunc("POST /register", s.handleRegisterSubmit)
 	mux.HandleFunc("GET /verify", s.handleVerify)
@@ -266,9 +267,10 @@ func (s *Server) handleLanding(w http.ResponseWriter, r *http.Request) {
 	}
 	type landing struct {
 		baseData
-		Titles []store.Title
+		Titles     []store.Title
+		TitlesTotal int
 	}
-	s.render(w, http.StatusOK, "landing.html", landing{d, titles})
+	s.render(w, http.StatusOK, "landing.html", landing{d, popularTitles(titles), len(titles)})
 }
 
 // handleFeatures and handleDownloads are static content pages: what the

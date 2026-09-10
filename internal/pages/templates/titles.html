@@ -1,0 +1,49 @@
+{{template "header" .}}
+<div class="page-head">
+  <h1>{{t .Lang "titles.title"}}</h1>
+  <p>{{t .Lang "titles.sub"}}</p>
+</div>
+
+<section aria-labelledby="titles-h">
+  <div class="section-head"><h2 id="titles-h" class="sr-only">{{t .Lang "titles.title"}}</h2></div>
+
+  <form class="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3" role="search" aria-label="{{t .Lang "titles.title"}}">
+    <label class="flex flex-col gap-1 text-sm text-ink-2">
+      <span>{{t .Lang "titles.search"}}</span>
+      <input id="titles-q" type="search" autocomplete="off" class="field" placeholder="{{t .Lang "titles.search"}}">
+    </label>
+    <label class="flex flex-col gap-1 text-sm text-ink-2">
+      <span>{{t .Lang "titles.console"}}</span>
+      <select id="titles-console" class="field">
+        <option value="">{{t .Lang "titles.all"}}</option>
+        {{range .Consoles}}<option value="{{.}}">{{.}}</option>{{end}}
+      </select>
+    </label>
+    <label class="flex flex-col gap-1 text-sm text-ink-2">
+      <span>{{t .Lang "titles.status"}}</span>
+      <select id="titles-status" class="field">
+        <option value="">{{t .Lang "titles.all"}}</option>
+        {{range .Statuses}}<option value="{{.}}">{{.}}</option>{{end}}
+      </select>
+    </label>
+  </form>
+
+  <p id="titles-count" class="mb-3 text-sm text-muted" data-showing="{{t .Lang "titles.showing"}}"></p>
+
+  {{with .Titles}}
+  <ul id="titles-list" class="card list-none divide-y divide-line p-0">
+    {{range .}}
+    <li class="titles-row flex flex-wrap items-center gap-x-3 gap-y-1 p-4"
+        data-name="{{.Name}}" data-console="{{.Platform}}" data-status="{{.Status}}">
+      <span class="font-semibold break-anywhere">{{.Name}}</span>
+      <span class="badge ml-auto">{{.Status}}</span>
+      <span class="w-full text-sm text-muted">{{.Platform}}</span>
+    </li>
+    {{end}}
+  </ul>
+  <p id="titles-empty" class="mt-5 card p-4 text-muted" hidden>{{t .Lang "titles.none"}}</p>
+  {{else}}<p class="mt-5 card p-4 text-muted">{{t .Lang "landing.titles.none"}}</p>{{end}}
+</section>
+
+<script src="/static/titles.js?v={{.Asset}}"></script>
+{{template "footer" .}}

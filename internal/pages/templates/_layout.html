@@ -34,6 +34,7 @@
           <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/account"}}font-semibold text-ink{{end}}" href="/account" {{if eq .Path "/account"}}aria-current="page"{{end}}>{{t .Lang "nav.account"}}</a>
           {{if .Admin}}<a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink" href="/admin">{{t .Lang "admin.title"}}</a>{{end}}
         {{end}}
+        <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/titles"}}font-semibold text-ink{{end}}" href="/titles" {{if eq .Path "/titles"}}aria-current="page"{{end}}>{{t .Lang "nav.titles"}}</a>
         <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/features"}}font-semibold text-ink{{end}}" href="/features" {{if eq .Path "/features"}}aria-current="page"{{end}}>{{t .Lang "nav.features"}}</a>
         <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/downloads"}}font-semibold text-ink{{end}}" href="/downloads" {{if eq .Path "/downloads"}}aria-current="page"{{end}}>{{t .Lang "nav.downloads"}}</a>
         <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/status"}}font-semibold text-ink{{end}}" href="/status" {{if eq .Path "/status"}}aria-current="page"{{end}}>{{t .Lang "nav.status"}}</a>
@@ -62,6 +63,7 @@
               <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/account">{{t .Lang "nav.account"}}</a>
               {{if .Admin}}<a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/admin">{{t .Lang "admin.title"}}</a>{{end}}
             {{end}}
+            <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/titles">{{t .Lang "nav.titles"}}</a>
             <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/features">{{t .Lang "nav.features"}}</a>
             <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/downloads">{{t .Lang "nav.downloads"}}</a>
             <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/status">{{t .Lang "nav.status"}}</a>
@@ -92,6 +94,7 @@
   <div class="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-7 text-sm text-muted sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-7 sm:px-6">
     <span>OpenPak</span>
     <nav aria-label="Footer" class="flex flex-wrap gap-x-5 gap-y-2">
+      <a class="text-muted no-underline hover:text-ink hover:underline" href="/titles">{{t .Lang "nav.titles"}}</a>
       <a class="text-muted no-underline hover:text-ink hover:underline" href="/features">{{t .Lang "nav.features"}}</a>
       <a class="text-muted no-underline hover:text-ink hover:underline" href="/downloads">{{t .Lang "nav.downloads"}}</a>
       <a class="text-muted no-underline hover:text-ink hover:underline" href="/status">{{t .Lang "nav.status"}}</a>

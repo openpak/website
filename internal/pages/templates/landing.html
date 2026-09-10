@@ -73,5 +73,6 @@
     </tbody>
   </table>
 {{else}}<p class="mt-5 card p-4 text-muted">{{t $.Lang "landing.titles.none"}}</p>{{end}}{{end}}
+  <p class="mt-4"><a href="/titles" class="font-medium">{{t .Lang "landing.titles.all"}} ({{.TitlesTotal}}) &rarr;</a></p>
 </section>
 {{template "footer" .}}

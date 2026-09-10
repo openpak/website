@@ -49,6 +49,13 @@ var defaultTitles = []store.Title{
 	{Name: "Super Mario Maker 2", Platform: "Switch", Status: "beta"},
 	{Name: "Super Mario Odyssey", Platform: "Switch", Status: "beta"},
 	{Name: "Super Smash Bros. Ultimate", Platform: "Switch", Status: "beta"},
+	// In progress -- third-party networks (Innersloth, Epic/Mediatonic, EA, Demonware) being
+	// brought up; not yet playable, shown so people can see what is coming. Alphabetical.
+	{Name: "Among Us", Platform: "Switch", Status: "alpha"},
+	{Name: "Crash Team Racing Nitro-Fueled", Platform: "Switch", Status: "alpha"},
+	{Name: "Fall Guys", Platform: "Switch", Status: "alpha"},
+	{Name: "Minecraft Dungeons", Platform: "Switch", Status: "alpha"},
+	{Name: "Plants vs. Zombies: Battle for Neighborville", Platform: "Switch", Status: "alpha"},
 }
 
 func main() {
