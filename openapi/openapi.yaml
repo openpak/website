@@ -281,9 +281,13 @@ paths:
   /requests:
     get:
       summary: The votable catalogue (titles and network features)
+      security: []
       description: |
         The same request/vote scoreboard the website shows. Each item carries a
-        live vote count and whether the caller has voted. Filter with `kind`.
+        live vote count. Auth is optional: `voted` is false when the request is
+        unauthenticated, and reflects the caller's own votes when a valid bearer
+        is sent. Returns every item; the client filters and sorts. `kind`
+        narrows to titles or features.
       parameters:
         - name: kind
           in: query
@@ -298,12 +302,12 @@ paths:
               schema:
                 type: object
                 properties:
-                  requests:
+                  items:
                     type: array
                     items:
                       type: object
                       properties:
-                        id: { type: integer }
+                        id: { type: integer, examples: [42] }
                         kind: { type: string, examples: ["title"] }
                         name: { type: string, examples: ["Tetris 99"] }
                         console: { type: string, examples: ["Switch"] }
@@ -313,22 +317,18 @@ paths:
                         notes: { type: string }
                         votes: { type: integer }
                         voted: { type: boolean }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-  /requests/vote:
+  /requests/{id}/vote:
     post:
       summary: Toggle the caller's vote on a request
       description: |
         Idempotent per account: voting an item you already voted for removes the
-        vote. Returns the new state.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [id]
-              properties:
-                id: { type: integer }
+        vote. Returns the request's fresh count and the caller's new state.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+          description: The request id from GET /requests.
       responses:
         "200":
           description: OK
@@ -337,6 +337,8 @@ paths:
               schema:
                 type: object
                 properties:
+                  id: { type: integer }
+                  votes: { type: integer }
                   voted: { type: boolean }
         "400": { description: Missing or unknown request id. }
         "401": { $ref: "#/components/responses/Unauthorized" }

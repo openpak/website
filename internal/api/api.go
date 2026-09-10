@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -89,9 +90,11 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	d("/me/push", s.auth(s.handleForgetPush))
 	h("/me/profile", s.auth(s.handleUpdateProfile))
 	g("/avatars", s.auth(s.handleAvatarChoices))
-	// Requests + votes: the same scoreboard the website shows, for the app.
-	g("/requests", s.auth(s.handleListRequests))
-	h("/requests/vote", s.auth(s.handleVoteRequest))
+	// Requests + votes: the same scoreboard the website shows, for the app's
+	// Titles tab. GET is public (a bearer only personalises `voted`); voting
+	// needs one.
+	g("/requests", s.handleListRequests)
+	h("/requests/{id}/vote", s.auth(s.handleVoteRequest))
 	// Public: no bearer. A status endpoint that needed an account could not be
 	// read by the thing most likely to want it — someone whose sign-in is the
 	// part that is broken. Registered through the same helper as everything
@@ -646,42 +649,61 @@ func (s *Server) handleChooseAvatar(w http.ResponseWriter, r *http.Request, tok 
 	writeJSON(w, http.StatusOK, map[string]any{"saved": true})
 }
 
-// handleListRequests: GET /api/v1/requests?kind=title|feature → the votable
-// catalogue with each item's vote count and whether the caller voted.
-func (s *Server) handleListRequests(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+// handleListRequests: GET /api/v1/requests?kind=title|feature → every votable
+// item with its vote count. Auth is optional: `voted` is false without a bearer
+// and reflects the caller's own votes with one. The app fetches all and
+// filters/sorts client-side, like the web /titles page.
+func (s *Server) handleListRequests(w http.ResponseWriter, r *http.Request) {
 	kind := r.URL.Query().Get("kind") // "" = all
-	reqs, err := s.DB.ListRequests(r.Context(), kind, tok.AccountID)
+	reqs, err := s.DB.ListRequests(r.Context(), kind, s.optionalAccount(r))
 	if err != nil {
 		s.log.Error("api: list requests", "err", err)
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
-	out := make([]map[string]any, 0, len(reqs))
+	items := make([]map[string]any, 0, len(reqs))
 	for _, q := range reqs {
-		out = append(out, map[string]any{
+		items = append(items, map[string]any{
 			"id": q.ID, "kind": q.Kind, "name": q.Name, "console": q.Console,
 			"category": q.Category, "backend": q.Backend, "status": q.Status,
 			"notes": q.Notes, "votes": q.Votes, "voted": q.Voted,
 		})
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"requests": out})
+	writeJSON(w, http.StatusOK, map[string]any{"items": items})
 }
 
-// handleVoteRequest: POST /api/v1/requests/vote {"id": N} → toggles the caller's
-// vote, returning the new state. Idempotent: voting twice removes the vote.
+// handleVoteRequest: POST /api/v1/requests/{id}/vote → toggles the caller's vote
+// and returns the fresh count. Idempotent: calling again removes the vote.
 func (s *Server) handleVoteRequest(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
-	var req struct {
-		ID int64 `json:"id"`
-	}
-	if !decodeSmall(w, r, &req) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request id")
 		return
 	}
-	voted, err := s.DB.ToggleVote(r.Context(), req.ID, tok.AccountID)
-	if err != nil {
+	if _, err := s.DB.ToggleVote(r.Context(), id, tok.AccountID); err != nil {
 		writeError(w, http.StatusBadRequest, "no such request")
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"voted": voted})
+	votes, voted, err := s.DB.RequestVotes(r.Context(), id, tok.AccountID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"id": id, "votes": votes, "voted": voted})
+}
+
+// optionalAccount resolves a bearer if one is present and valid, else "". Unlike
+// s.auth it never rejects: an absent or stale token just means an anonymous read.
+func (s *Server) optionalAccount(r *http.Request) string {
+	raw := session.BearerFromRequest(r)
+	if raw == "" {
+		return ""
+	}
+	tok, err := s.DB.APITokenByHash(r.Context(), s.Sessions.HashToken(raw))
+	if err != nil {
+		return ""
+	}
+	return tok.AccountID
 }
 
 // handleStatus is the machine-readable half of the status page: who is online,

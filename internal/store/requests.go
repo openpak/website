@@ -119,3 +119,13 @@ func (s *PG) ToggleVote(ctx context.Context, requestID int64, accountID string) 
 	}
 	return true, nil
 }
+
+// RequestVotes is one request's current count and whether the account voted —
+// the fresh numbers to hand back after a toggle. A missing request reads 0/false.
+func (s *PG) RequestVotes(ctx context.Context, requestID int64, accountID string) (int, bool, error) {
+	var votes int
+	var voted bool
+	err := s.pool.QueryRow(ctx, `SELECT count(*), COALESCE(bool_or(account_id = $2), false)
+		FROM request_votes WHERE request_id = $1`, requestID, accountID).Scan(&votes, &voted)
+	return votes, voted, err
+}

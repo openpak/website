@@ -239,6 +239,12 @@ func (m *Memory) ToggleVote(_ context.Context, requestID int64, accountID string
 	return true, nil
 }
 
+func (m *Memory) RequestVotes(_ context.Context, requestID int64, accountID string) (int, bool, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return len(m.votes[requestID]), m.votes[requestID][accountID], nil
+}
+
 func (m *Memory) SavePushToken(_ context.Context, accountID, token, platform string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
