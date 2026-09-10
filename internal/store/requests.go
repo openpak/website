@@ -76,7 +76,7 @@ func CatalogRequests() ([]Request, error) {
 	return out, nil
 }
 
-// SeedRequests upserts catalog rows by (kind, name): new rows inserted, existing
+// SeedRequests upserts catalog rows by (kind, name, console): new rows inserted, existing
 // rows refreshed to the catalog's current status/notes/etc. It never touches
 // request_votes — votes are user data and survive every reseed.
 func (s *PG) SeedRequests(ctx context.Context, reqs []Request) error {
@@ -88,8 +88,8 @@ func (s *PG) SeedRequests(ctx context.Context, reqs []Request) error {
 	for _, r := range reqs {
 		if _, err := tx.Exec(ctx, `INSERT INTO requests(kind, name, console, category, backend, status, notes, sort)
 			VALUES($1,$2,$3,$4,$5,$6,$7,$8)
-			ON CONFLICT (kind, name) DO UPDATE SET
-				console=EXCLUDED.console, category=EXCLUDED.category, backend=EXCLUDED.backend,
+			ON CONFLICT (kind, name, console) DO UPDATE SET
+				category=EXCLUDED.category, backend=EXCLUDED.backend,
 				status=EXCLUDED.status, notes=EXCLUDED.notes, sort=EXCLUDED.sort`,
 			r.Kind, r.Name, r.Console, r.Category, r.Backend, r.Status, r.Notes, r.Sort); err != nil {
 			return err

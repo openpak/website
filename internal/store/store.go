@@ -6,6 +6,8 @@ package store
 import (
 	"context"
 	"errors"
+	"maps"
+	"slices"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -134,7 +136,9 @@ func (s *PG) migrate(ctx context.Context) error {
 		version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())`); err != nil {
 		return err
 	}
-	for name, sql := range migrations {
+	// Sorted: 0004 rewrites a constraint 0003 creates, so map order will not do.
+	for _, name := range slices.Sorted(maps.Keys(migrations)) {
+		sql := migrations[name]
 		var exists bool
 		if err := s.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version=$1)`, name).Scan(&exists); err != nil {
 			return err

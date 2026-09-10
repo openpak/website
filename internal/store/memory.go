@@ -195,19 +195,19 @@ func (m *Memory) ListRequests(_ context.Context, kind, viewerAccountID string) (
 	return out, nil
 }
 
-// SeedRequests upserts by (kind, name), preserving ids and votes.
+// SeedRequests upserts by (kind, name, console), preserving ids and votes.
 func (m *Memory) SeedRequests(_ context.Context, reqs []Request) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.votes == nil {
 		m.votes = map[int64]map[string]bool{}
 	}
-	byKey := map[[2]string]int{}
+	byKey := map[[3]string]int{}
 	for i, r := range m.requests {
-		byKey[[2]string{r.Kind, r.Name}] = i
+		byKey[[3]string{r.Kind, r.Name, r.Console}] = i
 	}
 	for _, r := range reqs {
-		key := [2]string{r.Kind, r.Name}
+		key := [3]string{r.Kind, r.Name, r.Console}
 		if i, ok := byKey[key]; ok {
 			id := m.requests[i].ID
 			r.ID = id

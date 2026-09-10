@@ -125,12 +125,32 @@ func backPath(base string, byVotes bool) string {
 
 // consoleSlug maps a console name to the basename of its logo under
 // /static/consoles. Unknown consoles fall back to a generic gamepad glyph so a
-// row is never a broken image. Only Switch lists games today; add a slug + svg
-// when another console goes live.
+// row is never a broken image. Keep in step with the app's consoleAsset and
+// with the svg files actually present.
 func consoleSlug(console string) string {
 	switch console {
 	case "Switch":
 		return "switch"
+	case "Wii":
+		return "wii"
+	case "Wii U":
+		return "wii-u"
+	case "DS":
+		return "ds"
+	case "3DS":
+		return "3ds"
+	case "Xbox":
+		return "xbox"
+	case "Xbox 360":
+		return "xbox-360"
+	case "PS2":
+		return "ps2"
+	case "PS3":
+		return "ps3"
+	case "PSP":
+		return "psp"
+	case "Vita":
+		return "vita"
 	default:
 		return "generic"
 	}

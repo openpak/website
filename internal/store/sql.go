@@ -104,6 +104,12 @@ var migrations = map[string]string{
 		PRIMARY KEY (request_id, account_id)
 	);
 	CREATE INDEX IF NOT EXISTS request_votes_account_idx ON request_votes(account_id);`,
+
+	// A title is unique per console, not by name: Call of Duty: Black Ops is
+	// three different games on three different networks, and each gets its own
+	// row and its own votes.
+	"0004_requests_per_console": `ALTER TABLE requests DROP CONSTRAINT IF EXISTS requests_kind_name_key;
+	CREATE UNIQUE INDEX IF NOT EXISTS requests_kind_name_console_key ON requests(kind, name, console);`,
 }
 
 // Ping verifies database connectivity (status page).
