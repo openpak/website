@@ -29,7 +29,26 @@ import (
 // defaultTitles seeds the supported-titles table on first boot when
 // WEBSITE_SEED_TITLES is set. Ship honest placeholders only.
 var defaultTitles = []store.Title{
-	{Name: "To be announced", Platform: "Switch", Status: "planned"},
+	// Deployed and running on the network; not yet verified end-to-end against a
+	// retail console, so "beta" rather than "supported".
+	{Name: "Mario Kart 8 Deluxe", Platform: "Switch", Status: "beta"},
+	{Name: "Splatoon 2", Platform: "Switch", Status: "beta"},
+	{Name: "Splatoon 3", Platform: "Switch", Status: "beta"},
+	{Name: "Super Smash Bros. Ultimate", Platform: "Switch", Status: "beta"},
+	{Name: "Super Mario Odyssey", Platform: "Switch", Status: "beta"},
+	{Name: "Super Mario Maker 2", Platform: "Switch", Status: "beta"},
+	{Name: "Animal Crossing: New Horizons", Platform: "Switch", Status: "beta"},
+	{Name: "ARMS", Platform: "Switch", Status: "beta"},
+	{Name: "Mario Golf: Super Rush", Platform: "Switch", Status: "beta"},
+	{Name: "Mario Party Superstars", Platform: "Switch", Status: "beta"},
+	{Name: "Mario Tennis Aces", Platform: "Switch", Status: "beta"},
+	{Name: "Mario Strikers: Battle League", Platform: "Switch", Status: "beta"},
+	{Name: "Luigi's Mansion 3", Platform: "Switch", Status: "beta"},
+	{Name: "Monster Hunter Generations Ultimate", Platform: "Switch", Status: "beta"},
+	{Name: "Super Mario Bros. 35", Platform: "Switch", Status: "beta"},
+	{Name: "Minecraft", Platform: "Switch", Status: "beta"},
+	{Name: "Stardew Valley", Platform: "Switch", Status: "beta"},
+	{Name: "Outbound", Platform: "Switch", Status: "beta"},
 }
 
 func main() {
