@@ -48,6 +48,7 @@
   <ul class="mt-5 card list-none divide-y divide-line p-0 md:hidden">
     {{range .}}
     <li class="flex flex-wrap items-center gap-x-3 gap-y-1 p-4">
+      <img class="console-logo shrink-0" src="/static/consoles/{{consoleSlug .Console}}.svg" alt="{{.Console}}" width="24" height="24" loading="lazy">
       <span class="font-semibold break-anywhere">{{.Name}}</span>
       <span class="badge ml-auto">{{.Status}}</span>
       <span class="w-full text-sm text-muted">{{.Console}}</span>

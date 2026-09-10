@@ -80,7 +80,8 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		s.log.Error("list requests", "err", err)
 	}
-	byVotes := r.URL.Query().Get("sort") == "votes"
+	// The scoreboard (vote ranking) is internal: only admins get the sorted view.
+	byVotes := d.Admin && r.URL.Query().Get("sort") == "votes"
 	if byVotes {
 		reqs = mostRequested(reqs)
 	}
@@ -120,4 +121,17 @@ func backPath(base string, byVotes bool) string {
 		return base + "?sort=votes"
 	}
 	return base
+}
+
+// consoleSlug maps a console name to the basename of its logo under
+// /static/consoles. Unknown consoles fall back to a generic gamepad glyph so a
+// row is never a broken image. Only Switch lists games today; add a slug + svg
+// when another console goes live.
+func consoleSlug(console string) string {
+	switch console {
+	case "Switch":
+		return "switch"
+	default:
+		return "generic"
+	}
 }
