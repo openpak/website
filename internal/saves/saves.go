@@ -84,6 +84,9 @@ type Storage struct {
 	AccessKey  string     `json:"access_key"`
 	PathStyle  bool       `json:"path_style"`
 	Insecure   bool       `json:"insecure"`
+	URL        string     `json:"url"`      // webdav
+	Username   string     `json:"username"` // webdav
+	Account    string     `json:"account"`  // gdrive / onedrive: the e-mail the provider reported
 	LastTestAt *time.Time `json:"last_test_at"`
 	LastTestOK *bool      `json:"last_test_ok"`
 	LastError  string     `json:"last_error"`
@@ -91,8 +94,14 @@ type Storage struct {
 	Usage      Usage      `json:"usage"`
 }
 
-// S3Config is what the settings form submits. The secret is optional on an edit: empty keeps
-// the stored one when the access key is unchanged.
+// StorageConfig is what a settings form submits: one kind and its section. Secrets are
+// optional on an edit: empty keeps the stored one when the key or username is unchanged.
+type StorageConfig struct {
+	Kind   string        `json:"kind"`
+	S3     *S3Config     `json:"s3,omitempty"`
+	WebDAV *WebDAVConfig `json:"webdav,omitempty"`
+}
+
 type S3Config struct {
 	Endpoint  string `json:"endpoint"`
 	Region    string `json:"region"`
@@ -102,6 +111,39 @@ type S3Config struct {
 	SecretKey string `json:"secret_key"`
 	Insecure  bool   `json:"insecure"`
 	PathStyle bool   `json:"path_style"`
+}
+
+type WebDAVConfig struct {
+	URL      string `json:"url"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// Kinds says which storage kinds the service offers; the OAuth ones need registered apps.
+func (c *Client) Kinds(ctx context.Context) (map[string]bool, error) {
+	var out map[string]bool
+	err := c.doJSON(ctx, http.MethodGet, "/internal/storage/kinds", nil, &out)
+	return out, err
+}
+
+// OAuthURL is the provider's consent page for a player; redirectURI is the website's callback
+// and state is what the callback checks.
+func (c *Client) OAuthURL(ctx context.Context, provider, redirectURI, state string) (string, error) {
+	var out struct {
+		URL string `json:"url"`
+	}
+	err := c.doJSON(ctx, http.MethodGet, "/internal/storage/oauth/"+url.PathEscape(provider)+"/url?redirect_uri="+url.QueryEscape(redirectURI)+"&state="+url.QueryEscape(state), nil, &out)
+	return out.URL, err
+}
+
+// OAuthConnect finishes a consent for the account: the service exchanges the code, tests the
+// drive and stores the refresh token.
+func (c *Client) OAuthConnect(ctx context.Context, account, provider, code, redirectURI string) (string, error) {
+	var out struct {
+		Warning string `json:"warning"`
+	}
+	err := c.doJSON(ctx, http.MethodPost, acct(account)+"/storage/oauth", map[string]string{"provider": provider, "code": code, "redirect_uri": redirectURI}, &out)
+	return out.Warning, err
 }
 
 func (c *Client) do(ctx context.Context, method, path string, body io.Reader, size int64) (*http.Response, error) {
@@ -175,7 +217,7 @@ func (c *Client) Storage(ctx context.Context, account string) (Storage, error) {
 }
 
 // Connect tests then stores the bucket. The returned warning is advisory (a public bucket).
-func (c *Client) Connect(ctx context.Context, account string, cfg S3Config) (string, error) {
+func (c *Client) Connect(ctx context.Context, account string, cfg StorageConfig) (string, error) {
 	var out struct {
 		Warning string `json:"warning"`
 	}

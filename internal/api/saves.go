@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/store"
@@ -96,6 +97,36 @@ func (s *Server) registerSavesStorage(mux *http.ServeMux) {
 	mux.HandleFunc("PUT /api/v1/me/saves/storage", s.auth(s.handleStoragePut))
 	mux.HandleFunc("DELETE /api/v1/me/saves/storage", s.auth(s.handleStorageDelete))
 	mux.HandleFunc("POST /api/v1/me/saves/storage/move", s.auth(s.handleStorageMove))
+	mux.HandleFunc("GET /api/v1/me/saves/storage/kinds", s.auth(s.handleStorageKinds))
+	mux.HandleFunc("GET /api/v1/me/saves/storage/oauth/{provider}/url", s.auth(s.handleStorageOAuthURL))
+}
+
+func (s *Server) handleStorageKinds(w http.ResponseWriter, r *http.Request, _ store.APIToken) {
+	kinds, err := s.Saves.Kinds(r.Context())
+	if err != nil {
+		savesErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, kinds)
+}
+
+// handleStorageOAuthURL gives the app a consent URL to open in a browser. The state names the
+// account and is signed with the website secret, so the website's own callback finishes the
+// connection without a web session: the player just sees the site say it is done.
+func (s *Server) handleStorageOAuthURL(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	provider := r.PathValue("provider")
+	scheme := "https"
+	if r.TLS == nil && os.Getenv("WEBSITE_ENVIRONMENT") != "production" {
+		scheme = "http"
+	}
+	redirect := scheme + "://" + r.Host + "/account/saves/storage/oauth/" + provider + "/callback"
+	state := tok.AccountID + "." + s.Sessions.HashToken("oauth:"+tok.AccountID)
+	u, err := s.Saves.OAuthURL(r.Context(), provider, redirect, state)
+	if err != nil {
+		savesErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"url": u})
 }
 
 func (s *Server) handleStorageGet(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
@@ -108,9 +139,12 @@ func (s *Server) handleStorageGet(w http.ResponseWriter, r *http.Request, tok st
 }
 
 func (s *Server) handleStoragePut(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
-	var cfg saves.S3Config
+	var cfg saves.StorageConfig
 	if !decodeSmall(w, r, &cfg) {
 		return
+	}
+	if cfg.Kind == "" {
+		cfg.Kind = "s3"
 	}
 	warning, err := s.Saves.Connect(r.Context(), tok.AccountID, cfg)
 	if err != nil {

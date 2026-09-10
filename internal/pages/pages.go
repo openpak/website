@@ -274,6 +274,8 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /account/saves/storage", s.handleSavesStorage)
 	mux.HandleFunc("POST /account/saves/storage/disconnect", s.handleSavesDisconnect)
 	mux.HandleFunc("POST /account/saves/storage/move", s.handleSavesMove)
+	mux.HandleFunc("GET /account/saves/storage/oauth/{provider}/start", s.handleSavesOAuthStart)
+	mux.HandleFunc("GET /account/saves/storage/oauth/{provider}/callback", s.handleSavesOAuthCallback)
 	mux.HandleFunc("POST /account/saves/pin", s.handleSavesPin)
 	mux.HandleFunc("POST /account/saves/restore", s.handleSavesRestore)
 	mux.HandleFunc("POST /account/saves/delete", s.handleSavesDelete)

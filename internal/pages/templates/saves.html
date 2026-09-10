@@ -22,7 +22,7 @@
   <progress class="w-full" max="100" value="{{.Percent}}" aria-label="{{t .Lang "saves.usage"}}"></progress>
   {{else}}
   <div class="state-row ok">
-    <span class="name">{{.Storage.Bucket}} · {{.Storage.Endpoint}}</span>
+    <span class="name">{{.StorageName}}</span>
     <span class="pill">{{t .Lang "saves.storage.connected"}}</span>
   </div>
   {{end}}
@@ -64,7 +64,7 @@
   </div>
   {{if .Storage.Connected}}
   <div class="state-row {{.TestState}} mb-3">
-    <span class="name">{{.Storage.Bucket}} · {{.Storage.Endpoint}}</span>
+    <span class="name">{{.StorageName}}</span>
     <span class="pill">{{if .Storage.LastTestAt}}{{t .Lang "saves.storage.tested"}} {{.Storage.LastTestAt.UTC.Format "2006-01-02 15:04"}}{{else}}{{t .Lang "saves.storage.untested"}}{{end}}</span>
   </div>
   {{if .Storage.LastError}}<p class="hint">{{.Storage.LastError}}</p>{{end}}
@@ -81,25 +81,55 @@
   </div>
   {{end}}
 
-  <form method="post" action="/account/saves/storage" class="form-stack" autocomplete="off">
+  {{if or (index .Kinds "gdrive") (index .Kinds "onedrive")}}
+  <div class="mb-9">
+    <p class="hint">{{t .Lang "saves.storage.cloud.hint"}}</p>
+    {{if index .Kinds "gdrive"}}<a class="btn" href="/account/saves/storage/oauth/gdrive/start">{{t .Lang "saves.storage.google"}}</a>{{end}}
+    {{if index .Kinds "onedrive"}}<a class="btn" href="/account/saves/storage/oauth/onedrive/start">{{t .Lang "saves.storage.onedrive"}}</a>{{end}}
+  </div>
+  {{end}}
+
+  <details class="mb-9" {{if or (not .Storage.Connected) (eq .Storage.Kind "s3")}}open{{end}}>
+    <summary class="btn">{{t .Lang "saves.storage.s3"}}</summary>
+  <form method="post" action="/account/saves/storage" class="form-stack mt-6" autocomplete="off">
     <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <input type="hidden" name="kind" value="s3">
     <label for="endpoint">{{t .Lang "saves.storage.endpoint"}}</label>
-    <input id="endpoint" name="endpoint" type="text" required value="{{.Storage.Endpoint}}" placeholder="s3.eu-west-1.amazonaws.com" autocapitalize="off" spellcheck="false">
+    <input id="endpoint" name="endpoint" type="text" required value="{{if eq .Storage.Kind "s3"}}{{.Storage.Endpoint}}{{end}}" placeholder="s3.eu-west-1.amazonaws.com" autocapitalize="off" spellcheck="false">
     <label for="region">{{t .Lang "saves.storage.region"}}</label>
-    <input id="region" name="region" type="text" value="{{.Storage.Region}}" placeholder="auto" autocapitalize="off" spellcheck="false">
+    <input id="region" name="region" type="text" value="{{if eq .Storage.Kind "s3"}}{{.Storage.Region}}{{end}}" placeholder="auto" autocapitalize="off" spellcheck="false">
     <label for="bucket">{{t .Lang "saves.storage.bucket"}}</label>
-    <input id="bucket" name="bucket" type="text" required value="{{.Storage.Bucket}}" autocapitalize="off" spellcheck="false">
+    <input id="bucket" name="bucket" type="text" required value="{{if eq .Storage.Kind "s3"}}{{.Storage.Bucket}}{{end}}" autocapitalize="off" spellcheck="false">
     <label for="prefix">{{t .Lang "saves.storage.prefix"}}</label>
-    <input id="prefix" name="prefix" type="text" value="{{.Storage.Prefix}}" placeholder="openpak" autocapitalize="off" spellcheck="false">
+    <input id="prefix" name="prefix" type="text" value="{{if eq .Storage.Kind "s3"}}{{.Storage.Prefix}}{{end}}" placeholder="openpak" autocapitalize="off" spellcheck="false">
     <label for="access_key">{{t .Lang "saves.storage.access"}}</label>
-    <input id="access_key" name="access_key" type="text" required value="{{.Storage.AccessKey}}" autocapitalize="off" spellcheck="false">
+    <input id="access_key" name="access_key" type="text" required value="{{if eq .Storage.Kind "s3"}}{{.Storage.AccessKey}}{{end}}" autocapitalize="off" spellcheck="false">
     <label for="secret_key">{{t .Lang "saves.storage.secret"}}</label>
-    <input id="secret_key" name="secret_key" type="password" {{if not .Storage.Connected}}required{{end}} autocomplete="new-password">
+    <input id="secret_key" name="secret_key" type="password" {{if ne .Storage.Kind "s3"}}required{{end}} autocomplete="new-password">
     <p class="hint">{{t .Lang "saves.storage.secret.hint"}}</p>
-    <label><input type="checkbox" name="path_style" {{if or .Storage.PathStyle (not .Storage.Connected)}}checked{{end}}> {{t .Lang "saves.storage.pathstyle"}}</label>
+    <label><input type="checkbox" name="path_style" {{if or .Storage.PathStyle (ne .Storage.Kind "s3")}}checked{{end}}> {{t .Lang "saves.storage.pathstyle"}}</label>
     <label><input type="checkbox" name="insecure" {{if .Storage.Insecure}}checked{{end}}> {{t .Lang "saves.storage.insecure"}}</label>
     <button type="submit" class="btn primary">{{t .Lang "saves.storage.save"}}</button>
   </form>
+  </details>
+
+  <details class="mb-9" {{if eq .Storage.Kind "webdav"}}open{{end}}>
+    <summary class="btn">{{t .Lang "saves.storage.webdav"}}</summary>
+  <form method="post" action="/account/saves/storage" class="form-stack mt-6" autocomplete="off">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <input type="hidden" name="kind" value="webdav">
+    <label for="url">{{t .Lang "saves.storage.webdav.url"}}</label>
+    <input id="url" name="url" type="url" required value="{{if eq .Storage.Kind "webdav"}}{{.Storage.URL}}{{end}}" placeholder="https://cloud.example.org/remote.php/dav/files/me/OpenPak" autocapitalize="off" spellcheck="false">
+    <p class="hint">{{t .Lang "saves.storage.webdav.hint"}}</p>
+    <label for="username">{{t .Lang "saves.storage.webdav.user"}}</label>
+    <input id="username" name="username" type="text" required value="{{if eq .Storage.Kind "webdav"}}{{.Storage.Username}}{{end}}" autocapitalize="off" spellcheck="false">
+    <label for="password">{{t .Lang "saves.storage.webdav.pass"}}</label>
+    <input id="password" name="password" type="password" {{if ne .Storage.Kind "webdav"}}required{{end}} autocomplete="new-password">
+    <p class="hint">{{t .Lang "saves.storage.webdav.pass.hint"}}</p>
+    <button type="submit" class="btn primary">{{t .Lang "saves.storage.save"}}</button>
+  </form>
+  </details>
+
   <p class="hint">{{t .Lang "saves.storage.presets"}}</p>
   <ul class="rows">
     {{range .Presets}}<li><span class="name">{{.Name}}</span><span class="sub"><code>{{.Endpoint}}</code> · {{.Region}}{{if .Hint}} · {{.Hint}}{{end}}</span></li>{{end}}
