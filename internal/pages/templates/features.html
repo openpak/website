@@ -28,7 +28,7 @@
     {{range .}}
     <li class="titles-row flex items-center gap-3 p-4"
         data-name="{{.Name}}" data-console="{{.Console}}" data-status="{{.Status}}">
-      <img class="console-logo shrink-0" src="/static/consoles/{{consoleSlug .Console}}.svg" alt="{{.Console}}" width="36" height="24" loading="lazy">
+      <picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img class="console-logo shrink-0" src="/static/consoles/{{consoleSlug .Console}}.svg" alt="{{.Console}}" width="36" height="24" loading="lazy"></picture>
       <span class="font-semibold break-anywhere">{{.Name}}</span>
       <span class="ml-auto shrink-0"><span class="badge {{badgeClass .Status}}">{{.Status}}</span></span>
     </li>
