@@ -140,6 +140,7 @@
   }
   .badge.ok  { background: var(--ok-weak);  border-color: var(--ok-line);  color: var(--ok); }
   .badge.bad { background: var(--bad-weak); border-color: var(--bad-line); color: var(--bad); }
+  .badge.warn { background: var(--warn-weak); border-color: var(--warn-line); color: var(--warn); }
   /* Touch targets: 44px is the smallest thing a finger hits reliably. */
   .btn {
     display: inline-flex; align-items: center; justify-content: center;

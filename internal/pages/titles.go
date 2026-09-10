@@ -135,3 +135,19 @@ func consoleSlug(console string) string {
 		return "generic"
 	}
 }
+
+// badgeClass maps a status to the badge colour modifier, so a pill reads the
+// same as the app: green for done, amber for in-flight, red for blocked, and
+// neutral (no class) for the not-yet-started long tail.
+func badgeClass(status string) string {
+	switch status {
+	case "live", "working":
+		return "ok"
+	case "beta", "alpha", "partial":
+		return "warn"
+	case "not-feasible", "broken":
+		return "bad"
+	default:
+		return ""
+	}
+}

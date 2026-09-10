@@ -50,7 +50,7 @@
     <li class="flex flex-wrap items-center gap-x-3 gap-y-1 p-4">
       <img class="console-logo shrink-0" src="/static/consoles/{{consoleSlug .Console}}.svg" alt="{{.Console}}" width="24" height="24" loading="lazy">
       <span class="font-semibold break-anywhere">{{.Name}}</span>
-      <span class="badge ml-auto">{{.Status}}</span>
+      <span class="badge {{badgeClass .Status}} ml-auto">{{.Status}}</span>
       <span class="w-full text-sm text-muted">{{.Console}}</span>
     </li>
     {{end}}
@@ -68,7 +68,7 @@
       <tr class="border-b border-line last:border-0">
         <td class="py-3 pr-4 font-medium">{{.Name}}</td>
         <td class="py-3 pr-4 text-ink-2">{{.Console}}</td>
-        <td class="py-3"><span class="badge">{{.Status}}</span></td>
+        <td class="py-3"><span class="badge {{badgeClass .Status}}">{{.Status}}</span></td>
       </tr>
       {{end}}
     </tbody>

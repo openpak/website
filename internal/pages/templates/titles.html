@@ -60,7 +60,7 @@
           <a class="btn text-sm" href="/login" title="{{t $.Lang "requests.signin"}}">{{t $.Lang "requests.request"}}</a>
           {{end}}
         {{else}}
-          <span class="badge status-{{.Status}}">{{.Status}}</span>
+          <span class="badge {{badgeClass .Status}}">{{.Status}}</span>
         {{end}}
       </span>
     </li>

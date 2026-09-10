@@ -14,7 +14,7 @@
 
   function apply() {
     var term = (q.value || "").trim().toLowerCase();
-    var c = console_.value;
+    var c = console_ ? console_.value : "";
     var s = status.value;
     var shown = 0;
     rows.forEach(function (row) {

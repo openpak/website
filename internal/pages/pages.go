@@ -18,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -285,11 +286,22 @@ func (s *Server) handleFeatures(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		s.log.Error("list requests", "err", err)
 	}
+	// Distinct statuses for the filter dropdown, in stable order.
+	seen := map[string]bool{}
+	var statuses []string
+	for _, f := range reqs {
+		if f.Status != "" && !seen[f.Status] {
+			seen[f.Status] = true
+			statuses = append(statuses, f.Status)
+		}
+	}
+	sort.Strings(statuses)
 	type featuresPage struct {
 		baseData
 		Features []store.Request
+		Statuses []string
 	}
-	s.render(w, http.StatusOK, "features.html", featuresPage{d, reqs})
+	s.render(w, http.StatusOK, "features.html", featuresPage{d, reqs, statuses})
 }
 
 // handleVote toggles the viewer's vote on one request and returns them to the

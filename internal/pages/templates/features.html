@@ -7,32 +7,36 @@
 <section aria-labelledby="feat-h">
   <div class="section-head"><h2 id="feat-h" class="sr-only">{{t .Lang "features.title"}}</h2></div>
 
+  <form class="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2" role="search" aria-label="{{t .Lang "features.title"}}">
+    <label class="flex flex-col gap-1 text-sm text-ink-2">
+      <span>{{t .Lang "titles.search"}}</span>
+      <input id="titles-q" type="search" autocomplete="off" class="field" placeholder="{{t .Lang "titles.search"}}">
+    </label>
+    <label class="flex flex-col gap-1 text-sm text-ink-2">
+      <span>{{t .Lang "titles.status"}}</span>
+      <select id="titles-status" class="field">
+        <option value="">{{t .Lang "titles.all"}}</option>
+        {{range .Statuses}}<option value="{{.}}">{{.}}</option>{{end}}
+      </select>
+    </label>
+  </form>
+
+  <p id="titles-count" class="mb-3 text-sm text-muted" data-showing="{{t .Lang "titles.showing"}}"></p>
+
   {{with .Features}}
-  <div class="table-wrap">
-  <table>
-    <thead><tr>
-      <th scope="col">{{t $.Lang "features.col.feature"}}</th>
-      <th scope="col">{{t $.Lang "features.col.state"}}</th>
-    </tr></thead>
-    <tbody>
-      {{range .}}
-      <tr>
-        <td><b>{{.Name}}</b><br><span class="sub">{{.Category}} · {{.Console}}</span></td>
-        <td><span class="cl">{{t $.Lang "features.col.state"}}: </span><span class="badge">{{.Status}}</span></td>
-      </tr>
-      {{end}}
-    </tbody>
-  </table>
-  </div>
+  <ul id="titles-list" class="card list-none divide-y divide-line p-0">
+    {{range .}}
+    <li class="titles-row flex items-center gap-3 p-4"
+        data-name="{{.Name}}" data-console="{{.Console}}" data-status="{{.Status}}">
+      <img class="console-logo shrink-0" src="/static/consoles/{{consoleSlug .Console}}.svg" alt="{{.Console}}" width="26" height="26" loading="lazy">
+      <span class="font-semibold break-anywhere">{{.Name}}</span>
+      <span class="ml-auto shrink-0"><span class="badge {{badgeClass .Status}}">{{.Status}}</span></span>
+    </li>
+    {{end}}
+  </ul>
+  <p id="titles-empty" class="mt-5 card p-4 text-muted" hidden>{{t $.Lang "titles.none"}}</p>
   {{else}}<p class="mt-5 card p-4 text-muted">{{t $.Lang "features.next.body"}}</p>{{end}}
 </section>
 
-<section aria-labelledby="next-h">
-  <div class="section-head"><h2 id="next-h">{{t .Lang "features.next"}}</h2></div>
-  <p class="prose">{{t .Lang "features.next.body"}}</p>
-  <p class="actions">
-    <a class="btn" href="/downloads">{{t .Lang "downloads.title"}}</a>
-    <a class="btn" href="/status">{{t .Lang "nav.status"}}</a>
-  </p>
-</section>
+<script src="/static/titles.js?v={{.Asset}}"></script>
 {{template "footer" .}}
