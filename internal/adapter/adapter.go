@@ -44,6 +44,7 @@ func (c *Client) FriendCode(ctx context.Context, accountID string) string {
 		return ""
 	}
 	req.Header.Set("Authorization", "Bearer "+c.Key)
+	req.Header.Set("X-Internal-Key", c.Key)
 	resp, err := c.HTTP.Do(req)
 	if err != nil {
 		return ""
@@ -72,6 +73,7 @@ func (c *Client) get(ctx context.Context, path string, out any) error {
 		return err
 	}
 	req.Header.Set("Authorization", "Bearer "+c.Key)
+	req.Header.Set("X-Internal-Key", c.Key)
 	resp, err := c.HTTP.Do(req)
 	if err != nil {
 		return err
@@ -102,6 +104,7 @@ func (c *Client) EmulatorFriend(ctx context.Context, accountID, action string, p
 		return err
 	}
 	req.Header.Set("Authorization", "Bearer "+c.Key)
+	req.Header.Set("X-Internal-Key", c.Key)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := c.HTTP.Do(req)
 	if err != nil {
@@ -131,6 +134,7 @@ func (c *Client) CA(ctx context.Context) ([]byte, error) {
 		return nil, err
 	}
 	req.Header.Set("Authorization", "Bearer "+c.Key)
+	req.Header.Set("X-Internal-Key", c.Key)
 	resp, err := c.HTTP.Do(req)
 	if err != nil {
 		return nil, err
