@@ -301,6 +301,13 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 		mux.Handle("/link", adapterProxy(adapter))
 		mux.Handle("/link/", adapterProxy(adapter))
 	}
+	// The mod catalogue is its own service; the emulator and the app reach it under openpak.org
+	// with the same bearer they already hold (mods asks /api/v1/me who it belongs to).
+	if mods := os.Getenv("MODS_URL"); mods != "" {
+		for _, prefix := range []string{"/api/v1/titles/", "/api/v1/mods/", "/api/v1/submissions", "/api/v1/me/submissions", "/api/v1/me/favourites", "/api/v1/me/favourites/"} {
+			mux.Handle(prefix, adapterProxy(mods))
+		}
+	}
 }
 
 func (s *Server) handleLanding(w http.ResponseWriter, r *http.Request) {

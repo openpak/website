@@ -542,6 +542,59 @@ paths:
       responses:
         "200": { description: Unblocked }
         "401": { $ref: "#/components/responses/Unauthorized" }
+  /titles/{title_id}/mods:
+    get:
+      summary: Published mods for a title (served by the mods service)
+      parameters: [{ name: title_id, in: path, required: true, schema: { type: string } }]
+      responses:
+        "200": { description: "Manifest: id, slug, version, sha256, size, licence, summary, package_url" }
+  /mods/{id}:
+    get:
+      summary: One mod entry
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses:
+        "200": { description: The entry }
+        "404": { description: Not published }
+  /mods/{id}/package:
+    get:
+      summary: The mod package (zip); ETag is the sha256, honours If-None-Match
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses:
+        "200": { description: application/zip }
+        "304": { description: Unchanged }
+        "404": { description: Not published }
+  /submissions:
+    post:
+      summary: Submit a mod package (multipart field "package") for curation
+      responses:
+        "202": { description: Accepted into the queue }
+        "422": { description: Refused by the provenance gate, with the reason }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/submissions:
+    get:
+      summary: The caller's submissions and their status
+      responses:
+        "200": { description: List }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/favourites:
+    get:
+      summary: The caller's favourite mods
+      responses:
+        "200": { description: List }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/favourites/{id}:
+    put:
+      summary: Favourite a mod
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses:
+        "204": { description: Done }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    delete:
+      summary: Unfavourite a mod
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses:
+        "204": { description: Done }
+        "401": { $ref: "#/components/responses/Unauthorized" }
 components:
   securitySchemes:
     bearerAuth:
