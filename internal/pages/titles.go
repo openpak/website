@@ -129,10 +129,22 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 	}
 	// The scoreboard (vote ranking) is internal: only admins get the sorted view.
 	byVotes := d.Admin && r.URL.Query().Get("sort") == "votes"
+	// The list is what has a server; the long tail sits behind "Request a game". The admin
+	// scoreboard view keeps everything, ranked by votes.
+	var requestable []store.Request
 	if byVotes {
 		reqs = mostRequested(reqs)
 	} else {
 		reqs = catalogOrder(reqs)
+		var served []store.Request
+		for _, t := range reqs {
+			if t.Votable() {
+				requestable = append(requestable, t)
+			} else {
+				served = append(served, t)
+			}
+		}
+		reqs = served
 	}
 	// Distinct consoles and statuses, for the filter dropdowns, in stable order.
 	seenC, seenS := map[string]bool{}, map[string]bool{}
@@ -152,13 +164,14 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 	type titlesPage struct {
 		baseData
 		Titles      []store.Request
+		Requestable []store.Request
 		Consoles    []string
 		Statuses    []string
 		AllStatuses []string
 		ByVotes     bool
 		Back        string
 	}
-	s.render(w, http.StatusOK, "titles.html", titlesPage{d, reqs, consoles, statuses, allStatuses, byVotes, backPath("/titles", byVotes)})
+	s.render(w, http.StatusOK, "titles.html", titlesPage{d, reqs, requestable, consoles, statuses, allStatuses, byVotes, backPath("/titles", byVotes)})
 }
 
 // allStatuses is every status a title can be set to, in rank order. The word means the same

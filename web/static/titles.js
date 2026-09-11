@@ -35,3 +35,15 @@
   });
   apply();
 })();
+
+// "Request a game" opens a native dialog; the buttons carry data-close so no inline handlers
+// are needed under the page's CSP.
+(function () {
+  var open = document.getElementById("request-open");
+  var dialog = document.getElementById("request-dialog");
+  if (!open || !dialog || !dialog.showModal) return;
+  open.addEventListener("click", function () { dialog.showModal(); });
+  Array.prototype.forEach.call(dialog.querySelectorAll("[data-close]"), function (b) {
+    b.addEventListener("click", function () { dialog.close(); });
+  });
+})();

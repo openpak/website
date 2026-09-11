@@ -79,6 +79,45 @@
   </ul>
   <p id="titles-empty" class="mt-5 card p-4 text-muted" hidden>{{t $.Lang "titles.none"}}</p>
   {{else}}<p class="mt-5 card p-4 text-muted">{{t $.Lang "landing.titles.none"}}</p>{{end}}
+
+  {{if .Requestable}}
+  <div class="mt-6 flex flex-wrap items-center gap-3">
+    <button type="button" id="request-open" class="btn primary">{{t .Lang "titles.request.open"}}</button>
+    <span class="text-sm text-muted">{{t .Lang "titles.request.hint"}}</span>
+  </div>
+  <dialog id="request-dialog" class="card p-5 max-w-lg">
+    <h2 class="mb-2">{{t .Lang "titles.request.title"}}</h2>
+    {{if .User}}
+    <form method="post" action="/request/vote" class="flex flex-col gap-3">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <input type="hidden" name="back" value="{{.Back}}">
+      <label class="flex flex-col gap-1 text-sm text-ink-2">
+        <span>{{t .Lang "titles.request.pick"}}</span>
+        <select name="id" class="field" required>
+          {{$cur := ""}}{{range .Requestable}}{{if ne .Console $cur}}{{if $cur}}</optgroup>{{end}}<optgroup label="{{.Console}}">{{$cur = .Console}}{{end}}<option value="{{.ID}}">{{.Name}}{{if .Voted}} {{t $.Lang "titles.request.requested"}}{{end}}</option>{{end}}{{if $cur}}</optgroup>{{end}}
+        </select>
+      </label>
+      <div class="flex gap-2">
+        <button type="submit" class="btn primary">{{t .Lang "requests.request"}}</button>
+        <button type="button" class="btn" data-close="request-dialog">{{t .Lang "titles.request.close"}}</button>
+      </div>
+    </form>
+    {{else}}
+    <p class="mb-3 text-muted">{{t .Lang "requests.signin"}}</p>
+    <div class="flex gap-2"><a class="btn primary" href="/login">{{t .Lang "nav.login"}}</a><button type="button" class="btn" data-close="request-dialog">{{t .Lang "titles.request.close"}}</button></div>
+    {{end}}
+    {{if .Admin}}
+    <form method="post" action="/admin/titles/status" class="mt-5 flex flex-wrap items-end gap-2 border-t border-line pt-4">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <label class="flex flex-col gap-1 text-sm text-ink-2"><span>admin: promote</span>
+        <select name="id" class="field">{{range .Requestable}}<option value="{{.ID}}">{{.Console}} · {{.Name}}</option>{{end}}</select></label>
+      <label class="flex flex-col gap-1 text-sm text-ink-2"><span>to</span>
+        <select name="status" class="field">{{range .AllStatuses}}<option value="{{.}}">{{.}}</option>{{end}}</select></label>
+      <button type="submit" class="btn text-sm">set</button>
+    </form>
+    {{end}}
+  </dialog>
+  {{end}}
 </section>
 
 <script src="/static/titles.js?v={{.Asset}}"></script>

@@ -139,7 +139,8 @@ func TestVoteToggleOnePerAccountIdempotent(t *testing.T) {
 	}
 }
 
-// Reseeding refreshes status but never wipes votes (they are user data).
+// Reseeding never wipes votes (they are user data) and never changes a status the database
+// already holds: the database is the source of truth for status.
 func TestReseedPreservesVotes(t *testing.T) {
 	ctx := context.Background()
 	m := NewMemory()
@@ -153,8 +154,8 @@ func TestReseedPreservesVotes(t *testing.T) {
 	if len(reqs) != 1 {
 		t.Fatalf("reseed duplicated the row: %d rows", len(reqs))
 	}
-	if reqs[0].Status != "beta" {
-		t.Errorf("status = %q, want refreshed to beta", reqs[0].Status)
+	if reqs[0].Status != "alpha" {
+		t.Errorf("status = %q, want the database's alpha kept over the catalog's beta", reqs[0].Status)
 	}
 	if reqs[0].Votes != 1 || !reqs[0].Voted {
 		t.Errorf("reseed lost the vote: votes=%d voted=%v", reqs[0].Votes, reqs[0].Voted)

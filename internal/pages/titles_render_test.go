@@ -9,11 +9,13 @@ import (
 
 type titlesPage struct {
 	baseData
-	Titles   []store.Request
-	Consoles []string
-	Statuses []string
-	ByVotes  bool
-	Back     string
+	Titles      []store.Request
+	Requestable []store.Request
+	Consoles    []string
+	Statuses    []string
+	AllStatuses []string
+	ByVotes     bool
+	Back        string
 }
 
 func renderTitles(t *testing.T, pg titlesPage) string {
@@ -40,7 +42,7 @@ func TestTitlesVoteGating(t *testing.T) {
 
 	// Signed out, not-started: a Request affordance to sign in, no form, and a
 	// console logo for the row.
-	out := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles"}, votableRow, []string{"Switch"}, []string{"requestable"}, false, "/titles"})
+	out := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles"}, votableRow, nil, []string{"Switch"}, []string{"requestable"}, nil, false, "/titles"})
 	for _, want := range []string{"Tetris 99", "/static/titles.js", "Sign in to request", "Request", "/static/consoles/switch.svg"} {
 		if !bytes.Contains([]byte(out), []byte(want)) {
 			t.Errorf("signed-out not-started missing %q", want)
@@ -52,7 +54,7 @@ func TestTitlesVoteGating(t *testing.T) {
 
 	// Signed in, not-started: a request form with the id and CSRF token, the
 	// "Requested" label (Voted), and NO vote count (ranking is admin-only).
-	in := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok"}, votableRow, []string{"Switch"}, []string{"requestable"}, false, "/titles"})
+	in := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok"}, votableRow, nil, []string{"Switch"}, []string{"requestable"}, nil, false, "/titles"})
 	for _, want := range []string{`action="/request/vote"`, `name="id" value="7"`, `value="tok"`, "Requested"} {
 		if !bytes.Contains([]byte(in), []byte(want)) {
 			t.Errorf("signed-in not-started missing %q", want)
@@ -64,7 +66,7 @@ func TestTitlesVoteGating(t *testing.T) {
 
 	// Admin, not-started: the vote count rides the button, and the scoreboard
 	// toggle is present.
-	adm := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok", Admin: true}, votableRow, []string{"Switch"}, []string{"requestable"}, false, "/titles"})
+	adm := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok", Admin: true}, votableRow, nil, []string{"Switch"}, []string{"requestable"}, nil, false, "/titles"})
 	for _, want := range []string{"· 3", `href="/titles?sort=votes"`} {
 		if !bytes.Contains([]byte(adm), []byte(want)) {
 			t.Errorf("admin view missing %q", want)
@@ -72,7 +74,7 @@ func TestTitlesVoteGating(t *testing.T) {
 	}
 
 	// Signed in, alpha: a status pill, never a request form (alpha is started).
-	al := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok"}, alphaRow, []string{"Switch"}, []string{"alpha"}, false, "/titles"})
+	al := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok"}, alphaRow, nil, []string{"Switch"}, []string{"alpha"}, nil, false, "/titles"})
 	if !bytes.Contains([]byte(al), []byte(">alpha<")) {
 		t.Error("alpha row should show its status pill")
 	}
@@ -81,7 +83,7 @@ func TestTitlesVoteGating(t *testing.T) {
 	}
 
 	// Signed in, NON-votable (beta): status shown, but no request UI at all.
-	beta := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok"}, betaRow, []string{"Switch"}, []string{"beta"}, false, "/titles"})
+	beta := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok"}, betaRow, nil, []string{"Switch"}, []string{"beta"}, nil, false, "/titles"})
 	if !bytes.Contains([]byte(beta), []byte("Mario Kart 8 Deluxe")) || !bytes.Contains([]byte(beta), []byte(">beta<")) {
 		t.Error("beta row should still show name and status")
 	}
