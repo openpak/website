@@ -2057,8 +2057,8 @@
     "console": "Wii U",
     "category": "Kart racing — versus",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. 12-player online races, tournaments and ghost data; Pretendo already has a Mario Kart 8 Matchmake Extension and Ranking protocol we can port, and the Switch Deluxe server is ours."
+    "status": "beta",
+    "notes": "Publisher: Nintendo. 12-player online races, tournaments and ghost data; Pretendo already has a Mario Kart 8 Matchmake Extension and Ranking protocol we can port, and the Switch Deluxe server is ours. Game server: OpenPak's Go port of Pretendo's Python server (servers/nex/titles/mario-kart-8, 2026-09-11): tournaments, competition rankings, time trials, ghosts/MKTV DataStore. Registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
@@ -2236,9 +2236,9 @@
     "name": "Minecraft: Wii U Edition",
     "console": "Wii U",
     "category": "Sandbox — co-op",
-    "backend": "4J Studios / Nintendo Network",
-    "status": "requestable",
-    "notes": "Publisher: Mojang/4J. Online co-op worlds over Nintendo Network; which protocol set it uses is unconfirmed and worth a capture before any work."
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "Publisher: Mojang/4J. Online co-op worlds over Nintendo Network; which protocol set it uses is unconfirmed and worth a capture before any work. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
@@ -2264,8 +2264,8 @@
     "console": "3DS",
     "category": "Kart racing — versus",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. 8-player online races, communities and ghost data; a named Pretendo target with VS/battle rooms and community rankings mapped out."
+    "status": "beta",
+    "notes": "Publisher: Nintendo. 8-player online races, communities and ghost data; a named Pretendo target with VS/battle rooms and community rankings mapped out. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
@@ -2363,8 +2363,8 @@
     "console": "3DS",
     "category": "Action — versus",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. Light vs Dark and Free-for-All online plus friend rooms; a named Pretendo target."
+    "status": "beta",
+    "notes": "Publisher: Nintendo. Light vs Dark and Free-for-All online plus friend rooms; a named Pretendo target. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
@@ -2390,8 +2390,8 @@
     "console": "3DS",
     "category": "Adventure — co-op",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. 3-player online co-op and friend rooms; a named Pretendo target, and unplayable as designed without a server."
+    "status": "beta",
+    "notes": "Publisher: Nintendo. 3-player online co-op and friend rooms; a named Pretendo target, and unplayable as designed without a server. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
@@ -2399,8 +2399,8 @@
     "console": "3DS",
     "category": "Action — co-op",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. Recruit wandering adventurers plus a gem-apple shop stub that stops the game freezing; a named Pretendo target."
+    "status": "beta",
+    "notes": "Publisher: Nintendo. Recruit wandering adventurers plus a gem-apple shop stub that stops the game freezing; a named Pretendo target. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
@@ -2408,8 +2408,8 @@
     "console": "3DS",
     "category": "Action — visits",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. Online and SpotPass visits; a named Pretendo target."
+    "status": "beta",
+    "notes": "Publisher: Nintendo. Online and SpotPass visits; a named Pretendo target. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
@@ -2426,8 +2426,8 @@
     "console": "3DS",
     "category": "RPG — versus/trade",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo/Level-5. Online random battles, friend trades and rankings; a named Pretendo target."
+    "status": "beta",
+    "notes": "Publisher: Nintendo/Level-5. Online random battles, friend trades and rankings; a named Pretendo target. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
@@ -4111,5 +4111,59 @@
     "backend": "NEX",
     "status": "beta",
     "notes": "Game server: Pretendo's (AGPL) adapted into servers/nex/titles/wiiu-chat on 2026-09-11, one container from the shared image. Not console-verified."
+  },
+  {
+    "kind": "title",
+    "name": "Ice Station Z",
+    "console": "3DS",
+    "category": "Survival",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "Game server: Pretendo's (AGPL) adapted into servers/nex/titles/ice-station-z on 2026-09-11, one container from the shared image. Title ids not public yet, so no nn-account row: a console cannot be pointed at it until they are. Not console-verified."
+  },
+  {
+    "kind": "title",
+    "name": "Monster Hunter 4",
+    "console": "3DS",
+    "category": "Action — co-op",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "Game server: Pretendo's (AGPL) adapted into servers/nex/titles/monster-hunter-4 on 2026-09-11, one container from the shared image. Title ids not public yet, so no nn-account row: a console cannot be pointed at it until they are. Not console-verified."
+  },
+  {
+    "kind": "title",
+    "name": "Monster Hunter Stories",
+    "console": "3DS",
+    "category": "RPG",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "Game server: Pretendo's (AGPL) adapted into servers/nex/titles/monster-hunter-stories on 2026-09-11, one container from the shared image. Title ids not public yet, so no nn-account row: a console cannot be pointed at it until they are. Not console-verified."
+  },
+  {
+    "kind": "title",
+    "name": "Puyo Puyo!! 20th Anniversary",
+    "console": "3DS",
+    "category": "Puzzle",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "Game server: Pretendo's (AGPL) adapted into servers/nex/titles/puyo-puyo-20th on 2026-09-11, one container from the shared image. Title ids not public yet, so no nn-account row: a console cannot be pointed at it until they are. Not console-verified."
+  },
+  {
+    "kind": "title",
+    "name": "Resident Evil: The Mercenaries 3D",
+    "console": "3DS",
+    "category": "Action — co-op",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "Game server: Pretendo's (AGPL) adapted into servers/nex/titles/resident-evil-the-mercenaries-3d on 2026-09-11, one container from the shared image. Title ids not public yet, so no nn-account row: a console cannot be pointed at it until they are. Not console-verified."
+  },
+  {
+    "kind": "title",
+    "name": "Yo-kai Watch Blasters",
+    "console": "3DS",
+    "category": "RPG",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "Game server: Pretendo's (AGPL) adapted into servers/nex/titles/yo-kai-watch-blasters on 2026-09-11, one container from the shared image. Title ids not public yet, so no nn-account row: a console cannot be pointed at it until they are. Not console-verified."
   }
 ]
