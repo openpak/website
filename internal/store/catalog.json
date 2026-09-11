@@ -4165,5 +4165,14 @@
     "backend": "NEX",
     "status": "beta",
     "notes": "Game server: Pretendo's (AGPL) adapted into servers/nex/titles/yo-kai-watch-blasters on 2026-09-11, one container from the shared image. Title ids not public yet, so no nn-account row: a console cannot be pointed at it until they are. Not console-verified."
+  },
+  {
+    "kind": "title",
+    "name": "Mario vs. Donkey Kong: Tipping Stars",
+    "console": "Wii U",
+    "category": "Puzzle — level sharing",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "Cross-buy with the 3DS version; one server serves both (servers/nex/titles/mario-vs-donkey-kong-tipping-stars, 2026-09-11): OpenPak's Go rewrite of Pretendo's nex-go v1 server. DataStore only: profiles, tip buckets and tip/play ratings; level sharing itself is Miiverse. Registered in nn-account for both consoles. Not console-verified. Publisher: Nintendo."
   }
 ]
