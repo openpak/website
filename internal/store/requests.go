@@ -53,9 +53,14 @@ func (r Request) Votable() bool {
 	return false
 }
 
-// CatalogRequests parses the embedded catalog. Sort follows catalog order,
-// which is already curated (live titles first, then the long tail).
-func CatalogRequests() ([]Request, error) {
+// CatalogRequests parses the embedded catalog: the fallback when the live one
+// (CatalogURL) has not been fetched yet. Sort follows catalog order, which is
+// already curated (live titles first, then the long tail).
+func CatalogRequests() ([]Request, error) { return ParseCatalog(catalogJSON) }
+
+// ParseCatalog parses a catalog.json body, from the embedded copy or from the
+// catalog repository's raw file.
+func ParseCatalog(catalogJSON []byte) ([]Request, error) {
 	var raw []struct {
 		Kind     string `json:"kind"`
 		Name     string `json:"name"`

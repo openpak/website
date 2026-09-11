@@ -37,6 +37,11 @@ type Config struct {
 
 	MediaDir   string // filesystem storage root for avatars
 	SeedTitles bool   // WEBSITE_SEED_TITLES: upsert requests from the catalog on boot
+	// CatalogURL is the live catalog.json (the openpak/catalog repository's raw file); the site
+	// refetches it every CatalogRefresh and reseeds, so a status change needs no release.
+	// Empty disables the refresh and the embedded copy is all there is.
+	CatalogURL     string        // CATALOG_URL
+	CatalogRefresh time.Duration // CATALOG_REFRESH, default 10m
 }
 
 // Load reads the environment and validates required fields.
@@ -56,6 +61,8 @@ func Load() (Config, error) {
 		Environment:        env("WEBSITE_ENVIRONMENT", "development"),
 		MediaDir:           env("WEBSITE_MEDIA_DIR", "storage/media"),
 		SeedTitles:         env("WEBSITE_SEED_TITLES", "") != "",
+		CatalogURL:         env("CATALOG_URL", "https://raw.githubusercontent.com/openpak/catalog/main/catalog.json"),
+		CatalogRefresh:     duration("CATALOG_REFRESH", 10*time.Minute),
 	}
 	for _, id := range strings.Split(os.Getenv("WEBSITE_ADMIN_ACCOUNT_IDS"), ",") {
 		if id = strings.TrimSpace(id); id != "" {
@@ -76,4 +83,13 @@ func env(key, def string) string {
 		return v
 	}
 	return def
+}
+
+func duration(key string, fallback time.Duration) time.Duration {
+	if v := os.Getenv(key); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			return d
+		}
+	}
+	return fallback
 }
