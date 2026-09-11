@@ -15,7 +15,7 @@
     "category": "NPLN title",
     "backend": "NPLN",
     "status": "live",
-    "notes": "Deployed (servers/stardew-valley, ~19k LOC, tenant 21010/22200) and the only title besides Outbound the website actually serves. Online play needs a per-build online-compatibility/cert-acceptance patch on emulator/CFW. Publisher: ConcernedApe."
+    "notes": "Deployed (servers/npln/titles/stardew-valley, ~19k LOC, tenant 21010/22200) and the only title besides Outbound the website actually serves. Online play needs a per-build online-compatibility/cert-acceptance patch on emulator/CFW. Publisher: ConcernedApe."
   },
   {
     "kind": "title",
@@ -24,7 +24,16 @@
     "category": "NPLN title",
     "backend": "NPLN",
     "status": "beta",
-    "notes": "Largest title on the list (~19k LOC, servers/splatoon-3, tenant 21012/22210). Session layer relays (Pia peer-to-peer + coturn), it does not simulate. Blocked on a per-build certificate-acceptance patch: until it is set the client abandons its own call and no server work is observable. Not console-verified. Publisher: Nintendo."
+    "notes": "Largest title on the list (~19k LOC, servers/npln/titles/splatoon-3, tenant 21012/22210). Session layer relays (Pia peer-to-peer + coturn), it does not simulate. Blocked on a per-build certificate-acceptance patch: until it is set the client abandons its own call and no server work is observable. Not console-verified. Publisher: Nintendo. Deployed 2026-09-10 as openpak-splatoon-3 (tenant 21012 behind Traefik SNI, health 21013, own self-signed tenant cert like Stardew, JWT key persisted in a volume). Not console-verified."
+  },
+  {
+    "kind": "title",
+    "name": "Super Mario Bros. Wonder",
+    "console": "Switch",
+    "category": "NPLN title",
+    "backend": "NPLN",
+    "status": "beta",
+    "notes": "010015100B514000. servers/npln/titles/super-mario-bros-wonder: Stardew's verified NPLN service set (auth, friends, game sessions, gamesync) under Wonder's tenant t-ba973ec6-lp1 (Kinnay's NPLN Servers list, 2026-09-11). Deployed 2026-09-11 as openpak-wonder (tenant 21014 behind Traefik SNI, health 21015, own CA-signed tenant cert). Nothing Wonder-specific observed yet. Console needs a client patch: v1.2.1 (build FF773E90972D544EB79406EAA65396D53C43EFB9) pins the NPLN certificate and rejects two peer names. Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -33,7 +42,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "NEX 4.0.0 (ws). Implemented on the shared NEX host (servers/mario-kart-8-deluxe), image-shippable, health-wired. Not console-verified. Publisher: Nintendo."
+    "notes": "NEX 4.0.0 (ws). Implemented on the shared NEX host (servers/nex/titles/mario-kart-8-deluxe), image-shippable, health-wired. Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -42,7 +51,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "Implemented on the shared NEX host (servers/super-smash-bros-ultimate). Not console-verified. Publisher: Nintendo."
+    "notes": "Implemented on the shared NEX host (servers/nex/titles/super-smash-bros-ultimate). Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -51,7 +60,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "OpenPak confirms NEX. Implemented (servers/animal-crossing-new-horizons). Not console-verified. Publisher: Nintendo."
+    "notes": "OpenPak confirms NEX. Implemented (servers/nex/titles/animal-crossing-new-horizons). Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -60,7 +69,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "Online is Balloon World (DataStore). Implemented (servers/super-mario-odyssey). Not console-verified. Publisher: Nintendo."
+    "notes": "Online is Balloon World (DataStore). Implemented (servers/nex/titles/super-mario-odyssey). Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -69,7 +78,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "The Switch NEX session/matchmaking + NAT-traversal layer for friend-list lobbies (ARMS's protocol set minus DataStore). Bedrock/Xbox realms are a separate Xbox-network concern, out of scope here. Implemented (servers/minecraft). Not console-verified. Publisher: Mojang/Microsoft."
+    "notes": "The Switch NEX session/matchmaking + NAT-traversal layer for friend-list lobbies (ARMS's protocol set minus DataStore). Bedrock/Xbox realms are a separate Xbox-network concern, out of scope here. Implemented (servers/nex/titles/minecraft). Not console-verified. Publisher: Mojang/Microsoft."
   },
   {
     "kind": "title",
@@ -78,7 +87,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "Implemented (servers/splatoon-2, ~1k LOC). Not console-verified. Publisher: Nintendo."
+    "notes": "Implemented (servers/nex/titles/splatoon-2, ~1k LOC). Not console-verified. Publisher: Nintendo. Secure host routed 2026-09-11 (game-server id from Kinnay's Game Server List)."
   },
   {
     "kind": "title",
@@ -87,7 +96,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "The DataStore shape-definer (DataStore-heavy: user levels, course world). Implemented (servers/super-mario-maker-2). Not console-verified. Publisher: Nintendo."
+    "notes": "The DataStore shape-definer (DataStore-heavy: user levels, course world). Implemented (servers/nex/titles/super-mario-maker-2). Not console-verified. Publisher: Nintendo. Secure host routed 2026-09-11 (game-server id from Kinnay's Game Server List)."
   },
   {
     "kind": "title",
@@ -96,7 +105,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "NEX 4.3.5. Needs a DataStore backing (Party Crash ranking). Implemented (servers/arms). Not console-verified. Publisher: Nintendo."
+    "notes": "NEX 4.3.5. Needs a DataStore backing (Party Crash ranking). Implemented (servers/nex/titles/arms). Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -105,7 +114,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "NEX 4.3.5 (version unverified). Two WSS listeners. Implemented (servers/mario-tennis-aces). Not console-verified. Publisher: Nintendo."
+    "notes": "NEX 4.3.5 (version unverified). Two WSS listeners. Implemented (servers/nex/titles/mario-tennis-aces). Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -114,7 +123,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "NEX 4.6.5, single WSS listener carrying both streams. Implemented (servers/mario-golf-super-rush). Not console-verified. Publisher: Nintendo."
+    "notes": "NEX 4.6.5, single WSS listener carrying both streams. Implemented (servers/nex/titles/mario-golf-super-rush). Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -123,7 +132,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "NEX 4.6.5, two WSS listeners on two ports with a real secure URL. Implemented (servers/mario-party-superstars). Not console-verified. Publisher: Nintendo."
+    "notes": "NEX 4.6.5, two WSS listeners on two ports with a real secure URL. Implemented (servers/nex/titles/mario-party-superstars). Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -132,7 +141,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "OpenPak confirms NEX, with a DataStore backing. Implemented (servers/mario-strikers). Not console-verified. Publisher: Nintendo."
+    "notes": "OpenPak confirms NEX, with a DataStore backing. Implemented (servers/nex/titles/mario-strikers). Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -141,7 +150,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "Implemented (servers/luigis-mansion-3). Not console-verified. Publisher: Nintendo."
+    "notes": "Implemented (servers/nex/titles/luigis-mansion-3). Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -150,7 +159,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "NEX 4.4.0. Implemented (servers/monster-hunter-generations-ultimate). Not console-verified. Publisher: Capcom."
+    "notes": "NEX 4.4.0. Implemented (servers/nex/titles/monster-hunter-generations-ultimate). Not console-verified. Publisher: Capcom."
   },
   {
     "kind": "title",
@@ -159,7 +168,25 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "NEX 4.6.0, single listener carrying both streams. Delisted title (service ended 2021) \u2014 only playable at all through a replacement network. Implemented (servers/super-mario-bros-35). Not console-verified. Publisher: Nintendo."
+    "notes": "NEX 4.6.0, single listener carrying both streams. Delisted title (service ended 2021) — only playable at all through a replacement network. Implemented (servers/nex/titles/super-mario-bros-35). Not console-verified. Publisher: Nintendo."
+  },
+  {
+    "kind": "title",
+    "name": "Super Mario 3D World + Bowser's Fury",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX",
+    "status": "scaffold",
+    "notes": "010028600EBDA000. servers/nex/titles/super-mario-3d-world-bowsers-fury: the common NEX room set (matchmaking, NAT traversal, utility) over Postgres, block 22370. Not deployable yet: NEX access key and game-server id are not public (absent from Kinnay's list; OpenPak's repo is a licence-only placeholder). Publisher: Nintendo. Added 2026-09-11."
+  },
+  {
+    "kind": "title",
+    "name": "Kirby's Dream Buffet",
+    "console": "Switch",
+    "category": "NEX title",
+    "backend": "NEX",
+    "status": "scaffold",
+    "notes": "0100A8E016236000. servers/nex/titles/kirbys-dream-buffet: the common NEX room set over Postgres, block 22380; rankings will need Ranking once observed. Not deployable yet: NEX access key and game-server id are not public (absent from Kinnay's list; OpenPak's repo is a licence-only placeholder). Publisher: Nintendo. Added 2026-09-11."
   },
   {
     "kind": "title",
@@ -167,8 +194,8 @@
     "console": "Switch",
     "category": "Third-party network",
     "backend": "Innersloth (own servers, Hazel/UDP)",
-    "status": "alpha",
-    "notes": "Verdict: depend, do not build. Run Impostor (GPL-3.0) as a separate process; OpenPak supplies the hostname redirect + TLS front (~100 lines Go). Front stub started (servers/among-us, ~74 LOC). Not deployed. Publisher: Innersloth."
+    "status": "beta",
+    "notes": "Impostor (GPL-3.0, the open-source Among Us server) forked unmodified as openpak/impostor and built into the among-us image at build time (one container: Impostor + the front, deployed 2026-09-11): Traefik terminates matchmaker(.eu|.as).among.us with an OpenPak-CA leaf, the front logs and proxies to Impostor's HTTP API, game traffic is Hazel/UDP on 22603. openpak.nro 0.2.2 redirects the three names. Not console-verified; the evidence list in servers/among-us/docs still applies (EOS gate, region choice)."
   },
   {
     "kind": "title",
@@ -177,7 +204,7 @@
     "category": "Third-party network",
     "backend": "Demonware",
     "status": "alpha",
-    "notes": "Research verdict only, no code. Auth+matchmaking over Demonware (racing itself is peer-to-peer), which is plausible and squarely what OpenPak does, but unproven and possibly unnecessary \u2014 the open question is whether an OpenPak console needs us for it at all. Publisher: Activision."
+    "notes": "Research verdict only, no code. Auth+matchmaking over Demonware (racing itself is peer-to-peer), which is plausible and squarely what OpenPak does, but unproven and possibly unnecessary — the open question is whether an OpenPak console needs us for it at all. Publisher: Activision."
   },
   {
     "kind": "title",
@@ -330,7 +357,7 @@
     "category": "Social",
     "backend": "account + nx-baas",
     "status": "working",
-    "notes": "search -> request -> accept -> list, hardware-proven 2026-09-08. States use the console's words (AUTHORIZED). Friend list is console-local; the same graph is handed to NEX titles for free."
+    "notes": "search -> request -> accept -> list, hardware-proven 2026-09-08. States use the console's words (AUTHORIZED). Friend list is console-local; the same graph is handed to NEX titles for free. Cross-console since 2026-09-10: the core is the one graph; the Switch adapter, the Wii U/3DS friends server, the website and the phone all read and write it. The core emits friend_requested / friend_accepted / friend_removed; nx-baas refreshes Switch lists and nn-friends pushes NEX notifications to online Wii U/3DS consoles, with shadow PNIDs so a Switch or phone user has a face on a Wii U. The phone gets a push on request and acceptance."
   },
   {
     "kind": "feature",
@@ -366,7 +393,7 @@
     "category": "Session",
     "backend": "node / coturn / Photon",
     "status": "partial",
-    "notes": "Photon Fusion relay (Outbound) and NPLN TURN (Stardew, Pia peer-to-peer carried by coturn when NAT won't) work. NEX gameplay is peer-to-peer (auth returns the secure server, then consoles talk directly). The standalone nat-check helper is empty."
+    "notes": "Photon Fusion relay (Outbound) and NPLN TURN (Stardew, Pia peer-to-peer carried by coturn when NAT won't) work. NEX gameplay is peer-to-peer (auth returns the secure server, then consoles talk directly). The standalone nat-check helper is empty. Switch NAT check (nncs1/nncs2-lp1.n.n.srv.nintendo.net, UDP 10025/10125) is served by nn-nncs on two hosts since openpak.nro 0.2.1 (2026-09-11); the nat-check repo is docs only."
   },
   {
     "kind": "feature",
@@ -383,8 +410,8 @@
     "console": "Switch",
     "category": "Content",
     "backend": "saves",
-    "status": "planned",
-    "notes": "Repository is empty. Nothing implemented. Console-facing SCSI handlers are to be a Go package the Switch adapter mounts on 21000. See prds/cloud-saves-prd.md."
+    "status": "partial",
+    "notes": "Built and deployed 2026-09-10 (servers: saves on 20020/20021). Emulator and website surfaces work end to end: OpenPak allowance plus the player's own S3 bucket or WebDAV share. The Switch SCSI surface is served through the Switch adapter and answers the console's request set; whether a console accepts a server-minted key seed package (CS-M0) is not yet known. See prds/cloud-saves-prd.md and saves/docs/provenance.md."
   },
   {
     "kind": "feature",
@@ -424,12 +451,12 @@
   },
   {
     "kind": "feature",
-    "name": "Switch eShop access for homebrew / mods",
+    "name": "Mods catalogue",
     "console": "Switch",
     "category": "Content",
     "backend": "mods",
-    "status": "planned",
-    "notes": "mods repository is empty (no README, no code). See prds/mods-prd.md."
+    "status": "alpha",
+    "notes": "Built 2026-09-11: mods service (catalogue over Postgres, package store, provenance gate refusing game data/executables/keys and packages without licence or source, manifest API with ETag, favourites, 30-day version grace, takedown). Curation is an internal API until the website has pages (M2). Proxied under openpak.org/api/v1 by the website. Citron client (M3) not started."
   },
   {
     "kind": "feature",
@@ -446,8 +473,8 @@
     "console": "Wii U",
     "category": "Console network",
     "backend": "nn-account + nn-friends (NNAS/NEX)",
-    "status": "alpha",
-    "notes": "Go rewrite over the OpenPak core, forked from Pretendo account+friends (AGPL, depend+fork). nn-account M2 in progress, parts still TypeScript. Not deployed. networks.go: building."
+    "status": "beta",
+    "notes": "Deployed 2026-09-10 on the production box: nn-account (NNAS on account.nintendo.net, NASC, conntest/cbvc, account.v2 gRPC; Traefik terminates TLS with an OpenPak-CA leaf) and nn-friends (NEX auth/secure on UDP 22360/22361, graph in the account core). nn-nncs (NAT check) split across the production and status boxes. Not console-verified: no Wii U has connected yet; the console side is now forked: nn-inkay (Aroma module, built on openpak-v* tags, OpenPak CA, *.openpak.org names) and nn-sssl-dns + nn-sssl for hackless consoles; hardware untested. Optional Pretendo services not hosted: BOSS (SpotPass), Juxtaposition (Miiverse), SOAP (eShop/NUS)."
   },
   {
     "kind": "feature",
@@ -455,8 +482,8 @@
     "console": "3DS",
     "category": "Console network",
     "backend": "nn-account + nn-friends (NNAS/NASC)",
-    "status": "alpha",
-    "notes": "Same Pretendo-derived adapters as Wii U. Being built, not deployed. networks.go: building."
+    "status": "beta",
+    "notes": "Same deployment as the Wii U network (nn-account NASC on nasc.nintendowifi.net, nn-friends, nn-nncs). 3DS Mii decoding is off until an operator supplies PN_FRIENDS_CONFIG_MII_DECRYPT_KEY. Not console-verified; the console side is now forked: nn-nimbus (Luma patches with *.openpak.org names, SSL check disabled); not built here (needs devkitARM, CTRPluginFramework, armips, makerom, bannertool, flips); hardware untested. networks.go: building."
   },
   {
     "kind": "feature",
@@ -464,8 +491,8 @@
     "console": "Wii",
     "category": "Console network",
     "backend": "Nintendo WFC / GameSpy",
-    "status": "planned",
-    "notes": "No adapter yet. Reuse base: WiiLink24/wfc-server (Go, open, live, GameSpy-style). Wiimmfi is closed-source."
+    "status": "beta",
+    "notes": "WiiLink's wfc-server forked as nn-wfc (AGPL, Go) and deployed 2026-09-10: NAS on port 80 via Traefik (nas/naswii/dls1/sake/gamestats/race names), GameSpy 28910/29900/29901/29920 tcp and 27900/27901 udp on the host, Postgres wwfc. A Wii reaches it by pointing its DNS at nn-sssl-dns (no CFW). Not console-verified; cloud security lists still block the UDP/TCP game ports."
   },
   {
     "kind": "feature",
@@ -519,7 +546,7 @@
     "category": "Console network",
     "backend": "PSN",
     "status": "planned",
-    "notes": "No adapter yet. Plan: a Go server wire-compatible with RPCN (AGPL, Rust) so stock RPCS3 connects \u2014 emulator-first. Per-title servers to federate rather than rebuild: ProjectLighthouse (LBP, AGPL), MultiServer3 (GPL-3.0). Hardware waits on Phony Network or own RE."
+    "notes": "No adapter yet. Plan: a Go server wire-compatible with RPCN (AGPL, Rust) so stock RPCS3 connects — emulator-first. Per-title servers to federate rather than rebuild: ProjectLighthouse (LBP, AGPL), MultiServer3 (GPL-3.0). Hardware waits on Phony Network or own RE."
   },
   {
     "kind": "feature",
@@ -534,7 +561,7 @@
     "kind": "title",
     "name": "Dragon Ball FighterZ",
     "console": "Switch",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Bandai Namco. online ranked/casual versus; backend unconfirmed."
@@ -543,7 +570,7 @@
     "kind": "title",
     "name": "Ultra Street Fighter II: The Final Challengers",
     "console": "Switch",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Capcom. online versus; backend unconfirmed."
@@ -552,7 +579,7 @@
     "kind": "title",
     "name": "Mortal Kombat 11",
     "console": "Switch",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Warner Bros.. online versus/king of the hill; backend unconfirmed."
@@ -561,7 +588,7 @@
     "kind": "title",
     "name": "Mortal Kombat 1",
     "console": "Switch",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Warner Bros.. online versus; backend unconfirmed."
@@ -570,7 +597,7 @@
     "kind": "title",
     "name": "Brawlhalla",
     "console": "Switch",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Ubisoft. free-to-play online platform fighter; backend unconfirmed."
@@ -579,7 +606,7 @@
     "kind": "title",
     "name": "Nickelodeon All-Star Brawl 2",
     "console": "Switch",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: GameMill. online versus; backend unconfirmed."
@@ -588,7 +615,7 @@
     "kind": "title",
     "name": "BlazBlue: Cross Tag Battle",
     "console": "Switch",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Arc System Works. online versus; backend unconfirmed."
@@ -597,7 +624,7 @@
     "kind": "title",
     "name": "Power Rangers: Battle for the Grid",
     "console": "Switch",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: nWay. online cross-play versus; backend unconfirmed."
@@ -606,7 +633,7 @@
     "kind": "title",
     "name": "Samurai Shodown",
     "console": "Switch",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: SNK. online versus; backend unconfirmed."
@@ -615,7 +642,7 @@
     "kind": "title",
     "name": "Naruto x Boruto Ultimate Ninja Storm Connections",
     "console": "Switch",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Bandai Namco. online versus; backend unconfirmed."
@@ -624,7 +651,7 @@
     "kind": "title",
     "name": "Rivals of Aether",
     "console": "Switch",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Dan Fornace. online platform fighter; backend unconfirmed."
@@ -633,7 +660,7 @@
     "kind": "title",
     "name": "Under Night In-Birth Exe:Late[cl-r]",
     "console": "Switch",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Arc System Works. online versus; backend unconfirmed."
@@ -651,7 +678,7 @@
     "kind": "title",
     "name": "Team Sonic Racing",
     "console": "Switch",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Sega. online team racing; backend unconfirmed."
@@ -660,7 +687,7 @@
     "kind": "title",
     "name": "Fast RMX",
     "console": "Switch",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Shin'en. online racing; backend unconfirmed."
@@ -669,7 +696,7 @@
     "kind": "title",
     "name": "Cruis'n Blast",
     "console": "Switch",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: GameMill/Raw Thrills. online racing (post-launch); backend unconfirmed."
@@ -678,7 +705,7 @@
     "kind": "title",
     "name": "Disney Speedstorm",
     "console": "Switch",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Gameloft. free-to-play online racing; backend unconfirmed."
@@ -687,7 +714,7 @@
     "kind": "title",
     "name": "Nickelodeon Kart Racers 3: Slime Speedway",
     "console": "Switch",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: GameMill. online racing; backend unconfirmed."
@@ -696,7 +723,7 @@
     "kind": "title",
     "name": "Hotshot Racing",
     "console": "Switch",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Curve Games. online racing; backend unconfirmed."
@@ -705,7 +732,7 @@
     "kind": "title",
     "name": "Chocobo GP",
     "console": "Switch",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Square Enix. online racing; online service shut down 2023; backend unconfirmed."
@@ -714,7 +741,7 @@
     "kind": "title",
     "name": "Redout 2",
     "console": "Switch",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Saber Interactive. online racing; backend unconfirmed."
@@ -741,7 +768,7 @@
     "kind": "title",
     "name": "Overwatch 2",
     "console": "Switch",
-    "category": "Shooter \u2014 versus",
+    "category": "Shooter — versus",
     "backend": "Battle.net",
     "status": "requestable",
     "notes": "Publisher: Blizzard. online hero shooter; Blizzard Battle.net."
@@ -750,7 +777,7 @@
     "kind": "title",
     "name": "Paladins",
     "console": "Switch",
-    "category": "Shooter \u2014 versus",
+    "category": "Shooter — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Hi-Rez. free-to-play hero shooter; backend unconfirmed."
@@ -759,7 +786,7 @@
     "kind": "title",
     "name": "Rogue Company",
     "console": "Switch",
-    "category": "Shooter \u2014 versus",
+    "category": "Shooter — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Hi-Rez. online team shooter; backend unconfirmed."
@@ -768,7 +795,7 @@
     "kind": "title",
     "name": "Warface: Clutch",
     "console": "Switch",
-    "category": "Shooter \u2014 versus/co-op",
+    "category": "Shooter — versus/co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: My.Games. free-to-play shooter, PvP + co-op; backend unconfirmed."
@@ -777,7 +804,7 @@
     "kind": "title",
     "name": "DOOM Eternal",
     "console": "Switch",
-    "category": "Shooter \u2014 versus",
+    "category": "Shooter — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Bethesda/id. Battlemode online versus; backend unconfirmed."
@@ -786,7 +813,7 @@
     "kind": "title",
     "name": "Borderlands 3",
     "console": "Switch",
-    "category": "Shooter \u2014 co-op",
+    "category": "Shooter — co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: 2K/Gearbox. online co-op looter-shooter; backend unconfirmed."
@@ -795,7 +822,7 @@
     "kind": "title",
     "name": "Wolfenstein: Youngblood",
     "console": "Switch",
-    "category": "Shooter \u2014 co-op",
+    "category": "Shooter — co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Bethesda. online co-op; backend unconfirmed."
@@ -804,7 +831,7 @@
     "kind": "title",
     "name": "Payday 2",
     "console": "Switch",
-    "category": "Shooter \u2014 co-op",
+    "category": "Shooter — co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Starbreeze. 4-player online co-op heists; backend unconfirmed."
@@ -912,7 +939,7 @@
     "kind": "title",
     "name": "EA Sports FC 24",
     "console": "Switch",
-    "category": "Sports \u2014 versus",
+    "category": "Sports — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: EA. online friendlies/versus; backend unconfirmed (EA/Blaze?)."
@@ -921,7 +948,7 @@
     "kind": "title",
     "name": "NBA 2K24",
     "console": "Switch",
-    "category": "Sports \u2014 versus",
+    "category": "Sports — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: 2K. online versus; backend unconfirmed."
@@ -930,7 +957,7 @@
     "kind": "title",
     "name": "Super Mega Baseball 4",
     "console": "Switch",
-    "category": "Sports \u2014 versus/co-op",
+    "category": "Sports — versus/co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: EA. online versus and co-op; backend unconfirmed."
@@ -939,7 +966,7 @@
     "kind": "title",
     "name": "Windjammers 2",
     "console": "Switch",
-    "category": "Sports \u2014 versus",
+    "category": "Sports — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Dotemu. online versus; backend unconfirmed."
@@ -948,7 +975,7 @@
     "kind": "title",
     "name": "Captain Tsubasa: Rise of New Champions",
     "console": "Switch",
-    "category": "Sports \u2014 versus",
+    "category": "Sports — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Bandai Namco. online football versus; backend unconfirmed."
@@ -957,7 +984,7 @@
     "kind": "title",
     "name": "Golf With Your Friends",
     "console": "Switch",
-    "category": "Sports \u2014 versus",
+    "category": "Sports — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Team17. online multiplayer golf; backend unconfirmed."
@@ -966,7 +993,7 @@
     "kind": "title",
     "name": "Diablo III: Eternal Collection",
     "console": "Switch",
-    "category": "RPG \u2014 co-op",
+    "category": "RPG — co-op",
     "backend": "Battle.net",
     "status": "requestable",
     "notes": "Publisher: Blizzard. online co-op action-RPG; Blizzard Battle.net."
@@ -975,7 +1002,7 @@
     "kind": "title",
     "name": "Diablo II: Resurrected",
     "console": "Switch",
-    "category": "RPG \u2014 co-op",
+    "category": "RPG — co-op",
     "backend": "Battle.net",
     "status": "requestable",
     "notes": "Publisher: Blizzard. online co-op; Blizzard Battle.net."
@@ -984,7 +1011,7 @@
     "kind": "title",
     "name": "Monster Hunter Stories 2: Wings of Ruin",
     "console": "Switch",
-    "category": "RPG \u2014 versus/co-op",
+    "category": "RPG — versus/co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Capcom. online co-op expeditions and versus; backend unconfirmed."
@@ -1002,16 +1029,16 @@
     "kind": "title",
     "name": "Final Fantasy Crystal Chronicles Remastered",
     "console": "Switch",
-    "category": "RPG \u2014 co-op",
+    "category": "RPG — co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Square Enix. online co-op; online service ended 2024; backend unconfirmed."
   },
   {
     "kind": "title",
-    "name": "Divinity: Original Sin 2 \u2014 Definitive Edition",
+    "name": "Divinity: Original Sin 2 — Definitive Edition",
     "console": "Switch",
-    "category": "RPG \u2014 co-op",
+    "category": "RPG — co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Larian. online co-op, cross-play with PC; backend unconfirmed."
@@ -1047,7 +1074,7 @@
     "kind": "title",
     "name": "Torchlight III",
     "console": "Switch",
-    "category": "RPG \u2014 co-op",
+    "category": "RPG — co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Perfect World. online co-op action-RPG; backend unconfirmed."
@@ -1056,7 +1083,7 @@
     "kind": "title",
     "name": "Portal Knights",
     "console": "Switch",
-    "category": "RPG \u2014 co-op",
+    "category": "RPG — co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: 505 Games. online co-op sandbox RPG; backend unconfirmed."
@@ -1065,7 +1092,7 @@
     "kind": "title",
     "name": "Dragon Marked for Death",
     "console": "Switch",
-    "category": "RPG \u2014 co-op",
+    "category": "RPG — co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Inti Creates. 4-player online co-op; backend unconfirmed."
@@ -1074,7 +1101,7 @@
     "kind": "title",
     "name": "Bloodstained: Ritual of the Night",
     "console": "Switch",
-    "category": "RPG \u2014 co-op/versus",
+    "category": "RPG — co-op/versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: 505 Games. online co-op and versus modes; backend unconfirmed."
@@ -1281,7 +1308,7 @@
     "kind": "title",
     "name": "Don't Starve Together",
     "console": "Switch",
-    "category": "Survival \u2014 co-op",
+    "category": "Survival — co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Klei. online co-op survival; backend unconfirmed."
@@ -1290,7 +1317,7 @@
     "kind": "title",
     "name": "ARK: Survival Evolved",
     "console": "Switch",
-    "category": "Survival \u2014 co-op",
+    "category": "Survival — co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Studio Wildcard. online survival; backend unconfirmed."
@@ -1308,7 +1335,7 @@
     "kind": "title",
     "name": "Dragon Quest Builders 2",
     "console": "Switch",
-    "category": "Sandbox \u2014 co-op",
+    "category": "Sandbox — co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Square Enix. online co-op building; backend unconfirmed."
@@ -1317,7 +1344,7 @@
     "kind": "title",
     "name": "The Survivalists",
     "console": "Switch",
-    "category": "Survival \u2014 co-op",
+    "category": "Survival — co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Team17. online co-op survival; backend unconfirmed."
@@ -1326,7 +1353,7 @@
     "kind": "title",
     "name": "Farming Simulator 23",
     "console": "Switch",
-    "category": "Simulation \u2014 co-op",
+    "category": "Simulation — co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Giants Software. online co-op farming; backend unconfirmed."
@@ -1335,7 +1362,7 @@
     "kind": "title",
     "name": "PowerWash Simulator",
     "console": "Switch",
-    "category": "Simulation \u2014 co-op",
+    "category": "Simulation — co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Square Enix/FuturLab. online co-op; backend unconfirmed."
@@ -1353,7 +1380,7 @@
     "kind": "title",
     "name": "Sid Meier's Civilization VI",
     "console": "Switch",
-    "category": "Strategy \u2014 versus",
+    "category": "Strategy — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: 2K/Firaxis. online multiplayer 4X; backend unconfirmed."
@@ -1362,7 +1389,7 @@
     "kind": "title",
     "name": "Wargroove 2",
     "console": "Switch",
-    "category": "Strategy \u2014 versus/co-op",
+    "category": "Strategy — versus/co-op",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Chucklefish. online versus and co-op; backend unconfirmed."
@@ -1371,7 +1398,7 @@
     "kind": "title",
     "name": "Advance Wars 1+2: Re-Boot Camp",
     "console": "Switch",
-    "category": "Strategy \u2014 versus",
+    "category": "Strategy — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Nintendo. online versus; backend unconfirmed."
@@ -1389,7 +1416,7 @@
     "kind": "title",
     "name": "Worms W.M.D",
     "console": "Switch",
-    "category": "Strategy \u2014 versus",
+    "category": "Strategy — versus",
     "backend": "unconfirmed",
     "status": "requestable",
     "notes": "Publisher: Team17. online turn-based versus; backend unconfirmed."
@@ -1416,619 +1443,619 @@
     "kind": "title",
     "name": "Mario Kart Wii",
     "console": "Wii",
-    "category": "Kart racing \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. 12-player online VS/battle plus time-trial ghosts; the WFC flagship and Wiimmfi's first title, partial in WiiLink's open wfc-server."
+    "category": "Kart racing — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. 12-player online VS/battle plus time-trial ghosts; the WFC flagship and Wiimmfi's first title, partial in WiiLink's open wfc-server. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Super Smash Bros. Brawl",
     "console": "Wii",
-    "category": "Fighting \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. With Anyone/With Friends matches and Spectator; partial in wfc-server, Wiimmfi-proven."
+    "category": "Fighting — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. With Anyone/With Friends matches and Spectator; partial in wfc-server, Wiimmfi-proven. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Animal Crossing: City Folk",
     "console": "Wii",
-    "category": "Life sim \u2014 visits",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. Friend-code town visits and the message bottle; partial in wfc-server."
+    "category": "Life sim — visits",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. Friend-code town visits and the message bottle; partial in wfc-server. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Monster Hunter Tri",
     "console": "Wii",
-    "category": "Action RPG \u2014 co-op",
-    "backend": "Capcom servers",
-    "status": "requestable",
-    "notes": "Publisher: Capcom. 4-player online hunts on Capcom's own servers, not WFC; MH3SP (Python, open) already reimplements them for Wii and Dolphin."
+    "category": "Action RPG — co-op",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Capcom. 4-player online hunts on Capcom's own servers, not WFC; MH3SP (Python, open) already reimplements them for Wii and Dolphin. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Mario Strikers Charged",
     "console": "Wii",
-    "category": "Sports \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. Ranked online matches with continental leaderboards; Wiimmfi-proven."
+    "category": "Sports — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. Ranked online matches with continental leaderboards; Wiimmfi-proven. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Pokemon Battle Revolution",
     "console": "Wii",
-    "category": "Battle \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. Online battles with teams sent from DS Diamond/Pearl, so it needs the DS WFC side too."
+    "category": "Battle — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. Online battles with teams sent from DS Diamond/Pearl, so it needs the DS WFC side too. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "The Conduit",
     "console": "Wii",
-    "category": "FPS \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Sega/High Voltage. 12-player online shooter over GameSpy matchmaking; Wiimmfi-proven."
+    "category": "FPS — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Sega/High Voltage. 12-player online shooter over GameSpy matchmaking; Wiimmfi-proven. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Conduit 2",
     "console": "Wii",
-    "category": "FPS \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Sega/High Voltage. Ranked and private online matches; Wiimmfi-proven."
+    "category": "FPS — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Sega/High Voltage. Ranked and private online matches; Wiimmfi-proven. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "GoldenEye 007",
     "console": "Wii",
-    "category": "FPS \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Activision/Eurocom. 8-player online deathmatch; delisted title, online only ever returns through a replacement network."
+    "category": "FPS — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Activision/Eurocom. 8-player online deathmatch; delisted title, online only ever returns through a replacement network. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Call of Duty: Black Ops",
     "console": "Wii",
-    "category": "FPS \u2014 versus",
-    "backend": "Demonware",
-    "status": "requestable",
-    "notes": "Publisher: Activision/Treyarch. Wii online used Demonware matchmaking, not Nintendo WFC \u2014 a separate backend from everything else on this console."
+    "category": "FPS — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Activision/Treyarch. Wii online used Demonware matchmaking, not Nintendo WFC — a separate backend from everything else on this console. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Call of Duty: Modern Warfare 3",
     "console": "Wii",
-    "category": "FPS \u2014 versus",
-    "backend": "Demonware",
-    "status": "requestable",
-    "notes": "Publisher: Activision. Demonware matchmaking on the Wii build; same stack as the other Wii CoD releases."
+    "category": "FPS — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Activision. Demonware matchmaking on the Wii build; same stack as the other Wii CoD releases. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Call of Duty: World at War",
     "console": "Wii",
-    "category": "FPS \u2014 versus",
-    "backend": "Demonware",
-    "status": "requestable",
-    "notes": "Publisher: Activision/Treyarch. 4-player online co-op campaign plus versus, over Demonware."
+    "category": "FPS — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Activision/Treyarch. 4-player online co-op campaign plus versus, over Demonware. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Battalion Wars 2",
     "console": "Wii",
-    "category": "Strategy \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. Online skirmish and assault modes; Wiimmfi-proven."
+    "category": "Strategy — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. Online skirmish and assault modes; Wiimmfi-proven. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Bomberman Blast",
     "console": "Wii",
-    "category": "Action \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Hudson. 8-player online battle; shipped both on disc and WiiWare."
+    "category": "Action — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Hudson. 8-player online battle; shipped both on disc and WiiWare. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Dr. Mario Online Rx",
     "console": "Wii",
-    "category": "Puzzle \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. WiiWare online versus; partial in WiiLink's wfc-server today."
+    "category": "Puzzle — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. WiiWare online versus; partial in WiiLink's wfc-server today. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Tetris Party Deluxe",
     "console": "Wii",
-    "category": "Puzzle \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Majesco/Hudson. Online versus; one of the few titles wfc-server already supports fully."
+    "category": "Puzzle — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Majesco/Hudson. Online versus; one of the few titles wfc-server already supports fully. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Wii Chess",
     "console": "Wii",
-    "category": "Board \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. Online chess; fully supported by wfc-server, so it is the cheapest Wii bring-up target."
+    "category": "Board — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. Online chess; fully supported by wfc-server, so it is the cheapest Wii bring-up target. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Fortune Street",
     "console": "Wii",
-    "category": "Board \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo/Square Enix. 4-player online board play; partial in wfc-server."
+    "category": "Board — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo/Square Enix. 4-player online board play; partial in wfc-server. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Excitebots: Trick Racing",
     "console": "Wii",
-    "category": "Racing \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. 6-player online races; Wiimmfi-proven."
+    "category": "Racing — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. 6-player online races; Wiimmfi-proven. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Excitebike: World Rally",
     "console": "Wii",
-    "category": "Racing \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. WiiWare online races and track sharing."
+    "category": "Racing — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. WiiWare online races and track sharing. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Tatsunoko vs. Capcom: Ultimate All-Stars",
     "console": "Wii",
-    "category": "Fighting \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Capcom. Ranked and player online matches; Wiimmfi-proven."
+    "category": "Fighting — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Capcom. Ranked and player online matches; Wiimmfi-proven. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Dragon Ball Z: Budokai Tenkaichi 3",
     "console": "Wii",
-    "category": "Fighting \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Atari/Bandai Namco. Online versus on the Wii build only."
+    "category": "Fighting — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Atari/Bandai Namco. Online versus on the Wii build only. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Sonic & Sega All-Stars Racing",
     "console": "Wii",
-    "category": "Kart racing \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Sega/Sumo. 8-player online races; Wiimmfi-proven."
+    "category": "Kart racing — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Sega/Sumo. 8-player online races; Wiimmfi-proven. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Mario & Sonic at the Olympic Winter Games",
     "console": "Wii",
-    "category": "Sports \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Sega/Nintendo. Online events and leaderboards."
+    "category": "Sports — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Sega/Nintendo. Online events and leaderboards. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Endless Ocean 2: Adventures of the Deep",
     "console": "Wii",
-    "category": "Adventure \u2014 co-op",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo/Arika. Two-player online diving with voice chat, an unusually calm co-op target."
+    "category": "Adventure — co-op",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo/Arika. Two-player online diving with voice chat, an unusually calm co-op target. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Final Fantasy Crystal Chronicles: Echoes of Time",
     "console": "Wii",
-    "category": "Action RPG \u2014 co-op",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Square Enix. 4-player online co-op that cross-plays with the DS version, so both WFC sides must agree."
+    "category": "Action RPG — co-op",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Square Enix. 4-player online co-op that cross-plays with the DS version, so both WFC sides must agree. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Medal of Honor: Heroes 2",
     "console": "Wii",
-    "category": "FPS \u2014 versus",
-    "backend": "EA Nucleus",
-    "status": "requestable",
-    "notes": "Publisher: EA. 32-player online, the biggest on the console, but on EA's own servers rather than WFC \u2014 needs an EA backend, like the EA titles Insignia cannot serve on Xbox."
+    "category": "FPS — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: EA. 32-player online, the biggest on the console, but on EA's own servers rather than WFC — needs an EA backend, like the EA titles Insignia cannot serve on Xbox. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Pro Evolution Soccer 2011",
     "console": "Wii",
-    "category": "Sports \u2014 versus",
-    "backend": "Konami servers",
-    "status": "requestable",
-    "notes": "Publisher: Konami. Online matches over Konami's own matchmaking."
+    "category": "Sports — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Konami. Online matches over Konami's own matchmaking. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Guitar Hero III: Legends of Rock",
     "console": "Wii",
-    "category": "Rhythm \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Activision. Online head-to-head and leaderboards; representative of the whole Guitar Hero/Rock Band Wii set."
+    "category": "Rhythm — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Activision. Online head-to-head and leaderboards; representative of the whole Guitar Hero/Rock Band Wii set. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Mario Sports Mix",
     "console": "Wii",
-    "category": "Sports \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo/Square Enix. Online 2v2 matches with continental rankings."
+    "category": "Sports — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo/Square Enix. Online 2v2 matches with continental rankings. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Zangeki no Reginleiv",
     "console": "Wii",
-    "category": "Action \u2014 co-op",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo/Sandlot. Japan-only 4-player online co-op; never had a Western WFC presence to restore."
+    "category": "Action — co-op",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo/Sandlot. Japan-only 4-player online co-op; never had a Western WFC presence to restore. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Trackmania Wii",
     "console": "Wii",
-    "category": "Racing \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo/Firebrand. Online races and track sharing."
+    "category": "Racing — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo/Firebrand. Online races and track sharing. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Mario Kart DS",
     "console": "DS",
-    "category": "Kart racing \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. 4-player online VS; the one DS title WiiLink's open wfc-server already supports fully, so it is the bring-up target."
+    "category": "Kart racing — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. 4-player online VS; the one DS title WiiLink's open wfc-server already supports fully, so it is the bring-up target. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Pokemon Diamond / Pearl",
     "console": "DS",
-    "category": "RPG \u2014 versus/trade",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. GTS trading, Wi-Fi battles and the Union Room; the GTS is a store, not just matchmaking, so it needs real persistence."
+    "category": "RPG — versus/trade",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. GTS trading, Wi-Fi battles and the Union Room; the GTS is a store, not just matchmaking, so it needs real persistence. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Pokemon Platinum",
     "console": "DS",
-    "category": "RPG \u2014 versus/trade",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. GTS, Wi-Fi Plaza and battles; same backend shape as Diamond/Pearl."
+    "category": "RPG — versus/trade",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. GTS, Wi-Fi Plaza and battles; same backend shape as Diamond/Pearl. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Pokemon HeartGold / SoulSilver",
     "console": "DS",
-    "category": "RPG \u2014 versus/trade",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. GTS and Wi-Fi battles, plus the Pokewalker and Battle Tower rentals."
+    "category": "RPG — versus/trade",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. GTS and Wi-Fi battles, plus the Pokewalker and Battle Tower rentals. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Pokemon Black / White",
     "console": "DS",
-    "category": "RPG \u2014 versus/trade",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. GTS, Random Matchup and the Entralink/Dream World services \u2014 the largest WFC service surface on the console."
+    "category": "RPG — versus/trade",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. GTS, Random Matchup and the Entralink/Dream World services — the largest WFC service surface on the console. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Pokemon Black 2 / White 2",
     "console": "DS",
-    "category": "RPG \u2014 versus/trade",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. Random Matchup, GTS and the Global Link tie-ins; the last Nintendo WFC generation."
+    "category": "RPG — versus/trade",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. Random Matchup, GTS and the Global Link tie-ins; the last Nintendo WFC generation. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Animal Crossing: Wild World",
     "console": "DS",
-    "category": "Life sim \u2014 visits",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. Friend-code town visits for up to four players; the title that made friend codes famous."
+    "category": "Life sim — visits",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. Friend-code town visits for up to four players; the title that made friend codes famous. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Metroid Prime Hunters",
     "console": "DS",
-    "category": "FPS \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. 4-player online deathmatch with rankings; Wiimmfi-proven."
+    "category": "FPS — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. 4-player online deathmatch with rankings; Wiimmfi-proven. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Tetris DS",
     "console": "DS",
-    "category": "Puzzle \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. 4-player online versus with a worldwide ladder."
+    "category": "Puzzle — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. 4-player online versus with a worldwide ladder. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Clubhouse Games",
     "console": "DS",
-    "category": "Board \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. 42 All-Time Classics in Europe; 8-player online card and board play."
+    "category": "Board — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. 42 All-Time Classics in Europe; 8-player online card and board play. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Star Fox Command",
     "console": "DS",
-    "category": "Shooter \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. 3-player online dogfights; one of the earliest WFC shooters."
+    "category": "Shooter — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. 3-player online dogfights; one of the earliest WFC shooters. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "The Legend of Zelda: Phantom Hourglass",
     "console": "DS",
-    "category": "Adventure \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. Battle mode over Wi-Fi; the single-player campaign needs nothing from us."
+    "category": "Adventure — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. Battle mode over Wi-Fi; the single-player campaign needs nothing from us. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Diddy Kong Racing DS",
     "console": "DS",
-    "category": "Kart racing \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo/Rare. 4-player online races."
+    "category": "Kart racing — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo/Rare. 4-player online races. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Advance Wars: Days of Ruin",
     "console": "DS",
-    "category": "Strategy \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. 4-player online battles plus map trading, so it wants a DataStore-like upload service."
+    "category": "Strategy — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. 4-player online battles plus map trading, so it wants a DataStore-like upload service. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Fire Emblem: Shadow Dragon",
     "console": "DS",
-    "category": "Strategy \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. Online versus and the Wi-Fi shop."
+    "category": "Strategy — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. Online versus and the Wi-Fi shop. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Dragon Quest IX: Sentinels of the Starry Skies",
     "console": "DS",
-    "category": "RPG \u2014 co-op",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo/Square Enix. Co-op is local wireless; WFC carried the DQVC item shop and downloadable quests, which is a content service rather than matchmaking."
+    "category": "RPG — co-op",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo/Square Enix. Co-op is local wireless; WFC carried the DQVC item shop and downloadable quests, which is a content service rather than matchmaking. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Final Fantasy Crystal Chronicles: Echoes of Time",
     "console": "DS",
-    "category": "Action RPG \u2014 co-op",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Square Enix. 4-player online co-op cross-playing with the Wii version; do both or neither."
+    "category": "Action RPG — co-op",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Square Enix. 4-player online co-op cross-playing with the Wii version; do both or neither. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Final Fantasy Crystal Chronicles: Ring of Fates",
     "console": "DS",
-    "category": "Action RPG \u2014 co-op",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Square Enix. 4-player co-op; Wi-Fi carried the extras rather than the dungeon crawl."
+    "category": "Action RPG — co-op",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Square Enix. 4-player co-op; Wi-Fi carried the extras rather than the dungeon crawl. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Phantasy Star Zero",
     "console": "DS",
-    "category": "Action RPG \u2014 co-op",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Sega. 3-player online co-op with lobby chat, a genuinely server-heavy DS title."
+    "category": "Action RPG — co-op",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Sega. 3-player online co-op with lobby chat, a genuinely server-heavy DS title. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Jump Ultimate Stars",
     "console": "DS",
-    "category": "Fighting \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo/Ganbarion. Japan-only 4-player online versus; Wiimmfi-proven."
+    "category": "Fighting — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo/Ganbarion. Japan-only 4-player online versus; Wiimmfi-proven. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Mario & Sonic at the Olympic Games",
     "console": "DS",
-    "category": "Sports \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Sega/Nintendo. Online events and leaderboards on the DS build."
+    "category": "Sports — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Sega/Nintendo. Online events and leaderboards on the DS build. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Bomberman 2",
     "console": "DS",
-    "category": "Action \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Hudson. 4-player online battle."
+    "category": "Action — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Hudson. 4-player online battle. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Bleach: The Blade of Fate",
     "console": "DS",
-    "category": "Fighting \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Sega/Treasure. Online versus with a ranked ladder."
+    "category": "Fighting — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Sega/Treasure. Online versus with a ranked ladder. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Castlevania: Portrait of Ruin",
     "console": "DS",
-    "category": "Action RPG \u2014 co-op",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Konami. Wi-Fi shop and co-op/versus extras around a single-player game."
+    "category": "Action RPG — co-op",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Konami. Wi-Fi shop and co-op/versus extras around a single-player game. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Grand Theft Auto: Chinatown Wars",
     "console": "DS",
-    "category": "Action \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Rockstar. Online versus modes on a DS Rockstar title, an odd and well-liked WFC corner."
+    "category": "Action — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Rockstar. Online versus modes on a DS Rockstar title, an odd and well-liked WFC corner. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Call of Duty: Black Ops",
     "console": "DS",
-    "category": "FPS \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Activision. 6-player online on the DS build \u2014 unlike the Wii version, this one went through WFC."
+    "category": "FPS — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Activision. 6-player online on the DS build — unlike the Wii version, this one went through WFC. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Need for Speed: ProStreet",
     "console": "DS",
-    "category": "Racing \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: EA. 4-player online races over WFC on the DS build."
+    "category": "Racing — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: EA. 4-player online races over WFC on the DS build. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Mega Man Star Force 3",
     "console": "DS",
-    "category": "Action RPG \u2014 versus/trade",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Capcom. Online battles and card trading."
+    "category": "Action RPG — versus/trade",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Capcom. Online battles and card trading. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Space Invaders Extreme 2",
     "console": "DS",
-    "category": "Arcade \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Taito/Square Enix. Online versus and score boards."
+    "category": "Arcade — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Taito/Square Enix. Online versus and score boards. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Planet Puzzle League",
     "console": "DS",
-    "category": "Puzzle \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. Ranked online versus, the DS puzzle ladder."
+    "category": "Puzzle — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. Ranked online versus, the DS puzzle ladder. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Warhammer 40,000: Squad Command",
     "console": "DS",
-    "category": "Strategy \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: THQ. Up to 8 players online, the largest player count on the DS list."
+    "category": "Strategy — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: THQ. Up to 8 players online, the largest player count on the DS list. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Worms: Open Warfare 2",
     "console": "DS",
-    "category": "Strategy \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: THQ/Team17. Online turn-based versus."
+    "category": "Strategy — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: THQ/Team17. Online turn-based versus. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Tony Hawk's American Sk8land",
     "console": "DS",
-    "category": "Sports \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Activision. Online sessions and score sharing."
+    "category": "Sports — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Activision. Online sessions and score sharing. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Ultimate Mortal Kombat",
     "console": "DS",
-    "category": "Fighting \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Midway. Online versus on the DS port."
+    "category": "Fighting — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Midway. Online versus on the DS port. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Sonic Rush Adventure",
     "console": "DS",
-    "category": "Platformer \u2014 versus",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Sega. Wi-Fi races and item trading."
+    "category": "Platformer — versus",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Sega. Wi-Fi races and item trading. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Picross DS",
     "console": "DS",
-    "category": "Puzzle \u2014 co-op",
-    "backend": "Nintendo WFC (GameSpy)",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. Wi-Fi puzzle downloads and co-op solving \u2014 a content service, not matchmaking."
+    "category": "Puzzle — co-op",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Publisher: Nintendo. Wi-Fi puzzle downloads and co-op solving — a content service, not matchmaking. Served by nn-wfc (WiiLink WFC: NAS, GameSpy matchmaking, NATNEG, SAKE, DLC; gameplay is peer-to-peer) deployed 2026-09-10; the Wii client payload ships in nn-wfc-patcher-wii, the DS needs only the DNS setting. Not console-verified: flips to live after one real session."
   },
   {
     "kind": "title",
     "name": "Mario Kart 8",
     "console": "Wii U",
-    "category": "Kart racing \u2014 versus",
+    "category": "Kart racing — versus",
     "backend": "NEX",
     "status": "requestable",
     "notes": "Publisher: Nintendo. 12-player online races, tournaments and ghost data; Pretendo already has a Mario Kart 8 Matchmake Extension and Ranking protocol we can port, and the Switch Deluxe server is ours."
@@ -2037,43 +2064,43 @@
     "kind": "title",
     "name": "Splatoon",
     "console": "Wii U",
-    "category": "Shooter \u2014 versus",
+    "category": "Shooter — versus",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. Turf War and Ranked Battle plus Splatfests; Pretendo has the Splatoon Ranking protocol. The Switch sequels are already built here."
+    "status": "beta",
+    "notes": "Publisher: Nintendo. Turf War and Ranked Battle plus Splatfests; Pretendo has the Splatoon Ranking protocol. The Switch sequels are already built here. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
     "name": "Super Smash Bros. for Wii U",
     "console": "Wii U",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. For Fun/For Glory and Smash Tour sharing; Pretendo has both the Smash 4 DataStore and Ranking protocols."
+    "status": "beta",
+    "notes": "Publisher: Nintendo. For Fun/For Glory and Smash Tour sharing; Pretendo has both the Smash 4 DataStore and Ranking protocols. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
     "name": "Super Mario Maker",
     "console": "Wii U",
-    "category": "Creation \u2014 sharing",
+    "category": "Creation — sharing",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. Course upload, Course World and 100 Mario Challenge \u2014 a DataStore-heavy title, the Wii U counterpart of our Super Mario Maker 2 server."
+    "status": "beta",
+    "notes": "Publisher: Nintendo. Course upload, Course World and 100 Mario Challenge — a DataStore-heavy title, the Wii U counterpart of our Super Mario Maker 2 server. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
     "name": "Pokken Tournament",
     "console": "Wii U",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo/Bandai Namco. Friendly and ranked matches with ranking data; a named Pretendo target."
+    "status": "beta",
+    "notes": "Publisher: Nintendo/Bandai Namco. Friendly and ranked matches with ranking data; a named Pretendo target. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
     "name": "Mario Tennis: Ultra Smash",
     "console": "Wii U",
-    "category": "Sports \u2014 versus",
+    "category": "Sports — versus",
     "backend": "NEX",
     "status": "requestable",
     "notes": "Publisher: Nintendo. Online singles and doubles with rankings."
@@ -2082,16 +2109,16 @@
     "kind": "title",
     "name": "Pikmin 3",
     "console": "Wii U",
-    "category": "Strategy \u2014 rankings",
+    "category": "Strategy — rankings",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. No online play, but Mission Mode rankings over NEX and BOSS content delivery; a Pretendo target, and a cheap first Wii U title because there is no session layer."
+    "status": "beta",
+    "notes": "Publisher: Nintendo. No online play, but Mission Mode rankings over NEX and BOSS content delivery; a Pretendo target, and a cheap first Wii U title because there is no session layer. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
     "name": "Wii Sports Club",
     "console": "Wii U",
-    "category": "Sports \u2014 versus",
+    "category": "Sports — versus",
     "backend": "NEX",
     "status": "requestable",
     "notes": "Publisher: Nintendo. Online club play across the five sports, with regional clubs."
@@ -2100,7 +2127,7 @@
     "kind": "title",
     "name": "Monster Hunter 3 Ultimate",
     "console": "Wii U",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "NEX",
     "status": "requestable",
     "notes": "Publisher: Capcom. 4-player online hunts, cross-play with the 3DS version; the Wii U/3DS pair has to be done together."
@@ -2109,7 +2136,7 @@
     "kind": "title",
     "name": "Bayonetta 2",
     "console": "Wii U",
-    "category": "Action \u2014 co-op",
+    "category": "Action — co-op",
     "backend": "NEX",
     "status": "requestable",
     "notes": "Publisher: Nintendo/PlatinumGames. Tag Climax online co-op, an overlooked Wii U online mode."
@@ -2118,7 +2145,7 @@
     "kind": "title",
     "name": "FAST Racing NEO",
     "console": "Wii U",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "NEX",
     "status": "requestable",
     "notes": "Publisher: Shin'en. 8-player online races; a small indie NEX title, likely an easy win."
@@ -2127,16 +2154,16 @@
     "kind": "title",
     "name": "Devil's Third",
     "console": "Wii U",
-    "category": "Shooter \u2014 versus",
+    "category": "Shooter — versus",
     "backend": "NEX",
     "status": "requestable",
-    "notes": "Publisher: Nintendo/Valhalla. A 16-player online shooter whose servers Nintendo shut in 2016, years before the rest \u2014 only a replacement network can bring it back at all."
+    "notes": "Publisher: Nintendo/Valhalla. A 16-player online shooter whose servers Nintendo shut in 2016, years before the rest — only a replacement network can bring it back at all."
   },
   {
     "kind": "title",
     "name": "Tekken Tag Tournament 2 Wii U Edition",
     "console": "Wii U",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "Bandai Namco servers",
     "status": "requestable",
     "notes": "Publisher: Bandai Namco. Online ranked play on Namco's own matchmaking rather than plain NEX; needs its own investigation."
@@ -2145,7 +2172,7 @@
     "kind": "title",
     "name": "Injustice: Gods Among Us",
     "console": "Wii U",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "WB/NetherRealm servers",
     "status": "requestable",
     "notes": "Publisher: Warner Bros. Online versus and King of the Hill on WB's backend, not Nintendo's."
@@ -2154,7 +2181,7 @@
     "kind": "title",
     "name": "Call of Duty: Black Ops II",
     "console": "Wii U",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "Demonware",
     "status": "requestable",
     "notes": "Publisher: Activision/Treyarch. Demonware matchmaking on the Wii U build, the same stack as the Wii and 360 releases."
@@ -2163,7 +2190,7 @@
     "kind": "title",
     "name": "Call of Duty: Ghosts",
     "console": "Wii U",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "Demonware",
     "status": "requestable",
     "notes": "Publisher: Activision. Demonware matchmaking; the last Wii U CoD."
@@ -2172,7 +2199,7 @@
     "kind": "title",
     "name": "Assassin's Creed III",
     "console": "Wii U",
-    "category": "Action \u2014 versus",
+    "category": "Action — versus",
     "backend": "Ubisoft services",
     "status": "requestable",
     "notes": "Publisher: Ubisoft. Wolfpack and versus multiplayer over Ubisoft's own services."
@@ -2181,7 +2208,7 @@
     "kind": "title",
     "name": "Sonic & All-Stars Racing Transformed",
     "console": "Wii U",
-    "category": "Kart racing \u2014 versus",
+    "category": "Kart racing — versus",
     "backend": "NEX",
     "status": "requestable",
     "notes": "Publisher: Sega/Sumo. Online races on the Wii U build."
@@ -2190,7 +2217,7 @@
     "kind": "title",
     "name": "Rayman Legends",
     "console": "Wii U",
-    "category": "Platformer \u2014 challenges",
+    "category": "Platformer — challenges",
     "backend": "Ubisoft services",
     "status": "requestable",
     "notes": "Publisher: Ubisoft. Online Challenges and leaderboards via Ubisoft's services; the co-op itself is local."
@@ -2199,7 +2226,7 @@
     "kind": "title",
     "name": "Need for Speed: Most Wanted U",
     "console": "Wii U",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "EA Nucleus",
     "status": "requestable",
     "notes": "Publisher: EA. Autolog and online races on EA's own servers, the same wall as the EA titles on Xbox and Wii."
@@ -2208,7 +2235,7 @@
     "kind": "title",
     "name": "Minecraft: Wii U Edition",
     "console": "Wii U",
-    "category": "Sandbox \u2014 co-op",
+    "category": "Sandbox — co-op",
     "backend": "4J Studios / Nintendo Network",
     "status": "requestable",
     "notes": "Publisher: Mojang/4J. Online co-op worlds over Nintendo Network; which protocol set it uses is unconfirmed and worth a capture before any work."
@@ -2220,22 +2247,22 @@
     "category": "MMO",
     "backend": "Square Enix servers",
     "status": "requestable",
-    "notes": "Publisher: Square Enix. Japan-only MMO on Square's own servers, not NEX \u2014 out of reach without a full MMO server, and listed so the catalogue is honest about it."
+    "notes": "Publisher: Square Enix. Japan-only MMO on Square's own servers, not NEX — out of reach without a full MMO server, and listed so the catalogue is honest about it."
   },
   {
     "kind": "title",
     "name": "Super Mario 3D World",
     "console": "Wii U",
-    "category": "Platformer \u2014 sharing",
+    "category": "Platformer — sharing",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. No online play; Miiverse-era ghost and photo sharing only. Listed so votes for it land somewhere honest."
+    "status": "beta",
+    "notes": "Publisher: Nintendo. No online play; Miiverse-era ghost and photo sharing only. Listed so votes for it land somewhere honest. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
     "name": "Mario Kart 7",
     "console": "3DS",
-    "category": "Kart racing \u2014 versus",
+    "category": "Kart racing — versus",
     "backend": "NEX",
     "status": "requestable",
     "notes": "Publisher: Nintendo. 8-player online races, communities and ghost data; a named Pretendo target with VS/battle rooms and community rankings mapped out."
@@ -2244,34 +2271,34 @@
     "kind": "title",
     "name": "Super Smash Bros. for Nintendo 3DS",
     "console": "3DS",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. For Fun/For Glory online; shares the Smash 4 DataStore and Ranking protocols with the Wii U version."
+    "status": "beta",
+    "notes": "Publisher: Nintendo. For Fun/For Glory online; shares the Smash 4 DataStore and Ranking protocols with the Wii U version. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
     "name": "Pokemon X / Y",
     "console": "3DS",
-    "category": "RPG \u2014 versus/trade",
+    "category": "RPG — versus/trade",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. Battle Spot, GTS and Wonder Trade; Pretendo already has the X/Y DataStore and Matchmake Extension protocols."
+    "status": "beta",
+    "notes": "Publisher: Nintendo. Battle Spot, GTS and Wonder Trade; Pretendo already has the X/Y DataStore and Matchmake Extension protocols. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
     "name": "Pokemon Omega Ruby / Alpha Sapphire",
     "console": "3DS",
-    "category": "RPG \u2014 versus/trade",
+    "category": "RPG — versus/trade",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. Battle Spot, GTS and Secret Base sharing over the X/Y protocol set."
+    "status": "beta",
+    "notes": "Publisher: Nintendo. Battle Spot, GTS and Secret Base sharing over the X/Y protocol set. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
     "name": "Pokemon Sun / Moon",
     "console": "3DS",
-    "category": "RPG \u2014 versus/trade",
+    "category": "RPG — versus/trade",
     "backend": "NEX",
     "status": "requestable",
     "notes": "Publisher: Nintendo. Battle Spot, GTS, Festival Plaza and the QR scanner services."
@@ -2280,7 +2307,7 @@
     "kind": "title",
     "name": "Pokemon Ultra Sun / Ultra Moon",
     "console": "3DS",
-    "category": "RPG \u2014 versus/trade",
+    "category": "RPG — versus/trade",
     "backend": "NEX",
     "status": "requestable",
     "notes": "Publisher: Nintendo. The last 3DS Pokemon online generation; same services as Sun/Moon."
@@ -2289,43 +2316,43 @@
     "kind": "title",
     "name": "Animal Crossing: New Leaf",
     "console": "3DS",
-    "category": "Life sim \u2014 visits",
+    "category": "Life sim — visits",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. Online town visits, Dream Suite and the Happy Home Showcase \u2014 three different services behind one game."
+    "status": "beta",
+    "notes": "Publisher: Nintendo. Online town visits, Dream Suite and the Happy Home Showcase — three different services behind one game. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
     "name": "Monster Hunter 4 Ultimate",
     "console": "3DS",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Capcom. 4-player online hunts with guild cards; the most-played 3DS co-op title."
+    "status": "beta",
+    "notes": "Publisher: Capcom. 4-player online hunts with guild cards; the most-played 3DS co-op title. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
     "name": "Monster Hunter Generations",
     "console": "3DS",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Capcom. 4-player online hunts; our Switch Generations Ultimate server is the same game one console later."
+    "status": "beta",
+    "notes": "Publisher: Capcom. 4-player online hunts; our Switch Generations Ultimate server is the same game one console later. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
     "name": "Monster Hunter XX",
     "console": "3DS",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Capcom. Japan-only; Pretendo has its Matchmake Extension protocol, which makes it the best-documented 3DS co-op target."
+    "status": "beta",
+    "notes": "Publisher: Capcom. Japan-only; Pretendo has its Matchmake Extension protocol, which makes it the best-documented 3DS co-op target. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
     "name": "Monster Hunter 3 Ultimate",
     "console": "3DS",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "NEX",
     "status": "requestable",
     "notes": "Publisher: Capcom. Online hunts cross-playing with the Wii U version."
@@ -2334,7 +2361,7 @@
     "kind": "title",
     "name": "Kid Icarus: Uprising",
     "console": "3DS",
-    "category": "Action \u2014 versus",
+    "category": "Action — versus",
     "backend": "NEX",
     "status": "requestable",
     "notes": "Publisher: Nintendo. Light vs Dark and Free-for-All online plus friend rooms; a named Pretendo target."
@@ -2343,25 +2370,25 @@
     "kind": "title",
     "name": "Steel Diver: Sub Wars",
     "console": "3DS",
-    "category": "Shooter \u2014 versus",
+    "category": "Shooter — versus",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. Worldwide, same-continent and friend matches; a named Pretendo target and a small protocol surface."
+    "status": "beta",
+    "notes": "Publisher: Nintendo. Worldwide, same-continent and friend matches; a named Pretendo target and a small protocol surface. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
     "name": "IRONFALL Invasion",
     "console": "3DS",
-    "category": "Shooter \u2014 versus",
+    "category": "Shooter — versus",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: VD-Dev. Competitive and friendly online matches; a named Pretendo target."
+    "status": "beta",
+    "notes": "Publisher: VD-Dev. Competitive and friendly online matches; a named Pretendo target. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
     "name": "The Legend of Zelda: Tri Force Heroes",
     "console": "3DS",
-    "category": "Adventure \u2014 co-op",
+    "category": "Adventure — co-op",
     "backend": "NEX",
     "status": "requestable",
     "notes": "Publisher: Nintendo. 3-player online co-op and friend rooms; a named Pretendo target, and unplayable as designed without a server."
@@ -2370,7 +2397,7 @@
     "kind": "title",
     "name": "Team Kirby Clash Deluxe",
     "console": "3DS",
-    "category": "Action \u2014 co-op",
+    "category": "Action — co-op",
     "backend": "NEX",
     "status": "requestable",
     "notes": "Publisher: Nintendo. Recruit wandering adventurers plus a gem-apple shop stub that stops the game freezing; a named Pretendo target."
@@ -2379,7 +2406,7 @@
     "kind": "title",
     "name": "Pokemon Rumble World",
     "console": "3DS",
-    "category": "Action \u2014 visits",
+    "category": "Action — visits",
     "backend": "NEX",
     "status": "requestable",
     "notes": "Publisher: Nintendo. Online and SpotPass visits; a named Pretendo target."
@@ -2388,7 +2415,7 @@
     "kind": "title",
     "name": "Super Mario Maker for Nintendo 3DS",
     "console": "3DS",
-    "category": "Creation \u2014 sharing",
+    "category": "Creation — sharing",
     "backend": "NEX",
     "status": "requestable",
     "notes": "Publisher: Nintendo. Local course sharing plus online course delivery; a named Pretendo target."
@@ -2397,7 +2424,7 @@
     "kind": "title",
     "name": "Yo-kai Watch 2",
     "console": "3DS",
-    "category": "RPG \u2014 versus/trade",
+    "category": "RPG — versus/trade",
     "backend": "NEX",
     "status": "requestable",
     "notes": "Publisher: Nintendo/Level-5. Online random battles, friend trades and rankings; a named Pretendo target."
@@ -2406,7 +2433,7 @@
     "kind": "title",
     "name": "Fire Emblem Fates",
     "console": "3DS",
-    "category": "Strategy \u2014 versus",
+    "category": "Strategy — versus",
     "backend": "NEX",
     "status": "requestable",
     "notes": "Publisher: Nintendo. Online battles, visits to other castles and paid DLC delivery."
@@ -2415,7 +2442,7 @@
     "kind": "title",
     "name": "Mario Golf: World Tour",
     "console": "3DS",
-    "category": "Sports \u2014 versus",
+    "category": "Sports — versus",
     "backend": "NEX",
     "status": "requestable",
     "notes": "Publisher: Nintendo. Online tournaments and community play; our Switch Super Rush server is the same lineage."
@@ -2424,7 +2451,7 @@
     "kind": "title",
     "name": "Mario Tennis Open",
     "console": "3DS",
-    "category": "Sports \u2014 versus",
+    "category": "Sports — versus",
     "backend": "NEX",
     "status": "requestable",
     "notes": "Publisher: Nintendo. Online singles and doubles matches."
@@ -2433,16 +2460,16 @@
     "kind": "title",
     "name": "Luigi's Mansion: Dark Moon",
     "console": "3DS",
-    "category": "Action \u2014 co-op",
+    "category": "Action — co-op",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. ScareScraper online co-op for up to four players; our Luigi's Mansion 3 server is the sequel."
+    "status": "beta",
+    "notes": "Publisher: Nintendo. ScareScraper online co-op for up to four players; our Luigi's Mansion 3 server is the sequel. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
     "name": "Code Name: S.T.E.A.M.",
     "console": "3DS",
-    "category": "Strategy \u2014 versus",
+    "category": "Strategy — versus",
     "backend": "NEX",
     "status": "requestable",
     "notes": "Publisher: Nintendo. Online turn-based battles with amiibo characters."
@@ -2451,16 +2478,16 @@
     "kind": "title",
     "name": "Metroid Prime: Federation Force",
     "console": "3DS",
-    "category": "Shooter \u2014 co-op",
+    "category": "Shooter — co-op",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. 4-player online co-op missions and Blast Ball."
+    "status": "beta",
+    "notes": "Publisher: Nintendo. 4-player online co-op missions and Blast Ball. Game server: Pretendo's (AGPL) adapted into servers/nex/titles on 2026-09-11, one container from the shared image, registered in nn-account. Not console-verified."
   },
   {
     "kind": "title",
     "name": "Resident Evil: Revelations",
     "console": "3DS",
-    "category": "Action \u2014 co-op",
+    "category": "Action — co-op",
     "backend": "Capcom servers",
     "status": "requestable",
     "notes": "Publisher: Capcom. Raid Mode online co-op on Capcom's backend."
@@ -2469,7 +2496,7 @@
     "kind": "title",
     "name": "Street Fighter IV: 3D Edition",
     "console": "3DS",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "Capcom servers",
     "status": "requestable",
     "notes": "Publisher: Capcom. Online versus and the Figurine exchange over Capcom's own matchmaking."
@@ -2478,7 +2505,7 @@
     "kind": "title",
     "name": "Dead or Alive Dimensions",
     "console": "3DS",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "Tecmo Koei servers",
     "status": "requestable",
     "notes": "Publisher: Tecmo Koei. Online versus; a non-NEX 3DS backend worth confirming before any work."
@@ -2487,7 +2514,7 @@
     "kind": "title",
     "name": "Tetris Ultimate",
     "console": "3DS",
-    "category": "Puzzle \u2014 versus",
+    "category": "Puzzle — versus",
     "backend": "Ubisoft services",
     "status": "requestable",
     "notes": "Publisher: Ubisoft. Online versus on Ubisoft's services; delisted, so only a replacement network revives it."
@@ -2496,7 +2523,7 @@
     "kind": "title",
     "name": "Pokemon Bank",
     "console": "3DS",
-    "category": "Service \u2014 storage",
+    "category": "Service — storage",
     "backend": "NEX",
     "status": "requestable",
     "notes": "Publisher: Nintendo. Not a game: a paid cloud storage service on a NEX DataStore, and Pretendo has its protocol. Restoring it is what makes the Pokemon titles whole."
@@ -2505,7 +2532,7 @@
     "kind": "title",
     "name": "Halo 2",
     "console": "Xbox",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Microsoft/Bungie. The reason Xbox Live 1.0 mattered; Insignia serves it today, with matchmaking, clans and friends."
@@ -2514,7 +2541,7 @@
     "kind": "title",
     "name": "Counter-Strike",
     "console": "Xbox",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Microsoft/Valve. One of Insignia's thirteen launch titles."
@@ -2523,7 +2550,7 @@
     "kind": "title",
     "name": "MechAssault",
     "console": "Xbox",
-    "category": "Shooter \u2014 versus",
+    "category": "Shooter — versus",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Microsoft/Day 1. An Xbox Live launch title, and an Insignia launch title too."
@@ -2532,7 +2559,7 @@
     "kind": "title",
     "name": "Crimson Skies: High Road to Revenge",
     "console": "Xbox",
-    "category": "Flight \u2014 versus",
+    "category": "Flight — versus",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Microsoft. 16-player online dogfights; Insignia-supported."
@@ -2541,7 +2568,7 @@
     "kind": "title",
     "name": "Unreal Championship",
     "console": "Xbox",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Epic/Atari. An Xbox Live launch shooter; Insignia-supported."
@@ -2550,7 +2577,7 @@
     "kind": "title",
     "name": "Unreal Championship 2: The Liandri Conflict",
     "console": "Xbox",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Midway/Epic. Online versus; Insignia-supported."
@@ -2559,7 +2586,7 @@
     "kind": "title",
     "name": "Phantasy Star Online Episode I & II",
     "console": "Xbox",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "Sega servers",
     "status": "requestable",
     "notes": "Publisher: Sega. 4-player online co-op on Sega's own servers reached through Xbox Live; Insignia supports it, which is the proof that a non-Microsoft backend can be served too."
@@ -2568,7 +2595,7 @@
     "kind": "title",
     "name": "Project Gotham Racing 2",
     "console": "Xbox",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Microsoft/Bizarre. Online races and the Kudos leaderboards; Insignia-supported, leaderboards included."
@@ -2577,7 +2604,7 @@
     "kind": "title",
     "name": "Forza Motorsport",
     "console": "Xbox",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Microsoft. Online races and car trading; Insignia-supported."
@@ -2586,7 +2613,7 @@
     "kind": "title",
     "name": "RalliSport Challenge 2",
     "console": "Xbox",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Microsoft. Online rally racing; Insignia-supported."
@@ -2595,7 +2622,7 @@
     "kind": "title",
     "name": "Midtown Madness 3",
     "console": "Xbox",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Microsoft. An Xbox Live launch racer; Insignia-supported."
@@ -2604,7 +2631,7 @@
     "kind": "title",
     "name": "Tom Clancy's Rainbow Six 3",
     "console": "Xbox",
-    "category": "FPS \u2014 co-op",
+    "category": "FPS — co-op",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Ubisoft. Online co-op and versus with voice; Insignia-supported."
@@ -2613,7 +2640,7 @@
     "kind": "title",
     "name": "Tom Clancy's Splinter Cell: Chaos Theory",
     "console": "Xbox",
-    "category": "Stealth \u2014 co-op",
+    "category": "Stealth — co-op",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Ubisoft. Online co-op campaign plus Spies vs Mercs; Insignia serves both the co-op and the versus mode."
@@ -2622,7 +2649,7 @@
     "kind": "title",
     "name": "Tom Clancy's Ghost Recon: Island Thunder",
     "console": "Xbox",
-    "category": "Tactical \u2014 co-op",
+    "category": "Tactical — co-op",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Ubisoft. Online co-op and versus; Insignia-supported."
@@ -2631,7 +2658,7 @@
     "kind": "title",
     "name": "Star Wars: Battlefront II",
     "console": "Xbox",
-    "category": "Shooter \u2014 versus",
+    "category": "Shooter — versus",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: LucasArts. 16-player online battles; Insignia-supported, and its PS2 sibling is kept alive by SWBFspy."
@@ -2640,7 +2667,7 @@
     "kind": "title",
     "name": "DOOM 3",
     "console": "Xbox",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Activision/id. Online deathmatch and the two-player co-op campaign; Insignia-supported."
@@ -2649,7 +2676,7 @@
     "kind": "title",
     "name": "Dead or Alive Ultimate",
     "console": "Xbox",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Tecmo. Online versus with lobbies; an Insignia launch title."
@@ -2658,7 +2685,7 @@
     "kind": "title",
     "name": "Conker: Live & Reloaded",
     "console": "Xbox",
-    "category": "Shooter \u2014 versus",
+    "category": "Shooter — versus",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Microsoft/Rare. 16-player online multiplayer; Insignia-supported."
@@ -2667,7 +2694,7 @@
     "kind": "title",
     "name": "Sega GT Online",
     "console": "Xbox",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Sega. Built around Xbox Live from the start; Insignia-supported."
@@ -2676,7 +2703,7 @@
     "kind": "title",
     "name": "OutRun 2006: Coast to Coast",
     "console": "Xbox",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Sega. Online races; Insignia-supported."
@@ -2685,7 +2712,7 @@
     "kind": "title",
     "name": "Steel Battalion: Line of Contact",
     "console": "Xbox",
-    "category": "Mech sim \u2014 versus",
+    "category": "Mech sim — versus",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Capcom. Online-only mech warfare with the 40-button controller; dead for fifteen years, and Insignia now serves it."
@@ -2694,7 +2721,7 @@
     "kind": "title",
     "name": "Far Cry Instincts",
     "console": "Xbox",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Ubisoft. Online versus and map sharing; Insignia-supported, user-generated content included."
@@ -2703,7 +2730,7 @@
     "kind": "title",
     "name": "Mortal Kombat: Deception",
     "console": "Xbox",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Midway. Online versus; Insignia-supported in both NTSC and PAL."
@@ -2712,7 +2739,7 @@
     "kind": "title",
     "name": "Capcom vs. SNK 2 EO",
     "console": "Xbox",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Capcom. One of the first online console fighters; Insignia-supported."
@@ -2721,7 +2748,7 @@
     "kind": "title",
     "name": "Ninja Gaiden Black",
     "console": "Xbox",
-    "category": "Action \u2014 leaderboards",
+    "category": "Action — leaderboards",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Tecmo. No online play; Master Ninja Tournament score uploads, which Insignia serves."
@@ -2730,7 +2757,7 @@
     "kind": "title",
     "name": "Marvel: Ultimate Alliance",
     "console": "Xbox",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Activision. 4-player online co-op; Insignia-supported."
@@ -2739,7 +2766,7 @@
     "kind": "title",
     "name": "Whacked!",
     "console": "Xbox",
-    "category": "Party \u2014 versus",
+    "category": "Party — versus",
     "backend": "Xbox Live 1.0",
     "status": "requestable",
     "notes": "Publisher: Microsoft. An Xbox Live launch title; Insignia-supported."
@@ -2748,16 +2775,16 @@
     "kind": "title",
     "name": "Burnout 3: Takedown",
     "console": "Xbox",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "EA Nucleus",
     "status": "requestable",
-    "notes": "Publisher: EA. Online racing on EA's own servers, not Xbox Live matchmaking \u2014 Insignia says plainly that EA titles cannot be supported yet, so this is the shape of the EA problem on every console."
+    "notes": "Publisher: EA. Online racing on EA's own servers, not Xbox Live matchmaking — Insignia says plainly that EA titles cannot be supported yet, so this is the shape of the EA problem on every console."
   },
   {
     "kind": "title",
     "name": "Halo 3",
     "console": "Xbox 360",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "Xbox Live",
     "status": "requestable",
     "notes": "Publisher: Microsoft/Bungie. Matchmaking, Forge sharing and the Theatre; the Xenia netplay fork can reach a server for it, but the title services are the hard part."
@@ -2766,7 +2793,7 @@
     "kind": "title",
     "name": "Halo: Reach",
     "console": "Xbox 360",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "Xbox Live",
     "status": "requestable",
     "notes": "Publisher: Microsoft/Bungie. Matchmaking, Firefight co-op and file sharing."
@@ -2775,7 +2802,7 @@
     "kind": "title",
     "name": "Halo 4",
     "console": "Xbox 360",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "Xbox Live",
     "status": "requestable",
     "notes": "Publisher: Microsoft/343. Matchmaking and Spartan Ops co-op; the last 360 Halo."
@@ -2784,7 +2811,7 @@
     "kind": "title",
     "name": "Gears of War 2",
     "console": "Xbox 360",
-    "category": "Shooter \u2014 co-op",
+    "category": "Shooter — co-op",
     "backend": "Xbox Live",
     "status": "requestable",
     "notes": "Publisher: Microsoft/Epic. Horde co-op and versus matchmaking on Epic's services over Xbox Live."
@@ -2793,7 +2820,7 @@
     "kind": "title",
     "name": "Gears of War 3",
     "console": "Xbox 360",
-    "category": "Shooter \u2014 co-op",
+    "category": "Shooter — co-op",
     "backend": "Xbox Live",
     "status": "requestable",
     "notes": "Publisher: Microsoft/Epic. 4-player campaign co-op, Horde and Beast modes."
@@ -2802,7 +2829,7 @@
     "kind": "title",
     "name": "Call of Duty 4: Modern Warfare",
     "console": "Xbox 360",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "Demonware",
     "status": "requestable",
     "notes": "Publisher: Activision. Demonware matchmaking; one of the titles the Xenia netplay project names as working in some capacity."
@@ -2811,7 +2838,7 @@
     "kind": "title",
     "name": "Call of Duty: Modern Warfare 2",
     "console": "Xbox 360",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "Demonware",
     "status": "requestable",
     "notes": "Publisher: Activision. Demonware matchmaking plus Spec Ops co-op; Xenia netplay lists it."
@@ -2820,7 +2847,7 @@
     "kind": "title",
     "name": "Call of Duty: Black Ops",
     "console": "Xbox 360",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "Demonware",
     "status": "requestable",
     "notes": "Publisher: Activision/Treyarch. Demonware matchmaking, versus and Zombies co-op."
@@ -2829,7 +2856,7 @@
     "kind": "title",
     "name": "Call of Duty: World at War",
     "console": "Xbox 360",
-    "category": "FPS \u2014 co-op",
+    "category": "FPS — co-op",
     "backend": "Demonware",
     "status": "requestable",
     "notes": "Publisher: Activision/Treyarch. 4-player co-op campaign, versus and the first Nazi Zombies; Xenia netplay lists it."
@@ -2838,7 +2865,7 @@
     "kind": "title",
     "name": "Minecraft: Xbox 360 Edition",
     "console": "Xbox 360",
-    "category": "Sandbox \u2014 co-op",
+    "category": "Sandbox — co-op",
     "backend": "4J Studios / Xbox Live",
     "status": "requestable",
     "notes": "Publisher: Mojang/4J. 8-player online worlds; the same game as our Switch entry, on an entirely different backend."
@@ -2847,7 +2874,7 @@
     "kind": "title",
     "name": "Left 4 Dead 2",
     "console": "Xbox 360",
-    "category": "FPS \u2014 co-op",
+    "category": "FPS — co-op",
     "backend": "Valve / Xbox Live",
     "status": "requestable",
     "notes": "Publisher: Valve. 4-player online co-op campaigns and versus; Valve's backend behind Xbox Live matchmaking."
@@ -2856,7 +2883,7 @@
     "kind": "title",
     "name": "Borderlands 2",
     "console": "Xbox 360",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "Gearbox / Xbox Live",
     "status": "requestable",
     "notes": "Publisher: 2K/Gearbox. 4-player online co-op; SHiFT accounts sit alongside Xbox Live."
@@ -2865,7 +2892,7 @@
     "kind": "title",
     "name": "Castle Crashers",
     "console": "Xbox 360",
-    "category": "Action \u2014 co-op",
+    "category": "Action — co-op",
     "backend": "Xbox Live Arcade",
     "status": "requestable",
     "notes": "Publisher: The Behemoth. 4-player online co-op; a small, well-shaped XBLA target."
@@ -2874,7 +2901,7 @@
     "kind": "title",
     "name": "Forza Motorsport 4",
     "console": "Xbox 360",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "Xbox Live",
     "status": "requestable",
     "notes": "Publisher: Microsoft. Online races, rivals and the car-design marketplace, which is a storage service as much as matchmaking."
@@ -2883,7 +2910,7 @@
     "kind": "title",
     "name": "Blur",
     "console": "Xbox 360",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "Bizarre / Xbox Live",
     "status": "requestable",
     "notes": "Publisher: Activision/Bizarre. 20-player online races; named in Xenia netplay's working list, and also revived on PS3 through RPCN."
@@ -2892,7 +2919,7 @@
     "kind": "title",
     "name": "Trials Evolution",
     "console": "Xbox 360",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "RedLynx / Xbox Live",
     "status": "requestable",
     "notes": "Publisher: Microsoft/RedLynx. Online multiplayer plus track sharing and leaderboards."
@@ -2901,7 +2928,7 @@
     "kind": "title",
     "name": "Red Dead Redemption",
     "console": "Xbox 360",
-    "category": "Action \u2014 versus",
+    "category": "Action — versus",
     "backend": "Rockstar Social Club",
     "status": "requestable",
     "notes": "Publisher: Rockstar. Free-roam online posses on Rockstar's own services, reached through Xbox Live."
@@ -2910,7 +2937,7 @@
     "kind": "title",
     "name": "Grand Theft Auto IV",
     "console": "Xbox 360",
-    "category": "Action \u2014 versus",
+    "category": "Action — versus",
     "backend": "Rockstar Social Club",
     "status": "requestable",
     "notes": "Publisher: Rockstar. 16-player online free roam and modes; Rockstar's backend, not Microsoft's."
@@ -2919,7 +2946,7 @@
     "kind": "title",
     "name": "Saints Row: The Third",
     "console": "Xbox 360",
-    "category": "Action \u2014 co-op",
+    "category": "Action — co-op",
     "backend": "Xbox Live",
     "status": "requestable",
     "notes": "Publisher: THQ/Volition. Two-player online co-op campaign."
@@ -2928,7 +2955,7 @@
     "kind": "title",
     "name": "Dead Island",
     "console": "Xbox 360",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "Xbox Live",
     "status": "requestable",
     "notes": "Publisher: Deep Silver/Techland. 4-player online co-op."
@@ -2937,7 +2964,7 @@
     "kind": "title",
     "name": "Resident Evil 5",
     "console": "Xbox 360",
-    "category": "Action \u2014 co-op",
+    "category": "Action — co-op",
     "backend": "Capcom servers",
     "status": "requestable",
     "notes": "Publisher: Capcom. Two-player online co-op campaign and Mercenaries, on Capcom's backend."
@@ -2946,16 +2973,16 @@
     "kind": "title",
     "name": "Dark Souls",
     "console": "Xbox 360",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "FromSoftware / Xbox Live",
     "status": "requestable",
-    "notes": "Publisher: Bandai Namco/FromSoftware. Asynchronous messages, invasions and summoning \u2014 a matchmaking service with no lobbies, which is unusual and interesting to serve."
+    "notes": "Publisher: Bandai Namco/FromSoftware. Asynchronous messages, invasions and summoning — a matchmaking service with no lobbies, which is unusual and interesting to serve."
   },
   {
     "kind": "title",
     "name": "Portal 2",
     "console": "Xbox 360",
-    "category": "Puzzle \u2014 co-op",
+    "category": "Puzzle — co-op",
     "backend": "Valve / Xbox Live",
     "status": "requestable",
     "notes": "Publisher: Valve. The two-player online co-op campaign."
@@ -2964,7 +2991,7 @@
     "kind": "title",
     "name": "Chromehounds",
     "console": "Xbox 360",
-    "category": "Mech sim \u2014 versus",
+    "category": "Mech sim — versus",
     "backend": "Xbox Live",
     "status": "requestable",
     "notes": "Publisher: Sega/FromSoftware. An online-only mech war whose servers died in 2010; named in Xenia netplay's working list, and dead forever without a replacement."
@@ -2973,7 +3000,7 @@
     "kind": "title",
     "name": "Armored Core 4",
     "console": "Xbox 360",
-    "category": "Mech sim \u2014 versus",
+    "category": "Mech sim — versus",
     "backend": "Xbox Live",
     "status": "requestable",
     "notes": "Publisher: Sega/FromSoftware. Online versus; named in Xenia netplay's working list."
@@ -2982,7 +3009,7 @@
     "kind": "title",
     "name": "Lost Planet 2",
     "console": "Xbox 360",
-    "category": "Shooter \u2014 co-op",
+    "category": "Shooter — co-op",
     "backend": "Capcom servers",
     "status": "requestable",
     "notes": "Publisher: Capcom. 4-player online co-op campaign on Capcom's backend."
@@ -2991,7 +3018,7 @@
     "kind": "title",
     "name": "Rock Band 3",
     "console": "Xbox 360",
-    "category": "Rhythm \u2014 co-op",
+    "category": "Rhythm — co-op",
     "backend": "Harmonix / Xbox Live",
     "status": "requestable",
     "notes": "Publisher: MTV/Harmonix. Online band play and the music store, which is why it broke when the store closed."
@@ -3000,7 +3027,7 @@
     "kind": "title",
     "name": "Halo Wars",
     "console": "Xbox 360",
-    "category": "Strategy \u2014 versus",
+    "category": "Strategy — versus",
     "backend": "Xbox Live",
     "status": "requestable",
     "notes": "Publisher: Microsoft/Ensemble. Online skirmish and co-op; the 360's strategy outlier."
@@ -3009,16 +3036,16 @@
     "kind": "title",
     "name": "Titanfall",
     "console": "Xbox 360",
-    "category": "Shooter \u2014 versus",
+    "category": "Shooter — versus",
     "backend": "Respawn / Azure",
     "status": "requestable",
-    "notes": "Publisher: EA/Respawn. 360 version ran on Respawn's cloud, shut down in 2022 \u2014 no Xbox Live revival reaches it."
+    "notes": "Publisher: EA/Respawn. 360 version ran on Respawn's cloud, shut down in 2022 — no Xbox Live revival reaches it."
   },
   {
     "kind": "title",
     "name": "Battlefield 3",
     "console": "Xbox 360",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "EA Nucleus",
     "status": "requestable",
     "notes": "Publisher: EA. 24-player online on EA's own servers; the EA wall again, on a console where it is the single biggest gap."
@@ -3027,7 +3054,7 @@
     "kind": "title",
     "name": "SOCOM II: U.S. Navy SEALs",
     "console": "PS2",
-    "category": "Tactical \u2014 versus",
+    "category": "Tactical — versus",
     "backend": "Medius (SCEA)",
     "status": "requestable",
     "notes": "Publisher: Sony. 16-player online with headset voice chat, the PS2's defining online game; Medius is reimplemented by Horizon (MIT) and MultiServer3 (GPL-3.0)."
@@ -3036,7 +3063,7 @@
     "kind": "title",
     "name": "SOCOM 3: U.S. Navy SEALs",
     "console": "PS2",
-    "category": "Tactical \u2014 versus",
+    "category": "Tactical — versus",
     "backend": "Medius (SCEA)",
     "status": "requestable",
     "notes": "Publisher: Sony. 32-player online battles over Medius."
@@ -3045,7 +3072,7 @@
     "kind": "title",
     "name": "SOCOM: U.S. Navy SEALs Combined Assault",
     "console": "PS2",
-    "category": "Tactical \u2014 co-op",
+    "category": "Tactical — co-op",
     "backend": "Medius (SCEA)",
     "status": "requestable",
     "notes": "Publisher: Sony. Online co-op campaign and versus; the last PS2 SOCOM."
@@ -3054,7 +3081,7 @@
     "kind": "title",
     "name": "Twisted Metal: Black Online",
     "console": "PS2",
-    "category": "Vehicular \u2014 versus",
+    "category": "Vehicular — versus",
     "backend": "Medius (SCEA)",
     "status": "requestable",
     "notes": "Publisher: Sony. A free online-only release; the fan server TMBOSVR already revived it, which makes it a good reference rather than a build."
@@ -3063,7 +3090,7 @@
     "kind": "title",
     "name": "Jak X: Combat Racing",
     "console": "PS2",
-    "category": "Kart racing \u2014 versus",
+    "category": "Kart racing — versus",
     "backend": "Medius (SCEA)",
     "status": "requestable",
     "notes": "Publisher: Sony/Naughty Dog. 6-player online combat racing over Medius."
@@ -3072,7 +3099,7 @@
     "kind": "title",
     "name": "Ratchet: Deadlocked",
     "console": "PS2",
-    "category": "Shooter \u2014 co-op",
+    "category": "Shooter — co-op",
     "backend": "Medius (SCEA)",
     "status": "requestable",
     "notes": "Publisher: Sony/Insomniac. Online co-op and versus; a Horizon-revived title today."
@@ -3081,7 +3108,7 @@
     "kind": "title",
     "name": "Resident Evil Outbreak",
     "console": "PS2",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "Capcom servers",
     "status": "requestable",
     "notes": "Publisher: Capcom. 4-player online co-op on Capcom's own servers; the fan project Outbreak Server Resurrection keeps it alive and is the reference."
@@ -3090,7 +3117,7 @@
     "kind": "title",
     "name": "Resident Evil Outbreak File #2",
     "console": "PS2",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "Capcom servers",
     "status": "requestable",
     "notes": "Publisher: Capcom. The sequel, same backend and the same fan revival."
@@ -3099,7 +3126,7 @@
     "kind": "title",
     "name": "Metal Gear Solid 3: Subsistence",
     "console": "PS2",
-    "category": "Stealth \u2014 versus",
+    "category": "Stealth — versus",
     "backend": "Konami servers",
     "status": "requestable",
     "notes": "Publisher: Konami. Metal Gear Online's first form; SaveMGO (fan project) reimplements it."
@@ -3108,7 +3135,7 @@
     "kind": "title",
     "name": "Monster Hunter",
     "console": "PS2",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "Capcom servers",
     "status": "requestable",
     "notes": "Publisher: Capcom. Where the series' online hunting started; the MH Oldschool project revived it."
@@ -3117,7 +3144,7 @@
     "kind": "title",
     "name": "Monster Hunter 2",
     "console": "PS2",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "Capcom servers",
     "status": "requestable",
     "notes": "Publisher: Capcom. Japan-only online hunts; revived by MH Oldschool."
@@ -3144,7 +3171,7 @@
     "kind": "title",
     "name": "Champions: Return to Arms",
     "console": "PS2",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "SOE servers",
     "status": "requestable",
     "notes": "Publisher: Sony Online. Online co-op dungeon crawling, dead since 2013."
@@ -3153,7 +3180,7 @@
     "kind": "title",
     "name": "Star Wars: Battlefront II",
     "console": "PS2",
-    "category": "Shooter \u2014 versus",
+    "category": "Shooter — versus",
     "backend": "GameSpy",
     "status": "requestable",
     "notes": "Publisher: LucasArts. 16-player online battles over GameSpy; the fan project SWBFspy serves it, and OpenSpy covers the same protocol family."
@@ -3162,7 +3189,7 @@
     "kind": "title",
     "name": "Call of Duty 2: Big Red One",
     "console": "PS2",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "GameSpy",
     "status": "requestable",
     "notes": "Publisher: Activision. Online versus; playable today through OpenSpy, which is the cheapest kind of PS2 title to support."
@@ -3171,7 +3198,7 @@
     "kind": "title",
     "name": "Call of Duty 3",
     "console": "PS2",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "GameSpy",
     "status": "requestable",
     "notes": "Publisher: Activision. 24-player online; one of the very few PS2 titles whose official service was never formally killed."
@@ -3180,7 +3207,7 @@
     "kind": "title",
     "name": "Midnight Club 3: DUB Edition Remix",
     "console": "PS2",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "GameSpy",
     "status": "requestable",
     "notes": "Publisher: Rockstar. Online races; OpenSpy-revived."
@@ -3189,7 +3216,7 @@
     "kind": "title",
     "name": "Midnight Club II",
     "console": "PS2",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "GameSpy",
     "status": "requestable",
     "notes": "Publisher: Rockstar. Online races; OpenSpy-revived."
@@ -3198,7 +3225,7 @@
     "kind": "title",
     "name": "Mortal Kombat: Armageddon",
     "console": "PS2",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "GameSpy",
     "status": "requestable",
     "notes": "Publisher: Midway. Online versus; OpenSpy-revived."
@@ -3207,7 +3234,7 @@
     "kind": "title",
     "name": "Killzone",
     "console": "PS2",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "Medius (SCEA)",
     "status": "requestable",
     "notes": "Publisher: Sony. 16-player online battles; the series began on a dead PS2 service."
@@ -3216,7 +3243,7 @@
     "kind": "title",
     "name": "Syphon Filter: The Omega Strain",
     "console": "PS2",
-    "category": "Stealth \u2014 co-op",
+    "category": "Stealth — co-op",
     "backend": "Medius (SCEA)",
     "status": "requestable",
     "notes": "Publisher: Sony. 4-player online co-op missions over Medius."
@@ -3225,7 +3252,7 @@
     "kind": "title",
     "name": "ATV Offroad Fury 2",
     "console": "PS2",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "Medius (SCEA)",
     "status": "requestable",
     "notes": "Publisher: Sony. Online races; one of the earliest Medius titles."
@@ -3234,7 +3261,7 @@
     "kind": "title",
     "name": "Hardware: Online Arena",
     "console": "PS2",
-    "category": "Vehicular \u2014 versus",
+    "category": "Vehicular — versus",
     "backend": "Medius (SCEA)",
     "status": "requestable",
     "notes": "Publisher: Sony. An online-only PS2 launch-era title; it has no single-player worth playing, so it only exists with a server."
@@ -3243,7 +3270,7 @@
     "kind": "title",
     "name": "Auto Modellista",
     "console": "PS2",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "Capcom servers",
     "status": "requestable",
     "notes": "Publisher: Capcom. Online races on Capcom's backend; the Xbox version is Insignia-supported, so the two can be compared."
@@ -3264,13 +3291,13 @@
     "category": "MMO",
     "backend": "Square Enix servers",
     "status": "requestable",
-    "notes": "Publisher: Square Enix. Japan-only, online-only, dead since 2008 \u2014 nothing of it survives without a server."
+    "notes": "Publisher: Square Enix. Japan-only, online-only, dead since 2008 — nothing of it survives without a server."
   },
   {
     "kind": "title",
     "name": "Burnout 3: Takedown",
     "console": "PS2",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "EA Nucleus",
     "status": "requestable",
     "notes": "Publisher: EA. Online racing on EA's servers, dead since 2010; same EA wall as elsewhere."
@@ -3279,7 +3306,7 @@
     "kind": "title",
     "name": "Battlefield 2: Modern Combat",
     "console": "PS2",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "EA Nucleus",
     "status": "requestable",
     "notes": "Publisher: EA. 24-player online on EA's own servers, shut in 2014."
@@ -3288,16 +3315,16 @@
     "kind": "title",
     "name": "Gran Turismo 4",
     "console": "PS2",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "Medius (SCEA)",
     "status": "requestable",
-    "notes": "Publisher: Sony. Online racing only ever shipped as a Japanese test disc and a LAN mode \u2014 interesting, but barely a service to restore."
+    "notes": "Publisher: Sony. Online racing only ever shipped as a Japanese test disc and a LAN mode — interesting, but barely a service to restore."
   },
   {
     "kind": "title",
     "name": "Demon's Souls",
     "console": "PS3",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Sony/FromSoftware. Messages, invasions and summoning; already playable on RPCN, which makes it the reference PS3 title for a wire-compatible server."
@@ -3306,7 +3333,7 @@
     "kind": "title",
     "name": "LittleBigPlanet",
     "console": "PS3",
-    "category": "Platformer \u2014 co-op",
+    "category": "Platformer — co-op",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Sony/Media Molecule. 4-player online co-op and the level-sharing service; ProjectLighthouse (AGPL) already serves it, so OpenPak should federate rather than rebuild."
@@ -3315,7 +3342,7 @@
     "kind": "title",
     "name": "LittleBigPlanet 2",
     "console": "PS3",
-    "category": "Platformer \u2014 co-op",
+    "category": "Platformer — co-op",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Sony/Media Molecule. Online co-op and level sharing; ProjectLighthouse-served."
@@ -3324,7 +3351,7 @@
     "kind": "title",
     "name": "LittleBigPlanet 3",
     "console": "PS3",
-    "category": "Platformer \u2014 co-op",
+    "category": "Platformer — co-op",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Sony/Sumo. Online co-op and level sharing; ProjectLighthouse-served."
@@ -3333,7 +3360,7 @@
     "kind": "title",
     "name": "Soulcalibur V",
     "console": "PS3",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Bandai Namco. Online ranked and player matches; works on RPCN today."
@@ -3342,7 +3369,7 @@
     "kind": "title",
     "name": "Metal Gear Solid: Peace Walker HD",
     "console": "PS3",
-    "category": "Action \u2014 co-op",
+    "category": "Action — co-op",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Konami. 4-player online co-op; works on RPCN today."
@@ -3351,7 +3378,7 @@
     "kind": "title",
     "name": "Blur",
     "console": "PS3",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Activision/Bizarre. 20-player online races; works on RPCN, and the 360 version is in Xenia netplay's list."
@@ -3360,7 +3387,7 @@
     "kind": "title",
     "name": "Tekken 6",
     "console": "PS3",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Bandai Namco. Online ranked play."
@@ -3369,7 +3396,7 @@
     "kind": "title",
     "name": "Tekken Tag Tournament 2",
     "console": "PS3",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Bandai Namco. Online ranked and team play."
@@ -3378,7 +3405,7 @@
     "kind": "title",
     "name": "Ultra Street Fighter IV",
     "console": "PS3",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "Capcom servers",
     "status": "requestable",
     "notes": "Publisher: Capcom. Online versus and endless lobbies; Capcom's own backend behind PSN."
@@ -3387,7 +3414,7 @@
     "kind": "title",
     "name": "Ultimate Marvel vs. Capcom 3",
     "console": "PS3",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "Capcom servers",
     "status": "requestable",
     "notes": "Publisher: Capcom. Online versus on Capcom's backend."
@@ -3396,7 +3423,7 @@
     "kind": "title",
     "name": "Persona 4 Arena Ultimax",
     "console": "PS3",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Atlus. Online ranked and lobby play."
@@ -3405,7 +3432,7 @@
     "kind": "title",
     "name": "Guilty Gear Xrd -SIGN-",
     "console": "PS3",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "Arc System Works servers",
     "status": "requestable",
     "notes": "Publisher: Arc System Works. Online ranked and lobby play."
@@ -3414,7 +3441,7 @@
     "kind": "title",
     "name": "Gran Turismo 6",
     "console": "PS3",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "Polyphony servers",
     "status": "requestable",
     "notes": "Publisher: Sony/Polyphony. Online races, Seasonal Events and the course maker; Polyphony's own services, shut in 2018."
@@ -3423,7 +3450,7 @@
     "kind": "title",
     "name": "Uncharted 2: Among Thieves",
     "console": "PS3",
-    "category": "Shooter \u2014 co-op",
+    "category": "Shooter — co-op",
     "backend": "Naughty Dog / PSN",
     "status": "requestable",
     "notes": "Publisher: Sony/Naughty Dog. Online co-op and competitive multiplayer; shut in 2019."
@@ -3432,7 +3459,7 @@
     "kind": "title",
     "name": "Uncharted 3: Drake's Deception",
     "console": "PS3",
-    "category": "Shooter \u2014 co-op",
+    "category": "Shooter — co-op",
     "backend": "Naughty Dog / PSN",
     "status": "requestable",
     "notes": "Publisher: Sony/Naughty Dog. Online co-op and versus; shut in 2019."
@@ -3441,7 +3468,7 @@
     "kind": "title",
     "name": "Killzone 2",
     "console": "PS3",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "Guerrilla / PSN",
     "status": "requestable",
     "notes": "Publisher: Sony/Guerrilla. 32-player online battles; shut in 2018."
@@ -3450,7 +3477,7 @@
     "kind": "title",
     "name": "Killzone 3",
     "console": "PS3",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "Guerrilla / PSN",
     "status": "requestable",
     "notes": "Publisher: Sony/Guerrilla. 24-player online battles and co-op Operations; shut in 2018."
@@ -3459,7 +3486,7 @@
     "kind": "title",
     "name": "Resistance 2",
     "console": "PS3",
-    "category": "FPS \u2014 co-op",
+    "category": "FPS — co-op",
     "backend": "Insomniac / PSN",
     "status": "requestable",
     "notes": "Publisher: Sony/Insomniac. 8-player online co-op and 60-player competitive; shut in 2014 and gone since."
@@ -3468,7 +3495,7 @@
     "kind": "title",
     "name": "Resistance 3",
     "console": "PS3",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "Insomniac / PSN",
     "status": "requestable",
     "notes": "Publisher: Sony/Insomniac. 16-player online; shut in 2014."
@@ -3477,7 +3504,7 @@
     "kind": "title",
     "name": "Warhawk",
     "console": "PS3",
-    "category": "Shooter \u2014 versus",
+    "category": "Shooter — versus",
     "backend": "Medius (SCEA)",
     "status": "requestable",
     "notes": "Publisher: Sony. 32-player online-only title with dedicated servers; without a server it is nothing at all, and a custom server is required."
@@ -3486,7 +3513,7 @@
     "kind": "title",
     "name": "Starhawk",
     "console": "PS3",
-    "category": "Shooter \u2014 versus",
+    "category": "Shooter — versus",
     "backend": "Medius (SCEA)",
     "status": "requestable",
     "notes": "Publisher: Sony. 32-player online; same situation as Warhawk."
@@ -3495,7 +3522,7 @@
     "kind": "title",
     "name": "MotorStorm",
     "console": "PS3",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Sony/Evolution. 12-player online races; shut in 2012."
@@ -3504,7 +3531,7 @@
     "kind": "title",
     "name": "Journey",
     "console": "PS3",
-    "category": "Adventure \u2014 co-op",
+    "category": "Adventure — co-op",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Sony/thatgamecompany. Anonymous two-player matchmaking with no lobby and no chat; a tiny, elegant service to reimplement."
@@ -3513,7 +3540,7 @@
     "kind": "title",
     "name": "Minecraft: PlayStation 3 Edition",
     "console": "PS3",
-    "category": "Sandbox \u2014 co-op",
+    "category": "Sandbox — co-op",
     "backend": "4J Studios / PSN",
     "status": "requestable",
     "notes": "Publisher: Mojang/4J. 8-player online worlds; the same title as our Switch and 360 entries on a third backend."
@@ -3522,7 +3549,7 @@
     "kind": "title",
     "name": "Red Dead Redemption",
     "console": "PS3",
-    "category": "Action \u2014 versus",
+    "category": "Action — versus",
     "backend": "Rockstar Social Club",
     "status": "requestable",
     "notes": "Publisher: Rockstar. Online free roam on Rockstar's services, not PSN matchmaking."
@@ -3531,7 +3558,7 @@
     "kind": "title",
     "name": "Call of Duty: Black Ops II",
     "console": "PS3",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "Demonware",
     "status": "requestable",
     "notes": "Publisher: Activision/Treyarch. Demonware matchmaking; the same backend as the 360 and Wii U versions, which is an argument for one Demonware server across consoles."
@@ -3540,7 +3567,7 @@
     "kind": "title",
     "name": "Battlefield 3",
     "console": "PS3",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "EA Nucleus",
     "status": "requestable",
     "notes": "Publisher: EA. 24-player online on EA's own servers."
@@ -3549,16 +3576,16 @@
     "kind": "title",
     "name": "PlayStation All-Stars Battle Royale",
     "console": "PS3",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "PSN",
     "status": "requestable",
-    "notes": "Publisher: Sony. Online versus, with cross-play to the Vita version \u2014 so doing it properly means doing both consoles."
+    "notes": "Publisher: Sony. Online versus, with cross-play to the Vita version — so doing it properly means doing both consoles."
   },
   {
     "kind": "title",
     "name": "Metal Gear Online",
     "console": "PS3",
-    "category": "Shooter \u2014 versus",
+    "category": "Shooter — versus",
     "backend": "Konami servers",
     "status": "requestable",
     "notes": "Publisher: Konami. The MGS4 online mode, shut in 2012; Konami's backend, and the PS2 SaveMGO work is the only related prior art."
@@ -3567,16 +3594,16 @@
     "kind": "title",
     "name": "Armored Core V",
     "console": "PS3",
-    "category": "Mech sim \u2014 versus",
+    "category": "Mech sim — versus",
     "backend": "FromSoftware / PSN",
     "status": "requestable",
-    "notes": "Publisher: Bandai Namco/FromSoftware. Team-based online war with persistent territory, shut in 2018 \u2014 a genuinely stateful service."
+    "notes": "Publisher: Bandai Namco/FromSoftware. Team-based online war with persistent territory, shut in 2018 — a genuinely stateful service."
   },
   {
     "kind": "title",
     "name": "Monster Hunter Freedom Unite",
     "console": "PSP",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "PSN (ad-hoc)",
     "status": "requestable",
     "notes": "Publisher: Capcom. 4-player hunts over ad-hoc wireless only; PPSSPP's ad-hoc tunnel and aemu/Pro Online prove the protocol, and the relay is the whole service."
@@ -3585,7 +3612,7 @@
     "kind": "title",
     "name": "Monster Hunter Portable 3rd",
     "console": "PSP",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "PSN (ad-hoc)",
     "status": "requestable",
     "notes": "Publisher: Capcom. Japan-only; the most-played PSP ad-hoc title and a PPSSPP ad-hoc favourite."
@@ -3594,7 +3621,7 @@
     "kind": "title",
     "name": "Monster Hunter Freedom 2",
     "console": "PSP",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "PSN (ad-hoc)",
     "status": "requestable",
     "notes": "Publisher: Capcom. 4-player ad-hoc hunts; works well over a relay because it tolerates latency."
@@ -3603,7 +3630,7 @@
     "kind": "title",
     "name": "Metal Gear Solid: Peace Walker",
     "console": "PSP",
-    "category": "Action \u2014 co-op",
+    "category": "Action — co-op",
     "backend": "PSN (ad-hoc)",
     "status": "requestable",
     "notes": "Publisher: Konami. 4-player co-op and versus over ad-hoc, with an infrastructure mode on top."
@@ -3612,7 +3639,7 @@
     "kind": "title",
     "name": "Phantasy Star Portable 2",
     "console": "PSP",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "Sega servers",
     "status": "requestable",
     "notes": "Publisher: Sega. Real infrastructure online play, not just ad-hoc; the PSP2i fan server already revived it and is the reference."
@@ -3621,7 +3648,7 @@
     "kind": "title",
     "name": "SOCOM: U.S. Navy SEALs Fireteam Bravo 2",
     "console": "PSP",
-    "category": "Tactical \u2014 versus",
+    "category": "Tactical — versus",
     "backend": "Medius (SCEA)",
     "status": "requestable",
     "notes": "Publisher: Sony. 16-player infrastructure online over Medius, the same stack as the PS2 SOCOMs."
@@ -3630,7 +3657,7 @@
     "kind": "title",
     "name": "SOCOM: U.S. Navy SEALs Fireteam Bravo 3",
     "console": "PSP",
-    "category": "Tactical \u2014 co-op",
+    "category": "Tactical — co-op",
     "backend": "Medius (SCEA)",
     "status": "requestable",
     "notes": "Publisher: Sony. Online co-op and versus over Medius."
@@ -3639,7 +3666,7 @@
     "kind": "title",
     "name": "Killzone: Liberation",
     "console": "PSP",
-    "category": "Shooter \u2014 versus",
+    "category": "Shooter — versus",
     "backend": "Medius (SCEA)",
     "status": "requestable",
     "notes": "Publisher: Sony. 6-player infrastructure online."
@@ -3648,7 +3675,7 @@
     "kind": "title",
     "name": "Resistance: Retribution",
     "console": "PSP",
-    "category": "Shooter \u2014 versus",
+    "category": "Shooter — versus",
     "backend": "Medius (SCEA)",
     "status": "requestable",
     "notes": "Publisher: Sony. 8-player infrastructure online."
@@ -3657,7 +3684,7 @@
     "kind": "title",
     "name": "Wipeout Pulse",
     "console": "PSP",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "Medius (SCEA)",
     "status": "requestable",
     "notes": "Publisher: Sony. Online races with downloadable content."
@@ -3666,7 +3693,7 @@
     "kind": "title",
     "name": "Twisted Metal: Head-On",
     "console": "PSP",
-    "category": "Vehicular \u2014 versus",
+    "category": "Vehicular — versus",
     "backend": "Medius (SCEA)",
     "status": "requestable",
     "notes": "Publisher: Sony. Infrastructure online battles."
@@ -3675,7 +3702,7 @@
     "kind": "title",
     "name": "Syphon Filter: Logan's Shadow",
     "console": "PSP",
-    "category": "Stealth \u2014 versus",
+    "category": "Stealth — versus",
     "backend": "Medius (SCEA)",
     "status": "requestable",
     "notes": "Publisher: Sony. 8-player infrastructure online."
@@ -3684,7 +3711,7 @@
     "kind": "title",
     "name": "LittleBigPlanet PSP",
     "console": "PSP",
-    "category": "Platformer \u2014 sharing",
+    "category": "Platformer — sharing",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Sony/SCE Cambridge. Level sharing against the LBP services; ProjectLighthouse territory rather than new work."
@@ -3693,7 +3720,7 @@
     "kind": "title",
     "name": "Gran Turismo",
     "console": "PSP",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "PSN (ad-hoc)",
     "status": "requestable",
     "notes": "Publisher: Sony/Polyphony. Ad-hoc races only; the relay is the service."
@@ -3702,7 +3729,7 @@
     "kind": "title",
     "name": "Tekken 6",
     "console": "PSP",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "PSN (ad-hoc)",
     "status": "requestable",
     "notes": "Publisher: Bandai Namco. Ad-hoc versus, relayed online by PPSSPP today."
@@ -3711,7 +3738,7 @@
     "kind": "title",
     "name": "Dissidia 012 Final Fantasy",
     "console": "PSP",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "PSN (ad-hoc)",
     "status": "requestable",
     "notes": "Publisher: Square Enix. Ad-hoc versus and friend-card exchange."
@@ -3720,7 +3747,7 @@
     "kind": "title",
     "name": "God Eater Burst",
     "console": "PSP",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "PSN (ad-hoc)",
     "status": "requestable",
     "notes": "Publisher: Bandai Namco. 4-player ad-hoc hunts."
@@ -3729,7 +3756,7 @@
     "kind": "title",
     "name": "Call of Duty: Roads to Victory",
     "console": "PSP",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "PSN (ad-hoc)",
     "status": "requestable",
     "notes": "Publisher: Activision. Ad-hoc versus; named as a well-working title over PPSSPP's relay."
@@ -3738,7 +3765,7 @@
     "kind": "title",
     "name": "Ridge Racer 2",
     "console": "PSP",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "PSN (ad-hoc)",
     "status": "requestable",
     "notes": "Publisher: Bandai Namco. Ad-hoc races; named as a well-working title over PPSSPP's relay."
@@ -3747,7 +3774,7 @@
     "kind": "title",
     "name": "Grand Theft Auto: Liberty City Stories",
     "console": "PSP",
-    "category": "Action \u2014 versus",
+    "category": "Action — versus",
     "backend": "PSN (ad-hoc)",
     "status": "requestable",
     "notes": "Publisher: Rockstar. Ad-hoc multiplayer modes; works over the PPSSPP relay."
@@ -3756,7 +3783,7 @@
     "kind": "title",
     "name": "Patapon 2",
     "console": "PSP",
-    "category": "Rhythm \u2014 co-op",
+    "category": "Rhythm — co-op",
     "backend": "PSN (ad-hoc)",
     "status": "requestable",
     "notes": "Publisher: Sony. 4-player ad-hoc co-op missions."
@@ -3765,7 +3792,7 @@
     "kind": "title",
     "name": "Soulcalibur: Broken Destiny",
     "console": "PSP",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "PSN (ad-hoc)",
     "status": "requestable",
     "notes": "Publisher: Bandai Namco. Ad-hoc versus only, despite being a late PSP release."
@@ -3774,7 +3801,7 @@
     "kind": "title",
     "name": "Killzone: Mercenary",
     "console": "Vita",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Sony/Guerrilla. 8-player online battles; the Vita's flagship online shooter, shut down in 2018."
@@ -3783,7 +3810,7 @@
     "kind": "title",
     "name": "LittleBigPlanet PS Vita",
     "console": "Vita",
-    "category": "Platformer \u2014 co-op",
+    "category": "Platformer — co-op",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Sony/Tarsier. Online co-op and level sharing; ProjectLighthouse already covers Vita LBP, so federating is cheaper than building."
@@ -3792,7 +3819,7 @@
     "kind": "title",
     "name": "Soul Sacrifice Delta",
     "console": "Vita",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Sony/Marvelous. 4-player online co-op hunts; dead servers make it a single-player game."
@@ -3801,16 +3828,16 @@
     "kind": "title",
     "name": "Freedom Wars",
     "console": "Vita",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "PSN",
     "status": "requestable",
-    "notes": "Publisher: Sony. 8-player online co-op and versus, plus the panopticon donation service \u2014 more state than a lobby."
+    "notes": "Publisher: Sony. 8-player online co-op and versus, plus the panopticon donation service — more state than a lobby."
   },
   {
     "kind": "title",
     "name": "God Eater 2",
     "console": "Vita",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Bandai Namco. 4-player online hunts."
@@ -3819,7 +3846,7 @@
     "kind": "title",
     "name": "Wipeout 2048",
     "console": "Vita",
-    "category": "Racing \u2014 versus",
+    "category": "Racing — versus",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Sony/Studio Liverpool. 8-player online races with cross-play to the PS3 HD releases."
@@ -3828,7 +3855,7 @@
     "kind": "title",
     "name": "PlayStation All-Stars Battle Royale",
     "console": "Vita",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Sony. Online versus with PS3 cross-play; the pair has to be served together."
@@ -3837,7 +3864,7 @@
     "kind": "title",
     "name": "Call of Duty: Black Ops Declassified",
     "console": "Vita",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "Demonware",
     "status": "requestable",
     "notes": "Publisher: Activision. 8-player online on Demonware, so the Vita shares a backend with the 360 and PS3 CoDs."
@@ -3846,7 +3873,7 @@
     "kind": "title",
     "name": "Resistance: Burning Skies",
     "console": "Vita",
-    "category": "FPS \u2014 versus",
+    "category": "FPS — versus",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Sony/Nihilistic. 8-player online; shut in 2014, among the earliest Vita closures."
@@ -3855,7 +3882,7 @@
     "kind": "title",
     "name": "ModNation Racers: Road Trip",
     "console": "Vita",
-    "category": "Kart racing \u2014 sharing",
+    "category": "Kart racing — sharing",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Sony. Track sharing and online races; the sharing service is the point of the game."
@@ -3864,7 +3891,7 @@
     "kind": "title",
     "name": "Minecraft: PlayStation Vita Edition",
     "console": "Vita",
-    "category": "Sandbox \u2014 co-op",
+    "category": "Sandbox — co-op",
     "backend": "4J Studios / PSN",
     "status": "requestable",
     "notes": "Publisher: Mojang/4J. Online worlds with PS3 cross-play."
@@ -3873,7 +3900,7 @@
     "kind": "title",
     "name": "Terraria",
     "console": "Vita",
-    "category": "Sandbox \u2014 co-op",
+    "category": "Sandbox — co-op",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: 505 Games. 8-player online co-op worlds."
@@ -3882,7 +3909,7 @@
     "kind": "title",
     "name": "Borderlands 2",
     "console": "Vita",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: 2K/Gearbox. 2-player online co-op on the Vita port."
@@ -3891,7 +3918,7 @@
     "kind": "title",
     "name": "Dragon's Crown",
     "console": "Vita",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Atlus/Vanillaware. 4-player online co-op with PS3 cross-play."
@@ -3900,7 +3927,7 @@
     "kind": "title",
     "name": "Toukiden: Kiwami",
     "console": "Vita",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Tecmo Koei. 4-player online hunts with PS4 cross-play."
@@ -3909,7 +3936,7 @@
     "kind": "title",
     "name": "Street Fighter X Tekken",
     "console": "Vita",
-    "category": "Fighting \u2014 versus",
+    "category": "Fighting — versus",
     "backend": "Capcom servers",
     "status": "requestable",
     "notes": "Publisher: Capcom. Online versus with PS3 cross-play, on Capcom's backend."
@@ -3918,7 +3945,7 @@
     "kind": "title",
     "name": "Ragnarok Odyssey",
     "console": "Vita",
-    "category": "Action RPG \u2014 co-op",
+    "category": "Action RPG — co-op",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Gung-Ho. 4-player online co-op."
@@ -3927,7 +3954,7 @@
     "kind": "title",
     "name": "Hot Shots Golf: World Invitational",
     "console": "Vita",
-    "category": "Sports \u2014 versus",
+    "category": "Sports — versus",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Sony. Online tournaments and daily challenges, which are a content service as much as matchmaking."
@@ -3936,7 +3963,7 @@
     "kind": "title",
     "name": "Unit 13",
     "console": "Vita",
-    "category": "Shooter \u2014 co-op",
+    "category": "Shooter — co-op",
     "backend": "PSN",
     "status": "requestable",
     "notes": "Publisher: Sony/Zipper. Online co-op missions and the daily-challenge service; Zipper closed, so nobody will ever patch it."
@@ -3949,5 +3976,140 @@
     "backend": "Capcom servers",
     "status": "requestable",
     "notes": "Publisher: Capcom. A Japan-only subscription MMO on the Vita, shut in 2019; the most server-dependent title on the console and the least reachable."
+  },
+  {
+    "kind": "feature",
+    "name": "Miiverse (Juxtaposition)",
+    "console": "Wii U / 3DS",
+    "category": "Social",
+    "backend": "nn-juxtaposition",
+    "status": "alpha",
+    "notes": "Pretendo's Juxtaposition forked (AGPL) and deployed 2026-09-10 as two images (miiverse-api on 20090/20091, juxtaposition-ui on 20100) behind Traefik TLS for api/discovery/portal/ctr.olv.nintendo.net, over MongoDB, Postgres, MinIO and Redis. Talks to nn-account (account.v2: GetUserData, ExchangeIndependentServiceTokenForUserData) and nn-friends. Not console-verified."
+  },
+  {
+    "kind": "feature",
+    "name": "SpotPass / BOSS",
+    "console": "Wii U / 3DS",
+    "category": "Content",
+    "backend": "nn-boss",
+    "status": "alpha",
+    "notes": "Pretendo's BOSS forked (AGPL), moved to account.v2, deployed 2026-09-10 on 20080/20081 behind Traefik TLS for the np*.nintendowifi.net names. Cannot sign SpotPass content until the operator supplies the three console-dumped BOSS keys (PN_BOSS_CONFIG_BOSS_*_KEY). Not console-verified."
+  },
+  {
+    "kind": "feature",
+    "name": "eShop NUS/ECS SOAP",
+    "console": "Wii U / 3DS",
+    "category": "Content",
+    "backend": "nn-soap",
+    "status": "alpha",
+    "notes": "Pretendo's SOAP forked (AGPL), containerised and deployed 2026-09-10 on 20110 behind Traefik TLS for the *.shop.nintendo.net / *.shop.nintendowifi.net names. Serves only titles and tickets an operator mounts at /app/src/titles; nothing ships. Not console-verified."
+  },
+  {
+    "kind": "feature",
+    "name": "NAT check (NNCS)",
+    "console": "Wii U / 3DS",
+    "category": "Matchmaking",
+    "backend": "nn-nncs",
+    "status": "beta",
+    "notes": "Pretendo's nncs forked (AGPL) and split over two hosts (nncs1 on the production box, nncs2 on the status box) with a peer relay for the reply that must come from the other address. Deployed 2026-09-10; answers locally but the cloud security lists still block UDP 10025/10125 from outside."
+  },
+  {
+    "kind": "feature",
+    "name": "DS network",
+    "console": "DS",
+    "category": "Network",
+    "backend": "nn-wfc",
+    "status": "beta",
+    "notes": "Same nn-wfc deployment as the Wii (WiiLink WFC supports both). There is no client patcher for the DS anywhere: the console's DNS setting points at nn-sssl-dns, and NAS's HTTPS login needs the server-side certificate trick (enableHttpsExploitDS with nas-cert.der, nwc.der, nas-key.pem the operator supplies). DS Lite needs WEP. Not console-verified."
+  },
+  {
+    "kind": "feature",
+    "name": "Console DNS",
+    "console": "Wii U / 3DS / Wii / DS",
+    "category": "Access",
+    "backend": "nn-sssl-dns",
+    "status": "beta",
+    "notes": "Pretendo's SSSL-DNS forked into a full resolver: every *.nintendo.net, *.nintendowifi.net, *.nintendo.com, *.gamespy.com and *.openpak.org name answers with the OpenPak box (nncs2 with the status box); everything else is forwarded to 1.1.1.1. Deployed 2026-09-10 on udp 53 (host network); cloud security list still blocks 53 from outside."
+  },
+  {
+    "kind": "feature",
+    "name": "Wii U console patch (Inkay)",
+    "console": "Wii U",
+    "category": "Access",
+    "backend": "nn-inkay",
+    "status": "alpha",
+    "notes": "Aroma module: every pretendo.cc URL became the same-length openpak.org URL, data/ca.pem is the OpenPak CA, and the module resolves every *.openpak.org name to the OpenPak box itself (no public DNS record, override with -DOPENPAK_SERVER_IP). Built by GitHub Actions on openpak-v* tags (Inkay-openpak.wms). Needs a hardware run."
+  },
+  {
+    "kind": "feature",
+    "name": "3DS console patch (nimbus)",
+    "console": "3DS",
+    "category": "Access",
+    "backend": "nn-nimbus",
+    "status": "planned",
+    "notes": "Luma patches and account manager with openpak.org names; the socket patch resolves *.openpak.org and the NNCS names to the OpenPak box on the console (no public DNS record). Not built (toolchain not present here) and not run."
+  },
+  {
+    "kind": "feature",
+    "name": "Wii client (WFC patcher)",
+    "console": "Wii",
+    "category": "Access",
+    "backend": "nn-wfc-patcher-wii",
+    "status": "alpha",
+    "notes": "WiiLink's wfc-patcher-wii forked and built for openpak.org: a launcher (the Wii's setup file), per-game stage-0 gecko codes, and RSA-signed stage-1/2 payloads that nn-wfc serves from its payload volume. Signing key: WFC_PAYLOAD_PRIVATE_KEY secret and deploy/keys on the box (rotated 2026-09-10 after a commit slip). Builds on openpak-v* tags; not run on hardware."
+  },
+  {
+    "kind": "title",
+    "name": "F1 2011",
+    "console": "3DS",
+    "category": "Racing",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "Game server: Pretendo's (AGPL) adapted into servers/nex/titles/f1-2011 on 2026-09-11, one container from the shared image. Not console-verified."
+  },
+  {
+    "kind": "title",
+    "name": "Dr. Luigi",
+    "console": "Wii U",
+    "category": "Puzzle",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "Game server: Pretendo's (AGPL) adapted into servers/nex/titles/dr-luigi on 2026-09-11, one container from the shared image. Not console-verified."
+  },
+  {
+    "kind": "title",
+    "name": "Dr. Mario: Miracle Cure",
+    "console": "3DS",
+    "category": "Puzzle",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "Game server: Pretendo's (AGPL) adapted into servers/nex/titles/miracle-cure on 2026-09-11, one container from the shared image. Not console-verified."
+  },
+  {
+    "kind": "title",
+    "name": "Puyo Puyo Tetris",
+    "console": "Wii U",
+    "category": "Puzzle",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "Game server: Pretendo's (AGPL) adapted into servers/nex/titles/puyo-puyo-tetris on 2026-09-11, one container from the shared image. Not console-verified."
+  },
+  {
+    "kind": "title",
+    "name": "Super Street Fighter IV 3D Edition",
+    "console": "3DS",
+    "category": "Fighting",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "Game server: Pretendo's (AGPL) adapted into servers/nex/titles/super-street-fighter-iv on 2026-09-11, one container from the shared image. Not console-verified."
+  },
+  {
+    "kind": "title",
+    "name": "Wii U Chat",
+    "console": "Wii U",
+    "category": "System — video chat",
+    "backend": "NEX",
+    "status": "beta",
+    "notes": "Game server: Pretendo's (AGPL) adapted into servers/nex/titles/wiiu-chat on 2026-09-11, one container from the shared image. Not console-verified."
   }
 ]

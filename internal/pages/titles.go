@@ -165,6 +165,8 @@ func badgeClass(status string) string {
 		return "ok"
 	case "beta", "alpha", "partial":
 		return "warn"
+	case "scaffold": // code in the tree, waiting on a fact a console has to reveal
+		return "warn"
 	case "not-feasible", "broken":
 		return "bad"
 	default:
