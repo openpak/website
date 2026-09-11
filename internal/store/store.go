@@ -85,6 +85,7 @@ type Store interface {
 
 	ListRequests(ctx context.Context, kind, viewerAccountID string) ([]Request, error)
 	SeedRequests(ctx context.Context, reqs []Request) error
+	SetRequestStatus(ctx context.Context, id int64, status, notes string) error
 	ToggleVote(ctx context.Context, requestID int64, accountID string) (bool, error)
 	RequestVotes(ctx context.Context, requestID int64, accountID string) (votes int, voted bool, err error)
 

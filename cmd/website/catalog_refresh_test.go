@@ -12,7 +12,8 @@ import (
 	"github.com/openpak/website/internal/store"
 )
 
-// A status change in the live catalog reaches the title list without a release.
+// A title added to the live catalog appears without a release; a status already set in the
+// database is not overwritten by the catalog's word for it.
 func TestRefreshCatalogReseeds(t *testing.T) {
 	body := `[{"kind":"title","name":"Mario Kart 8","console":"Wii U","category":"Racing","backend":"NEX","status":"requestable","notes":""}]`
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { io.WriteString(w, body) }))
@@ -36,6 +37,26 @@ func TestRefreshCatalogReseeds(t *testing.T) {
 		t.Fatalf("Mario Kart 8 never became %q", want)
 	}
 	waitStatus("requestable")
-	body = `[{"kind":"title","name":"Mario Kart 8","console":"Wii U","category":"Racing","backend":"NEX","status":"beta","notes":"deployed"}]`
-	waitStatus("beta")
+	reqs, _ := db.ListRequests(ctx, "title", "")
+	if err := db.SetRequestStatus(ctx, reqs[0].ID, "beta", "deployed"); err != nil {
+		t.Fatal(err)
+	}
+	body = `[{"kind":"title","name":"Mario Kart 8","console":"Wii U","category":"Racing","backend":"NEX","status":"requestable","notes":""},` +
+		`{"kind":"title","name":"Pikmin 3","console":"Wii U","category":"Strategy","backend":"NEX","status":"requestable","notes":""}]`
+	deadline := time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		reqs, _ = db.ListRequests(ctx, "title", "")
+		if len(reqs) == 2 {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if len(reqs) != 2 {
+		t.Fatal("Pikmin 3 never appeared")
+	}
+	for _, r := range reqs {
+		if r.Name == "Mario Kart 8" && r.Status != "beta" {
+			t.Fatalf("catalog refresh overwrote the database status: %+v", r)
+		}
+	}
 }

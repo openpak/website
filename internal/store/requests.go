@@ -81,9 +81,10 @@ func ParseCatalog(catalogJSON []byte) ([]Request, error) {
 	return out, nil
 }
 
-// SeedRequests upserts catalog rows by (kind, name, console): new rows inserted, existing
-// rows refreshed to the catalog's current status/notes/etc. It never touches
-// request_votes — votes are user data and survive every reseed.
+// SeedRequests adds catalog rows by (kind, name, console) and refreshes their category,
+// backend and sort. It never touches status or notes on a row that exists: the database is
+// the source of truth for those (SetRequestStatus), the catalog only introduces titles. It
+// never touches request_votes either — votes are user data.
 func (s *PG) SeedRequests(ctx context.Context, reqs []Request) error {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
@@ -94,8 +95,7 @@ func (s *PG) SeedRequests(ctx context.Context, reqs []Request) error {
 		if _, err := tx.Exec(ctx, `INSERT INTO requests(kind, name, console, category, backend, status, notes, sort)
 			VALUES($1,$2,$3,$4,$5,$6,$7,$8)
 			ON CONFLICT (kind, name, console) DO UPDATE SET
-				category=EXCLUDED.category, backend=EXCLUDED.backend,
-				status=EXCLUDED.status, notes=EXCLUDED.notes, sort=EXCLUDED.sort`,
+				category=EXCLUDED.category, backend=EXCLUDED.backend, sort=EXCLUDED.sort`,
 			r.Kind, r.Name, r.Console, r.Category, r.Backend, r.Status, r.Notes, r.Sort); err != nil {
 			return err
 		}
@@ -170,4 +170,17 @@ func (s *PG) RequestVotes(ctx context.Context, requestID int64, accountID string
 	err := s.pool.QueryRow(ctx, `SELECT count(*), COALESCE(bool_or(account_id = $2), false)
 		FROM request_votes WHERE request_id = $1`, requestID, accountID).Scan(&votes, &voted)
 	return votes, voted, err
+}
+
+// SetRequestStatus changes one title's status and notes. This is how a game becomes beta or
+// live on the site and in the app: a row update, no release.
+func (s *PG) SetRequestStatus(ctx context.Context, id int64, status, notes string) error {
+	tag, err := s.pool.Exec(ctx, `UPDATE requests SET status=$2, notes=$3 WHERE id=$1`, id, status, notes)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
 }

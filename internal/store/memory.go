@@ -209,8 +209,8 @@ func (m *Memory) SeedRequests(_ context.Context, reqs []Request) error {
 	for _, r := range reqs {
 		key := [3]string{r.Kind, r.Name, r.Console}
 		if i, ok := byKey[key]; ok {
-			id := m.requests[i].ID
-			r.ID = id
+			existing := m.requests[i]
+			r.ID, r.Status, r.Notes = existing.ID, existing.Status, existing.Notes
 			m.requests[i] = r
 			continue
 		}
@@ -300,4 +300,17 @@ func (m *Memory) SetPushCursor(_ context.Context, v uint64) error {
 	defer m.mu.Unlock()
 	m.pushCursor = v
 	return nil
+}
+
+// SetRequestStatus changes one title's status and notes in place.
+func (m *Memory) SetRequestStatus(_ context.Context, id int64, status, notes string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for i := range m.requests {
+		if m.requests[i].ID == id {
+			m.requests[i].Status, m.requests[i].Notes = status, notes
+			return nil
+		}
+	}
+	return ErrNotFound
 }

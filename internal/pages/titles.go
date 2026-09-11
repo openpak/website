@@ -2,7 +2,9 @@ package pages
 
 import (
 	"net/http"
+	"slices"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/openpak/website/internal/i18n"
@@ -149,13 +151,44 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 	sort.Strings(statuses)
 	type titlesPage struct {
 		baseData
-		Titles   []store.Request
-		Consoles []string
-		Statuses []string
-		ByVotes  bool
-		Back     string
+		Titles      []store.Request
+		Consoles    []string
+		Statuses    []string
+		AllStatuses []string
+		ByVotes     bool
+		Back        string
 	}
-	s.render(w, http.StatusOK, "titles.html", titlesPage{d, reqs, consoles, statuses, byVotes, backPath("/titles", byVotes)})
+	s.render(w, http.StatusOK, "titles.html", titlesPage{d, reqs, consoles, statuses, allStatuses, byVotes, backPath("/titles", byVotes)})
+}
+
+// allStatuses is every status a title can be set to, in rank order. The word means the same
+// thing everywhere: live works on hardware, beta is deployed and not console-verified, alpha
+// is partial, scaffold is code waiting on a fact, requestable is listed for votes.
+var allStatuses = []string{"live", "beta", "alpha", "scaffold", "requestable", "not-feasible"}
+
+// handleSetTitleStatus is how a title changes status: an admin picks it on the titles page
+// and the database row changes. The site and the app read that row, so nothing is rebuilt.
+func (s *Server) handleSetTitleStatus(w http.ResponseWriter, r *http.Request) {
+	v, ok := s.postGuard(w, r)
+	if !ok {
+		return
+	}
+	if !slices.Contains(s.AdminAccountIDs, v.AccountID) {
+		http.Error(w, "admins only", http.StatusForbidden)
+		return
+	}
+	id, err := strconv.ParseInt(r.PostFormValue("id"), 10, 64)
+	status := r.PostFormValue("status")
+	if err != nil || !slices.Contains(allStatuses, status) {
+		http.Error(w, "a title id and one of the known statuses are required", http.StatusBadRequest)
+		return
+	}
+	if err := s.DB.SetRequestStatus(r.Context(), id, status, strings.TrimSpace(r.PostFormValue("notes"))); err != nil {
+		s.log.Error("set title status", "id", id, "err", err)
+		http.Error(w, "could not change the status", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/titles", http.StatusSeeOther)
 }
 
 // d0Lang reads the request language the same way s.data does, so the page title
