@@ -809,7 +809,6 @@ func (s *Server) handleAnnounce(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"node_id": id, "approved": approved})
 }
 
-
 // nnAdapter is the Wii U/3DS adapter client, or nil until NN_ACCOUNT_INTERNAL_URL is set.
 func nnAdapter() *adapter.Client {
 	if u := os.Getenv("NN_ACCOUNT_INTERNAL_URL"); u != "" {
