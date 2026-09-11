@@ -17,6 +17,8 @@ import (
 func (s *Server) registerEmulator(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/me/switch", s.auth(s.handleSwitch))
 	mux.HandleFunc("POST /api/v1/me/switch/friend", s.auth(s.handleSwitchFriend))
+	mux.HandleFunc("GET /api/v1/me/wiiu", s.auth(s.handleConsole("wiiu")))
+	mux.HandleFunc("GET /api/v1/me/3ds", s.auth(s.handleConsole("3ds")))
 	mux.HandleFunc("GET /ca.pem", s.handleCA)
 }
 
@@ -28,6 +30,25 @@ func (s *Server) handleSwitch(w http.ResponseWriter, r *http.Request, tok store.
 		return
 	}
 	writeJSON(w, http.StatusOK, out)
+}
+
+// handleConsole is the Wii U or 3DS identity of the account (PNID, NEX credentials, Mii, and
+// on the 3DS the friend code), minted by nn-account on first sight. Cemu and Azahar write it
+// into their emulated console instead of needing a console dump.
+func (s *Server) handleConsole(family string) func(http.ResponseWriter, *http.Request, store.APIToken) {
+	return func(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+		if s.NNAdapter == nil {
+			writeError(w, http.StatusServiceUnavailable, family+" identities are not configured")
+			return
+		}
+		out, err := s.NNAdapter.Console(r.Context(), family, tok.AccountID)
+		if err != nil {
+			s.log.Error("console identity", "family", family, "err", err)
+			writeError(w, http.StatusBadGateway, family+" identity unavailable")
+			return
+		}
+		writeJSON(w, http.StatusOK, out)
+	}
 }
 
 func (s *Server) handleSwitchFriend(w http.ResponseWriter, r *http.Request, tok store.APIToken) {

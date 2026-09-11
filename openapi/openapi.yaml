@@ -595,6 +595,20 @@ paths:
       responses:
         "204": { description: Done }
         "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/wiiu:
+    get:
+      summary: The account's Wii U identity (PNID, NEX credentials, Mii), minted on first sight
+      responses:
+        "200": { description: "account_id, pid, username, nex_password, mii_name, mii_data, device_type" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "503": { description: Not configured }
+  /me/3ds:
+    get:
+      summary: The account's 3DS identity (PNID, NEX credentials, friend code, Mii), minted on first sight
+      responses:
+        "200": { description: "account_id, pid, username, friend_code, nex_password, mii_name, mii_data, device_type" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "503": { description: Not configured }
 components:
   securitySchemes:
     bearerAuth:

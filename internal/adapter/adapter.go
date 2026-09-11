@@ -93,6 +93,15 @@ func (c *Client) Emulator(ctx context.Context, accountID string) (map[string]any
 	return out, err
 }
 
+// Console is the identity of an account for a console family served by another adapter
+// (nn-account: "wiiu", "3ds"), the same shape of call as Emulator but on that adapter's
+// /internal/<family>/emulator. Returned as the adapter sent it.
+func (c *Client) Console(ctx context.Context, family, accountID string) (map[string]any, error) {
+	var out map[string]any
+	err := c.get(ctx, "/internal/"+family+"/emulator?account_id="+url.QueryEscape(accountID), &out)
+	return out, err
+}
+
 // EmulatorFriend performs a friend action for an account by PID or friend code.
 func (c *Client) EmulatorFriend(ctx context.Context, accountID, action string, pid uint64, friendCode string) error {
 	if c == nil {

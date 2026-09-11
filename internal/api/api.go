@@ -46,6 +46,7 @@ type Server struct {
 	// Adapter answers the console-shaped questions the core cannot: the friend
 	// code is minted by the Switch adapter and lives only there.
 	Adapter    *adapter.Client
+	NNAdapter  *adapter.Client // the Wii U/3DS adapter (nn-account), nil when not configured
 	Saves      *saves.Client
 	MediaLimit *ratelimit.Limiter
 	DB         store.Store
@@ -61,6 +62,7 @@ func New(c core.HTTP, id core.Identity, soc core.Social, lnk core.Links, inv cor
 		Core: c, Identity: id, Social: soc, Links: lnk, Invites: inv, DB: db, Sessions: sess,
 		Media:      md,
 		Adapter:    adapter.New(os.Getenv("ADAPTER_INTERNAL_URL"), os.Getenv("NX_INTERNAL_KEY")),
+		NNAdapter:  nnAdapter(),
 		Auth:       ratelimit.New(10, time.Minute),
 		PerToken:   ratelimit.New(120, time.Minute),
 		MediaLimit: ratelimit.New(5, time.Hour),
@@ -805,4 +807,13 @@ func (s *Server) handleAnnounce(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"node_id": id, "approved": approved})
+}
+
+
+// nnAdapter is the Wii U/3DS adapter client, or nil until NN_ACCOUNT_INTERNAL_URL is set.
+func nnAdapter() *adapter.Client {
+	if u := os.Getenv("NN_ACCOUNT_INTERNAL_URL"); u != "" {
+		return adapter.New(u, os.Getenv("NN_ACCOUNT_INTERNAL_KEY"))
+	}
+	return nil
 }
