@@ -1,0 +1,301 @@
+# TLS passthrough only: every backend terminates TLS with its own certificate, so Traefik
+# just reads the SNI and splices the connection. Adding a title means adding a router here.
+tcp:
+  routers:
+    news-experiment:
+      entryPoints: [console]
+      rule: "HostSNI(`bcat-topics-lp1.cdn.nintendo.net`)"
+      priority: 1000
+      service: news-experiment
+      tls:
+        passthrough: true
+    stardew:
+      entryPoints: [console]
+      rule: "HostSNI(`t-9f607adf-lp1.lp1.t.npln.srv.nintendo.net`) || HostSNI(`gamesync.npln.nintendo.net`)"
+      service: stardew
+      tls:
+        passthrough: true
+    splatoon-3:
+      entryPoints: [console]
+      rule: "HostSNI(`t-dce9377b-lp1.lp1.t.npln.srv.nintendo.net`)"
+      service: splatoon-3
+      tls:
+        passthrough: true
+    nex-animal-crossing-new-horizons:
+      entryPoints: [console]
+      rule: "HostSNI(`g2ee2e300-lp1.s.n.srv.nintendo.net`)"
+      service: nex-animal-crossing-new-horizons
+      tls:
+        passthrough: true
+    nex-arms:
+      entryPoints: [console]
+      rule: "HostSNI(`g25c08801-lp1.s.n.srv.nintendo.net`)"
+      service: nex-arms
+      tls:
+        passthrough: true
+    nex-luigis-mansion-3:
+      entryPoints: [console]
+      rule: "HostSNI(`g20de2100-lp1.s.n.srv.nintendo.net`)"
+      service: nex-luigis-mansion-3
+      tls:
+        passthrough: true
+    nex-mario-golf-super-rush:
+      entryPoints: [console]
+      rule: "HostSNI(`g211a3f00-lp1.s.n.srv.nintendo.net`)"
+      service: nex-mario-golf-super-rush
+      tls:
+        passthrough: true
+    nex-mario-kart-8-deluxe:
+      entryPoints: [console]
+      rule: "HostSNI(`g2b309e01-lp1.s.n.srv.nintendo.net`)"
+      service: nex-mario-kart-8-deluxe
+      tls:
+        passthrough: true
+    nex-mario-party-superstars:
+      entryPoints: [console]
+      rule: "HostSNI(`g28abaa00-lp1.s.n.srv.nintendo.net`)"
+      service: nex-mario-party-superstars
+      tls:
+        passthrough: true
+    nex-mario-strikers:
+      entryPoints: [console]
+      rule: "HostSNI(`g26cfaf00-lp1.s.n.srv.nintendo.net`)"
+      service: nex-mario-strikers
+      tls:
+        passthrough: true
+    nex-mario-tennis-aces:
+      entryPoints: [console]
+      rule: "HostSNI(`g23932a00-lp1.s.n.srv.nintendo.net`)"
+      service: nex-mario-tennis-aces
+      tls:
+        passthrough: true
+    nex-monster-hunter-generations-ultimate:
+      entryPoints: [console]
+      rule: "HostSNI(`g2896bd04-lp1.s.n.srv.nintendo.net`)"
+      service: nex-monster-hunter-generations-ultimate
+      tls:
+        passthrough: true
+    nex-super-mario-bros-35:
+      entryPoints: [console]
+      rule: "HostSNI(`g21f12900-lp1.s.n.srv.nintendo.net`)"
+      service: nex-super-mario-bros-35
+      tls:
+        passthrough: true
+    nex-super-mario-odyssey:
+      entryPoints: [console]
+      rule: "HostSNI(`g255ba201-lp1.s.n.srv.nintendo.net`)"
+      service: nex-super-mario-odyssey
+      tls:
+        passthrough: true
+    nex-super-smash-bros-ultimate:
+      entryPoints: [console]
+      rule: "HostSNI(`g23380901-lp1.s.n.srv.nintendo.net`)"
+      service: nex-super-smash-bros-ultimate
+      tls:
+        passthrough: true
+    wonder:
+      entryPoints: [console]
+      rule: "HostSNI(`t-ba973ec6-lp1.lp1.t.npln.srv.nintendo.net`)"
+      service: wonder
+      tls:
+        passthrough: true
+    nex-splatoon-2:
+      entryPoints: [console]
+      rule: "HostSNI(`g2df33d01-lp1.s.n.srv.nintendo.net`)"
+      service: nex-splatoon-2
+      tls:
+        passthrough: true
+    nex-super-mario-maker-2:
+      entryPoints: [console]
+      rule: "HostSNI(`g22306d00-lp1.s.n.srv.nintendo.net`)"
+      service: nex-super-mario-maker-2
+      tls:
+        passthrough: true
+    adapter:
+      entryPoints: [console]
+      rule: "HostSNI(`*`)"          # everything else: BAAS, Nintendo Account, dauth, Penne
+      service: nx-baas
+      tls:
+        passthrough: true
+  services:
+    wonder:
+      loadBalancer:
+        servers:
+          - address: "openpak-wonder:21014"
+    nex-splatoon-2:
+      loadBalancer:
+        servers:
+          - address: "openpak-splatoon-2:22320"
+    nex-super-mario-maker-2:
+      loadBalancer:
+        servers:
+          - address: "openpak-super-mario-maker-2:22330"
+    nex-animal-crossing-new-horizons:
+      loadBalancer:
+        servers:
+          - address: "openpak-animal-crossing-new-horizons:22180"
+    nex-arms:
+      loadBalancer:
+        servers:
+          - address: "openpak-arms:22140"
+    nex-luigis-mansion-3:
+      loadBalancer:
+        servers:
+          - address: "openpak-luigis-mansion-3:22190"
+    nex-mario-golf-super-rush:
+      loadBalancer:
+        servers:
+          - address: "openpak-mario-golf-super-rush:22130"
+    nex-mario-kart-8-deluxe:
+      loadBalancer:
+        servers:
+          - address: "openpak-mario-kart-8-deluxe:22150"
+    nex-mario-party-superstars:
+      loadBalancer:
+        servers:
+          - address: "openpak-mario-party-superstars:22110"
+    nex-mario-strikers:
+      loadBalancer:
+        servers:
+          - address: "openpak-mario-strikers:22300"
+    nex-mario-tennis-aces:
+      loadBalancer:
+        servers:
+          - address: "openpak-mario-tennis-aces:22170"
+    nex-monster-hunter-generations-ultimate:
+      loadBalancer:
+        servers:
+          - address: "openpak-monster-hunter-generations-ultimate:22120"
+    nex-super-mario-bros-35:
+      loadBalancer:
+        servers:
+          - address: "openpak-super-mario-bros-35:22160"
+    nex-super-mario-odyssey:
+      loadBalancer:
+        servers:
+          - address: "openpak-super-mario-odyssey:22340"
+    nex-super-smash-bros-ultimate:
+      loadBalancer:
+        servers:
+          - address: "openpak-super-smash-bros-ultimate:22350"
+    news-experiment:
+      loadBalancer:
+        servers:
+          - address: "openpak-news-experiment:20040"
+    nx-baas:
+      loadBalancer:
+        servers:
+          - address: "openpak-nx-baas:21000"
+    splatoon-3:
+      loadBalancer:
+        servers:
+          - address: "openpak-splatoon-3:21012"
+    stardew:
+      loadBalancer:
+        servers:
+          - address: "openpak-stardew:21010"
+
+# Wii U / 3DS: the adapter speaks plain HTTP, so Traefik terminates TLS for these names with
+# a leaf signed by the OpenPak CA (certs/wiiu.pem). Everything else stays SNI passthrough.
+http:
+  routers:
+    among-us:
+      entryPoints: [console]
+      rule: "Host(`matchmaker.among.us`) || Host(`matchmaker-eu.among.us`) || Host(`matchmaker-as.among.us`)"
+      service: among-us
+      tls: {}
+    nn-account:
+      entryPoints: [console]
+      rule: "Host(`account.nintendo.net`) || Host(`nasc.nintendowifi.net`) || Host(`cbvc.cdn.nintendo.net`) || Host(`account.openpak.org`) || Host(`nasc.openpak.org`) || Host(`cbvc.cdn.openpak.org`)"
+      service: nn-account
+      tls: {}
+    conntest-tls:
+      entryPoints: [console]
+      rule: "Host(`conntest.nintendowifi.net`) || Host(`conntest.openpak.org`)"
+      middlewares: [conntest-root]
+      service: nn-account
+      tls: {}
+    nn-juxtaposition-api:
+      entryPoints: [console]
+      rule: "Host(`api.olv.nintendo.net`) || Host(`discovery.olv.nintendo.net`) || Host(`api.olv.openpak.org`) || Host(`discovery.olv.openpak.org`)"
+      service: nn-juxtaposition-api
+      tls: {}
+    nn-juxtaposition-ui:
+      entryPoints: [console]
+      rule: "Host(`portal.olv.nintendo.net`) || Host(`ctr.olv.nintendo.net`) || Host(`portal.olv.openpak.org`) || Host(`ctr.olv.openpak.org`)"
+      service: nn-juxtaposition-ui
+      tls: {}
+    nn-boss:
+      entryPoints: [console]
+      rule: 'Host(`npdi.cdn.nintendowifi.net`) || Host(`npdl.cdn.nintendowifi.net`) || Host(`npfl.c.app.nintendowifi.net`) || Host(`nppl.app.nintendowifi.net`) || Host(`npts.app.nintendowifi.net`) || Host(`service.spotpass.nintendowifi.net`) || HostRegexp(`^(npdi|npdl)\.cdn\.openpak\.org$`) || HostRegexp(`^(nppl|npts)\.app\.openpak\.org$`) || Host(`npfl.c.app.openpak.org`) || Host(`service.spotpass.openpak.org`)'
+      service: nn-boss
+      tls: {}
+    nn-soap:
+      entryPoints: [console]
+      rule: 'Host(`ecs.wup.shop.nintendo.net`) || Host(`ias.wup.shop.nintendo.net`) || Host(`nus.wup.shop.nintendo.net`) || Host(`ccs.wup.shop.nintendo.net`) || Host(`ecs.c.shop.nintendowifi.net`) || Host(`ias.c.shop.nintendowifi.net`) || Host(`nus.c.shop.nintendowifi.net`) || Host(`ccs.c.shop.nintendowifi.net`) || HostRegexp(`^(ecs|ias|nus|ccs|cas|pushmo|pushmore|tagaya|pls)\.(wup|c)\.shop\.openpak\.org$`)'
+      service: nn-soap
+      tls: {}
+    nn-wfc-nas:
+      entryPoints: [web]
+      rule: 'HostRegexp(`^(nas|naswii|dls1)\.nintendowifi\.net$`) || HostRegexp(`\.(sake|gamestats2?|race)\.gs\.nintendowifi\.net$`) || HostRegexp(`^(nas|naswii|dls1)\.openpak\.org$`) || HostRegexp(`\.gs\.openpak\.org$`) || HostRegexp(`\.(sake|gamestats2?|race)\.gs\.openpak\.org$`)'
+      priority: 20
+      service: nn-wfc-nas
+    conntest-web:
+      entryPoints: [web]
+      rule: "Host(`conntest.nintendowifi.net`) || Host(`conntest.openpak.org`)"
+      priority: 20
+      middlewares: [conntest-root]
+      service: nn-account
+    cbvc-web:
+      entryPoints: [web]
+      rule: "Host(`cbvc.cdn.nintendo.net`) || Host(`cbvc.cdn.openpak.org`)"
+      priority: 20
+      service: nn-account
+    nx-baas-web:
+      entryPoints: [web]
+      rule: "PathPrefix(`/`)"
+      priority: 1
+      service: nx-baas-http
+  middlewares:
+    conntest-root:
+      replacePath:
+        path: /conntest
+  services:
+    nn-account:
+      loadBalancer:
+        servers:
+          - url: "http://openpak-nn-account:20050"
+    nn-juxtaposition-api:
+      loadBalancer:
+        servers:
+          - url: "http://openpak-nn-juxtaposition-api:20090"
+    nn-juxtaposition-ui:
+      loadBalancer:
+        servers:
+          - url: "http://openpak-nn-juxtaposition-ui:20100"
+    nn-boss:
+      loadBalancer:
+        servers:
+          - url: "http://openpak-nn-boss:20080"
+    nn-soap:
+      loadBalancer:
+        servers:
+          - url: "http://openpak-nn-soap:20110"
+    nn-wfc-nas:
+      loadBalancer:
+        servers:
+          - url: "http://openpak-nn-wfc:20120"
+    nx-baas-http:
+      loadBalancer:
+        servers:
+          - url: "http://openpak-nx-baas:21080"
+    among-us:
+      loadBalancer:
+        servers:
+          - url: "http://openpak-among-us:22600"
+tls:
+  certificates:
+    - certFile: /etc/traefik/certs/wiiu.pem
+      keyFile: /etc/traefik/certs/wiiu.key
+    - certFile: /etc/traefik/certs/amongus.pem
+      keyFile: /etc/traefik/certs/amongus.key

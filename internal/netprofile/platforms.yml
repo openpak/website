@@ -1,0 +1,86 @@
+# The per-platform network map: the only authored input to the network
+# profile (PRD network-profile-service-prd §5). Everything else is derived
+# from what this server already routes:
+#
+#   source 1  Traefik's dynamic config (NETPROFILE_TRAEFIK_FILE) — the
+#             authoritative list of names this network answers on. A routed
+#             name must be claimed by at least one platform below, either by
+#             one of its families or by its exact list; internal/drift_test
+#             fails the build when one is not.
+#   source 2  The console DNS family list (nn-sssl-dns, before NP-4) — the
+#             ceiling a family may belong to. It is mirrored in families.go;
+#             a family outside it is rejected at load. Since NP-4 the DNS
+#             server reads this map, and this ceiling is what keeps the loop
+#             closed.
+#
+# This file changes rarely and is reviewed like code. Adding a title needs no
+# edit here: the title's HostSNI lands in Traefik, its name ends in a family
+# every Switch client already redirects, and the profile picks it up.
+#
+# Rules the review enforces:
+#   - The server may narrow, never widen. A family listed here is a subset of
+#     what the console family's clients compile in; anything more is a
+#     redirect of somebody else's traffic.
+#   - never lists names that must reach the real internet. A connection test
+#     pointed at OpenPak measures OpenPak, not the player's internet.
+
+public_base_url: https://openpak.org
+
+server:
+  address: 145.241.199.19      # what a redirected name resolves to (the box)
+  https_port: 443              # consoles cannot be told a port; this is for clients that can
+  http_port: 80
+
+recheck_after: 21600           # a hint, not a contract (6h)
+
+platforms:
+  switch:
+    # NPLN, NEX, BAAS, dauth, Penne, BCAT all live under nintendo.net;
+    # accounts.nintendo.com under nintendo.com. No Switch title needs the
+    # DS-era families, so they are narrowed away.
+    families: [".nintendo.net", ".nintendo.com"]
+    exact:
+      # The Among Us matchmaker sits outside every Nintendo family; the
+      # patched client is redirected by name.
+      - "matchmaker.among.us"
+      - "matchmaker-eu.among.us"
+      - "matchmaker-as.among.us"
+    never: ["conntest.nintendowifi.net"]
+    services: {}               # Switch clients resolve names; nothing addresses a URL
+
+  wiiu:
+    families: [".nintendo.net", ".nintendowifi.net", ".openpak.org"]
+    never: ["conntest.nintendowifi.net"]
+    # Cemu addresses URLs, not names: the ten entries its OpenPakURLs struct
+    # carries today (emulators/cemu src/config/NetworkSettings.h). The struct
+    # stays as the compiled-in fallback; these replace it when a profile
+    # arrives. Every host must end in one of the families above.
+    services:
+      act:    "https://account.openpak.org"
+      ecs:    "https://ecs.wup.shop.openpak.org/ecs/services/ECommerceSOAP"
+      nus:    "https://nus.wup.shop.openpak.org/nus/services/NetUpdateSOAP"
+      ias:    "https://ias.wup.shop.openpak.org/ias/services/IdentityAuthenticationSOAP"
+      ccsu:   "https://ccs.wup.shop.openpak.org/ccs/download"
+      ccs:    "http://ccs.cdn.wup.shop.openpak.org/ccs/download"
+      idbe:   "https://idbe-wup.cdn.openpak.org/icondata"
+      boss:   "https://npts.app.openpak.org/p01/tasksheet"
+      tagaya: "https://tagaya.wup.shop.openpak.org/tagaya/versionlist"
+      olv:    "https://discovery.olv.openpak.org/v1/endpoint"
+
+  3ds:
+    families: [".nintendo.net", ".nintendowifi.net", ".openpak.org"]
+    never: ["conntest.nintendowifi.net"]
+    services: {}               # Azahar takes names from redirect.*, not URLs
+
+  wii:
+    # WFC: the NAS front and the GameSpy back (sake/gamestats/race) live
+    # under nintendowifi.net; a few titles speak gamespy.com directly; the
+    # patched Wii client uses the openpak.org aliases.
+    families: [".nintendowifi.net", ".gamespy.com", ".openpak.org"]
+    never: ["conntest.nintendowifi.net"]
+    services: {}
+
+  ds:
+    families: [".nintendowifi.net", ".gamespy.com", ".openpak.org"]
+    never: ["conntest.nintendowifi.net"]
+    services: {}

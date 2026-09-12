@@ -278,6 +278,73 @@ paths:
                   node_id: { type: string }
                   approved: { type: boolean }
         "401": { description: No node key, or one the core does not know. }
+  /network/profile:
+    get:
+      summary: The OpenPak network profile — what to redirect, and where
+      security: []
+      description: |
+        Generated from the routing this server actually runs (PRD
+        network-profile-service-prd), so adding a title is a server deploy,
+        not six client releases. One conditional GET per launch: send
+        `If-None-Match` with the stored ETag and an unchanged profile is a
+        304. Public, identical for everyone, no credentials.
+
+        The client's own compiled-in allowlist stays the ceiling: the server
+        may narrow, never widen, and a profile entry outside that allowlist
+        is dropped and logged client-side.
+      parameters:
+        - name: platform
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [switch, wiiu, 3ds, wii, ds]
+          description: |
+            Omitted means every platform united — what a diagnostic or the
+            website itself wants and no emulator does.
+      responses:
+        "200":
+          description: The current profile for the platform
+          headers:
+            ETag:
+              description: Strong entity tag; echo it in If-None-Match
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NetworkProfile"
+        "304":
+          description: Unchanged; the stored profile is still current
+          headers:
+            ETag:
+              schema: { type: string }
+        "400": { description: Unknown platform. }
+        "503": { description: Profiles not configured on this deployment. }
+  /network/ca.pem:
+    get:
+      summary: The console CA the profile pins
+      security: []
+      description: |
+        The PEM of the CA console-facing certificates chain to, published
+        under the profile's `ca.url` and pinned by its `ca.sha256` — a
+        profile cannot swap the trust anchor without the hash changing.
+        A client bootstraps trust from nothing but openpak.org: fetch the
+        profile, fetch this, check the digest before trusting it.
+      responses:
+        "200":
+          description: The CA, PEM-encoded
+          headers:
+            ETag:
+              schema: { type: string }
+            X-CA-Sha256:
+              description: The same digest the profile's `ca.sha256` carries
+              schema: { type: string }
+          content:
+            application/x-pem-file:
+              schema: { type: string }
+        "304": { description: Unchanged. }
+        "404": { description: No CA available on this deployment. }
+        "503": { description: Profiles not configured on this deployment. }
   /requests:
     get:
       summary: The votable catalogue (titles and network features)
@@ -644,6 +711,62 @@ components:
       type: object
       properties:
         message: { type: string }
+    NetworkProfile:
+      type: object
+      description: |
+        PRD network-profile-service-prd §4. `version` is for humans and logs;
+        the ETag is the machine's answer. `recheck_after` is a hint the
+        client may honour or ignore. Validation before applying is the
+        client's job: reject the whole profile unless it arrived over HTTPS
+        from openpak.org and every entry sits inside the compiled-in
+        allowlist.
+      required: [version, generated_at, platform, server, redirect, services, recheck_after]
+      properties:
+        version: { type: integer, description: Monotonic; bumps when anything below changes. }
+        generated_at: { type: integer, description: Unix seconds. }
+        platform:
+          type: string
+          description: The requested platform, or "all" for the union.
+        server:
+          type: object
+          required: [address, https_port, http_port]
+          properties:
+            address: { type: string, description: What a redirected name resolves to. }
+            https_port: { type: integer }
+            http_port: { type: integer }
+        ca:
+          type: [object, "null"]
+          description: Absent when no CA is available; the client keeps the one it pinned.
+          properties:
+            url: { type: string }
+            sha256: { type: string, description: Hex digest of the PEM at ca.url. }
+            not_after: { type: integer, description: Unix seconds; CA expiry. }
+        redirect:
+          type: object
+          required: [suffixes, exact, never]
+          properties:
+            suffixes:
+              type: array
+              items: { type: string }
+              description: Domain families to redirect; a subset of the client's compiled-in families.
+            exact:
+              type: array
+              items: { type: string }
+              description: Names outside every listed suffix family.
+            never:
+              type: array
+              items: { type: string }
+              description: Names that must reach the real internet — a connection test pointed at OpenPak measures OpenPak.
+        services:
+          type: array
+          description: For clients that address a URL rather than resolve a name (Cemu). DNS-redirecting clients ignore it.
+          items:
+            type: object
+            required: [id, url]
+            properties:
+              id: { type: string }
+              url: { type: string }
+        recheck_after: { type: integer, description: Seconds; a hint, not a contract. }
     Error:
       type: object
       properties:

@@ -42,27 +42,40 @@ type Config struct {
 	// Empty disables the refresh and the embedded copy is all there is.
 	CatalogURL     string        // CATALOG_URL
 	CatalogRefresh time.Duration // CATALOG_REFRESH, default 10m
+
+	// NetProfileTraefikFile is the read-only mount of Traefik's dynamic
+	// configuration; the network profile (PRD network-profile-service-prd) is
+	// generated from it at request time. Empty disables /api/v1/network/*:
+	// without the live routing there is nothing to generate from.
+	NetProfileTraefikFile string
+	// NetProfilePlatformMap optionally overrides the embedded per-platform
+	// map (platforms.yml). The embedded copy is what production runs; an
+	// override is for experiments, not for shipping a change without a
+	// reviewed file.
+	NetProfilePlatformMap string
 }
 
 // Load reads the environment and validates required fields.
 func Load() (Config, error) {
 	c := Config{
-		HTTPAddr:           env("WEBSITE_HTTP_ADDR", ":20010"),
-		MetricsAddr:        env("WEBSITE_METRICS_ADDR", ":20012"),
-		CoreBaseURL:        env("CORE_BASE_URL", "http://localhost:20000"),
-		CoreGRPCAddr:       env("CORE_GRPC_ADDR", "localhost:20001"),
-		CoreInternalKey:    os.Getenv("CORE_INTERNAL_KEY"),
-		CoreHTTPTimeout:    10 * time.Second,
-		SessionCookieName:  "opak_session",
-		SiteDatabaseURL:    os.Getenv("WEBSITE_DATABASE_URL"),
-		FCMCredentialsFile: os.Getenv("FCM_CREDENTIALS_FILE"),
-		CoreSessionTTL:     30 * 24 * time.Hour,
-		SessionSecret:      os.Getenv("WEBSITE_SESSION_SECRET"),
-		Environment:        env("WEBSITE_ENVIRONMENT", "development"),
-		MediaDir:           env("WEBSITE_MEDIA_DIR", "storage/media"),
-		SeedTitles:         env("WEBSITE_SEED_TITLES", "") != "",
-		CatalogURL:         env("CATALOG_URL", "https://raw.githubusercontent.com/openpak/catalog/main/catalog.json"),
-		CatalogRefresh:     duration("CATALOG_REFRESH", 10*time.Minute),
+		HTTPAddr:              env("WEBSITE_HTTP_ADDR", ":20010"),
+		MetricsAddr:           env("WEBSITE_METRICS_ADDR", ":20012"),
+		CoreBaseURL:           env("CORE_BASE_URL", "http://localhost:20000"),
+		CoreGRPCAddr:          env("CORE_GRPC_ADDR", "localhost:20001"),
+		CoreInternalKey:       os.Getenv("CORE_INTERNAL_KEY"),
+		CoreHTTPTimeout:       10 * time.Second,
+		SessionCookieName:     "opak_session",
+		SiteDatabaseURL:       os.Getenv("WEBSITE_DATABASE_URL"),
+		FCMCredentialsFile:    os.Getenv("FCM_CREDENTIALS_FILE"),
+		CoreSessionTTL:        30 * 24 * time.Hour,
+		SessionSecret:         os.Getenv("WEBSITE_SESSION_SECRET"),
+		Environment:           env("WEBSITE_ENVIRONMENT", "development"),
+		MediaDir:              env("WEBSITE_MEDIA_DIR", "storage/media"),
+		SeedTitles:            env("WEBSITE_SEED_TITLES", "") != "",
+		CatalogURL:            env("CATALOG_URL", "https://raw.githubusercontent.com/openpak/catalog/main/catalog.json"),
+		CatalogRefresh:        duration("CATALOG_REFRESH", 10*time.Minute),
+		NetProfileTraefikFile: os.Getenv("NETPROFILE_TRAEFIK_FILE"),
+		NetProfilePlatformMap: os.Getenv("NETPROFILE_PLATFORM_MAP"),
 	}
 	for _, id := range strings.Split(os.Getenv("WEBSITE_ADMIN_ACCOUNT_IDS"), ",") {
 		if id = strings.TrimSpace(id); id != "" {

@@ -176,6 +176,26 @@ so bans/logouts/password resets end mobile access with the core's
 revocation window. Rate limits: 10 mints/min per client, 120 calls/min per
 token.
 
+### Network profile (NP-0..NP-4)
+
+`GET /api/v1/network/profile?platform=<switch|wiiu|3ds|wii|ds>` answers what
+OpenPak is and what a client should send it, generated from the routing this
+server actually runs (PRD `network-profile-service-prd`): the Traefik dynamic
+config mounted read-only at `NETPROFILE_TRAEFIK_FILE` provides the names,
+`internal/netprofile/platforms.yml` is the only authored input, and the
+console DNS universe (`internal/netprofile/families.go`) is the ceiling no
+family may leave. One conditional GET per launch: ETag in, 304 out.
+`GET /api/v1/network/ca.pem` serves the CA the profile's `ca.sha256` pins.
+
+- A routed name no platform claims is omitted and logged loudly;
+  `internal/netprofile`'s drift test fails the build when the shipped map
+  stops covering the live routing (refresh `testdata/traefik.yml` from the
+  box in the same PR as the map change).
+- The server may narrow, never widen: every emitted family is inside what
+  the console's clients already compile in.
+- `nn-sssl-dns` reads the same map (NP-4), so the real-console resolver and
+  the emulators cannot drift apart.
+
 ## Sessions model (WEB-02)
 
 The website cookie (`opak_session`, HttpOnly/Secure/SameSite=Lax) wraps the
