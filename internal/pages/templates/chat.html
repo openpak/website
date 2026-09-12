@@ -1,0 +1,68 @@
+{{template "header" .}}
+<div class="mx-auto w-full max-w-2xl">
+  <h1>{{t .Lang "chat.title"}}</h1>
+  <p class="sub">{{t .Lang "chat.sub"}}</p>
+
+  {{if not .Available}}
+    <p class="card p-4" role="status">{{t .Lang "chat.unavailable"}}</p>
+  {{else}}
+
+  {{if .With}}
+  <section class="card p-4 mt-4">
+    <h2>{{.With.DisplayName}}</h2>
+    <div class="mt-3 flex flex-col gap-2">
+      {{if not .Messages}}<p class="sub">{{t .Lang "chat.none"}}</p>{{end}}
+      {{range .Messages}}
+        <div class="max-w-md px-3 py-2 rounded {{if .Outgoing}}ml-auto bg-emerald-700/30{{else}}bg-neutral-800{{end}}">
+          <div class="text-sm whitespace-pre-wrap break-words">{{.Body}}</div>
+          <div class="text-xs text-neutral-400 mt-1">{{if .Outgoing}}{{t $.Lang "chat.you"}} · {{end}}{{.When}}</div>
+        </div>
+      {{end}}
+    </div>
+    <form method="post" action="/account/chat/send" class="mt-4 flex gap-2">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <input type="hidden" name="peer" value="{{.With.AccountID}}">
+      <input type="text" name="body" maxlength="2000" required placeholder='{{t .Lang "chat.reply"}}'
+             class="flex-1 bg-neutral-900 border border-neutral-700 rounded px-3 py-2">
+      <button type="submit" class="btn primary">{{t .Lang "chat.send"}}</button>
+    </form>
+  </section>
+  {{end}}
+
+  <section class="card p-4 mt-4">
+    <h2>{{t .Lang "chat.threads"}}</h2>
+    {{if not .Threads}}
+      <p class="sub mt-2">{{t .Lang "chat.none"}}</p>
+    {{else}}
+      <ul class="mt-2 divide-y divide-neutral-800">
+        {{range .Threads}}
+        <li>
+          <a class="flex items-baseline justify-between gap-3 py-2 hover:bg-neutral-900 rounded px-2"
+             href="/account/chat?with={{.Peer.AccountID}}">
+            <span class="font-medium">{{.Peer.DisplayName}}</span>
+            <span class="text-sm text-neutral-400 truncate max-w-[50%]">
+              {{if .Outgoing}}{{t $.Lang "chat.you"}}: {{end}}{{.Preview}}
+            </span>
+            <span class="text-xs text-neutral-500 whitespace-nowrap">{{.When}}</span>
+          </a>
+        </li>
+        {{end}}
+      </ul>
+    {{end}}
+  </section>
+
+  <section class="card p-4 mt-4">
+    <h2>{{t .Lang "chat.peers"}}</h2>
+    {{if not .Peers}}
+      <p class="sub mt-2">{{t .Lang "chat.none"}}</p>
+    {{else}}
+      <ul class="mt-2 flex flex-wrap gap-2">
+        {{range .Peers}}
+        <li><a class="btn" href="/account/chat?with={{.AccountID}}">{{.DisplayName}}</a></li>
+        {{end}}
+      </ul>
+    {{end}}
+  </section>
+  {{end}}
+</div>
+{{template "footer" .}}

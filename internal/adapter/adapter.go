@@ -34,6 +34,39 @@ func New(baseURL, key string) *Client {
 // FriendCode returns the console friend code for an account, or "" when there
 // is none. An unreachable adapter gives the same answer as "no code": a page
 // has to render either way, and a made-up code is worse than a missing one.
+// AccountByFriendCode is the reverse of FriendCode, and the lookup the
+// add-a-friend form needs. The core's "switch" link subject is the BAAS user
+// id, never the friend code, so asking the core for a link whose subject is a
+// friend code could only ever miss -- which is what every Switch friend code
+// did. The adapter mints the codes and is the only thing that holds the map.
+func (c *Client) AccountByFriendCode(ctx context.Context, code string) string {
+	if c == nil || code == "" {
+		return ""
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
+		fmt.Sprintf("%s/internal/switch/account-by-friend-code?friend_code=%s", c.BaseURL, url.QueryEscape(code)), nil)
+	if err != nil {
+		return ""
+	}
+	req.Header.Set("Authorization", "Bearer "+c.Key)
+	req.Header.Set("X-Internal-Key", c.Key)
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return ""
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return ""
+	}
+	var out struct {
+		AccountID string `json:"account_id"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		return ""
+	}
+	return out.AccountID
+}
+
 func (c *Client) FriendCode(ctx context.Context, accountID string) string {
 	if c == nil {
 		return ""

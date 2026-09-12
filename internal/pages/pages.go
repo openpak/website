@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/openpak/website/internal/adapter"
+	"github.com/openpak/website/internal/chat"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/media"
@@ -50,7 +51,9 @@ type Server struct {
 	// WFC resolves Wii/DS friend codes for the link flow; nil hides the form.
 	WFC *wfc.Client
 	// Saves is the cloud saves service; nil renders the page as "not available".
-	Saves      *saves.Client
+	Saves *saves.Client
+	// Chat is the neutral chat service; nil renders the page as "not available".
+	Chat       *chat.Client
 	Sessions   *session.Manager
 	Production bool
 	// AdminAccountIDs mirrors the admin allowlist so the portal can show
@@ -282,6 +285,8 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /account/friends/block", s.handleFriendBlock)
 	mux.HandleFunc("POST /account/friends/unblock", s.handleFriendUnblock)
 	mux.HandleFunc("GET /account/invitations", s.handleInvitations)
+	mux.HandleFunc("GET /account/chat", s.handleChat)
+	mux.HandleFunc("POST /account/chat/send", s.handleChatSend)
 	mux.HandleFunc("GET /account/saves", s.handleSaves)
 	mux.HandleFunc("POST /account/saves/storage", s.handleSavesStorage)
 	mux.HandleFunc("POST /account/saves/storage/disconnect", s.handleSavesDisconnect)

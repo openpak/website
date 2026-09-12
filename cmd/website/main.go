@@ -16,11 +16,13 @@ import (
 
 	"github.com/openpak/website/internal/admin"
 	"github.com/openpak/website/internal/api"
+	"github.com/openpak/website/internal/chat"
 	"github.com/openpak/website/internal/config"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/metrics"
+	"github.com/openpak/website/internal/netprofile"
 	"github.com/openpak/website/internal/pages"
 	"github.com/openpak/website/internal/push"
 	"github.com/openpak/website/internal/ratelimit"
@@ -111,9 +113,37 @@ func run(log *slog.Logger) error {
 	}
 	pageSrv.Saves = savesCli
 
+	chatCli := chat.New(os.Getenv("CHAT_URL"), os.Getenv("CHAT_INTERNAL_KEY"))
+	if chatCli == nil {
+		log.Info("chat: CHAT_URL not set; the chat page says so and the API answers 503")
+	}
+	pageSrv.Chat = chatCli
+
 	apiSrv := api.New(coreHTTP, coreGRPC, coreGRPC, coreGRPC, coreGRPC, db, sessions, mediaSvc, log)
 	apiSrv.Federation = coreGRPC
 	apiSrv.Saves = savesCli
+	apiSrv.Chat = chatCli
+
+	// The network profile (PRD network-profile-service-prd): generated from
+	// the live Traefik routing, so adding a title is a server deploy, not six
+	// client releases. The file is mounted read-only; without it there is
+	// nothing to generate from and /api/v1/network/* answers 503 while the
+	// rest of the site is unaffected.
+	if cfg.NetProfileTraefikFile != "" {
+		np, err := netprofile.New(netprofile.Options{
+			TraefikFile: cfg.NetProfileTraefikFile,
+			PlatformMap: cfg.NetProfilePlatformMap,
+			CA:          apiSrv.Adapter.CA,
+			Log:         log,
+		})
+		if err != nil {
+			return err
+		}
+		apiSrv.Profiles = np
+		log.Info("network profile enabled", "traefik", cfg.NetProfileTraefikFile)
+	} else {
+		log.Info("network profile: NETPROFILE_TRAEFIK_FILE not set; /api/v1/network/* answers 503")
+	}
 
 	// Push. Absent credentials is a supported configuration: the site runs, the
 	// app can still register a token, and nothing is delivered until a service

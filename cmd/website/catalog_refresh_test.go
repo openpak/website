@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 
@@ -15,8 +16,15 @@ import (
 // A title added to the live catalog appears without a release; a status already set in the
 // database is not overwritten by the catalog's word for it.
 func TestRefreshCatalogReseeds(t *testing.T) {
-	body := `[{"kind":"title","name":"Mario Kart 8","console":"Wii U","category":"Racing","backend":"NEX","status":"requestable","notes":""}]`
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { io.WriteString(w, body) }))
+	// The catalog's answer changes mid-test; the handler goroutine reads it
+	// under the same lock the test writes it, or the race detector is right
+	// to complain.
+	var bodyMu sync.Mutex
+	var body string
+	current := func() string { bodyMu.Lock(); defer bodyMu.Unlock(); return body }
+	setCurrent := func(s string) { bodyMu.Lock(); defer bodyMu.Unlock(); body = s }
+	setCurrent(`[{"kind":"title","name":"Mario Kart 8","console":"Wii U","category":"Racing","backend":"NEX","status":"requestable","notes":""}]`)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { io.WriteString(w, current()) }))
 	defer srv.Close()
 	db := store.NewMemory()
 	ctx, cancel := context.WithCancel(context.Background())
@@ -41,8 +49,8 @@ func TestRefreshCatalogReseeds(t *testing.T) {
 	if err := db.SetRequestStatus(ctx, reqs[0].ID, "beta", "deployed"); err != nil {
 		t.Fatal(err)
 	}
-	body = `[{"kind":"title","name":"Mario Kart 8","console":"Wii U","category":"Racing","backend":"NEX","status":"requestable","notes":""},` +
-		`{"kind":"title","name":"Pikmin 3","console":"Wii U","category":"Strategy","backend":"NEX","status":"requestable","notes":""}]`
+	setCurrent(`[{"kind":"title","name":"Mario Kart 8","console":"Wii U","category":"Racing","backend":"NEX","status":"requestable","notes":""},` +
+		`{"kind":"title","name":"Pikmin 3","console":"Wii U","category":"Strategy","backend":"NEX","status":"requestable","notes":""}]`)
 	deadline := time.Now().Add(3 * time.Second)
 	for time.Now().Before(deadline) {
 		reqs, _ = db.ListRequests(ctx, "title", "")
