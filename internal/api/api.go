@@ -21,8 +21,10 @@ import (
 	"time"
 
 	"github.com/openpak/website/internal/adapter"
+	"github.com/openpak/website/internal/chat"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/media"
+	"github.com/openpak/website/internal/netprofile"
 	"github.com/openpak/website/internal/ratelimit"
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/session"
@@ -43,11 +45,16 @@ type Server struct {
 	// Federation is set by main; nil answers 503 on the region routes.
 	Federation core.Federation
 	Media      *media.Service
+	// Profiles generates the network profile (PRD network-profile-service-prd)
+	// from the live Traefik routing. Set by main when NETPROFILE_TRAEFIK_FILE
+	// is configured; nil answers 503 on /api/v1/network/*.
+	Profiles *netprofile.Service
 	// Adapter answers the console-shaped questions the core cannot: the friend
 	// code is minted by the Switch adapter and lives only there.
 	Adapter    *adapter.Client
 	NNAdapter  *adapter.Client // the Wii U/3DS adapter (nn-account), nil when not configured
 	Saves      *saves.Client
+	Chat       *chat.Client
 	MediaLimit *ratelimit.Limiter
 	DB         store.Store
 	Sessions   *session.Manager
@@ -83,6 +90,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	d("/me/sessions/{id}", s.auth(s.handleRevokeSession))
 	g("/me/friends", s.auth(s.handleFriends)) // GET /api/v1/me/friends
 	s.registerSaves(mux)
+	s.registerChat(mux)
 	s.registerEmulator(mux)
 	g("/me/friends/requests", s.auth(s.handleRequests))
 	h("/me/friends/requests", s.auth(s.handleSendRequest)) // POST: add by friend code
@@ -101,12 +109,16 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	// needs one.
 	g("/requests", s.handleListRequests)
 	h("/requests/{id}/vote", s.auth(s.handleVoteRequest))
-	// Public: no bearer. A status endpoint that needed an account could not be
-	// read by the thing most likely to want it — someone whose sign-in is the
-	// part that is broken. Registered through the same helper as everything
-	// else so the contract test sees it; a route added straight on the mux
-	// would slip past that check unnoticed.
+	// Public: no bearer. A status endpoint that needed an account could not
+	// be read by the thing most likely to want it — someone whose sign-in is
+	// the part that is broken. Registered through the same helper as
+	// everything else so the contract test sees it; a route added straight on
+	// the mux would slip past that check unnoticed.
 	g("/status", s.handleStatus)
+	// The network profile: what OpenPak is and what a client should send it,
+	// generated from the live Traefik routing. One conditional GET per launch,
+	// the same conditional GET the console itself already does for BCAT.
+	s.registerNetwork(mux)
 	// Public: the region nodes a room may be served from. The status page, the
 	// app, and the matchmaking servers all read this one list.
 	g("/regions", s.handleRegions)
@@ -252,6 +264,11 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request, tok store.APIT
 		// id picks, and the URL serves both.
 		resp["avatar_url"] = "/media/avatars/" + tok.AccountID + "/256"
 	}
+	// Linked consoles, every family the account reaches. A Wii/DS console is
+	// linked from the website by friend code (WFC has no login); its subject
+	// is the console-level user id, and per-title friend codes mean there is
+	// no single code to project here — the console being listed is the point.
+	platforms := []map[string]string{}
 	if link, err := s.Links.ActiveLinkByAccount(r.Context(), "switch", tok.AccountID); err == nil {
 		// The link subject is the console's user id, not a friend code. Ask
 		// the adapter, which mints the codes; show none rather than dressing
@@ -259,12 +276,12 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request, tok store.APIT
 		if code := s.Adapter.FriendCode(r.Context(), tok.AccountID); code != "" {
 			resp["friend_code"] = code
 		}
-		resp["linked_platforms"] = []map[string]string{
-			{"namespace": "switch", "link_id": link.LinkID},
-		}
-	} else {
-		resp["linked_platforms"] = []map[string]string{}
+		platforms = append(platforms, map[string]string{"namespace": "switch", "link_id": link.LinkID})
 	}
+	if link, err := s.Links.ActiveLinkByAccount(r.Context(), "wfc", tok.AccountID); err == nil {
+		platforms = append(platforms, map[string]string{"namespace": "wfc", "link_id": link.LinkID})
+	}
+	resp["linked_platforms"] = platforms
 	writeJSON(w, http.StatusOK, resp)
 }
 
@@ -359,9 +376,19 @@ func (s *Server) handleSendRequest(w http.ResponseWriter, r *http.Request, tok s
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
-	code := normalizeCode(req.FriendCode)
-	target, err := s.Links.AccountBySubject(r.Context(), "switch", code)
-	if err != nil || target == "" {
+	// Ask the Switch adapter, not the core. The core's "switch" link subject is
+	// the BAAS user id; the friend code is minted by the adapter and held only
+	// there, so looking a code up as a link subject answered "no account found"
+	// for every code anyone has ever typed. The core lookup stays as a
+	// fallback for a subject someone pastes verbatim.
+	target := s.Adapter.AccountByFriendCode(r.Context(), req.FriendCode)
+	if target == "" {
+		code := normalizeCode(req.FriendCode)
+		if got, err := s.Links.AccountBySubject(r.Context(), "switch", code); err == nil {
+			target = got
+		}
+	}
+	if target == "" {
 		writeError(w, http.StatusNotFound, "no account for that friend code")
 		return
 	}

@@ -29,6 +29,7 @@ type fakeCore struct {
 	sessions       map[string]string
 	friends        map[string][]string
 	links          map[string]string
+	wfcLinks       map[string]string // namespace "wfc": the console a typed friend code resolved to
 	subjectToAc    map[string]string
 	invitations    []core.PendingInvitation
 	presence       map[string]core.Presence
@@ -149,12 +150,16 @@ func (f *fakeCore) Relationship(_ context.Context, _, _ string) (core.Relationsh
 }
 func (f *fakeCore) Block(_ context.Context, _, _ string) error   { return nil }
 func (f *fakeCore) Unblock(_ context.Context, _, _ string) error { return nil }
-func (f *fakeCore) ActiveLinkByAccount(_ context.Context, _, accountID string) (core.Link, error) {
-	sub, ok := f.links[accountID]
+func (f *fakeCore) ActiveLinkByAccount(_ context.Context, namespace, accountID string) (core.Link, error) {
+	links := f.links
+	if namespace == "wfc" {
+		links = f.wfcLinks
+	}
+	sub, ok := links[accountID]
 	if !ok {
 		return core.Link{}, core.ErrNotFound
 	}
-	return core.Link{LinkID: "link-" + accountID, SubjectID: sub}, nil
+	return core.Link{LinkID: "link-" + namespace + "-" + accountID, Namespace: namespace, SubjectID: sub}, nil
 }
 func (f *fakeCore) AccountBySubject(_ context.Context, _, subject string) (string, error) {
 	id, ok := f.subjectToAc[subject]
@@ -183,6 +188,7 @@ func newTestAPI(t *testing.T) (*Server, *fakeCore, *store.Memory) {
 		sessions:    map[string]string{},
 		friends:     map[string][]string{},
 		links:       map[string]string{"acct-b@x.test": "0123456789ab"},
+		wfcLinks:    map[string]string{},
 		subjectToAc: map[string]string{"0123456789ab": "acct-b@x.test"},
 	}
 	db := store.NewMemory()
@@ -661,5 +667,47 @@ func TestEveryAccountHasAnAvatar(t *testing.T) {
 	}
 	if me.AvatarURL == nil || *me.AvatarURL == "" {
 		t.Fatal("an account with nothing uploaded was given no picture at all")
+	}
+}
+
+// A Wii/DS console linked by friend code (WD-0) is part of the person: the same
+// linked_platforms list the app reads carries it beside the Switch link.
+func TestMeListsWiiDSLink(t *testing.T) {
+	s, fc, _ := newTestAPI(t)
+
+	rec := do(t, s, http.MethodPost, "/api/v1/token", "", tokenRequest{Email: "a@x.test", Password: "password-A-1"})
+	var minted struct {
+		Token string `json:"token"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &minted)
+
+	// No console of either kind: the empty list, as before.
+	rec = do(t, s, http.MethodGet, "/api/v1/me", minted.Token, nil)
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `"linked_platforms":[]`) {
+		t.Fatalf("empty me: %d %s", rec.Code, rec.Body.String())
+	}
+
+	// Link a Wii by friend code; it appears beside nothing else.
+	fc.wfcLinks["acct-a@x.test"] = "123456789" // nn-wfc console-level user id
+	rec = do(t, s, http.MethodGet, "/api/v1/me", minted.Token, nil)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("me: %d", rec.Code)
+	}
+	if !strings.Contains(rec.Body.String(), `"namespace":"wfc"`) {
+		t.Fatalf("wfc link missing from %s", rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), `"friend_code"`) {
+		t.Fatal("a per-title friend code must not be projected as the account's friend code")
+	}
+
+	// Both families at once: two rows, switch first.
+	fc.links["acct-a@x.test"] = "3000000000000003"
+	rec = do(t, s, http.MethodGet, "/api/v1/me", minted.Token, nil)
+	body := rec.Body.String()
+	if !strings.Contains(body, `"namespace":"switch"`) || !strings.Contains(body, `"namespace":"wfc"`) {
+		t.Fatalf("both links expected, got %s", body)
+	}
+	if strings.Index(body, `"namespace":"switch"`) > strings.Index(body, `"namespace":"wfc"`) {
+		t.Fatalf("switch link should come first, got %s", body)
 	}
 }
