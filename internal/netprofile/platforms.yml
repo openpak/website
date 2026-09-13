@@ -45,6 +45,17 @@ platforms:
       - "matchmaker.among.us"
       - "matchmaker-eu.among.us"
       - "matchmaker-as.among.us"
+      # Outbound matchmakes over Photon, which is UDP on published ports and has no Traefik
+      # router to be derived from: a UDP router carries no hostname, so this name has to be
+      # declared. The name server is the only one the title resolves; it answers with the
+      # master and game server addresses itself.
+      - "ns.photonengine.io"
+    overrides:
+      # The NAT check probes two addresses from one socket and decides the
+      # console's NAT type from what each of them saw. Both probes collapsing
+      # onto the server address is a NAT type it cannot determine, so the
+      # second responder is named its own box here.
+      "nncs2-lp1.n.n.srv.nintendo.net": "145.241.228.207"
     never: ["conntest.nintendowifi.net"]
     services: {}               # Switch clients resolve names; nothing addresses a URL
 

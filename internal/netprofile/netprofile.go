@@ -30,6 +30,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"maps"
 	"net"
 	"net/url"
 	"os"
@@ -75,6 +76,11 @@ type Redirect struct {
 	Suffixes []string `json:"suffixes"`
 	Exact    []string `json:"exact"`
 	Never    []string `json:"never"`
+	// Overrides are names with an address of their own, applied before the
+	// suffixes collapse them onto the server. The NAT check is why this
+	// exists: it compares what two addresses observe of one console, so its
+	// second probe must not land on the first.
+	Overrides map[string]string `json:"overrides,omitempty"`
 }
 
 // ServiceEntry is a full URL for clients that address a URL rather than
@@ -107,10 +113,11 @@ type PlatformMap struct {
 
 // Platform is one console family's slice of the map.
 type Platform struct {
-	Families []string          `yaml:"families"`
-	Exact    []string          `yaml:"exact"`
-	Never    []string          `yaml:"never"`
-	Services map[string]string `yaml:"services"`
+	Families  []string          `yaml:"families"`
+	Exact     []string          `yaml:"exact"`
+	Never     []string          `yaml:"never"`
+	Overrides map[string]string `yaml:"overrides"`
+	Services  map[string]string `yaml:"services"`
 }
 
 // ErrUnknownPlatform means the query asked for a platform this map does not
@@ -230,6 +237,20 @@ func LoadMap(data []byte) (*PlatformMap, error) {
 		for _, e := range append(slices.Clone(p.Exact), p.Never...) {
 			if e == "" || strings.ContainsAny(e, "*?") || !strings.Contains(e, ".") {
 				return nil, fmt.Errorf("netprofile: platform %q entry %q is not a plain hostname", name, e)
+			}
+		}
+		// An override redirects a name somewhere other than the server, so it
+		// must still be a name this platform may redirect at all, and the
+		// where must be an address rather than another name to resolve.
+		for _, host := range sortedKeys(p.Overrides) {
+			if host == "" || strings.ContainsAny(host, "*?") || !strings.Contains(host, ".") {
+				return nil, fmt.Errorf("netprofile: platform %q override %q is not a plain hostname", name, host)
+			}
+			if !coveredByAny(host, p.Families) && !slices.Contains(p.Exact, host) {
+				return nil, fmt.Errorf("netprofile: platform %q override %q is outside the names it may redirect", name, host)
+			}
+			if net.ParseIP(p.Overrides[host]) == nil {
+				return nil, fmt.Errorf("netprofile: platform %q override %q address %q is not an IP", name, host, p.Overrides[host])
 			}
 		}
 		ids := make([]string, 0, len(p.Services))
@@ -564,6 +585,10 @@ func (m *PlatformMap) generate(platform string, routes Routes) *Profile {
 	// a routed name claimed by nobody is drift — omitted here, logged by the
 	// caller. What remains is the authored list.
 	prof.Redirect.Exact = sortedKeys(exact)
+
+	if len(p.Overrides) > 0 {
+		prof.Redirect.Overrides = maps.Clone(p.Overrides)
+	}
 
 	ids := make([]string, 0, len(p.Services))
 	for id := range p.Services {

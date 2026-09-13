@@ -523,3 +523,12 @@ http:
       loadBalancer:
         servers: [{ url: "http://openpak-among-us:22600" }]
 `
+
+func TestSwitchOverridesCarrySecondNatAddress(t *testing.T) {
+	s := newTestService(t, "testdata/traefik.yml", "", nil)
+	p := mustProfile(t, s, "switch")
+	got := p.Redirect.Overrides["nncs2-lp1.n.n.srv.nintendo.net"]
+	if got == "" || got == p.Server.Address {
+		t.Fatalf("nncs2 must have an address of its own, not the server's: %q", got)
+	}
+}
