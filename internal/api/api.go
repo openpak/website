@@ -26,6 +26,7 @@ import (
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/netprofile"
 	"github.com/openpak/website/internal/ratelimit"
+	"github.com/openpak/website/internal/registry"
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/store"
@@ -49,6 +50,20 @@ type Server struct {
 	// from the live Traefik routing. Set by main when NETPROFILE_TRAEFIK_FILE
 	// is configured; nil answers 503 on /api/v1/network/*.
 	Profiles *netprofile.Service
+	// Registry is the v2 bundle distribution service (PRD
+	// universal-tls-forwarding/01). Set by main when REGISTRY_* variables are
+	// configured; nil answers 503 on /api/v2/network/*.
+	Registry *registry.Service
+	// CIVerifier turns the bearer presented to /build-sessions into a
+	// verified CI assertion. OIDC in production (02 AUTH-M1); a static
+	// verifier in staging until then.
+	CIVerifier registry.CIVerifier
+	// V2 quotas (02 AUTH-007): issuance per client hash, requests per
+	// session, artifact bytes per session. Nil means un metered, which only
+	// tests do; New sets the production defaults.
+	V2ClientSessionLimit *ratelimit.Limiter
+	V2SessionLimit       *ratelimit.Limiter
+	V2Bytes              *v2ByteMeter
 	// Adapter answers the console-shaped questions the core cannot: the friend
 	// code is minted by the Switch adapter and lives only there.
 	Adapter    *adapter.Client
@@ -73,9 +88,17 @@ func New(c core.HTTP, id core.Identity, soc core.Social, lnk core.Links, inv cor
 		Auth:       ratelimit.New(10, time.Minute),
 		PerToken:   ratelimit.New(120, time.Minute),
 		MediaLimit: ratelimit.New(5, time.Hour),
-		log:        log,
+
+		V2ClientSessionLimit: ratelimit.New(v2SessionsPerClient, time.Hour),
+		V2SessionLimit:       ratelimit.New(v2SessionRequestsPerMinute, time.Minute),
+		V2Bytes:              newV2ByteMeter(),
+		log:                  log,
 	}
 }
+
+// SetLog injects the logger for harnesses outside this package (the v2
+// fetch-tool tests mount the real routes against a memory registry).
+func (s *Server) SetLog(l *slog.Logger) { s.log = l }
 
 // RegisterRoutes mounts the API under the given path prefix.
 func (s *Server) RegisterRoutes(mux *http.ServeMux) {
@@ -119,6 +142,9 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	// generated from the live Traefik routing. One conditional GET per launch,
 	// the same conditional GET the console itself already does for BCAT.
 	s.registerNetwork(mux)
+	// The v2 bundle distribution: authenticated, signed, build-time (PRD
+	// universal-tls-forwarding/01). 503 until the REGISTRY_* variables are set.
+	s.registerNetworkV2(mux)
 	// Public: the region nodes a room may be served from. The status page, the
 	// app, and the matchmaking servers all read this one list.
 	g("/regions", s.handleRegions)
