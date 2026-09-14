@@ -162,6 +162,18 @@ func scanClient(row pgx.Row) (Client, error) {
 }
 
 func (s *PG) PutClient(ctx context.Context, c Client) error {
+	// An empty scope is a fact (review has not pinned one yet), not an
+	// absence: the columns are NOT NULL, so nil slices must go out as empty
+	// arrays rather than NULLs.
+	if c.Platforms == nil {
+		c.Platforms = []string{}
+	}
+	if c.Channels == nil {
+		c.Channels = []string{}
+	}
+	if c.Workflows == nil {
+		c.Workflows = []string{}
+	}
 	_, err := s.pool.Exec(ctx, `INSERT INTO registry_clients (`+clientColumns+`)
 		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,COALESCE($11, now()),now())
 		ON CONFLICT (id) DO UPDATE SET repository=EXCLUDED.repository, kind=EXCLUDED.kind,
