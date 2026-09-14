@@ -368,7 +368,13 @@ func (t *Tool) Fetch(ctx context.Context) (*Lockfile, error) {
 		if got := hex.EncodeToString(sum[:]); got != p.SHA256 {
 			return nil, fmt.Errorf("%w: payload %s hashes to %s, manifest says %s", ErrUnverified, p.Path, got, p.SHA256)
 		}
-		if err := os.WriteFile(filepath.Join(staged, filepath.FromSlash(p.Path)), data, 0o644); err != nil {
+		target := filepath.Join(staged, filepath.FromSlash(p.Path))
+		// Payload paths may nest (trust/ca.pem); the archive is materialized
+		// literally, so parents must exist before the payload lands.
+		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+			return nil, err
+		}
+		if err := os.WriteFile(target, data, 0o644); err != nil {
 			return nil, err
 		}
 		artifacts[p.Path] = p.SHA256

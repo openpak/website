@@ -73,6 +73,7 @@ platforms:
 	canonical, err := policy.Build(policy.Inputs{
 		PolicyID:         "openpak-production",
 		Map:              m,
+		CA:               &policy.CA{ID: "openpak-ca-2", PEM: []byte("harness pem"), NotAfter: now.Add(365 * 24 * time.Hour)},
 		CeilingRevisions: map[string]string{"switch": "unified-1"},
 	}, policy.EnvProduction)
 	if err != nil {
@@ -89,7 +90,12 @@ platforms:
 		Canonical: canonical,
 		Platform:  "switch",
 		Channel:   "stable",
-		Promote:   true,
+		Artifacts: []policy.PayloadInput{{
+			Path:      policy.TrustArtifactPath,
+			MediaType: policy.MediaTypePEM,
+			Bytes:     []byte("harness pem"),
+		}},
+		Promote: true,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -224,6 +230,7 @@ func TestFetchAndVerify(t *testing.T) {
 	dir := tool.cfg.Output
 	for _, name := range []string{
 		"policy.json", "manifest.json", LockfileName,
+		"trust/ca.pem",
 		"metadata/root.json", "metadata/targets.json", "metadata/snapshot.json", "metadata/timestamp.json",
 	} {
 		if _, err := os.Stat(filepath.Join(dir, name)); err != nil {
