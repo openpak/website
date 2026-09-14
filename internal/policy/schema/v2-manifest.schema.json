@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openpak.org/schemas/v2/manifest.schema.json",
+  "title": "OpenPak bundle manifest, schema version 2",
+  "description": "The signed target manifest that binds every payload of one published bundle (PRD universal-tls-forwarding/01): path, byte length, digest and media type, plus the platform and capability requirements a consumer must satisfy before any payload byte is trusted. Fields named x_* are diagnostic extensions; every other unknown field rejects the manifest.",
+  "type": "object",
+  "additionalProperties": false,
+  "patternProperties": {
+    "^x_": { "type": ["string", "number", "boolean"], "maxLength": 4096 }
+  },
+  "required": [
+    "schema_version",
+    "kind",
+    "policy_id",
+    "platform",
+    "channel",
+    "sequence",
+    "required_capabilities",
+    "payloads"
+  ],
+  "properties": {
+    "schema_version": { "const": 2 },
+    "kind": { "const": "openpak-bundle-manifest" },
+    "policy_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+    },
+    "platform": { "enum": ["switch", "wiiu", "3ds", "wii", "ds"] },
+    "channel": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,31}$"
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9223372036854775807
+    },
+    "required_capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "dns.suffix.v1",
+          "dns.exact.v1",
+          "dns.override.v1",
+          "tls.scoped-ca.v1",
+          "service.url.v1"
+        ]
+      }
+    },
+    "payloads": {
+      "description": "Every payload the bundle carries, each bound by length and SHA-256. Paths are archive-relative, normalized and unique; traversal, symlinks and executable hooks are rejected at validation.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1024,
+      "items": { "$ref": "#/$defs/payload" }
+    }
+  },
+  "$defs": {
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "media_type", "length", "sha256"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,254}$",
+          "maxLength": 255
+        },
+        "media_type": {
+          "enum": [
+            "application/json",
+            "application/x-pem-file",
+            "application/octet-stream"
+          ]
+        },
+        "length": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1073741824
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,325 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openpak.org/schemas/v2/policy.schema.json",
+  "title": "OpenPak network policy bundle, schema version 2",
+  "description": "One signed platform projection of the canonical OpenPak network policy (PRD universal-tls-forwarding/01). A bundle is generated, never authored: every rule here is a deterministic projection of the reviewed canonical revision whose digest the bundle carries. Consumers must reject unknown schema major versions, unknown actions and any declared required capability they do not implement. Fields named x_* are diagnostic extensions a consumer may ignore; every other unknown field rejects the whole bundle.",
+  "type": "object",
+  "additionalProperties": false,
+  "patternProperties": {
+    "^x_": { "type": ["string", "number", "boolean"], "maxLength": 4096 }
+  },
+  "required": [
+    "schema_version",
+    "policy_id",
+    "sequence",
+    "platform",
+    "channel",
+    "issued_at",
+    "canonical_policy_sha256",
+    "required_capabilities",
+    "ceiling_revision",
+    "default_destination",
+    "rules",
+    "services",
+    "trust",
+    "patch_sets"
+  ],
+  "properties": {
+    "schema_version": { "const": 2 },
+    "policy_id": { "$ref": "#/$defs/policyId" },
+    "sequence": {
+      "description": "Monotonically increasing publication sequence for this platform/channel. Allocated transactionally by the registry; never reused, never rewound.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9223372036854775807
+    },
+    "platform": { "$ref": "#/$defs/platform" },
+    "channel": { "$ref": "#/$defs/channel" },
+    "issued_at": {
+      "description": "Publication time. Rides alongside the content: it must never change the canonical policy digest.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "canonical_policy_sha256": {
+      "description": "SHA-256 (lowercase hex) of this bundle's canonical policy revision with all publication fields removed: the content identity shared by every platform/channel projection of one revision.",
+      "$ref": "#/$defs/sha256"
+    },
+    "required_capabilities": {
+      "description": "Capabilities a consumer must implement to apply this bundle. A client adapter may not ignore a declared required capability.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/capability" }
+    },
+    "ceiling_revision": {
+      "description": "The approved domain ceiling revision this projection stays inside. Generation and certification fail outside it.",
+      "$ref": "#/$defs/ceilingRevision"
+    },
+    "default_destination": { "$ref": "#/$defs/destination" },
+    "rules": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": { "$ref": "#/$defs/rule" }
+    },
+    "services": {
+      "description": "Complete URLs for clients that address a service rather than resolve a name.",
+      "type": "array",
+      "maxItems": 256,
+      "items": { "$ref": "#/$defs/service" }
+    },
+    "trust": {
+      "description": "Trust artifacts a TLS-enabled release requires. A TLS-enabled release with no compatible CA artifact is incomplete and cannot be published (POL-008).",
+      "type": "array",
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/trust" }
+    },
+    "patch_sets": {
+      "description": "Console patch artifacts. Patch manifests own firmware compatibility; total patch bytes per bundle are bounded at 268435456 (256 MiB) and each patch artifact at 67108864 (64 MiB); both bounds are conformance inputs enforced at publication and verification.",
+      "type": "array",
+      "maxItems": 256,
+      "items": { "$ref": "#/$defs/patchSet" }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "policyId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+    },
+    "platform": {
+      "enum": ["switch", "wiiu", "3ds", "wii", "ds"]
+    },
+    "channel": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,31}$"
+    },
+    "ceilingRevision": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9.-]{0,62}$"
+    },
+    "capability": {
+      "enum": [
+        "dns.suffix.v1",
+        "dns.exact.v1",
+        "dns.override.v1",
+        "tls.scoped-ca.v1",
+        "service.url.v1"
+      ]
+    },
+    "hostname": {
+      "description": "A lowercase FQDN of at least two labels, one dot required, RFC 1123 labels. No wildcards: a suffix match is expressed as a suffix, not a pattern.",
+      "type": "string",
+      "pattern": "^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$",
+      "maxLength": 253
+    },
+    "suffix": {
+      "description": "A leading-dot domain family: every name ending in the dot form matches, longest suffix first.",
+      "type": "string",
+      "pattern": "^\\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$",
+      "maxLength": 254
+    },
+    "port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "destination": {
+      "description": "Where redirected traffic lands. IPv4 required (the console DNS path answers A records with it); IPv6 optional. Production rejects loopback, unspecified, multicast, private and link-local addresses including IPv4-mapped forms; the JSON grammar below is only the shape, the address class is enforced at validation (POL-005).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ipv4", "https_port", "http_port"],
+      "properties": {
+        "ipv4": {
+          "type": "string",
+          "pattern": "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(\\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3}$"
+        },
+        "ipv6": {
+          "type": "string",
+          "pattern": "^([0-9a-f]{1,4})(:[0-9a-f]{1,4}){7}$",
+          "maxLength": 45
+        },
+        "https_port": { "$ref": "#/$defs/port" },
+        "http_port": { "$ref": "#/$defs/port" }
+      }
+    },
+    "redirectTarget": {
+      "description": "A per-rule destination for a redirect that must not land on the default destination. Ports ride with the default destination; a rule cannot move ports.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ipv4": {
+          "type": "string",
+          "pattern": "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(\\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3}$"
+        },
+        "ipv6": {
+          "type": "string",
+          "pattern": "^([0-9a-f]{1,4})(:[0-9a-f]{1,4}){7}$",
+          "maxLength": 45
+        }
+      },
+      "minProperties": 1
+    },
+    "match": {
+      "description": "Exactly one of exact or suffix.",
+      "type": "object",
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "required": ["exact"],
+          "properties": {
+            "exact": { "$ref": "#/$defs/hostname" },
+            "suffix": { "type": "null" },
+            "include_apex": { "type": "null" }
+          }
+        },
+        {
+          "required": ["suffix"],
+          "properties": {
+            "exact": { "type": "null" },
+            "suffix": { "$ref": "#/$defs/suffix" },
+            "include_apex": {
+              "description": "Whether the family's own apex name (the suffix without its leading dot) matches too. Default false.",
+              "type": "boolean",
+              "default": false
+            }
+          }
+        }
+      ],
+      "properties": {
+        "exact": { "$ref": "#/$defs/hostname" },
+        "suffix": { "$ref": "#/$defs/suffix" },
+        "include_apex": { "type": "boolean", "default": false }
+      }
+    },
+    "tlsRef": {
+      "description": "TLS references for redirected TLS traffic: the SNI the client must present and the trust entry whose certificate chain covers the connection.",
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "sni": { "$ref": "#/$defs/hostname" },
+        "trust": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,62}$" }
+      }
+    },
+    "rule": {
+      "description": "One reviewed routing decision. A passthrough rule carries none of the redirect-only fields: the name must reach the real internet untouched.",
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x_": { "type": ["string", "number", "boolean"], "maxLength": 4096 }
+      },
+      "required": ["id", "match", "action"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$", "maxLength": 128 },
+        "match": { "$ref": "#/$defs/match" },
+        "action": { "enum": ["redirect", "passthrough"] },
+        "destination": { "$ref": "#/$defs/redirectTarget" },
+        "transport": {
+          "description": "The forwarded protocol's transport, default tcp. UDP services are declared explicitly (POL-002); a missing Traefik hostname is not grounds to drop one.",
+          "enum": ["tcp", "udp"],
+          "default": "tcp"
+        },
+        "ports": {
+          "description": "Destination ports this rule covers. Absent means the destination's own ports.",
+          "type": "array",
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/port" }
+        },
+        "tls": { "$ref": "#/$defs/tlsRef" },
+        "service_id": {
+          "description": "A reference into services for clients that address the URL rather than the name.",
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,62}$"
+        },
+        "readiness": {
+          "description": "Reference to reviewed evidence that a backend actually serves this name (POL-002). Unserved endpoints stay inactive inventory.",
+          "type": "string",
+          "maxLength": 256
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "action": { "const": "passthrough" } } },
+          "then": {
+            "properties": {
+              "destination": { "type": "null" },
+              "transport": { "type": "null" },
+              "ports": { "type": "null" },
+              "tls": { "type": "null" },
+              "service_id": { "type": "null" }
+            }
+          }
+        }
+      ]
+    },
+    "service": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x_": { "type": ["string", "number", "boolean"], "maxLength": 4096 }
+      },
+      "required": ["id", "url"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,62}$" },
+        "url": {
+          "description": "A complete service URL. The host must sit inside the platform's approved families; scheme https or http.",
+          "type": "string",
+          "pattern": "^https?://",
+          "maxLength": 2048
+        },
+        "transport": { "enum": ["tcp", "udp"], "default": "tcp" },
+        "trust": {
+          "description": "The trust entry whose CA verifies this service's TLS. Required knowledge for scoped-CA deployments; plain http services carry none.",
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,62}$"
+        }
+      }
+    },
+    "trust": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "artifact", "scope"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,62}$" },
+        "artifact": {
+          "description": "Archive-relative path of the trust artifact, bound by the bundle manifest.",
+          "$ref": "#/$defs/archivePath"
+        },
+        "scope": {
+          "description": "What the trust anchor may verify. Scoped trust is the rule: a CA for redirected services must never be read as a general-purpose anchor.",
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9.-]{0,62}$"
+        }
+      }
+    },
+    "patchSet": {
+      "description": "One console patch artifact and the firmware window it applies to. Patch manifests own firmware compatibility; unresolved dependencies reject the bundle (POL-008).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "artifact", "min_firmware"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,62}$" },
+        "artifact": { "$ref": "#/$defs/archivePath" },
+        "min_firmware": { "type": "string", "maxLength": 32 },
+        "max_firmware": { "type": "string", "maxLength": 32 },
+        "depends_on": {
+          "type": "array",
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,62}$" }
+        }
+      }
+    },
+    "archivePath": {
+      "description": "Archive-relative, normalized and unique; no symlinks, executable hooks or traversal. Enforced in full at validation.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,254}$",
+      "maxLength": 255
+    }
+  }
+}
