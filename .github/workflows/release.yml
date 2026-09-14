@@ -14,6 +14,44 @@ permissions:
   packages: write
 
 jobs:
+  # The pinned fetch tool of build-time integration (03, BUILD-009): pilot
+  # release workflows download a tagged binary and verify its checksum, so
+  # the tool's revision is part of every certified release's provenance.
+  network-tool:
+    runs-on: [self-hosted, linux, podman]
+    permissions:
+      contents: write # release assets only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27.x"
+      - run: |
+          set -e
+          mkdir -p dist
+          for platform in linux/amd64 linux/arm64 darwin/arm64; do
+            os=${platform%/*}; arch=${platform#*/}
+            CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" \
+              go build -trimpath -ldflags "-s -w" \
+              -o "dist/openpak-network-$os-$arch" ./cmd/openpak-network
+          done
+          (cd dist && sha256sum openpak-network-* > checksums.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openpak-network
+          path: dist/*
+          if-no-files-found: error
+      - if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
+              --title "openpak-network $GITHUB_REF_NAME" \
+              --notes "Static openpak-network fetch tool builds; pin one via its checksums.txt (03 BUILD-009)."
+          gh release upload "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+
   image:
     runs-on: [self-hosted, linux, podman]
     steps:
