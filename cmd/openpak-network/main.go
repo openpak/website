@@ -83,12 +83,13 @@ Configuration comes from the environment:
 `)
 }
 
-// cmdAuthenticate obtains a CI identity token and writes it to a file the
-// fetch step reads. Inside GitHub Actions the token is the workflow's own
-// OIDC identity, requested for the audience the registry expects; outside
-// it, an explicitly passed --token serves staging credentials. Either way
-// the token lands in one 0600 file and never in the command line of the
-// later steps.
+// cmdAuthenticate turns the job's CI identity into the build credential the
+// fetch step presents (02 AUTH-001/002). Inside GitHub Actions the identity
+// is the workflow's own OIDC token, requested for the audience the registry
+// expects; outside it, an explicitly passed --token serves staging
+// credentials. Either way the identity is exchanged at the registry for a
+// short-lived build credential — the CI identity itself never becomes the
+// fetch bearer — and only that credential lands in one 0600 file.
 func cmdAuthenticate(args []string, stderr io.Writer) error {
 	fs := flag.NewFlagSet("authenticate", flag.ExitOnError)
 	out := fs.String("token-output", "", "path to write the bearer credential (required)")
@@ -131,12 +132,25 @@ func cmdAuthenticate(args []string, stderr io.Writer) error {
 		}
 		value = doc.Value
 	}
+	// The exchange: CI identity in, build credential out. Mode and identity
+	// come from the same variable contract fetch enforces; certified mode
+	// exchanges only at the pinned registry.
+	buildToken, err := fetchtool.Exchange(context.Background(), nil,
+		strings.ToLower(strings.TrimSpace(os.Getenv("OPENPAK_NETWORK_MODE"))),
+		os.Getenv("OPENPAK_REGISTRY_URL"),
+		value,
+		os.Getenv("OPENPAK_CLIENT_HASH"),
+		os.Getenv("OPENPAK_PLATFORM"),
+		os.Getenv("OPENPAK_CHANNEL"))
+	if err != nil {
+		return err
+	}
 	if err := os.MkdirAll(filepath.Dir(*out), 0o700); err != nil {
 		return err
 	}
 	// 0600: the credential file is briefly on disk by design; scans and
 	// accidental prints are the failure modes the mode and file mode contain.
-	return os.WriteFile(*out, []byte(value+"\n"), 0o600)
+	return os.WriteFile(*out, []byte(buildToken+"\n"), 0o600)
 }
 
 func cmdFetch(args []string, stdout io.Writer) error {

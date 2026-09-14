@@ -8,6 +8,7 @@
 package fetchtool
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -84,6 +85,24 @@ type Config struct {
 	Clock func() time.Time
 }
 
+// endpointFor resolves the distribution endpoint under the pinning rules:
+// development points where the operator says, certified always at the
+// production registry.
+func endpointFor(mode, override string) (string, error) {
+	switch mode {
+	case ModeDevelopment:
+		endpoint := strings.TrimSuffix(strings.TrimSpace(override), "/")
+		if endpoint == "" {
+			return "", fmt.Errorf("fetchtool: development mode needs OPENPAK_REGISTRY_URL; there is no default development endpoint")
+		}
+		return endpoint, nil
+	case ModeCertified:
+		return DefaultRegistryURL, nil
+	default:
+		return "", fmt.Errorf("fetchtool: OPENPAK_NETWORK_MODE %q is not one of disabled, development, certified", mode)
+	}
+}
+
 // LoadConfig derives the configuration from a variable lookup and fails
 // with an actionable message when certified mode is missing a required
 // field (BUILD-001).
@@ -101,20 +120,15 @@ func LoadConfig(get func(string) string) (Config, error) {
 	if cfg.Mode == "" {
 		cfg.Mode = ModeDisabled
 	}
-	switch cfg.Mode {
-	case ModeDisabled:
+	if cfg.Mode == ModeDisabled {
 		// No identity is acceptable here and no request is ever made.
 		return cfg, nil
-	case ModeDevelopment:
-		cfg.RegistryURL = strings.TrimSuffix(strings.TrimSpace(get("OPENPAK_REGISTRY_URL")), "/")
-		if cfg.RegistryURL == "" {
-			return cfg, fmt.Errorf("fetchtool: development mode needs OPENPAK_REGISTRY_URL; there is no default development endpoint")
-		}
-	case ModeCertified:
-		cfg.RegistryURL = DefaultRegistryURL
-	default:
-		return cfg, fmt.Errorf("fetchtool: OPENPAK_NETWORK_MODE %q is not one of disabled, development, certified", cfg.Mode)
 	}
+	endpoint, err := endpointFor(cfg.Mode, get("OPENPAK_REGISTRY_URL"))
+	if err != nil {
+		return cfg, err
+	}
+	cfg.RegistryURL = endpoint
 	// Everything below is required to talk to the registry at all.
 	missing := func(name string) error {
 		return fmt.Errorf("fetchtool: certified fetch needs %s; a failed official build never falls back to an unpinned release (BUILD-001)", name)
@@ -180,6 +194,66 @@ func New(cfg Config) (*Tool, error) {
 		clock = time.Now
 	}
 	return &Tool{cfg: cfg, token: token, http: httpClient, clock: clock}, nil
+}
+
+// Exchange turns one CI identity into one short-lived build credential
+// (02 AUTH-002): the endpoint follows the same pinning rules as fetch, and
+// the issued credential — never the CI identity itself — is what the fetch
+// phase presents afterwards.
+func Exchange(ctx context.Context, client *http.Client, mode, override, ciToken, clientHash, platform, channel string) (string, error) {
+	endpoint, err := endpointFor(mode, override)
+	if err != nil {
+		return "", err
+	}
+	if ciToken == "" {
+		return "", fmt.Errorf("fetchtool: exchange carries no CI identity")
+	}
+	if clientHash == "" || platform == "" {
+		return "", fmt.Errorf("fetchtool: exchange needs OPENPAK_CLIENT_HASH and OPENPAK_PLATFORM")
+	}
+	if channel == "" {
+		channel = "stable"
+	}
+	if client == nil {
+		client = &http.Client{Timeout: 30 * time.Second}
+	}
+	body, err := json.Marshal(map[string]string{
+		"client_hash": strings.ToLower(clientHash),
+		"platform":    strings.ToLower(platform),
+		"channel":     channel,
+	})
+	if err != nil {
+		return "", err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint+"/build-sessions", bytes.NewReader(body))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Authorization", "Bearer "+ciToken)
+	req.Header.Set("Content-Type", "application/json")
+	res, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("fetchtool: build-session exchange: %w", err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusCreated {
+		var e struct {
+			Code    string `json:"code"`
+			Message string `json:"message"`
+		}
+		_ = json.NewDecoder(io.LimitReader(res.Body, 64<<10)).Decode(&e)
+		return "", fmt.Errorf("fetchtool: build-session exchange answered %d (%s): %s", res.StatusCode, e.Code, e.Message)
+	}
+	var out struct {
+		BuildToken string `json:"build_token"`
+	}
+	if err := json.NewDecoder(io.LimitReader(res.Body, 64<<10)).Decode(&out); err != nil {
+		return "", fmt.Errorf("fetchtool: build-session exchange: %w", err)
+	}
+	if out.BuildToken == "" {
+		return "", fmt.Errorf("fetchtool: build-session exchange carried no credential")
+	}
+	return out.BuildToken, nil
 }
 
 // resolveResponse mirrors the registry's /resolve answer.
