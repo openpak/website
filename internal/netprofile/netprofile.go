@@ -50,9 +50,12 @@ var embeddedMap []byte
 // It is what a diagnostic or the website itself wants and no emulator does.
 const PlatformAll = ""
 
-// platformsAllowed is the platform set the PRD names. The map may not invent
-// another one; a new console family is a change here first.
-var platformsAllowed = []string{"switch", "wiiu", "3ds", "wii", "ds"}
+// PlatformsAllowed is the platform set the PRD names. The map may not invent
+// another one; a new console family is a change here first. It is exported
+// because it is the platform vocabulary, not a host list: the v2 policy
+// package (PRD universal-tls-forwarding/01) validates against the same set
+// instead of carrying a second copy.
+var PlatformsAllowed = []string{"switch", "wiiu", "3ds", "wii", "ds"}
 
 // ServerInfo is where a redirected name lands.
 type ServerInfo struct {
@@ -222,9 +225,9 @@ func LoadMap(data []byte) (*PlatformMap, error) {
 	sort.Strings(names)
 	for _, name := range names {
 		p := m.Platforms[name]
-		if !slices.Contains(platformsAllowed, name) {
+		if !slices.Contains(PlatformsAllowed, name) {
 			return nil, fmt.Errorf("netprofile: platform %q is not one the PRD names (%s)",
-				name, strings.Join(platformsAllowed, ", "))
+				name, strings.Join(PlatformsAllowed, ", "))
 		}
 		if len(p.Families) == 0 {
 			return nil, fmt.Errorf("netprofile: platform %q lists no families", name)

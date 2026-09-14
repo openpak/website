@@ -67,7 +67,7 @@ func TestSwitchProfileIsGeneratedFromTheLiveRouting(t *testing.T) {
 		t.Fatalf("server block: %+v", p.Server)
 	}
 	// Narrowed to what a Switch speaks: no DS-era families.
-	if strings.Join(p.Redirect.Suffixes, ",") != ".nintendo.com,.nintendo.net" {
+	if strings.Join(p.Redirect.Suffixes, ",") != ".battle.net,.nintendo.com,.nintendo.net" {
 		t.Fatalf("suffixes: %v", p.Redirect.Suffixes)
 	}
 	// Names a family covers never appear as exact; the matchmakers do.

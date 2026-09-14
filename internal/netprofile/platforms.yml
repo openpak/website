@@ -38,7 +38,13 @@ platforms:
     # NPLN, NEX, BAAS, dauth, Penne, BCAT all live under nintendo.net;
     # accounts.nintendo.com under nintendo.com. No Switch title needs the
     # DS-era families, so they are narrowed away.
-    families: [".nintendo.net", ".nintendo.com"]
+    #
+    # Blizzard titles (Diablo II: Resurrected first) reach Battle.net under
+    # its own names: geo.battle.net for region routing, telemetry-in and
+    # account for login, and the *.actual.battle.net gateways after that —
+    # a family, because the regional variants are more names than anyone
+    # wants to enumerate. Observed 2026-09-13 from a retail D2R boot.
+    families: [".nintendo.net", ".nintendo.com", ".battle.net"]
     exact:
       # The Among Us matchmaker sits outside every Nintendo family; the
       # patched client is redirected by name.

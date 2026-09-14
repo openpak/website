@@ -21,4 +21,5 @@ var Universe = []string{
 	".nintendo.com",
 	".openpak.org",
 	".gamespy.com",
+	".battle.net",
 }
