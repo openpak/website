@@ -25,6 +25,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -457,16 +458,26 @@ func isSHA256Hex(s string) bool {
 func ConfigureV2Registry(log *slog.Logger) (*registry.Service, registry.CIVerifier, func()) {
 	databaseURL := os.Getenv("REGISTRY_DATABASE_URL")
 	blobDir := os.Getenv("REGISTRY_BLOB_DIR")
-	rootKeyFile := os.Getenv("REGISTRY_ROOT_KEY_FILE")
 	onlineKeyFile := os.Getenv("REGISTRY_ONLINE_KEY_FILE")
 	rootMetadataFile := os.Getenv("REGISTRY_ROOT_METADATA_FILE")
-	if databaseURL == "" || blobDir == "" || rootKeyFile == "" || onlineKeyFile == "" {
+	if databaseURL == "" && blobDir == "" && onlineKeyFile == "" && rootMetadataFile == "" {
 		return nil, nil, func() {}
 	}
-	if rootMetadataFile == "" {
-		// Without a provisioned root file every restart would mint a fresh
-		// root expiry and silently break every client pin (POL-006).
-		log.Error("v2 registry: REGISTRY_ROOT_METADATA_FILE is not set; refusing to derive a restart-varying root")
+	var missing []string
+	for name, value := range map[string]string{
+		"REGISTRY_DATABASE_URL":       databaseURL,
+		"REGISTRY_BLOB_DIR":           blobDir,
+		"REGISTRY_ONLINE_KEY_FILE":    onlineKeyFile,
+		"REGISTRY_ROOT_METADATA_FILE": rootMetadataFile,
+	} {
+		if value == "" {
+			missing = append(missing, name)
+		}
+	}
+	if len(missing) > 0 {
+		// A half-configured registry would answer 503 while looking
+		// configured; say which variable is absent instead.
+		log.Error("v2 registry: configuration incomplete", "missing", strings.Join(missing, ", "))
 		return nil, nil, func() {}
 	}
 	policyID := os.Getenv("REGISTRY_POLICY_ID")
