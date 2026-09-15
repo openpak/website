@@ -88,15 +88,26 @@ func trimSpace(s string) string {
 
 // NewPublisher builds root metadata from the two keys and signs it. The
 // root bytes are fixed for the publisher's lifetime: rotating the root is a
-// rehearsed recovery procedure, not a publication step.
+// rehearsed recovery procedure, not a publication step. Provisioning note:
+// the root expiry anchors to `now`, so a publisher built this way at every
+// process start would mint a different root each boot — production wiring
+// must provision the root once (ProvisionRoot) and load it with
+// NewPublisherWithRoot.
 func NewPublisher(rootKey, onlineKey ed25519.PrivateKey, now time.Time) (*Publisher, error) {
+	rootBytes, err := ProvisionRoot(rootKey, onlineKey, now)
+	if err != nil {
+		return nil, err
+	}
+	return NewPublisherWithRoot(rootBytes, onlineKey)
+}
+
+// ProvisionRoot signs the root metadata once, at key provisioning time: the
+// bytes a client pins must be the same for the root key's whole life, not a
+// fresh expiry minted at every restart (POL-006).
+func ProvisionRoot(rootKey, onlineKey ed25519.PrivateKey, now time.Time) ([]byte, error) {
 	rootSigner, err := signature.LoadSignerVerifier(rootKey, crypto.SHA256)
 	if err != nil {
 		return nil, fmt.Errorf("registry: root signer: %w", err)
-	}
-	onlineSigner, err := signature.LoadSignerVerifier(onlineKey, crypto.SHA256)
-	if err != nil {
-		return nil, fmt.Errorf("registry: online signer: %w", err)
 	}
 	rootPub, err := metadata.KeyFromPublicKey(rootKey.Public())
 	if err != nil {
@@ -105,10 +116,6 @@ func NewPublisher(rootKey, onlineKey ed25519.PrivateKey, now time.Time) (*Publis
 	onlinePub, err := metadata.KeyFromPublicKey(onlineKey.Public())
 	if err != nil {
 		return nil, fmt.Errorf("registry: online key: %w", err)
-	}
-	onlineKeyID, err := onlinePub.ID()
-	if err != nil {
-		return nil, err
 	}
 
 	root := metadata.Root(now.Add(rootExpiry))
@@ -131,9 +138,35 @@ func NewPublisher(rootKey, onlineKey ed25519.PrivateKey, now time.Time) (*Publis
 	if _, err := root.Sign(rootSigner); err != nil {
 		return nil, fmt.Errorf("registry: sign root: %w", err)
 	}
-	rootBytes, err := root.ToBytes(false)
+	return root.ToBytes(false)
+}
+
+// NewPublisherWithRoot builds a publisher from already-provisioned root
+// bytes and the online key: every publication serves exactly the root the
+// operator provisioned, whatever process restarted when.
+func NewPublisherWithRoot(rootBytes []byte, onlineKey ed25519.PrivateKey) (*Publisher, error) {
+	onlineSigner, err := signature.LoadSignerVerifier(onlineKey, crypto.SHA256)
+	if err != nil {
+		return nil, fmt.Errorf("registry: online signer: %w", err)
+	}
+	onlinePub, err := metadata.KeyFromPublicKey(onlineKey.Public())
+	if err != nil {
+		return nil, fmt.Errorf("registry: online key: %w", err)
+	}
+	onlineKeyID, err := onlinePub.ID()
 	if err != nil {
 		return nil, err
+	}
+	// The served root must at least parse and carry this online key, so a
+	// mismatched provisioning file dies here rather than in a client pin.
+	root, err := metadataFromRootBytes(rootBytes)
+	if err != nil {
+		return nil, err
+	}
+	// The served root must delegate to this online key, so a mismatched
+	// provisioning file dies here rather than in a client pin.
+	if !containsKeyID(root, onlineKeyID) {
+		return nil, fmt.Errorf("registry: provisioned root does not delegate to the online key")
 	}
 	return &Publisher{
 		rootBytes:     rootBytes,
@@ -141,6 +174,20 @@ func NewPublisher(rootKey, onlineKey ed25519.PrivateKey, now time.Time) (*Publis
 		onlineSigner:  onlineSigner,
 		targetsPubKey: onlinePub,
 	}, nil
+}
+
+// containsKeyID reports whether the root's targets role trusts the key id.
+func containsKeyID(root *metadata.Metadata[metadata.RootType], keyID string) bool {
+	role, ok := root.Signed.Roles["targets"]
+	if !ok {
+		return false
+	}
+	for _, id := range role.KeyIDs {
+		if id == keyID {
+			return true
+		}
+	}
+	return false
 }
 
 // MetadataNames are the paths the /metadata/{name} endpoint serves; anything

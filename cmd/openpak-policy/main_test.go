@@ -8,6 +8,7 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"math/big"
@@ -118,6 +119,15 @@ func newTestService(t *testing.T) *registry.Service {
 		t.Fatal(err)
 	}
 	return &registry.Service{Store: store, Blobs: blobs, Publisher: publisher, PolicyID: "openpak-production"}
+}
+
+func mustRead(t *testing.T, path string) []byte {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data
 }
 
 type cliResult struct {
@@ -292,9 +302,32 @@ func TestRegisterAndSuspendLifecycle(t *testing.T) {
 // back exactly the bytes a client repository pins against.
 func TestKeygenAndRootProvisioning(t *testing.T) {
 	dir := t.TempDir()
-	res := runCLI(t, "keygen", "--root", filepath.Join(dir, "root.seed"), "--online", filepath.Join(dir, "online.seed"))
+	res := runCLI(t, "keygen", "--root", filepath.Join(dir, "root.seed"), "--online", filepath.Join(dir, "online.seed"),
+		"--root-metadata", filepath.Join(dir, "root.json"))
 	if res.code != 0 {
 		t.Fatalf("keygen: code %d stderr %s", res.code, res.stderr)
+	}
+	// The provisioned root is real TUF root metadata delegating to the
+	// freshly minted online key — the file a client repository pins.
+	var rootDoc struct {
+		Signed struct {
+			Expires string `json:"expires"`
+			Roles   map[string]struct {
+				KeyIDs []string `json:"keyIDs"`
+			} `json:"roles"`
+		} `json:"signed"`
+	}
+	if err := json.Unmarshal(mustRead(t, filepath.Join(dir, "root.json")), &rootDoc); err != nil {
+		t.Fatalf("provisioned root is not json: %v", err)
+	}
+	if len(rootDoc.Signed.Roles["targets"].KeyIDs) == 0 {
+		t.Fatal("provisioned root carries no targets key")
+	}
+	// provision-root derives the same object from keys that already exist.
+	res = runCLI(t, "provision-root", "--root-key", filepath.Join(dir, "root.seed"),
+		"--online-key", filepath.Join(dir, "online.seed"), "--out", filepath.Join(dir, "root-again.json"))
+	if res.code != 0 {
+		t.Fatalf("provision-root: code %d stderr %s", res.code, res.stderr)
 	}
 	for _, name := range []string{"root.seed", "online.seed"} {
 		info, err := os.Stat(filepath.Join(dir, name))

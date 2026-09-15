@@ -20,6 +20,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/x509"
@@ -66,6 +67,8 @@ func run(args []string, getenv func(string) string, stdout, stderr io.Writer) in
 		err = cmdStatus(rest, getenv, stdout)
 	case "keygen":
 		err = cmdKeygen(rest, stdout)
+	case "provision-root":
+		err = cmdProvisionRoot(rest, stdout)
 	case "root":
 		err = cmdRoot(rest, getenv, stdout)
 	case "register":
@@ -95,7 +98,8 @@ func usage(w io.Writer) {
   openpak-policy rollback --platform NAME --channel NAME
   openpak-policy withdraw --bundle-sha256 HEX
   openpak-policy status --platform NAME --channel NAME
-  openpak-policy keygen --root PATH --online PATH
+  openpak-policy keygen --root PATH --online PATH [--root-metadata PATH]
+  openpak-policy provision-root --root-key PATH --online-key PATH --out PATH
   openpak-policy root --platform NAME --channel NAME [--out PATH]
   openpak-policy register --repository OWNER/REPO --kind emulator|setup|service
                           --platform NAME... --channel NAME...
@@ -104,11 +108,11 @@ func usage(w io.Writer) {
   openpak-policy client-status --client-id ID --status STATUS
 
 Configuration comes from the same REGISTRY_* environment the website uses:
-  REGISTRY_DATABASE_URL     Postgres connection for the registry store
-  REGISTRY_BLOB_DIR         private content-addressed blob directory
-  REGISTRY_ROOT_KEY_FILE    offline root ed25519 seed file, 0600
-  REGISTRY_ONLINE_KEY_FILE  online signing ed25519 seed file, 0600
-  REGISTRY_POLICY_ID        policy id (default openpak-production)
+  REGISTRY_DATABASE_URL       Postgres connection for the registry store
+  REGISTRY_BLOB_DIR           private content-addressed blob directory
+  REGISTRY_ONLINE_KEY_FILE    online signing ed25519 seed file, 0600
+  REGISTRY_ROOT_METADATA_FILE provisioned root.json; the bytes every client pins
+  REGISTRY_POLICY_ID          policy id (default openpak-production)
 `)
 }
 
@@ -118,7 +122,7 @@ Configuration comes from the same REGISTRY_* environment the website uses:
 // "silently" did nothing would be worse than one that refuses to start.
 func openService(getenv func(string) string) (*registry.Service, func(), error) {
 	var missing []string
-	for _, name := range []string{"REGISTRY_DATABASE_URL", "REGISTRY_BLOB_DIR", "REGISTRY_ROOT_KEY_FILE", "REGISTRY_ONLINE_KEY_FILE"} {
+	for _, name := range []string{"REGISTRY_DATABASE_URL", "REGISTRY_BLOB_DIR", "REGISTRY_ONLINE_KEY_FILE", "REGISTRY_ROOT_METADATA_FILE"} {
 		if getenv(name) == "" {
 			missing = append(missing, name)
 		}
@@ -138,15 +142,18 @@ func openService(getenv func(string) string) (*registry.Service, func(), error) 
 	if err != nil {
 		return fail(err)
 	}
-	rootKey, err := registry.LoadEd25519(getenv("REGISTRY_ROOT_KEY_FILE"))
-	if err != nil {
-		return fail(err)
-	}
+	// The root seed is deliberately not loaded here: the offline root
+	// provisions its metadata once, and the publication host works from
+	// those bytes plus the online key (POL-006).
 	onlineKey, err := registry.LoadEd25519(getenv("REGISTRY_ONLINE_KEY_FILE"))
 	if err != nil {
 		return fail(err)
 	}
-	publisher, err := registry.NewPublisher(rootKey, onlineKey, time.Now())
+	rootBytes, err := os.ReadFile(getenv("REGISTRY_ROOT_METADATA_FILE"))
+	if err != nil {
+		return fail(fmt.Errorf("read provisioned root metadata: %w", err))
+	}
+	publisher, err := registry.NewPublisherWithRoot(rootBytes, onlineKey)
 	if err != nil {
 		return fail(err)
 	}
@@ -384,6 +391,7 @@ func cmdKeygen(args []string, stdout io.Writer) error {
 	fs := flag.NewFlagSet("keygen", flag.ExitOnError)
 	root := fs.String("root", "", "path for the offline root seed (required)")
 	online := fs.String("online", "", "path for the online signing seed (required)")
+	rootMetadata := fs.String("root-metadata", "", "write the provisioned root.json here; production wiring loads these bytes (REGISTRY_ROOT_METADATA_FILE)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -408,7 +416,51 @@ func cmdKeygen(args []string, stdout io.Writer) error {
 		return err
 	}
 	fmt.Fprintf(stdout, "generated %s (offline root; signs root metadata only)\ngenerated %s (online; signs targets/snapshot/timestamp)\nboth files are 0600 hex ed25519 seeds — back the root seed up somewhere off this host\n", *root, *online)
+	if *rootMetadata != "" {
+		if err := writeProvisionedRoot(*rootMetadata, rootKey, onlineKey, stdout); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+// writeProvisionedRoot signs the root metadata once and writes it: the
+// bytes a client repository pins must be the same for the root key's whole
+// life, never re-minted with a fresh expiry at every restart (POL-006).
+func writeProvisionedRoot(path string, rootKey, onlineKey ed25519.PrivateKey, stdout io.Writer) error {
+	data, err := registry.ProvisionRoot(rootKey, onlineKey, time.Now())
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		return err
+	}
+	fmt.Fprintf(stdout, "provisioned %s — REGISTRY_ROOT_METADATA_FILE points here; commit copies to client repositories\n", path)
+	return nil
+}
+
+// cmdProvisionRoot derives the root metadata from keys that already exist,
+// for deployments provisioned before the root file existed.
+func cmdProvisionRoot(args []string, stdout io.Writer) error {
+	fs := flag.NewFlagSet("provision-root", flag.ExitOnError)
+	rootKeyFile := fs.String("root-key", "", "existing offline root seed file (required)")
+	onlineKeyFile := fs.String("online-key", "", "existing online seed file (required)")
+	out := fs.String("out", "", "path to write the provisioned root.json (required)")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if *rootKeyFile == "" || *onlineKeyFile == "" || *out == "" {
+		return errors.New("--root-key, --online-key and --out are required")
+	}
+	rootKey, err := registry.LoadEd25519(*rootKeyFile)
+	if err != nil {
+		return err
+	}
+	onlineKey, err := registry.LoadEd25519(*onlineKeyFile)
+	if err != nil {
+		return err
+	}
+	return writeProvisionedRoot(*out, rootKey, onlineKey, stdout)
 }
 
 // cmdRoot writes out the pinned trust root of one channel: the root.json

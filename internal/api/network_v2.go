@@ -459,7 +459,14 @@ func ConfigureV2Registry(log *slog.Logger) (*registry.Service, registry.CIVerifi
 	blobDir := os.Getenv("REGISTRY_BLOB_DIR")
 	rootKeyFile := os.Getenv("REGISTRY_ROOT_KEY_FILE")
 	onlineKeyFile := os.Getenv("REGISTRY_ONLINE_KEY_FILE")
+	rootMetadataFile := os.Getenv("REGISTRY_ROOT_METADATA_FILE")
 	if databaseURL == "" || blobDir == "" || rootKeyFile == "" || onlineKeyFile == "" {
+		return nil, nil, func() {}
+	}
+	if rootMetadataFile == "" {
+		// Without a provisioned root file every restart would mint a fresh
+		// root expiry and silently break every client pin (POL-006).
+		log.Error("v2 registry: REGISTRY_ROOT_METADATA_FILE is not set; refusing to derive a restart-varying root")
 		return nil, nil, func() {}
 	}
 	policyID := os.Getenv("REGISTRY_POLICY_ID")
@@ -481,15 +488,18 @@ func ConfigureV2Registry(log *slog.Logger) (*registry.Service, registry.CIVerifi
 	if err != nil {
 		return fail(err, "blob dir")
 	}
-	rootKey, err := registry.LoadEd25519(rootKeyFile)
-	if err != nil {
-		return fail(err, "root key")
-	}
+	// The root seed is deliberately NOT loaded here: the offline root
+	// provisions its metadata once (POL-006), and the publication host only
+	// ever needs the online key plus those provisioned bytes.
 	onlineKey, err := registry.LoadEd25519(onlineKeyFile)
 	if err != nil {
 		return fail(err, "online key")
 	}
-	publisher, err := registry.NewPublisher(rootKey, onlineKey, time.Now())
+	rootBytes, err := os.ReadFile(rootMetadataFile)
+	if err != nil {
+		return fail(err, "root metadata")
+	}
+	publisher, err := registry.NewPublisherWithRoot(rootBytes, onlineKey)
 	if err != nil {
 		return fail(err, "publisher")
 	}
