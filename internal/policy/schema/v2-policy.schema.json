@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openpak.org/schemas/v2/policy.schema.json",
   "title": "OpenPak network policy bundle, schema version 2",
-  "description": "One signed platform projection of the canonical OpenPak network policy (PRD universal-tls-forwarding/01). A bundle is generated, never authored: every rule here is a deterministic projection of the reviewed canonical revision whose digest the bundle carries. Consumers must reject unknown schema major versions, unknown actions and any declared required capability they do not implement. Fields named x_* are diagnostic extensions a consumer may ignore; every other unknown field rejects the whole bundle.",
+  "description": "One signed platform projection of the canonical OpenPak network policy (PRD emulators/prds/universal-tls-forwarding/01). A bundle is generated, never authored: every rule here is a deterministic projection of the reviewed canonical revision whose digest the bundle carries. Consumers must reject unknown schema major versions, unknown actions and any declared required capability they do not implement. Fields named x_* are diagnostic extensions a consumer may ignore; every other unknown field rejects the whole bundle.",
   "type": "object",
   "additionalProperties": false,
   "patternProperties": {

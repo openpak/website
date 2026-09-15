@@ -44,7 +44,7 @@ type Config struct {
 	CatalogRefresh time.Duration // CATALOG_REFRESH, default 10m
 
 	// NetProfileTraefikFile is the read-only mount of Traefik's dynamic
-	// configuration; the network profile (PRD network-profile-service-prd) is
+	// configuration; the network profile (PRD prds/network-profile-service-prd.md) is
 	// generated from it at request time. Empty disables /api/v1/network/*:
 	// without the live routing there is nothing to generate from.
 	NetProfileTraefikFile string

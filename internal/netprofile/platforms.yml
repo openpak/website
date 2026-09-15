@@ -1,5 +1,5 @@
 # The per-platform network map: the only authored input to the network
-# profile (PRD network-profile-service-prd §5). Everything else is derived
+# profile (PRD prds/network-profile-service-prd.md §5). Everything else is derived
 # from what this server already routes:
 #
 #   source 1  Traefik's dynamic config (NETPROFILE_TRAEFIK_FILE) — the

@@ -1,5 +1,5 @@
 // Package fetchtool is the CI-side half of build-time integration (PRD
-// universal-tls-forwarding/03): the logic behind the openpak-network CLI.
+// emulators/prds/universal-tls-forwarding/03): the logic behind the openpak-network CLI.
 // It talks to the distribution API exactly like a certified release job
 // does — bootstrap URL and root trust pinned here, never taken from the
 // environment in certified mode — and it verifies before it exposes

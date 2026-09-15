@@ -53,7 +53,7 @@ const PlatformAll = ""
 // PlatformsAllowed is the platform set the PRD names. The map may not invent
 // another one; a new console family is a change here first. It is exported
 // because it is the platform vocabulary, not a host list: the v2 policy
-// package (PRD universal-tls-forwarding/01) validates against the same set
+// package (PRD emulators/prds/universal-tls-forwarding/01) validates against the same set
 // instead of carrying a second copy.
 var PlatformsAllowed = []string{"switch", "wiiu", "3ds", "wii", "ds"}
 

@@ -8,7 +8,7 @@ import (
 	"github.com/openpak/website/internal/netprofile"
 )
 
-// The network profile surface (PRD network-profile-service-prd). Public on
+// The network profile surface (PRD prds/network-profile-service-prd.md). Public on
 // purpose: the profile is identical for everyone, carries no credential, and
 // the clients most likely to need it are the ones that cannot sign in. One
 // conditional GET per launch: ETag in, 304 out.

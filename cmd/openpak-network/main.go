@@ -1,5 +1,5 @@
 // openpak-network is the CI-facing fetch tool of build-time integration
-// (PRD universal-tls-forwarding/03). One command authenticates the release
+// (PRD emulators/prds/universal-tls-forwarding/03). One command authenticates the release
 // job, one fetches and verifies the pinned bundle, one re-verifies a
 // fetched directory offline. Day-to-day input is the standard variable
 // contract; certification is never inferred from a variable being set.

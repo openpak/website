@@ -284,7 +284,7 @@ paths:
       security: []
       description: |
         Generated from the routing this server actually runs (PRD
-        network-profile-service-prd), so adding a title is a server deploy,
+        website/prds/network-profile-service-prd.md), so adding a title is a server deploy,
         not six client releases. One conditional GET per launch: send
         `If-None-Match` with the stored ETag and an unchanged profile is a
         304. Public, identical for everyone, no credentials.
@@ -714,7 +714,7 @@ components:
     NetworkProfile:
       type: object
       description: |
-        PRD network-profile-service-prd §4. `version` is for humans and logs;
+        PRD prds/network-profile-service-prd.md §4. `version` is for humans and logs;
         the ETag is the machine's answer. `recheck_after` is a hint the
         client may honour or ignore. Validation before applying is the
         client's job: reject the whole profile unless it arrived over HTTPS

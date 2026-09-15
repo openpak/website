@@ -124,7 +124,7 @@ func run(log *slog.Logger) error {
 	apiSrv.Saves = savesCli
 	apiSrv.Chat = chatCli
 
-	// The network profile (PRD network-profile-service-prd): generated from
+	// The network profile (PRD prds/network-profile-service-prd.md): generated from
 	// the live Traefik routing, so adding a title is a server deploy, not six
 	// client releases. The file is mounted read-only; without it there is
 	// nothing to generate from and /api/v1/network/* answers 503 while the
@@ -145,7 +145,7 @@ func run(log *slog.Logger) error {
 		log.Info("network profile: NETPROFILE_TRAEFIK_FILE not set; /api/v1/network/* answers 503")
 	}
 
-	// The v2 bundle registry (PRD universal-tls-forwarding/01): signed,
+	// The v2 bundle registry (PRD emulators/prds/universal-tls-forwarding/01): signed,
 	// authenticated, build-time distribution. Absent REGISTRY_* variables is
 	// a supported configuration: /api/v2/network/* answers 503 while the
 	// rest of the site is unaffected, exactly like the v1 profile surface

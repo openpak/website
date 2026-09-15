@@ -1,6 +1,6 @@
 # OpenPak website
 
-openpak.org: the public site and the account portal (PRD `website-prd.md`).
+openpak.org: the public site and the account portal (PRD `prds/website-prd.md`).
 Server-rendered Go service — registration, verification, sign-in, recovery,
 profile with friend code and console links, friends, invitations view,
 moderation, site configuration, status, and the versioned mobile API under
@@ -180,7 +180,7 @@ token.
 
 `GET /api/v1/network/profile?platform=<switch|wiiu|3ds|wii|ds>` answers what
 OpenPak is and what a client should send it, generated from the routing this
-server actually runs (PRD `network-profile-service-prd`): the Traefik dynamic
+server actually runs (PRD `prds/network-profile-service-prd.md`): the Traefik dynamic
 config mounted read-only at `NETPROFILE_TRAEFIK_FILE` provides the names,
 `internal/netprofile/platforms.yml` is the only authored input, and the
 console DNS universe (`internal/netprofile/families.go`) is the ceiling no

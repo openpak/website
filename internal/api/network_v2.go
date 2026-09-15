@@ -1,4 +1,4 @@
-// The v2 network distribution surface (PRD universal-tls-forwarding/01).
+// The v2 network distribution surface (PRD emulators/prds/universal-tls-forwarding/01).
 // Unlike the v1 profile, everything here is protected: a route change is a
 // release input, not a launch-time answer, and the bytes a certified client
 // embeds come from an authenticated, signed registry. Credentials ride

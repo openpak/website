@@ -1,5 +1,5 @@
 // openpak-policy is the operator console for the v2 network policy registry
-// (PRD universal-tls-forwarding/01 POL-M1/G1 and 02 AUTH-M0). The
+// (PRD emulators/prds/universal-tls-forwarding/01 POL-M1/G1 and 02 AUTH-M0). The
 // publication pipeline is a library; this command is the reviewed path that
 // calls it: publish a canonical revision's projections, roll a channel back
 // to its last good content, withdraw poisoned bytes, inspect a channel, and

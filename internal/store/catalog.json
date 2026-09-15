@@ -411,7 +411,7 @@
     "category": "Content",
     "backend": "saves",
     "status": "partial",
-    "notes": "Built and deployed 2026-09-10 (servers: saves on 20020/20021). Emulator and website surfaces work end to end: OpenPak allowance plus the player's own S3 bucket or WebDAV share. The Switch SCSI surface is served through the Switch adapter and answers the console's request set; whether a console accepts a server-minted key seed package (CS-M0) is not yet known. See prds/cloud-saves-prd.md and saves/docs/provenance.md."
+    "notes": "Built and deployed 2026-09-10 (servers: saves on 20020/20021). Emulator and website surfaces work end to end: OpenPak allowance plus the player's own S3 bucket or WebDAV share. The Switch SCSI surface is served through the Switch adapter and answers the console's request set; whether a console accepts a server-minted key seed package (CS-M0) is not yet known. See saves/prds/cloud-saves-prd.md and saves/docs/provenance.md."
   },
   {
     "kind": "feature",

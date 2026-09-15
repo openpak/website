@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openpak.org/schemas/v2/manifest.schema.json",
   "title": "OpenPak bundle manifest, schema version 2",
-  "description": "The signed target manifest that binds every payload of one published bundle (PRD universal-tls-forwarding/01): path, byte length, digest and media type, plus the platform and capability requirements a consumer must satisfy before any payload byte is trusted. Fields named x_* are diagnostic extensions; every other unknown field rejects the manifest.",
+  "description": "The signed target manifest that binds every payload of one published bundle (PRD emulators/prds/universal-tls-forwarding/01): path, byte length, digest and media type, plus the platform and capability requirements a consumer must satisfy before any payload byte is trusted. Fields named x_* are diagnostic extensions; every other unknown field rejects the manifest.",
   "type": "object",
   "additionalProperties": false,
   "patternProperties": {

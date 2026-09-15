@@ -46,12 +46,12 @@ type Server struct {
 	// Federation is set by main; nil answers 503 on the region routes.
 	Federation core.Federation
 	Media      *media.Service
-	// Profiles generates the network profile (PRD network-profile-service-prd)
+	// Profiles generates the network profile (PRD prds/network-profile-service-prd.md)
 	// from the live Traefik routing. Set by main when NETPROFILE_TRAEFIK_FILE
 	// is configured; nil answers 503 on /api/v1/network/*.
 	Profiles *netprofile.Service
 	// Registry is the v2 bundle distribution service (PRD
-	// universal-tls-forwarding/01). Set by main when REGISTRY_* variables are
+	// emulators/prds/universal-tls-forwarding/01). Set by main when REGISTRY_* variables are
 	// configured; nil answers 503 on /api/v2/network/*.
 	Registry *registry.Service
 	// CIVerifier turns the bearer presented to /build-sessions into a
@@ -143,7 +143,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	// the same conditional GET the console itself already does for BCAT.
 	s.registerNetwork(mux)
 	// The v2 bundle distribution: authenticated, signed, build-time (PRD
-	// universal-tls-forwarding/01). 503 until the REGISTRY_* variables are set.
+	// emulators/prds/universal-tls-forwarding/01). 503 until the REGISTRY_* variables are set.
 	s.registerNetworkV2(mux)
 	// Public: the region nodes a room may be served from. The status page, the
 	// app, and the matchmaking servers all read this one list.

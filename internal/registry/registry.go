@@ -1,5 +1,5 @@
 // Package registry owns revisions and publication of the network policy
-// bundles (PRD universal-tls-forwarding/01, gate G1): certified client
+// bundles (PRD emulators/prds/universal-tls-forwarding/01, gate G1): certified client
 // registrations and their build sessions, immutable content-addressed bundle
 // storage, transactionally allocated monotonic sequences per platform/channel,
 // atomic channel promotion and higher-sequence rollback, and the signed TUF

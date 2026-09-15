@@ -1,5 +1,5 @@
 // Package policy is the v2 half of the network platform (PRD
-// universal-tls-forwarding/01): the machine-readable bundle schema, its
+// emulators/prds/universal-tls-forwarding/01): the machine-readable bundle schema, its
 // validation, and the deterministic generation of one canonical policy
 // revision plus per-platform projections.
 //
