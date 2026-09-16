@@ -13,10 +13,12 @@ import (
 //
 //	GET  /api/v1/me/switch                 identity, token, friends, requests
 //	POST /api/v1/me/switch/friend          {"action":"request","friend_code":…} | {"action":"accept"|"decline","pid":…}
+//	POST /api/v1/me/switch/link            {"client_id":…} -> {"id_token":…} for the emulated console's federation
 //	GET  /ca.pem                           the OpenPak CA, so a client can pin it instead of trusting anything
 func (s *Server) registerEmulator(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/me/switch", s.auth(s.handleSwitch))
 	mux.HandleFunc("POST /api/v1/me/switch/friend", s.auth(s.handleSwitchFriend))
+	mux.HandleFunc("POST /api/v1/me/switch/link", s.auth(s.handleSwitchLink))
 	mux.HandleFunc("GET /api/v1/me/wiiu", s.auth(s.handleConsole("wiiu")))
 	mux.HandleFunc("GET /api/v1/me/3ds", s.auth(s.handleConsole("3ds")))
 	mux.HandleFunc("GET /ca.pem", s.handleCA)
@@ -49,6 +51,25 @@ func (s *Server) handleConsole(family string) func(http.ResponseWriter, *http.Re
 		}
 		writeJSON(w, http.StatusOK, out)
 	}
+}
+
+// handleSwitchLink hands an emulator the Nintendo-Account id_token its device account binds
+// with, so signing in to the website once is also the console link — the same proof a console
+// gets by typing the password into the link page, minted for an account already proved here.
+func (s *Server) handleSwitchLink(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	var in struct {
+		ClientID string `json:"client_id"`
+	}
+	if !decodeSmall(w, r, &in) {
+		return
+	}
+	out, err := s.Adapter.LinkToken(r.Context(), tok.AccountID, in.ClientID)
+	if err != nil {
+		s.log.Error("emulator link token", "err", err)
+		writeError(w, http.StatusBadGateway, "switch link unavailable")
+		return
+	}
+	writeJSON(w, http.StatusOK, out)
 }
 
 func (s *Server) handleSwitchFriend(w http.ResponseWriter, r *http.Request, tok store.APIToken) {

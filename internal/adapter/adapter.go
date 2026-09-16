@@ -126,6 +126,14 @@ func (c *Client) Emulator(ctx context.Context, accountID string) (map[string]any
 	return out, err
 }
 
+// LinkToken is the Nintendo-Account id_token an emulator's device account federates with, for
+// an account the website has already authenticated. Returned as the adapter sent it.
+func (c *Client) LinkToken(ctx context.Context, accountID, clientID string) (map[string]any, error) {
+	var out map[string]any
+	err := c.get(ctx, "/internal/switch/emulator/link-token?account_id="+url.QueryEscape(accountID)+"&client_id="+url.QueryEscape(clientID), &out)
+	return out, err
+}
+
 // Console is the identity of an account for a console family served by another adapter
 // (nn-account: "wiiu", "3ds"), the same shape of call as Emulator but on that adapter's
 // /internal/<family>/emulator. Returned as the adapter sent it.
