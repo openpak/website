@@ -3,6 +3,11 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.44.1 — 2026-09-18
+
+- API: `GET /api/v1/me/saves` names each game and gives its icon path, the same the saves
+  page shows, so the app can draw them.
+
 ## v0.44.0 — 2026-09-18
 
 - Saves: one row per game — icon, name, console logo, a version dropdown (picking one makes it

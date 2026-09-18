@@ -122,6 +122,7 @@ func run(log *slog.Logger) error {
 	apiSrv := api.New(coreHTTP, coreGRPC, coreGRPC, coreGRPC, coreGRPC, db, sessions, mediaSvc, log)
 	apiSrv.Federation = coreGRPC
 	apiSrv.Saves = savesCli
+	apiSrv.SaveTitle = pages.SaveTitle
 	apiSrv.Chat = chatCli
 
 	// The network profile (PRD prds/network-profile-service-prd.md): generated from

@@ -46,10 +46,24 @@ func (s *Server) handleSavesList(w http.ResponseWriter, r *http.Request, tok sto
 		savesErr(w, err)
 		return
 	}
-	if list == nil {
-		list = []saves.Save{}
+	// The game's name and icon, the same the website's saves page shows.
+	type game struct {
+		saves.Save
+		Name string `json:"name"`
+		Icon string `json:"icon,omitempty"` // a path on this site
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"saves": list, "usage": usage})
+	out := make([]game, 0, len(list))
+	for _, sv := range list {
+		g := game{Save: sv, Name: sv.TitleID}
+		if s.SaveTitle != nil {
+			var icon bool
+			if g.Name, icon = s.SaveTitle(r.Context(), sv.Platform, sv.TitleID); icon {
+				g.Icon = "/titles/icon/" + sv.TitleID
+			}
+		}
+		out = append(out, g)
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"saves": out, "usage": usage})
 }
 
 func (s *Server) handleSaveNewest(w http.ResponseWriter, r *http.Request, tok store.APIToken) {

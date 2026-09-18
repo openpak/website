@@ -66,9 +66,12 @@ type Server struct {
 	V2Bytes              *v2ByteMeter
 	// Adapter answers the console-shaped questions the core cannot: the friend
 	// code is minted by the Switch adapter and lives only there.
-	Adapter    *adapter.Client
-	NNAdapter  *adapter.Client // the Wii U/3DS adapter (nn-account), nil when not configured
-	Saves      *saves.Client
+	Adapter   *adapter.Client
+	NNAdapter *adapter.Client // the Wii U/3DS adapter (nn-account), nil when not configured
+	Saves     *saves.Client
+	// SaveTitle names a save's game and says whether /titles/icon/{id} draws it; the pages
+	// package owns the lookup. Nil lists bare title ids.
+	SaveTitle  func(ctx context.Context, platform, id string) (name string, icon bool)
 	Chat       *chat.Client
 	MediaLimit *ratelimit.Limiter
 	DB         store.Store

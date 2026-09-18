@@ -1,6 +1,7 @@
 package pages
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -94,13 +95,8 @@ func (s *Server) handleSaves(w http.ResponseWriter, r *http.Request) {
 		view.Percent = int(usage.AllowanceUsed * 100 / usage.Allowance)
 	}
 	for _, sv := range list {
-		row := saveRow{Platform: sv.Platform, Console: platformConsole(sv.Platform), Name: titleName(sv.TitleID), TitleID: sv.TitleID}
-		if row.Console == "Switch" && switchID.MatchString(sv.TitleID) {
-			row.Icon = true
-			if n := switchTitleName(ctx, sv.TitleID); n != "" {
-				row.Name = n
-			}
-		}
+		row := saveRow{Platform: sv.Platform, Console: platformConsole(sv.Platform), TitleID: sv.TitleID}
+		row.Name, row.Icon = SaveTitle(ctx, sv.Platform, sv.TitleID)
 		for _, ver := range sv.Versions {
 			when := ver.CreatedAt
 			if ver.SavedAt != nil && !ver.SavedAt.IsZero() && ver.SavedAt.Unix() > 0 {
@@ -132,6 +128,19 @@ func (s *Server) handleSaves(w http.ResponseWriter, r *http.Request) {
 		s.log.Error("saves storage", "err", err)
 	}
 	s.render(w, http.StatusOK, "saves.html", view)
+}
+
+// SaveTitle is how a save reads: the game's name when known, else the id, and whether
+// /titles/icon/{id} draws its icon. The saves page and the app's API share it.
+func SaveTitle(ctx context.Context, platform, id string) (name string, icon bool) {
+	name = titleName(id)
+	if platformConsole(platform) == "Switch" && switchID.MatchString(id) {
+		icon = true
+		if n := switchTitleName(ctx, id); n != "" {
+			name = n
+		}
+	}
+	return name, icon
 }
 
 // platformConsole names the console behind a saves platform: the emulators' own names and the
