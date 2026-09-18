@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.43.1 — 2026-09-18
+
+- Saves: each game shows its console logo, name and console instead of a bare title id.
+
 ## v0.43.0 — 2026-09-18
 
 - Catalog: Super Mario 3D World + Bowser's Fury, Kirby's Dream Buffet and Clubhouse Games 51

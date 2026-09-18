@@ -33,6 +33,8 @@ type savesView struct {
 
 type saveRow struct {
 	Platform string
+	Console  string // the console the platform emulates, for the logo
+	Name     string // the game's name when known, else the id
 	TitleID  string
 	Versions []versionRow
 }
@@ -88,7 +90,7 @@ func (s *Server) handleSaves(w http.ResponseWriter, r *http.Request) {
 		view.Percent = int(usage.AllowanceUsed * 100 / usage.Allowance)
 	}
 	for _, sv := range list {
-		row := saveRow{Platform: sv.Platform, TitleID: sv.TitleID}
+		row := saveRow{Platform: sv.Platform, Console: platformConsole(sv.Platform), Name: titleName(sv.TitleID), TitleID: sv.TitleID}
 		for _, ver := range sv.Versions {
 			when := ver.CreatedAt
 			if ver.SavedAt != nil && !ver.SavedAt.IsZero() && ver.SavedAt.Unix() > 0 {
@@ -113,6 +115,20 @@ func (s *Server) handleSaves(w http.ResponseWriter, r *http.Request) {
 		s.log.Error("saves storage", "err", err)
 	}
 	s.render(w, http.StatusOK, "saves.html", view)
+}
+
+// platformConsole names the console behind a saves platform: the emulators' own names and the
+// console's. Unknown platforms fall through to consoleSlug's generic logo.
+func platformConsole(p string) string {
+	switch strings.ToLower(p) {
+	case "citron", "switch":
+		return "Switch"
+	case "wii":
+		return "Wii"
+	case "ds":
+		return "DS"
+	}
+	return p
 }
 
 // back sends the player to the saves page with a flash and, when there is one, the service's

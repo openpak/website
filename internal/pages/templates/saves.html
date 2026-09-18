@@ -35,7 +35,11 @@
   </div>
   {{if .Saves}}
   {{range .Saves}}
-  <h3 class="mb-3 text-xs font-bold uppercase tracking-widest text-muted">{{.Platform}} · <code>{{.TitleID}}</code></h3>
+  <h3 class="mb-3 flex items-center gap-3">
+    <picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img class="console-logo shrink-0" src="/static/consoles/{{consoleSlug .Console}}.svg" alt="{{.Console}}" width="36" height="24" loading="lazy"></picture>
+    <span class="font-semibold break-anywhere">{{.Name}}</span>
+    <span class="text-xs text-muted">{{.Console}}{{if ne .Name .TitleID}} · <code>{{.TitleID}}</code>{{end}}</span>
+  </h3>
   <ul class="rows mb-9">
     {{range .Versions}}<li>
       <span class="name">{{t $.Lang "saves.version"}} {{.Number}}{{if .Pinned}} · {{t $.Lang "saves.pinned"}}{{end}}</span>
