@@ -35,6 +35,7 @@ type saveRow struct {
 	Platform string
 	Console  string // the console the platform emulates, for the logo
 	Name     string // the game's name when known, else the id
+	Icon     bool   // a Switch title: /titles/icon/{id} draws its icon
 	TitleID  string
 	Versions []versionRow
 }
@@ -91,6 +92,12 @@ func (s *Server) handleSaves(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, sv := range list {
 		row := saveRow{Platform: sv.Platform, Console: platformConsole(sv.Platform), Name: titleName(sv.TitleID), TitleID: sv.TitleID}
+		if row.Console == "Switch" && switchID.MatchString(sv.TitleID) {
+			row.Icon = true
+			if n := switchTitleName(ctx, sv.TitleID); n != "" {
+				row.Name = n
+			}
+		}
 		for _, ver := range sv.Versions {
 			when := ver.CreatedAt
 			if ver.SavedAt != nil && !ver.SavedAt.IsZero() && ver.SavedAt.Unix() > 0 {

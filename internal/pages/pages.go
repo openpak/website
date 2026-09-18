@@ -288,6 +288,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /account/chat", s.handleChat)
 	mux.HandleFunc("POST /account/chat/send", s.handleChatSend)
 	mux.HandleFunc("GET /account/saves", s.handleSaves)
+	mux.HandleFunc("GET /titles/icon/{id}", s.handleSwitchIcon)
 	mux.HandleFunc("POST /account/saves/storage", s.handleSavesStorage)
 	mux.HandleFunc("POST /account/saves/storage/disconnect", s.handleSavesDisconnect)
 	mux.HandleFunc("POST /account/saves/storage/move", s.handleSavesMove)
