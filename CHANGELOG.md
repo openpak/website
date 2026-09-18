@@ -3,6 +3,12 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.43.0 — 2026-09-18
+
+- Catalog: Super Mario 3D World + Bowser's Fury, Kirby's Dream Buffet and Clubhouse Games 51
+  (served by switch-nexd) and Human Fall Flat and Dinkum (registered in npln) are alpha.
+- `POST /api/v1/me/switch/link`: the console-link token for a signed-in emulator.
+
 ## v0.42.0 — 2026-09-15
 
 
