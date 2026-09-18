@@ -44,7 +44,7 @@ func TestSavesPage(t *testing.T) {
 		t.Fatalf("saves page: %d", page.Code)
 	}
 	body := page.Body.String()
-	for _, want := range []string{"0100abcd", "Version 2", "Conflict", "2 kB", "256.0 MB", "/account/saves/download/7"} {
+	for _, want := range []string{"0100abcd", "Version 2", "Conflict", "2 kB", "256.0 MB", `value="7"`, `formaction="/account/saves/download"`} {
 		if !strings.Contains(body, want) {
 			t.Fatalf("saves page lacks %q", want)
 		}

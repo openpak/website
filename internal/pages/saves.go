@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -20,6 +21,7 @@ type savesView struct {
 	Available   bool
 	Detail      string // the service's own words on a failure, under the flash
 	Saves       []saveRow
+	Consoles    []string // the consoles the saves span, for the filter
 	Usage       saves.Usage
 	UsedText    string
 	LimitText   string
@@ -36,6 +38,7 @@ type saveRow struct {
 	Console  string // the console the platform emulates, for the logo
 	Name     string // the game's name when known, else the id
 	Icon     bool   // a Switch title: /titles/icon/{id} draws its icon
+	Conflict bool   // some version conflicts
 	TitleID  string
 	Versions []versionRow
 }
@@ -104,8 +107,15 @@ func (s *Server) handleSaves(w http.ResponseWriter, r *http.Request) {
 				when = *ver.SavedAt
 			}
 			row.Versions = append(row.Versions, versionRow{Version: ver, SizeText: sizeText(ver.Size), When: when.UTC().Format("2006-01-02 15:04"), Single: ver.Parts == 1})
+			row.Conflict = row.Conflict || ver.Conflict
+		}
+		if len(row.Versions) == 0 {
+			continue // nothing to pick in the dropdown
 		}
 		view.Saves = append(view.Saves, row)
+		if !slices.Contains(view.Consoles, row.Console) {
+			view.Consoles = append(view.Consoles, row.Console)
+		}
 	}
 	view.Kinds, _ = s.Saves.Kinds(ctx)
 	if st, err := s.Saves.Storage(ctx, v.AccountID); err == nil {
@@ -214,23 +224,6 @@ func versionID(r *http.Request) (int64, bool) {
 	return id, err == nil && id > 0
 }
 
-func (s *Server) handleSavesPin(w http.ResponseWriter, r *http.Request) {
-	v, ok := s.postGuard(w, r)
-	if !ok {
-		return
-	}
-	id, ok := versionID(r)
-	if !ok {
-		back(w, r, "saves-failed", nil)
-		return
-	}
-	if err := s.Saves.Pin(r.Context(), v.AccountID, id, r.PostFormValue("pinned") == "1"); err != nil {
-		back(w, r, "saves-failed", err)
-		return
-	}
-	back(w, r, "saves-saved", nil)
-}
-
 func (s *Server) handleSavesRestore(w http.ResponseWriter, r *http.Request) {
 	v, ok := s.postGuard(w, r)
 	if !ok {
@@ -275,7 +268,26 @@ func (s *Server) handleSavesDownload(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	resp, err := s.Saves.Download(r.Context(), v.AccountID, id)
+	s.sendSave(w, r, v.AccountID, id)
+}
+
+// handleSavesDownloadPost is the game row's download button: the version comes from the
+// row's dropdown, so it rides in the same form as pin, restore and delete.
+func (s *Server) handleSavesDownloadPost(w http.ResponseWriter, r *http.Request) {
+	v, ok := s.postGuard(w, r)
+	if !ok {
+		return
+	}
+	id, ok := versionID(r)
+	if !ok {
+		back(w, r, "saves-failed", nil)
+		return
+	}
+	s.sendSave(w, r, v.AccountID, id)
+}
+
+func (s *Server) sendSave(w http.ResponseWriter, r *http.Request, accountID string, id int64) {
+	resp, err := s.Saves.Download(r.Context(), accountID, id)
 	if err != nil {
 		back(w, r, "saves-failed", err)
 		return

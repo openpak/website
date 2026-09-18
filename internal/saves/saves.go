@@ -233,10 +233,6 @@ func (c *Client) Move(ctx context.Context, account string) error {
 	return c.doJSON(ctx, http.MethodPost, acct(account)+"/storage/move", nil, nil)
 }
 
-func (c *Client) Pin(ctx context.Context, account string, id int64, pinned bool) error {
-	return c.doJSON(ctx, http.MethodPost, acct(account)+"/versions/"+strconv.FormatInt(id, 10)+"/pin", map[string]bool{"pinned": pinned}, nil)
-}
-
 func (c *Client) Restore(ctx context.Context, account string, id int64) error {
 	return c.doJSON(ctx, http.MethodPost, acct(account)+"/versions/"+strconv.FormatInt(id, 10)+"/restore", nil, nil)
 }

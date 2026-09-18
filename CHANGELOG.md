@@ -3,6 +3,13 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.44.0 — 2026-09-18
+
+- Saves: one row per game — icon, name, console logo, a version dropdown (picking one makes it
+  current) and download/delete icon buttons; search and console filters above the list.
+- Saves: the pin button is gone; the storage usage bar sits inside its row, themed.
+- Saves: the storage section's missing strings (Google Drive, OneDrive, S3, WebDAV) are filled in.
+
 ## v0.43.2 — 2026-09-18
 
 - Saves: Switch games show their icon and name from nlib; icons are relayed through
