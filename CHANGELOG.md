@@ -3,6 +3,11 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.44.2 — 2026-09-18
+
+- API: restore, download and delete a save version (`/api/v1/me/saves/versions/{id}`), the
+  same actions the saves page has, for the app.
+
 ## v0.44.1 — 2026-09-18
 
 - API: `GET /api/v1/me/saves` names each game and gives its icon path, the same the saves

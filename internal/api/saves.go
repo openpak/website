@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/store"
@@ -18,8 +19,14 @@ import (
 //	                                                     X-Save-Version, X-Save-Sha256, X-Save-Conflict
 //	PUT /api/v1/me/saves/{platform}/{title}              body = the save; X-Save-Base = version loaded
 //	                                                     from, X-Save-Device = a name for the machine
+//	GET    /api/v1/me/saves/versions/{id}               one version's bytes (single-part versions)
+//	POST   /api/v1/me/saves/versions/{id}/restore       make it the current one; the old stays
+//	DELETE /api/v1/me/saves/versions/{id}               delete it
 func (s *Server) registerSaves(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/me/saves", s.auth(s.handleSavesList))
+	mux.HandleFunc("GET /api/v1/me/saves/versions/{id}", s.auth(s.handleSaveDownload))
+	mux.HandleFunc("POST /api/v1/me/saves/versions/{id}/restore", s.auth(s.handleSaveRestore))
+	mux.HandleFunc("DELETE /api/v1/me/saves/versions/{id}", s.auth(s.handleSaveDelete))
 	mux.HandleFunc("GET /api/v1/me/saves/{platform}/{title}", s.auth(s.handleSaveNewest))
 	mux.HandleFunc("PUT /api/v1/me/saves/{platform}/{title}", s.auth(s.handleSaveUpload))
 	s.registerSavesStorage(mux)
@@ -64,6 +71,53 @@ func (s *Server) handleSavesList(w http.ResponseWriter, r *http.Request, tok sto
 		out = append(out, g)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"saves": out, "usage": usage})
+}
+
+// versionID is the {id} of a version route, or a 404 already written.
+func versionID(w http.ResponseWriter, r *http.Request) (int64, bool) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "no such version")
+	}
+	return id, err == nil
+}
+
+func (s *Server) handleSaveDownload(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	id, ok := versionID(w, r)
+	if !ok {
+		return
+	}
+	resp, err := s.Saves.Download(r.Context(), tok.AccountID, id)
+	if err != nil {
+		savesErr(w, err)
+		return
+	}
+	defer resp.Body.Close()
+	if cl := resp.Header.Get("Content-Length"); cl != "" {
+		w.Header().Set("Content-Length", cl)
+	}
+	w.Header().Set("Content-Type", "application/octet-stream")
+	_, _ = io.Copy(w, resp.Body)
+}
+
+func (s *Server) handleSaveRestore(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	if id, ok := versionID(w, r); ok {
+		if err := s.Saves.Restore(r.Context(), tok.AccountID, id); err != nil {
+			savesErr(w, err)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func (s *Server) handleSaveDelete(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	if id, ok := versionID(w, r); ok {
+		if err := s.Saves.Delete(r.Context(), tok.AccountID, id); err != nil {
+			savesErr(w, err)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}
 }
 
 func (s *Server) handleSaveNewest(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
