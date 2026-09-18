@@ -176,8 +176,8 @@
     "console": "Switch",
     "category": "NEX title",
     "backend": "NEX",
-    "status": "scaffold",
-    "notes": "010028600EBDA000. servers/nex/titles/super-mario-3d-world-bowsers-fury: the common NEX room set (matchmaking, NAT traversal, utility) over Postgres, block 22370. Not deployable yet: NEX access key and game-server id are not public (absent from Kinnay's list; OpenPak's repo is a licence-only placeholder). Publisher: Nintendo. Added 2026-09-11."
+    "status": "alpha",
+    "notes": "010028600EBDA000. Served by switch-nexd (servers/switch-nex) since 2026-09-18, v0.2.15, block 22370: game server 2B306A00 and access key 67f366f2 read from our own v1.2.2 dump (NEX 4.6.4). Matchmaking with the reference's 100 ms Participate delay. Login verified end to end without a console; not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -185,8 +185,8 @@
     "console": "Switch",
     "category": "NEX title",
     "backend": "NEX",
-    "status": "scaffold",
-    "notes": "0100A8E016236000. servers/nex/titles/kirbys-dream-buffet: the common NEX room set over Postgres, block 22380; rankings will need Ranking once observed. Not deployable yet: NEX access key and game-server id are not public (absent from Kinnay's list; OpenPak's repo is a licence-only placeholder). Publisher: Nintendo. Added 2026-09-11."
+    "status": "alpha",
+    "notes": "0100A8E016236000. Served by switch-nexd (servers/switch-nex) since 2026-09-18, v0.2.15, block 22380: game server 25374500 and access key 6wVacwwe read from our own dump (NEX 4.6.6). Matchmaking, DataStore and Ranking2 \u2014 what its binary links; nothing measured yet. Login verified end to end without a console; not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -302,8 +302,8 @@
     "console": "Switch",
     "category": "NEX title",
     "backend": "NEX",
-    "status": "requestable",
-    "notes": "Online multiplayer classics; not started. Publisher: Nintendo."
+    "status": "alpha",
+    "notes": "010047700D540000. Served by switch-nexd (servers/switch-nex) since 2026-09-16, block 22870, game server 2035BB00: matchmaking with the reference's create-time normalisation and account-setup DataStore answers. Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -1138,9 +1138,9 @@
     "name": "Human: Fall Flat",
     "console": "Switch",
     "category": "Co-op",
-    "backend": "unconfirmed",
-    "status": "requestable",
-    "notes": "Publisher: Curve Games. online co-op physics puzzles; backend unconfirmed."
+    "backend": "NPLN",
+    "status": "alpha",
+    "notes": "01000CA004DCA000. NPLN title (NPLN 1.41.1, Pia 6.42.0), found in our own dump. Registered in servers/npln 2026-09-18 (tenant 21124, session 22240) on Stardew's service set; not deployed \u2014 the tenant is resolved at runtime and has to come from a first boot. Publisher: Curve Games."
   },
   {
     "kind": "title",
@@ -4174,5 +4174,14 @@
     "backend": "NEX",
     "status": "beta",
     "notes": "Cross-buy with the 3DS version; one server serves both (servers/nex/titles/mario-vs-donkey-kong-tipping-stars, 2026-09-11): OpenPak's Go rewrite of Pretendo's nex-go v1 server. DataStore only: profiles, tip buckets and tip/play ratings; level sharing itself is Miiverse. Registered in nn-account for both consoles. Not console-verified. Publisher: Nintendo."
+  },
+  {
+    "kind": "title",
+    "name": "Dinkum",
+    "console": "Switch",
+    "category": "Co-op",
+    "backend": "NPLN",
+    "status": "alpha",
+    "notes": "0100A5A020D5E000. NPLN title (NPLN 1.43.3 with the WebRTC/QUIC P2P add-ons), found in our own dump. Registered in servers/npln 2026-09-18 (tenant 21122, session 22230) on Stardew's service set; not deployed \u2014 the tenant is resolved at runtime and has to come from a first boot. Publisher: James Bendon / No More Robots."
   }
 ]
