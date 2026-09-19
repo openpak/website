@@ -30,6 +30,7 @@ import (
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/store"
+	"github.com/openpak/website/internal/wfc"
 )
 
 // TokenTTL is the mobile bearer lifetime; it can never outlive its bound
@@ -73,6 +74,7 @@ type Server struct {
 	// package owns the lookup. Nil lists bare title ids.
 	SaveTitle  func(ctx context.Context, platform, id string) (name string, icon bool)
 	Chat       *chat.Client
+	WFC        *wfc.Client // resolves Wii/DS friend codes; nil answers 503 on /me/links/wfc
 	MediaLimit *ratelimit.Limiter
 	DB         store.Store
 	Sessions   *session.Manager
@@ -88,6 +90,7 @@ func New(c core.HTTP, id core.Identity, soc core.Social, lnk core.Links, inv cor
 		Media:      md,
 		Adapter:    adapter.New(os.Getenv("ADAPTER_INTERNAL_URL"), os.Getenv("NX_INTERNAL_KEY")),
 		NNAdapter:  nnAdapter(),
+		WFC:        wfc.New(os.Getenv("WFC_API_URL"), os.Getenv("WFC_API_SECRET")),
 		Auth:       ratelimit.New(10, time.Minute),
 		PerToken:   ratelimit.New(120, time.Minute),
 		MediaLimit: ratelimit.New(5, time.Hour),
@@ -129,6 +132,13 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	h("/me/push", s.auth(s.handleRegisterPush))
 	d("/me/push", s.auth(s.handleForgetPush))
 	h("/me/profile", s.auth(s.handleUpdateProfile))
+	h("/me/password", s.auth(s.handleChangePassword))
+	h("/me/links/wfc", s.auth(s.handleLinkWFC))
+	d("/me/links/{namespace}", s.auth(s.handleUnlink))
+	// Public: signing up and asking for a reset mail are what someone without
+	// an account, or without its password, does.
+	h("/register", s.handleRegister)
+	h("/password/forgot", s.handleForgotPassword)
 	g("/avatars", s.auth(s.handleAvatarChoices))
 	// Requests + votes: the same scoreboard the website shows, for the app's
 	// Titles tab. GET is public (a bearer only personalises `voted`); voting
@@ -680,23 +690,26 @@ func (s *Server) handleAvatarChoices(w http.ResponseWriter, r *http.Request, _ s
 	writeJSON(w, http.StatusOK, map[string]any{"avatars": out})
 }
 
-// handleChooseAvatar sets one of the built-ins. Uploading a photo stays on the
-// website for now: it is multipart, rate limited and size checked there, and
-// none of that is worth duplicating until the app asks for a camera.
+// handleChooseAvatar sets one of the built-ins from JSON {"preset"}, or stores
+// an uploaded photo sent as multipart/form-data.
 func (s *Server) handleChooseAvatar(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
-	var req struct {
-		Preset string `json:"preset"`
-	}
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&req); err != nil || req.Preset == "" {
-		writeError(w, http.StatusBadRequest, "preset is required")
-		return
-	}
 	if s.Media == nil {
 		writeError(w, http.StatusServiceUnavailable, "avatars are not configured")
 		return
 	}
 	if !s.MediaLimit.Allow(tok.AccountID) {
 		writeError(w, http.StatusTooManyRequests, "too many changes; slow down")
+		return
+	}
+	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
+		s.uploadAvatar(w, r, tok)
+		return
+	}
+	var req struct {
+		Preset string `json:"preset"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&req); err != nil || req.Preset == "" {
+		writeError(w, http.StatusBadRequest, "preset is required")
 		return
 	}
 	if err := s.Media.StorePreset(r.Context(), tok.AccountID, req.Preset); err != nil {
@@ -708,6 +721,7 @@ func (s *Server) handleChooseAvatar(w http.ResponseWriter, r *http.Request, tok 
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
+	s.stampAvatar(r, tok.AccountID)
 	writeJSON(w, http.StatusOK, map[string]any{"saved": true})
 }
 

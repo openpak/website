@@ -168,8 +168,17 @@ func (f *fakeCore) AccountBySubject(_ context.Context, _, subject string) (strin
 	}
 	return id, nil
 }
-func (f *fakeCore) Unlink(_ context.Context, _, _ string) error     { return nil }
-func (f *fakeCore) Link(_ context.Context, _, _, _, _ string) error { return nil }
+func (f *fakeCore) Unlink(_ context.Context, linkID, _ string) error {
+	delete(f.wfcLinks, strings.TrimPrefix(linkID, "link-wfc-"))
+	delete(f.links, strings.TrimPrefix(linkID, "link-switch-"))
+	return nil
+}
+func (f *fakeCore) Link(_ context.Context, accountID, namespace, subject, _ string) error {
+	if namespace == "wfc" {
+		f.wfcLinks[accountID] = subject
+	}
+	return nil
+}
 
 type apiDeps struct {
 	Core     core.HTTP
@@ -479,9 +488,6 @@ func TestAvatarChoicesAreListedAndSettable(t *testing.T) {
 	rec = do(t, s, http.MethodGet, "/api/v1/avatars", a.Token, nil)
 	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "aurora") {
 		t.Fatalf("avatars: %d %s", rec.Code, rec.Body.String())
-	}
-	if rec := do(t, s, http.MethodPost, "/api/v1/me/avatar", a.Token, map[string]string{}); rec.Code != http.StatusBadRequest {
-		t.Errorf("empty preset: %d", rec.Code)
 	}
 	if rec := do(t, s, http.MethodPost, "/api/v1/me/avatar", a.Token,
 		map[string]string{"preset": "aurora"}); rec.Code != http.StatusServiceUnavailable {

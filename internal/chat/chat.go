@@ -44,8 +44,8 @@ type Message struct {
 func (m Message) SentAt() time.Time { return time.Unix(m.SentAtUnix, 0) }
 
 type Conversation struct {
-	Peer   string
-	Newest Message
+	Peer   string  `json:"peer"`
+	Newest Message `json:"newest"`
 }
 
 func (c *Client) call(ctx context.Context, method, path string, body io.Reader, out any) error {
@@ -78,8 +78,8 @@ func (c *Client) Conversations(ctx context.Context, account string) ([]Conversat
 	}
 	var wire struct {
 		Conversations []struct {
-			Peer   string   `json:"peer"`
-			Newest Message  `json:"newest"`
+			Peer   string  `json:"peer"`
+			Newest Message `json:"newest"`
 		} `json:"conversations"`
 	}
 	if err := c.call(ctx, http.MethodGet, "/internal/accounts/"+account+"/conversations", nil, &wire); err != nil {
