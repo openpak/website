@@ -3,12 +3,21 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
-## Unreleased
+## v0.47.0 — 2026-09-19
+
+The site speaks German, French, Brazilian Portuguese, Italian and Spanish.
 
 - Languages: the UI language follows Accept-Language (q-values; `pt` and `pt-PT` read
-  `pt-BR`, `de-AT` reads `de`), and a `lang` cookie set by a footer form (`GET /lang`, no
-  JavaScript) beats it. The form shows once a second catalogue exists; missing keys fall
-  back to English, and a test fails when a non-admin key is missing from any language.
+  `pt-BR`, `de-AT` reads `de`); a `lang` cookie set by a footer form (`GET /lang`, no
+  JavaScript) beats it. Five catalogues (`internal/i18n/catalogue_*.go`, machine-drafted and
+  reviewed against `docs/glossary.md`, the shared terms and form of address for the site and
+  the app); admin pages stay English. A test fails when a non-admin key is missing from any
+  language. Page titles, flash messages, nav landmarks and long dates follow the language.
+- Account emails: calls to the account core carry the page language as `Accept-Language`,
+  so verification, email-change and reset mails arrive in it (needs account core with
+  `internal/mailtext`, 2a69299; older cores send English).
+- API errors carry a stable `code` beside the English `error` (33 codes, listed in
+  `openapi.yaml`) for the app to translate; a test fails when a mapped message is reworded.
 - Atom feeds: `/feed/news.xml` (published articles) and `/feed/titles.xml` (title status
   changes from the `title.status` audit rows; notes and the admin stay out), linked from
   every page and cached five minutes.
