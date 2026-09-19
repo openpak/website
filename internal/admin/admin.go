@@ -49,6 +49,8 @@ type Server struct {
 	StatusAPI string
 	// News is the news service's operator gRPC; nil says "not configured".
 	News newsv1.NewsClient
+	// Mods is the mods service's curation API; nil says "not configured".
+	Mods *ModsAPI
 
 	tmpl       *template.Template
 	log        *slog.Logger
@@ -94,6 +96,8 @@ var adminNav = []struct{ href, key string }{
 	{"/admin", "admin.nav.overview"},
 	{"/admin/monitor", "admin.monitor"},
 	{"/admin/news", "admin.news"},
+	{"/admin/titles", "admin.titles"},
+	{"/admin/mods", "admin.mods"},
 	{"/admin/nodes", "admin.nodes"},
 	{"/admin/config", "admin.nav.config"},
 	{"/admin/events", "admin.nav.events"},
@@ -188,6 +192,11 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/news/{id}", s.handleNewsSave)
 	mux.HandleFunc("POST /admin/news/{id}/publish", s.handleNewsPublish)
 	mux.HandleFunc("POST /admin/news/{id}/unpublish", s.handleNewsPublish)
+	mux.HandleFunc("GET /admin/titles", s.handleTitles)
+	mux.HandleFunc("POST /admin/titles", s.handleTitleSave)
+	mux.HandleFunc("GET /admin/mods", s.handleMods)
+	mux.HandleFunc("POST /admin/mods/{action}", s.handleModDecision)
+	mux.HandleFunc("POST /admin/mods/{id}/{action}", s.handleModDecision)
 	mux.HandleFunc("GET /admin/config", s.handleConfig)
 	mux.HandleFunc("POST /admin/config", s.handleConfigSave)
 	mux.HandleFunc("GET /admin/events", s.handleEvents)

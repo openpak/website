@@ -183,6 +183,7 @@ func run(log *slog.Logger) error {
 	adminSrv.Chat = chatCli
 	adminSrv.PushOn = pushOn
 	adminSrv.StatusAPI = envOr("STATUS_API_URL", "https://status.openpak.org/api/status")
+	adminSrv.Mods = admin.NewModsAPI(os.Getenv("MODS_INTERNAL_URL"), os.Getenv("MODS_INTERNAL_KEY"))
 
 	// News: the public feed for the landing page, and the operator gRPC for
 	// /admin/news. Either can be absent; the landing page then has no news

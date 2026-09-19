@@ -1,0 +1,42 @@
+{{template "header" .}}
+{{template "adminnav" .}}
+<div class="page-head"><h1>{{t .Lang "admin.mods"}}</h1><p>{{t .Lang "admin.mods.sub"}}</p></div>
+{{if not .Configured}}
+<p class="notice" role="status">{{t .Lang "admin.mods.off"}}</p>
+{{else}}
+{{if .Error}}<p class="notice bad" role="alert">{{.Error}}</p>{{end}}
+<h2>{{t .Lang "admin.mods.queue"}}</h2>
+{{if not .Queue}}<p class="empty">{{t .Lang "admin.mods.none"}}</p>{{end}}
+{{range .Queue}}
+<article class="card mb-4 p-5">
+  <h3 class="mb-1 break-anywhere">{{.Name}} <span class="font-normal text-muted">{{.Version}}</span></h3>
+  <p class="text-sm text-muted break-anywhere"><code>{{.ID}}</code> · {{.TitleID}} · {{.Author}} · {{.Licence}} · {{.Layout}} · {{.Size}} B</p>
+  {{if .Summary}}<p>{{.Summary}}</p>{{end}}
+  <p class="text-sm break-anywhere">{{t $.Lang "admin.mods.source"}}: <a href="{{.SourceURL}}" rel="noopener noreferrer nofollow">{{.SourceURL}}</a><br><span class="text-muted">sha256 <code>{{.SHA256}}</code></span></p>
+  <div class="flex flex-wrap items-end gap-3">
+    <form method="post" action="/admin/mods/{{.ID}}/publish">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <button type="submit" class="btn primary">{{t $.Lang "admin.mods.publish"}}</button>
+    </form>
+    <form method="post" action="/admin/mods/{{.ID}}/reject" class="flex flex-1 flex-wrap gap-2">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <label class="sr-only" for="r{{.ID}}">{{t $.Lang "admin.mods.reason"}}</label>
+      <input id="r{{.ID}}" name="reason" type="text" class="field min-w-48 flex-1" required maxlength="500" placeholder="{{t $.Lang "admin.mods.reason"}}">
+      <button type="submit" class="btn">{{t $.Lang "admin.mods.reject"}}</button>
+    </form>
+  </div>
+</article>
+{{end}}
+
+<h2 class="mt-9">{{t .Lang "admin.mods.takedown"}}</h2>
+<p class="text-muted">{{t .Lang "admin.mods.takedown.sub"}}</p>
+<form method="post" action="/admin/mods/takedown" class="form-stack max-w-md">
+  <input type="hidden" name="csrf" value="{{.CSRF}}">
+  <label for="td-id">{{t .Lang "admin.mods.id"}}</label>
+  <input id="td-id" name="id" type="text" required maxlength="80">
+  <label for="td-reason">{{t .Lang "admin.mods.reason"}}</label>
+  <input id="td-reason" name="reason" type="text" required maxlength="500">
+  <button type="submit" class="btn">{{t .Lang "admin.mods.takedown"}}</button>
+</form>
+{{end}}
+{{template "footer" .}}
