@@ -162,7 +162,10 @@ func (a *agent) services(ctx context.Context) ([]service, error) {
 
 	var list []service
 	for _, e := range entries {
-		if len(e.Names) == 0 || !strings.HasPrefix(e.Names[0], a.prefix) {
+		// Ours if the container or its quadlet unit carries the prefix: switch-nexd's
+		// container is named without it, but its unit is openpak-switch-nexd.service.
+		if len(e.Names) == 0 || !(strings.HasPrefix(e.Names[0], a.prefix) ||
+			strings.HasPrefix(e.Labels["PODMAN_SYSTEMD_UNIT"], a.prefix)) {
 			continue
 		}
 		s := service{

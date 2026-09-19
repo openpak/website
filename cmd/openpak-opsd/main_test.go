@@ -15,13 +15,14 @@ import (
 )
 
 // psSample is trimmed `podman ps -a --format json` output from a real host:
-// two quadlet containers, one hand-run container with the prefix, and one
+// two quadlet containers (one, like switch-nexd, whose container name lacks the
+// prefix but whose unit has it), one hand-run container with the prefix, and one
 // that is not ours.
 const psSample = `[
   {"Id": "a1", "Names": ["openpak-website"], "Image": "ghcr.io/openpak/website:latest",
    "State": "running", "Status": "Up 7 days (healthy)", "StartedAt": 1789238737,
    "Labels": {"PODMAN_SYSTEMD_UNIT": "openpak-website.service"}},
-  {"Id": "b2", "Names": ["openpak-switch-nexd"], "Image": "ghcr.io/openpak/switch-nex:latest",
+  {"Id": "b2", "Names": ["switch-nexd"], "Image": "ghcr.io/openpak/switch-nex:latest",
    "State": "running", "Status": "Up 2 days", "StartedAt": 1789238000,
    "Labels": {"PODMAN_SYSTEMD_UNIT": "openpak-switch-nexd.service", "org.openpak.network": "switch"}},
   {"Id": "c3", "Names": ["openpak-saves-test"], "Image": "docker.io/library/postgres:18-alpine",
@@ -46,8 +47,8 @@ const autoUpdateSample = `[
     },
     {
         "Unit": "openpak-switch-nexd.service",
-        "Container": "eb837ae6d1c7 (openpak-switch-nexd)",
-        "ContainerName": "openpak-switch-nexd",
+        "Container": "eb837ae6d1c7 (switch-nexd)",
+        "ContainerName": "switch-nexd",
         "ContainerID": "eb837ae6d1c7ef3aef26c39701b3add9e2b802ebe024db25c79054fa0ccf678f",
         "Image": "ghcr.io/openpak/switch-nex:latest",
         "Policy": "registry",
@@ -185,10 +186,10 @@ func TestServicesList(t *testing.T) {
 	for _, s := range got {
 		names = append(names, s.Name)
 	}
-	if want := []string{"openpak-saves-test", "openpak-switch-nexd", "openpak-website"}; !reflect.DeepEqual(names, want) {
+	if want := []string{"openpak-saves-test", "openpak-website", "switch-nexd"}; !reflect.DeepEqual(names, want) {
 		t.Fatalf("names = %v, want %v (prefix filter, sorted)", names, want)
 	}
-	saves, nexd, web := got[0], got[1], got[2]
+	saves, web, nexd := got[0], got[1], got[2]
 
 	if web.Unit != "openpak-website.service" || web.Health != "healthy" || !web.Protected || !web.UpdateAvailable {
 		t.Errorf("website = %+v", web)
@@ -250,9 +251,9 @@ func TestActions(t *testing.T) {
 		code int
 		want []string
 	}{
-		{"/v1/services/openpak-switch-nexd/restart", 200, []string{"systemctl --user restart openpak-switch-nexd.service"}},
-		{"/v1/services/openpak-switch-nexd/stop", 200, []string{"systemctl --user stop openpak-switch-nexd.service"}},
-		{"/v1/services/openpak-switch-nexd/start", 200, []string{"systemctl --user start openpak-switch-nexd.service"}},
+		{"/v1/services/switch-nexd/restart", 200, []string{"systemctl --user restart openpak-switch-nexd.service"}},
+		{"/v1/services/switch-nexd/stop", 200, []string{"systemctl --user stop openpak-switch-nexd.service"}},
+		{"/v1/services/switch-nexd/start", 200, []string{"systemctl --user start openpak-switch-nexd.service"}},
 		{"/v1/services/openpak-website/update", 200, []string{
 			"podman pull ghcr.io/openpak/website:latest",
 			"systemctl --user restart openpak-website.service",
@@ -265,7 +266,7 @@ func TestActions(t *testing.T) {
 		// Outside the prefix, or unknown: not ours.
 		{"/v1/services/homepage/restart", 404, nil},
 		{"/v1/services/openpak-nope/restart", 404, nil},
-		{"/v1/services/openpak-switch-nexd/rm", 404, nil},
+		{"/v1/services/switch-nexd/rm", 404, nil},
 	}
 	for _, c := range cases {
 		a, f := newTestAgent(t, "k")
@@ -295,7 +296,7 @@ func TestActionBusyUnit(t *testing.T) {
 	a, f := newTestAgent(t, "k")
 	lock := a.unitLock("openpak-switch-nexd.service")
 	lock.Lock()
-	code, _ := do(t, a, "POST", "/v1/services/openpak-switch-nexd/restart", "Bearer k")
+	code, _ := do(t, a, "POST", "/v1/services/switch-nexd/restart", "Bearer k")
 	lock.Unlock()
 	if code != http.StatusConflict || len(f.actions()) != 0 {
 		t.Errorf("busy unit: %d, ran %q", code, f.actions())
