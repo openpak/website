@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/pages"
 	"github.com/openpak/website/internal/store"
@@ -132,7 +133,7 @@ func (s *Server) pushLag(ctx context.Context) check {
 	if err != nil {
 		return check{name, "bad", err.Error()}
 	}
-	head, err := eventHead(ctx, s.Core, cursor)
+	head, err := core.EventHead(ctx, s.Core, cursor)
 	if err != nil {
 		return check{name, "bad", err.Error()}
 	}

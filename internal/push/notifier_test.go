@@ -13,18 +13,21 @@ import (
 )
 
 type fakeEvents struct {
-	events []core.Event
-	max    uint64
+	events []core.Event // in version order, like the core's stream
 }
 
+// Poll is faithful to the core's PollEvents: oldest first, at most limit, and
+// max_version is the last one returned (or since, if none) — not the stream's head.
 func (f *fakeEvents) Poll(_ context.Context, since uint64, limit int32) ([]core.Event, uint64, error) {
 	var out []core.Event
+	max := since
 	for _, e := range f.events {
-		if e.Version > since {
+		if e.Version > since && len(out) < int(limit) {
 			out = append(out, e)
+			max = e.Version
 		}
 	}
-	return out, f.max, nil
+	return out, max, nil
 }
 
 type fakeIdentity struct{}
@@ -82,8 +85,10 @@ func newNotifier(t *testing.T, ev *fakeEvents, inv *fakeInvites, s Sender) (*Not
 // unread: every friend request ever made would arrive at once on someone's
 // lock screen.
 func TestFirstRunDoesNotReplayHistory(t *testing.T) {
-	ev := &fakeEvents{max: 42, events: []core.Event{
+	// A history more than one page deep: the head is 42, not the first page's end.
+	ev := &fakeEvents{events: []core.Event{
 		{Version: 7, Type: "friend_requested", AccountID: "a", SubjectID: "b"},
+		{Version: 42, Type: "friend_requested", AccountID: "a", SubjectID: "c"},
 	}}
 	s := &fakeSender{}
 	n, db := newNotifier(t, ev, &fakeInvites{}, s)
@@ -120,7 +125,6 @@ func TestNotifiesOnFriendRequestAndInvitation(t *testing.T) {
 		{Version: 102, Type: "invitation_sent", AccountID: "a", SubjectID: "inv-9"},
 		{Version: 103, Type: "account_banned", AccountID: "a"}, // not notifiable
 	}
-	ev.max = 103
 	if err := n.tick(ctx); err != nil {
 		t.Fatal(err)
 	}
@@ -149,7 +153,7 @@ func TestNotifiesOnFriendRequestAndInvitation(t *testing.T) {
 // notification retries an uninstalled app forever.
 func TestDeadTokenIsForgotten(t *testing.T) {
 	ctx := context.Background()
-	ev := &fakeEvents{max: 5, events: []core.Event{
+	ev := &fakeEvents{events: []core.Event{
 		{Version: 5, Type: "friend_requested", AccountID: "a", SubjectID: "b"},
 	}}
 	s := &fakeSender{gone: map[string]bool{"dead": true}}
@@ -174,7 +178,7 @@ func TestDeadTokenIsForgotten(t *testing.T) {
 // notifications for everyone.
 func TestOneFailureDoesNotStallTheCursor(t *testing.T) {
 	ctx := context.Background()
-	ev := &fakeEvents{max: 9, events: []core.Event{
+	ev := &fakeEvents{events: []core.Event{
 		{Version: 9, Type: "friend_requested", AccountID: "a", SubjectID: "b"},
 	}}
 	n, db := newNotifier(t, ev, &fakeInvites{}, senderFunc(func() error {

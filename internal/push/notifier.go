@@ -67,12 +67,14 @@ func (n *Notifier) start(ctx context.Context) error {
 	if cursor > 0 {
 		return nil
 	}
-	_, max, err := n.Events.Poll(ctx, 0, 1)
+	// Not Poll(0, 1): its max_version is the end of that one-event page, so a fresh
+	// install would start at version 1 and replay everything after it.
+	head, err := core.EventHead(ctx, n.Events, 0)
 	if err != nil {
 		return err
 	}
-	n.log.Info("push: starting from the present", "version", max)
-	return n.DB.SetPushCursor(ctx, max)
+	n.log.Info("push: starting from the present", "version", head)
+	return n.DB.SetPushCursor(ctx, head)
 }
 
 func (n *Notifier) tick(ctx context.Context) error {
