@@ -131,7 +131,7 @@
   </ul>
   {{else}}<p class="empty">{{t .Lang "account.links.none"}}</p>{{end}}
   {{if .CanLinkWFC}}
-  <form method="post" action="/account/link/wfc" class="stack">
+  <form method="post" action="/account/link/wfc" class="form-stack max-w-md">
     <input type="hidden" name="csrf" value="{{.CSRF}}">
     <label for="friend_code">{{t .Lang "account.links.wfc"}}</label>
     <p class="hint">{{t .Lang "account.links.wfc.help"}}</p>
@@ -148,7 +148,7 @@
     <h2 id="profile-h">{{t .Lang "account.profile.title"}}</h2>
     <p>{{t .Lang "account.profile.hint"}}</p>
   </div>
-  <form method="post" action="/account/profile" class="stack">
+  <form method="post" action="/account/profile" class="form-stack max-w-md">
     <input type="hidden" name="csrf" value="{{.CSRF}}">
     <label for="profile-name">{{t .Lang "auth.displayname"}}</label>
     <input id="profile-name" name="display_name" type="text" value="{{.DisplayName}}" minlength="3" maxlength="32" autocomplete="nickname">
@@ -168,7 +168,7 @@
     <h2 id="pw-h">{{t .Lang "account.password.title"}}</h2>
     <p>{{t .Lang "account.password.hint"}}</p>
   </div>
-  <form method="post" action="/account/password" class="stack">
+  <form method="post" action="/account/password" class="form-stack max-w-md">
     <input type="hidden" name="csrf" value="{{.CSRF}}">
     <label for="pw-current">{{t .Lang "account.password.current"}}</label>
     <input id="pw-current" type="password" name="current_password" autocomplete="current-password" required>
@@ -196,7 +196,7 @@
         <button type="submit" class="small">{{t .Lang "account.verify.resend"}}</button></form>{{end}}
     </li>
   </ul>
-  <form method="post" action="/account/email" class="stack">
+  <form method="post" action="/account/email" class="form-stack max-w-md">
     <input type="hidden" name="csrf" value="{{.CSRF}}">
     <label for="email-new">{{t .Lang "account.email.new"}}</label>
     <input id="email-new" name="new_email" type="email" required autocomplete="email">
@@ -206,10 +206,10 @@
     <button type="submit">{{t .Lang "account.email.submit"}}</button>
   </form>
 
-  <h3>{{t .Lang "account.2fa.title"}}</h3>
+  <h3 class="mt-8">{{t .Lang "account.2fa.title"}}</h3>
   {{if .TwoFactorEnabled}}
   <ul class="rows"><li><span class="name">{{t .Lang "account.2fa.on"}}</span><span class="badge ok">{{t .Lang "account.2fa.badge.on"}}</span></li></ul>
-  <form method="post" action="/account/2fa/disable" class="stack">
+  <form method="post" action="/account/2fa/disable" class="form-stack max-w-md">
     <input type="hidden" name="csrf" value="{{.CSRF}}">
     <label for="2fa-off-password">{{t .Lang "account.password.current"}}</label>
     <input id="2fa-off-password" name="password" type="password" required autocomplete="current-password">
@@ -223,7 +223,7 @@
   {{/* Said before anything is switched on: consoles sign in with the
        password alone and cannot be asked for a code yet. */}}
   <p class="notice">{{t .Lang "account.2fa.consoles"}}</p>
-  <form method="post" action="/account/2fa/setup" class="stack">
+  <form method="post" action="/account/2fa/setup" class="form-stack max-w-md">
     <input type="hidden" name="csrf" value="{{.CSRF}}">
     <label for="2fa-password">{{t .Lang "account.password.current"}}</label>
     <input id="2fa-password" name="password" type="password" required autocomplete="current-password">
@@ -254,7 +254,7 @@
     <h2 id="delete-h">{{t .Lang "account.delete.title"}}</h2>
     <p>{{t .Lang "account.delete.hint"}}</p>
   </div>
-  <form method="post" action="/account/delete" class="stack">
+  <form method="post" action="/account/delete" class="form-stack max-w-md">
     <input type="hidden" name="csrf" value="{{.CSRF}}">
     <label for="delete-password">{{t .Lang "account.password.current"}}</label>
     <input id="delete-password" type="password" name="password" autocomplete="current-password" required>
@@ -263,7 +263,7 @@
     <input id="delete-code" type="text" name="code" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" required>
     <p class="hint">{{t .Lang "auth.2fa.recovery"}}</p>
     {{end}}
-    <label><input type="checkbox" name="confirm" value="yes" required> {{t .Lang "account.delete.confirm"}}</label>
+    <label class="flex items-center gap-2"><input type="checkbox" name="confirm" value="yes" class="w-auto min-h-0" required> {{t .Lang "account.delete.confirm"}}</label>
     <button type="submit" class="danger">{{t .Lang "account.delete.submit"}}</button>
   </form>
 </section>
