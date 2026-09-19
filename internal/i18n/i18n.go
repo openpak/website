@@ -1,5 +1,5 @@
-// Package i18n holds the single string catalogue (WEB-09). All UI copy is
-// referenced by key so a second language is one new map.
+// Package i18n holds the string catalogues (WEB-09): English here, the others
+// in catalogue_*.go. Terms follow docs/glossary.md.
 package i18n
 
 import (
@@ -13,6 +13,11 @@ import (
 type Catalogue map[string]string
 
 var languages = map[string]Catalogue{
+	"de":    catalogueDE,
+	"fr":    catalogueFR,
+	"pt-BR": cataloguePTBR,
+	"it":    catalogueIT,
+	"es":    catalogueES,
 	"en": {
 		"site.name":                "OpenPak",
 		"site.tagline":             "The community account network for open console play.",
@@ -502,6 +507,10 @@ var languages = map[string]Catalogue{
 		"admin.news.body.hint":             "Plain text. A blank line starts a new paragraph; the landing page shows the first one.",
 		"msg.saved":                        "Saved.",
 		"msg.error":                        "Something went wrong. Please try again.",
+		"nav.main":                         "Main",
+		"nav.footer":                       "Footer",
+		"page.home":                        "Home",
+		"page.verify":                      "Verify email",
 		"lang.name":                        "English",
 		"footer.language":                  "Language",
 		"footer.language.set":              "Change",

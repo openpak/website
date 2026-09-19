@@ -127,7 +127,7 @@ func TestChatSendRefusedWhenBlocked(t *testing.T) {
 	if rec.Code != http.StatusSeeOther || !strings.Contains(rec.Header().Get("Location"), "m=chat-blocked") || sent != 0 {
 		t.Fatalf("blocked: %d %s, %d sent", rec.Code, rec.Header().Get("Location"), sent)
 	}
-	if !strings.Contains(flashText("chat-blocked"), "blocked") {
+	if !strings.Contains(flashText("en", "chat-blocked"), "blocked") {
 		t.Fatal("the refusal has no words")
 	}
 	fc.blocks = nil

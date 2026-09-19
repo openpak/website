@@ -20,15 +20,15 @@ func TestCataloguesComplete(t *testing.T) {
 }
 
 func TestLang(t *testing.T) {
-	languages["de"], languages["pt-BR"] = Catalogue{}, Catalogue{}
-	t.Cleanup(func() { delete(languages, "de"); delete(languages, "pt-BR") })
 	for header, want := range map[string]string{
 		"":                         "en",
 		"ja":                       "en",
+		"fr-CA":                    "fr",
+		"es-419":                   "es",
 		"de-AT,de;q=0.9,en;q=0.8":  "de",
 		"en;q=0.5,pt":              "pt-BR",
 		"PT-pt":                    "pt-BR",
-		"fr, de;q=0.1":             "de",
+		"ja, de;q=0.1":             "de",
 		"de;q=0, en":               "en",
 		"en-GB,en;q=0.9,de;q=0.8":  "en",
 		"*;q=0.5, pt-br;q=0.6, xx": "pt-BR",

@@ -31,7 +31,7 @@
       </a>
 
       {{/* Wide: the links sit in the bar. Narrow: they live in the menu below. */}}
-      <nav aria-label="Main" class="hidden md:flex items-center gap-1 ml-4">
+      <nav aria-label="{{t .Lang "nav.main"}}" class="hidden md:flex items-center gap-1 ml-4">
         {{if .User}}
           <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/account"}}font-semibold text-ink{{end}}" href="/account" {{if eq .Path "/account"}}aria-current="page"{{end}}>{{t .Lang "nav.account"}}</a>
           <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/account/saves"}}font-semibold text-ink{{end}}" href="/account/saves" {{if eq .Path "/account/saves"}}aria-current="page"{{end}}>{{t .Lang "nav.saves"}}</a>
@@ -61,7 +61,7 @@
               <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </summary>
-          <nav aria-label="Main" class="absolute right-0 z-20 mt-2 w-56 card p-2 shadow-lg">
+          <nav aria-label="{{t .Lang "nav.main"}}" class="absolute right-0 z-20 mt-2 w-56 card p-2 shadow-lg">
             {{if .User}}
               <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/account">{{t .Lang "nav.account"}}</a>
               <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/account/saves">{{t .Lang "nav.saves"}}</a>
@@ -97,7 +97,7 @@
 <footer class="border-t border-line">
   <div class="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-7 text-sm text-muted sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-7 sm:px-6">
     <span>OpenPak</span>
-    <nav aria-label="Footer" class="flex flex-wrap gap-x-5 gap-y-2">
+    <nav aria-label="{{t .Lang "nav.footer"}}" class="flex flex-wrap gap-x-5 gap-y-2">
       <a class="text-muted no-underline hover:text-ink hover:underline" href="/titles">{{t .Lang "nav.titles"}}</a>
       <a class="text-muted no-underline hover:text-ink hover:underline" href="/features">{{t .Lang "nav.features"}}</a>
       <a class="text-muted no-underline hover:text-ink hover:underline" href="/downloads">{{t .Lang "nav.downloads"}}</a>

@@ -117,81 +117,81 @@ func (s *Server) data(r *http.Request, v *viewer, title string) baseData {
 		d.Admin = slices.Contains(s.AdminAccountIDs, v.AccountID)
 		d.CSRF = s.Sessions.CSRFToken(v.CoreSessionID)
 	}
-	d.Flash = flashText(r.URL.Query().Get("m"))
+	d.Flash = flashText(d.Lang, r.URL.Query().Get("m"))
 	return d
 }
 
 // flashText maps short redirect codes to catalogue strings.
-func flashText(code string) string {
+func flashText(lang, code string) string {
 	switch code {
 	case "saved":
-		return i18n.T("en", "msg.saved")
+		return i18n.T(lang, "msg.saved")
 	case "pwreset":
-		return i18n.T("en", "auth.reset.ok")
+		return i18n.T(lang, "auth.reset.ok")
 	case "frequest":
-		return i18n.T("en", "friends.request.ok")
+		return i18n.T(lang, "friends.request.ok")
 	case "funknown":
-		return i18n.T("en", "friends.request.unknown")
+		return i18n.T(lang, "friends.request.unknown")
 	case "fself":
-		return i18n.T("en", "friends.request.self")
+		return i18n.T(lang, "friends.request.self")
 	case "wfc-linked":
-		return i18n.T("en", "account.links.wfc.ok")
+		return i18n.T(lang, "account.links.wfc.ok")
 	case "wfc-notfound":
-		return i18n.T("en", "account.links.wfc.notfound")
+		return i18n.T(lang, "account.links.wfc.notfound")
 	case "wfc-taken":
-		return i18n.T("en", "account.links.wfc.taken")
+		return i18n.T(lang, "account.links.wfc.taken")
 	case "password-changed":
-		return i18n.T("en", "account.password.ok")
+		return i18n.T(lang, "account.password.ok")
 	case "password-mismatch":
-		return i18n.T("en", "account.password.mismatch")
+		return i18n.T(lang, "account.password.mismatch")
 	case "password-failed":
-		return i18n.T("en", "account.password.failed")
+		return i18n.T(lang, "account.password.failed")
 	case "profile-saved":
-		return i18n.T("en", "account.profile.ok")
+		return i18n.T(lang, "account.profile.ok")
 	case "profile-failed":
-		return i18n.T("en", "account.profile.failed")
+		return i18n.T(lang, "account.profile.failed")
 	case "delete-unconfirmed":
-		return i18n.T("en", "account.delete.unconfirmed")
+		return i18n.T(lang, "account.delete.unconfirmed")
 	case "email-sent":
-		return i18n.T("en", "account.email.sent")
+		return i18n.T(lang, "account.email.sent")
 	case "email-wrongpassword":
-		return i18n.T("en", "account.email.wrongpassword")
+		return i18n.T(lang, "account.email.wrongpassword")
 	case "email-invalid":
-		return i18n.T("en", "account.email.invalid")
+		return i18n.T(lang, "account.email.invalid")
 	case "verify-sent":
-		return i18n.T("en", "account.verify.sent")
+		return i18n.T(lang, "account.verify.sent")
 	case "2fa-disabled":
-		return i18n.T("en", "account.2fa.disabled")
+		return i18n.T(lang, "account.2fa.disabled")
 	case "2fa-wrongpassword":
-		return i18n.T("en", "account.2fa.wrongpassword")
+		return i18n.T(lang, "account.2fa.wrongpassword")
 	case "2fa-wrongcode":
-		return i18n.T("en", "account.2fa.wrongcode")
+		return i18n.T(lang, "account.2fa.wrongcode")
 	case "2fa-locked":
-		return i18n.T("en", "auth.2fa.locked")
+		return i18n.T(lang, "auth.2fa.locked")
 	case "2fa-state":
-		return i18n.T("en", "account.2fa.state")
+		return i18n.T(lang, "account.2fa.state")
 	case "chat-blocked":
-		return i18n.T("en", "chat.blocked")
+		return i18n.T(lang, "chat.blocked")
 	case "chat-notfriends":
-		return i18n.T("en", "chat.notfriends")
+		return i18n.T(lang, "chat.notfriends")
 	case "storage-saved":
-		return i18n.T("en", "saves.storage.ok")
+		return i18n.T(lang, "saves.storage.ok")
 	case "storage-warning":
-		return i18n.T("en", "saves.storage.warning")
+		return i18n.T(lang, "saves.storage.warning")
 	case "storage-failed":
-		return i18n.T("en", "saves.storage.failed")
+		return i18n.T(lang, "saves.storage.failed")
 	case "storage-disconnected":
-		return i18n.T("en", "saves.storage.disconnected")
+		return i18n.T(lang, "saves.storage.disconnected")
 	case "storage-moving":
-		return i18n.T("en", "saves.storage.moving")
+		return i18n.T(lang, "saves.storage.moving")
 	case "saves-saved":
-		return i18n.T("en", "msg.saved")
+		return i18n.T(lang, "msg.saved")
 	case "saves-restored":
-		return i18n.T("en", "saves.restored")
+		return i18n.T(lang, "saves.restored")
 	case "saves-deleted":
-		return i18n.T("en", "saves.deleted")
+		return i18n.T(lang, "saves.deleted")
 	case "saves-failed":
-		return i18n.T("en", "saves.failed")
+		return i18n.T(lang, "saves.failed")
 	default:
 		return ""
 	}
@@ -360,7 +360,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 
 func (s *Server) handleLanding(w http.ResponseWriter, r *http.Request) {
 	v := s.viewerOf(w, r)
-	d := s.data(r, v, "Home")
+	d := s.data(r, v, i18n.T(i18n.FromRequest(r), "page.home"))
 	titles, err := s.DB.ListRequests(r.Context(), "title", "")
 	if err != nil {
 		s.log.Error("list requests", "err", err)
@@ -381,7 +381,7 @@ func (s *Server) handleLanding(w http.ResponseWriter, r *http.Request) {
 // Display-only — voting is for games, so there are no vote controls here.
 func (s *Server) handleFeatures(w http.ResponseWriter, r *http.Request) {
 	v := s.viewerOf(w, r)
-	d := s.data(r, v, i18n.T("en", "features.title"))
+	d := s.data(r, v, i18n.T(i18n.FromRequest(r), "features.title"))
 	reqs, err := s.DB.ListRequests(r.Context(), "feature", "")
 	if err != nil {
 		s.log.Error("list requests", "err", err)
@@ -482,7 +482,7 @@ func (s *Server) handleDownloads(w http.ResponseWriter, r *http.Request) {
 		baseData
 		Downloads []download
 		Platforms []platform
-	}{s.data(r, v, i18n.T("en", "downloads.title")), downloads, platforms})
+	}{s.data(r, v, i18n.T(i18n.FromRequest(r), "downloads.title")), downloads, platforms})
 }
 
 func (s *Server) handleRegisterForm(w http.ResponseWriter, r *http.Request) {
@@ -491,7 +491,7 @@ func (s *Server) handleRegisterForm(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/account", http.StatusSeeOther)
 		return
 	}
-	d := s.data(r, nil, "Create account")
+	d := s.data(r, nil, i18n.T(i18n.FromRequest(r), "nav.register"))
 	type reg struct {
 		baseData
 		Closed      bool
@@ -508,7 +508,7 @@ func (s *Server) handleRegisterSubmit(w http.ResponseWriter, r *http.Request) {
 		s.render(w, http.StatusForbidden, "message.html", struct {
 			baseData
 			Message string
-		}{s.data(r, nil, "Register"), i18n.T("en", "auth.register.closed")})
+		}{s.data(r, nil, i18n.T(i18n.FromRequest(r), "nav.register")), i18n.T(i18n.FromRequest(r), "auth.register.closed")})
 		return
 	}
 	if !s.AuthLimit.Allow(clientKey(r)) {
@@ -532,19 +532,19 @@ func (s *Server) handleRegisterSubmit(w http.ResponseWriter, r *http.Request) {
 	s.render(w, http.StatusOK, "message.html", struct {
 		baseData
 		Message string
-	}{s.data(r, nil, "Register"), i18n.T("en", "auth.register.sent")})
+	}{s.data(r, nil, i18n.T(i18n.FromRequest(r), "nav.register")), i18n.T(i18n.FromRequest(r), "auth.register.sent")})
 }
 
 func (s *Server) handleVerify(w http.ResponseWriter, r *http.Request) {
 	err := s.Core.VerifyEmail(r.Context(), r.URL.Query().Get("token"))
-	msg := i18n.T("en", "auth.verify.ok")
+	msg := i18n.T(i18n.FromRequest(r), "auth.verify.ok")
 	if err != nil {
-		msg = i18n.T("en", "auth.verify.bad")
+		msg = i18n.T(i18n.FromRequest(r), "auth.verify.bad")
 	}
 	s.render(w, http.StatusOK, "message.html", struct {
 		baseData
 		Message string
-	}{s.data(r, nil, "Verify email"), msg})
+	}{s.data(r, nil, i18n.T(i18n.FromRequest(r), "page.verify")), msg})
 }
 
 func (s *Server) handleLoginForm(w http.ResponseWriter, r *http.Request) {
@@ -552,7 +552,7 @@ func (s *Server) handleLoginForm(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/account", http.StatusSeeOther)
 		return
 	}
-	s.render(w, http.StatusOK, "login.html", s.data(r, nil, "Sign in"))
+	s.render(w, http.StatusOK, "login.html", s.data(r, nil, i18n.T(i18n.FromRequest(r), "auth.login.title")))
 }
 
 func (s *Server) handleLoginSubmit(w http.ResponseWriter, r *http.Request) {
@@ -593,9 +593,9 @@ type login2FAView struct {
 }
 
 func (s *Server) renderLogin2FA(w http.ResponseWriter, r *http.Request, status int, challenge, errKey string) {
-	v := login2FAView{baseData: s.data(r, nil, i18n.T("en", "auth.2fa.title")), Challenge: challenge}
+	v := login2FAView{baseData: s.data(r, nil, i18n.T(i18n.FromRequest(r), "auth.2fa.title")), Challenge: challenge}
 	if errKey != "" {
-		v.Error = i18n.T("en", errKey)
+		v.Error = i18n.T(i18n.FromRequest(r), errKey)
 	}
 	s.render(w, status, "login_2fa.html", v)
 }
@@ -638,7 +638,7 @@ func (s *Server) loginFailed(w http.ResponseWriter, r *http.Request, status int,
 	s.render(w, status, "message.html", struct {
 		baseData
 		Message string
-	}{s.data(r, nil, i18n.T("en", "auth.login.title")), i18n.T("en", key)})
+	}{s.data(r, nil, i18n.T(i18n.FromRequest(r), "auth.login.title")), i18n.T(i18n.FromRequest(r), key)})
 }
 
 // finishLogin turns a fresh core session into a website session. Whoami
@@ -687,7 +687,7 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleForgotForm(w http.ResponseWriter, r *http.Request) {
-	s.render(w, http.StatusOK, "forgot.html", s.data(r, nil, "Reset password"))
+	s.render(w, http.StatusOK, "forgot.html", s.data(r, nil, i18n.T(i18n.FromRequest(r), "auth.forgot.title")))
 }
 
 func (s *Server) handleForgotSubmit(w http.ResponseWriter, r *http.Request) {
@@ -702,7 +702,7 @@ func (s *Server) handleForgotSubmit(w http.ResponseWriter, r *http.Request) {
 	s.render(w, http.StatusOK, "message.html", struct {
 		baseData
 		Message string
-	}{s.data(r, nil, "Reset password"), i18n.T("en", "auth.forgot.sent")})
+	}{s.data(r, nil, i18n.T(i18n.FromRequest(r), "auth.forgot.title")), i18n.T(i18n.FromRequest(r), "auth.forgot.sent")})
 }
 
 func (s *Server) handleResetForm(w http.ResponseWriter, r *http.Request) {
@@ -710,7 +710,7 @@ func (s *Server) handleResetForm(w http.ResponseWriter, r *http.Request) {
 		baseData
 		Token string
 	}
-	s.render(w, http.StatusOK, "reset.html", reset{s.data(r, nil, "Choose a new password"), r.URL.Query().Get("token")})
+	s.render(w, http.StatusOK, "reset.html", reset{s.data(r, nil, i18n.T(i18n.FromRequest(r), "auth.reset.title")), r.URL.Query().Get("token")})
 }
 
 func (s *Server) handleResetSubmit(w http.ResponseWriter, r *http.Request) {
@@ -727,7 +727,7 @@ func (s *Server) handleResetSubmit(w http.ResponseWriter, r *http.Request) {
 		s.render(w, http.StatusOK, "message.html", struct {
 			baseData
 			Message string
-		}{s.data(r, nil, "Reset password"), i18n.T("en", "auth.reset.bad")})
+		}{s.data(r, nil, i18n.T(i18n.FromRequest(r), "auth.forgot.title")), i18n.T(i18n.FromRequest(r), "auth.reset.bad")})
 		return
 	}
 	// The core revoked every web session on reset; the website must forget

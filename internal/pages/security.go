@@ -61,7 +61,7 @@ func (s *Server) handleEmailConfirmForm(w http.ResponseWriter, r *http.Request) 
 		s.renderMessage(w, r, v, http.StatusBadRequest, "auth.email.confirm.title", "auth.email.confirm.bad")
 		return
 	}
-	s.render(w, http.StatusOK, "email_confirm.html", emailConfirmView{s.data(r, v, i18n.T("en", "auth.email.confirm.title")), token})
+	s.render(w, http.StatusOK, "email_confirm.html", emailConfirmView{s.data(r, v, i18n.T(i18n.FromRequest(r), "auth.email.confirm.title")), token})
 }
 
 // handleEmailConfirmSubmit applies the change. The token is the credential,
@@ -110,7 +110,7 @@ func (s *Server) renderMessage(w http.ResponseWriter, r *http.Request, v *viewer
 	s.render(w, status, "message.html", struct {
 		baseData
 		Message string
-	}{s.data(r, v, i18n.T("en", titleKey)), i18n.T("en", msgKey)})
+	}{s.data(r, v, i18n.T(i18n.FromRequest(r), titleKey)), i18n.T(i18n.FromRequest(r), msgKey)})
 }
 
 // twoFactorView is the enrolment page: the secret to type into an
@@ -135,7 +135,7 @@ func (s *Server) handle2FASetup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.render(w, http.StatusOK, "account_2fa.html", twoFactorView{
-		baseData: s.data(r, v, i18n.T("en", "account.2fa.title")), Secret: sec.Secret, URI: sec.OTPAuthURI})
+		baseData: s.data(r, v, i18n.T(i18n.FromRequest(r), "account.2fa.title")), Secret: sec.Secret, URI: sec.OTPAuthURI})
 }
 
 // handle2FAEnable finishes enrolment with a first code and shows the recovery
@@ -149,9 +149,9 @@ func (s *Server) handle2FAEnable(w http.ResponseWriter, r *http.Request) {
 	codes, err := s.Core.TwoFactorEnable(r.Context(), v.CoreSessionID, strings.ReplaceAll(r.PostFormValue("code"), " ", ""))
 	if errors.Is(err, core.ErrInvalidCode) {
 		s.render(w, http.StatusUnauthorized, "account_2fa.html", twoFactorView{
-			baseData: s.data(r, v, i18n.T("en", "account.2fa.title")),
+			baseData: s.data(r, v, i18n.T(i18n.FromRequest(r), "account.2fa.title")),
 			Secret:   r.PostFormValue("secret"), URI: r.PostFormValue("uri"),
-			Error: i18n.T("en", "account.2fa.wrongcode")})
+			Error: i18n.T(i18n.FromRequest(r), "account.2fa.wrongcode")})
 		return
 	}
 	if err != nil {
@@ -159,7 +159,7 @@ func (s *Server) handle2FAEnable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.render(w, http.StatusOK, "account_2fa.html", twoFactorView{
-		baseData: s.data(r, v, i18n.T("en", "account.2fa.title")), RecoveryCodes: codes})
+		baseData: s.data(r, v, i18n.T(i18n.FromRequest(r), "account.2fa.title")), RecoveryCodes: codes})
 }
 
 // handle2FADisable turns 2FA off with the password and a current code (or a

@@ -53,7 +53,7 @@ func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx := r.Context()
-	view := chatView{baseData: s.data(r, v, i18n.T("en", "chat.title")), Names: map[string]string{}}
+	view := chatView{baseData: s.data(r, v, i18n.T(i18n.FromRequest(r), "chat.title")), Names: map[string]string{}}
 	if s.Chat == nil {
 		s.render(w, http.StatusOK, "chat.html", view)
 		return

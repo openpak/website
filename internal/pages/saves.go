@@ -80,7 +80,7 @@ func (s *Server) handleSaves(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx := r.Context()
-	view := savesView{baseData: s.data(r, v, i18n.T("en", "saves.title")), Detail: r.URL.Query().Get("d"), Presets: presets}
+	view := savesView{baseData: s.data(r, v, i18n.T(i18n.FromRequest(r), "saves.title")), Detail: r.URL.Query().Get("d"), Presets: presets}
 	list, usage, err := s.Saves.List(ctx, v.AccountID)
 	if err != nil {
 		if !errors.Is(err, saves.ErrUnavailable) {

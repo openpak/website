@@ -54,7 +54,7 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx := r.Context()
-	view := accountView{baseData: s.data(r, v, i18n.T("en", "account.title")), CurrentSession: v.CoreSessionID}
+	view := accountView{baseData: s.data(r, v, i18n.T(i18n.FromRequest(r), "account.title")), CurrentSession: v.CoreSessionID}
 	view.AvatarURL = "/media/avatars/" + v.AccountID + "/512"
 
 	// Friend code: read-only projection of the adapter-owned link subject
@@ -192,7 +192,7 @@ func (s *Server) handleDeleteAccount(w http.ResponseWriter, r *http.Request) {
 	s.render(w, http.StatusOK, "message.html", struct {
 		baseData
 		Message string
-	}{s.data(r, nil, i18n.T("en", "account.delete.title")), i18n.T("en", "account.delete.ok")})
+	}{s.data(r, nil, i18n.T(i18n.FromRequest(r), "account.delete.title")), i18n.T(i18n.FromRequest(r), "account.delete.ok")})
 }
 
 func (s *Server) handleRevokeSession(w http.ResponseWriter, r *http.Request) {
@@ -289,7 +289,7 @@ func (s *Server) handleAvatarUpload(w http.ResponseWriter, r *http.Request) {
 		s.render(w, http.StatusServiceUnavailable, "message.html", struct {
 			baseData
 			Message string
-		}{s.data(r, v, "Avatar"), i18n.T("en", "account.avatar.pending")})
+		}{s.data(r, v, i18n.T(i18n.FromRequest(r), "account.avatar")), i18n.T(i18n.FromRequest(r), "account.avatar.pending")})
 		return
 	}
 	if !s.MediaLimit.Allow(v.AccountID) {
@@ -652,7 +652,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		CountsOK                bool
 	}
 	view := statusView{
-		baseData:  s.data(r, s.viewerOf(w, r), i18n.T("en", "status.title")),
+		baseData:  s.data(r, s.viewerOf(w, r), i18n.T(i18n.FromRequest(r), "status.title")),
 		CoreOK:    coreOK,
 		DBOk:      dbOK,
 		StorageOK: storeOK,

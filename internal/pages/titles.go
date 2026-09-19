@@ -77,7 +77,7 @@ func mostRequested(reqs []store.Request) []store.Request {
 // requestable long tail.
 func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 	v := s.viewerOf(w, r)
-	d := s.data(r, v, i18n.T(d0Lang(r), "titles.title"))
+	d := s.data(r, v, i18n.T(i18n.FromRequest(r), "titles.title"))
 	var accountID string
 	if v != nil {
 		accountID = v.AccountID
@@ -196,10 +196,6 @@ func (s *Server) handleSetTitleStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	http.Redirect(w, r, "/titles", http.StatusSeeOther)
 }
-
-// d0Lang reads the request language the same way s.data does, so the page title
-// is localised without threading baseData through.
-func d0Lang(r *http.Request) string { return i18n.FromRequest(r) }
 
 // backPath is where a vote returns the viewer, preserving the sort view.
 func backPath(base string, byVotes bool) string {
