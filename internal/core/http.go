@@ -215,8 +215,9 @@ func (c *HTTPClient) ChangePassword(ctx context.Context, coreSessionID, current,
 	return ErrNotFound
 }
 
-// UpdateProfile sets the country and date of birth of the signed-in account. Registration
-// collects both; this is how an account created before that fills them in.
+// UpdateProfile proxies POST /v1/profile: the display name, country and date of birth of the
+// signed-in account. The core keeps the current display name when it is sent empty; country
+// and birthday are stored as sent, so an empty one clears it.
 func (c *HTTPClient) UpdateProfile(ctx context.Context, coreSessionID, country, birthday, displayName string) error {
 	code, body, _, err := c.call(ctx, http.MethodPost, "v1/profile", map[string]string{
 		"country": country, "birthday": birthday, "display_name": displayName,

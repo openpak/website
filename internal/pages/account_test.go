@@ -44,6 +44,30 @@ func TestDeleteAccount(t *testing.T) {
 	}
 }
 
+// The display name is edited on the profile form and the header shows the new one straight
+// away; a form sent with the name left empty keeps the name rather than erasing it.
+func TestDisplayNameCanBeChanged(t *testing.T) {
+	s, fc, _ := newTestServer(t)
+	emailA, _ := seedTwoAccounts(fc)
+	fc.names["acct-"+emailA] = "Alice"
+	a := login(t, s, emailA, "password-A-1")
+	if body := authedRequest(s, a, http.MethodGet, "/account", nil).Body.String(); !strings.Contains(body, `value="Alice"`) {
+		t.Fatal("the form does not start with the current name")
+	}
+
+	rec := authedRequest(s, a, http.MethodPost, "/account/profile", &url.Values{"display_name": {"Leia"}})
+	if !strings.Contains(rec.Header().Get("Location"), "profile-saved") {
+		t.Fatalf("save: %d %s", rec.Code, rec.Header().Get("Location"))
+	}
+	if body := authedRequest(s, a, http.MethodGet, "/account", nil).Body.String(); !strings.Contains(body, "<h1>Leia</h1>") {
+		t.Fatal("the header still shows the old name")
+	}
+	authedRequest(s, a, http.MethodPost, "/account/profile", &url.Values{"display_name": {""}})
+	if fc.names["acct-"+emailA] != "Leia" {
+		t.Fatalf("an empty name field erased the name: %q", fc.names["acct-"+emailA])
+	}
+}
+
 // A block stops a chat message before it reaches the chat service, which only checks
 // friendship and would otherwise deliver it: blocking does not end a friendship.
 func TestChatSendRefusedWhenBlocked(t *testing.T) {

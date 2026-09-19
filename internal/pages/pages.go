@@ -515,8 +515,13 @@ func (s *Server) handleLoginSubmit(w http.ResponseWriter, r *http.Request) {
 		}{s.data(r, nil, "Sign in"), i18n.T("en", "msg.error")})
 		return
 	}
+	// The header shows the display name, which the password check does not carry.
+	var name string
+	if a, err := s.Identity.GetAccount(r.Context(), acct.ID); err == nil {
+		name = a.DisplayName
+	}
 	if err := s.DB.PutWebSession(r.Context(), store.WebSession{
-		CoreSessionID: coreSession, AccountID: acct.ID, Email: email,
+		CoreSessionID: coreSession, AccountID: acct.ID, Email: email, DisplayName: name,
 	}); err != nil {
 		_ = s.Core.Logout(context.Background(), coreSession)
 		s.log.Error("put web session", "err", err)

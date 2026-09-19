@@ -29,6 +29,7 @@ type accountView struct {
 	AvatarURL      string
 	AvatarPending  bool
 	Presets        []string
+	DisplayName    string
 	Country        string
 	Birthday       string
 	Countries      []country
@@ -80,7 +81,7 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 	// them hold neither; the form below is the only way to fill them in.
 	view.Countries, view.MaxBirthday = countries, time.Now().Format("2006-01-02")
 	if acct, err := s.Identity.GetAccount(ctx, v.AccountID); err == nil {
-		view.Country, view.Birthday = acct.Country, acct.Birthday
+		view.DisplayName, view.Country, view.Birthday = acct.DisplayName, acct.Country, acct.Birthday
 	} else {
 		s.log.Error("get account", "err", err)
 	}
@@ -113,19 +114,30 @@ func (s *Server) handleChangePassword(w http.ResponseWriter, r *http.Request) {
 	redirectMsg(w, r, "/account", "password-changed")
 }
 
-// handleUpdateProfile saves the country and date of birth. Both are optional here: an account
-// that holds neither is valid, and nothing downstream substitutes a value for what is missing.
+// handleUpdateProfile saves the display name, country and date of birth. Country and birthday
+// are optional here: an account that holds neither is valid, and nothing downstream substitutes
+// a value for what is missing. The name field arrives filled with the current name, and the
+// core keeps that name if the field is sent empty, so a name is never erased by accident.
 func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request) {
 	v, ok := s.postGuard(w, r)
 	if !ok {
 		return
 	}
+	display := strings.TrimSpace(r.PostFormValue("display_name"))
 	country := strings.TrimSpace(r.PostFormValue("country"))
 	birthday := strings.TrimSpace(r.PostFormValue("birthday"))
-	if err := s.Core.UpdateProfile(r.Context(), v.CoreSessionID, country, birthday, ""); err != nil {
+	if err := s.Core.UpdateProfile(r.Context(), v.CoreSessionID, country, birthday, display); err != nil {
 		s.log.Error("update profile", "err", err)
 		redirectMsg(w, r, "/account", "profile-failed")
 		return
+	}
+	// The header reads the name cached on the session row; refresh it from the core, which
+	// holds whatever it actually kept.
+	if acct, err := s.Identity.GetAccount(r.Context(), v.AccountID); err == nil {
+		v.WebSession.DisplayName = acct.DisplayName
+		if err := s.DB.PutWebSession(r.Context(), v.WebSession); err != nil {
+			s.log.Error("refresh session name", "err", err)
+		}
 	}
 	redirectMsg(w, r, "/account", "profile-saved")
 }

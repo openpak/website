@@ -1,6 +1,6 @@
 {{template "header" .}}
-{{/* Display names are optional today (CR-7 makes them editable); fall back
-     to the address so the heading is never blank. */}}
+{{/* An account may have no display name; fall back to the address so the
+     heading is never blank. */}}
 {{$name := .User.DisplayName}}{{if not $name}}{{$name = .User.Email}}{{end}}
 <div class="page-head">
   <div class="identity">
@@ -128,6 +128,8 @@
   </div>
   <form method="post" action="/account/profile" class="stack">
     <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <label for="profile-name">{{t .Lang "auth.displayname"}}</label>
+    <input id="profile-name" name="display_name" type="text" value="{{.DisplayName}}" minlength="3" maxlength="32" autocomplete="nickname">
     <label for="profile-country">{{t .Lang "auth.country"}}</label>
     <select id="profile-country" name="country" autocomplete="country">
       <option value="">{{t .Lang "account.profile.unset"}}</option>

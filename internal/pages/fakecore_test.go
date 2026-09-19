@@ -22,7 +22,8 @@ type fakeCore struct {
 	sessions       map[string]string // coreSessionID -> email
 	friends        []friendRow
 	blocks         [][2]string
-	profile        [2]string // country, birthday as last saved
+	profile        [2]string         // country, birthday as last saved
+	names          map[string]string // accountID -> display name
 	invitations    []core.PendingInvitation
 	presence       map[string]core.Presence
 	players        []core.TitlePlayers
@@ -48,6 +49,7 @@ func newFakeCore() *fakeCore {
 		links:       map[string]string{},
 		wfcLinks:    map[string]string{},
 		subjectToAc: map[string]string{},
+		names:       map[string]string{},
 	}
 }
 
@@ -105,7 +107,7 @@ func (f *fakeCore) ChangePassword(_ context.Context, _, current, next string) er
 	f.accounts["a@x.test"] = next
 	return nil
 }
-func (f *fakeCore) UpdateProfile(_ context.Context, _, country, birthday, _ string) error {
+func (f *fakeCore) UpdateProfile(_ context.Context, sid, country, birthday, displayName string) error {
 	// Mirror the core's own rule: an ISO date or nothing.
 	if birthday != "" {
 		if _, err := time.Parse("2006-01-02", birthday); err != nil {
@@ -113,6 +115,10 @@ func (f *fakeCore) UpdateProfile(_ context.Context, _, country, birthday, _ stri
 		}
 	}
 	f.profile = [2]string{country, birthday}
+	// Like the core, an empty name keeps the current one.
+	if displayName != "" {
+		f.names["acct-"+f.sessions[sid]] = displayName
+	}
 	return nil
 }
 func (f *fakeCore) ForgotPassword(_ context.Context, _ string) error { return nil }
@@ -129,7 +135,7 @@ func (f *fakeCore) ResolveAccount(_ context.Context, email, password string) (co
 	return core.Account{ID: "acct-" + email, Email: email}, nil
 }
 func (f *fakeCore) GetAccount(_ context.Context, accountID string) (core.Account, error) {
-	return core.Account{ID: accountID}, nil
+	return core.Account{ID: accountID, DisplayName: f.names[accountID]}, nil
 }
 
 // The accounts are keyed by email and their ids are "acct-" + email, so the
