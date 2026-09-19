@@ -15,7 +15,7 @@
     "category": "NPLN title",
     "backend": "NPLN",
     "status": "live",
-    "notes": "Deployed (servers/npln/titles/stardew-valley, ~19k LOC, tenant 21010/22200) and the only title besides Outbound the website actually serves. Online play needs a per-build online-compatibility/cert-acceptance patch on emulator/CFW. Publisher: ConcernedApe."
+    "notes": "Deployed (servers/npln/titles/stardew-valley, ~19k LOC, tenant 21010/22200); console-verified. Online play needs a per-build online-compatibility/cert-acceptance patch on emulator/CFW. Publisher: ConcernedApe."
   },
   {
     "kind": "title",
@@ -42,7 +42,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "NEX 4.0.0 (ws). Implemented on the shared NEX host (servers/nex/titles/mario-kart-8-deluxe), image-shippable, health-wired. Not console-verified. Publisher: Nintendo."
+    "notes": "NEX 4.0.0 (ws). Served by switch-nexd (servers/switch-nex) since 2026-09-16, block 22150; the per-title nex-go container is retired. Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -51,7 +51,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "Implemented on the shared NEX host (servers/nex/titles/super-smash-bros-ultimate). Not console-verified. Publisher: Nintendo."
+    "notes": "Served by switch-nexd (servers/switch-nex) since 2026-09-16, block 22350; the per-title nex-go container is retired. Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -60,7 +60,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "OpenPak confirms NEX. Implemented (servers/nex/titles/animal-crossing-new-horizons). Not console-verified. Publisher: Nintendo."
+    "notes": "OpenPak confirms NEX. Served by switch-nexd (servers/switch-nex) since 2026-09-16, block 22180; the per-title nex-go container is retired. Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -69,7 +69,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "Online is Balloon World (DataStore). Implemented (servers/nex/titles/super-mario-odyssey). Not console-verified. Publisher: Nintendo."
+    "notes": "Online is Balloon World (DataStore). Served by switch-nexd (servers/switch-nex) since 2026-09-16, block 22340; the per-title nex-go container is retired. Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -78,7 +78,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "The Switch NEX session/matchmaking + NAT-traversal layer for friend-list lobbies (ARMS's protocol set minus DataStore). Bedrock/Xbox realms are a separate Xbox-network concern, out of scope here. Implemented (servers/nex/titles/minecraft). Not console-verified. Publisher: Mojang/Microsoft."
+    "notes": "The Switch NEX session/matchmaking + NAT-traversal layer for friend-list lobbies (ARMS's protocol set minus DataStore). Bedrock/Xbox realms are a separate Xbox-network concern, out of scope here. Served by switch-nexd (servers/switch-nex) since 2026-09-16, block 22310; the per-title nex-go container is retired. Game-server host g28c77600 found by booting 2026-09-18 and routed; the first real login worked, but the secure stage never sends CONNECT (2306-0502). Not console-verified. Publisher: Mojang/Microsoft."
   },
   {
     "kind": "title",
@@ -87,7 +87,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "Implemented (servers/nex/titles/splatoon-2, ~1k LOC). Not console-verified. Publisher: Nintendo. Secure host routed 2026-09-11 (game-server id from Kinnay's Game Server List)."
+    "notes": "Served by switch-nexd (servers/switch-nex) since 2026-09-16, block 22320; the per-title nex-go container is retired. Not console-verified. Publisher: Nintendo. Secure host routed 2026-09-11 (game-server id from Kinnay's Game Server List)."
   },
   {
     "kind": "title",
@@ -96,7 +96,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "The DataStore shape-definer (DataStore-heavy: user levels, course world). Implemented (servers/nex/titles/super-mario-maker-2). Not console-verified. Publisher: Nintendo. Secure host routed 2026-09-11 (game-server id from Kinnay's Game Server List)."
+    "notes": "The DataStore shape-definer (DataStore-heavy: user levels, course world). Served by switch-nexd (servers/switch-nex) since 2026-09-16, block 22330; the per-title nex-go container is retired. Not console-verified. Publisher: Nintendo. Secure host routed 2026-09-11 (game-server id from Kinnay's Game Server List)."
   },
   {
     "kind": "title",
@@ -105,7 +105,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "NEX 4.3.5. Needs a DataStore backing (Party Crash ranking). Implemented (servers/nex/titles/arms). Not console-verified. Publisher: Nintendo."
+    "notes": "NEX 4.3.5. Needs a DataStore backing (Party Crash ranking). Served by switch-nexd (servers/switch-nex) since 2026-09-16, block 22140; the per-title nex-go container is retired. Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -114,7 +114,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "NEX 4.3.5 (version unverified). Two WSS listeners. Implemented (servers/nex/titles/mario-tennis-aces). Not console-verified. Publisher: Nintendo."
+    "notes": "NEX 4.3.5 (version unverified). Two WSS listeners. Served by switch-nexd (servers/switch-nex) since 2026-09-16, block 22170; the per-title nex-go container is retired. Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -123,7 +123,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "NEX 4.6.5, single WSS listener carrying both streams. Implemented (servers/nex/titles/mario-golf-super-rush). Not console-verified. Publisher: Nintendo."
+    "notes": "NEX 4.6.5, single WSS listener carrying both streams. Served by switch-nexd (servers/switch-nex) since 2026-09-16, block 22130; the per-title nex-go container is retired. Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -132,7 +132,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "NEX 4.6.5, two WSS listeners on two ports with a real secure URL. Implemented (servers/nex/titles/mario-party-superstars). Not console-verified. Publisher: Nintendo."
+    "notes": "NEX 4.6.5, two WSS listeners on two ports with a real secure URL. Served by switch-nexd (servers/switch-nex) since 2026-09-16, block 22110; the per-title nex-go container is retired. Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -141,7 +141,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "OpenPak confirms NEX, with a DataStore backing. Implemented (servers/nex/titles/mario-strikers). Not console-verified. Publisher: Nintendo."
+    "notes": "OpenPak confirms NEX, with a DataStore backing. Served by switch-nexd (servers/switch-nex) since 2026-09-16, block 22300; the per-title nex-go container is retired. Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -150,7 +150,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "Implemented (servers/nex/titles/luigis-mansion-3). Not console-verified. Publisher: Nintendo."
+    "notes": "Served by switch-nexd (servers/switch-nex) since 2026-09-16, block 22190; the per-title nex-go container is retired. Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -168,7 +168,7 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "beta",
-    "notes": "NEX 4.6.0, single listener carrying both streams. Delisted title (service ended 2021) \u2014 only playable at all through a replacement network. Implemented (servers/nex/titles/super-mario-bros-35). Not console-verified. Publisher: Nintendo."
+    "notes": "NEX 4.6.0, single listener carrying both streams. Delisted title (service ended 2021) \u2014 only playable at all through a replacement network. Served by switch-nexd (servers/switch-nex) since 2026-09-16, block 22160; the per-title nex-go container is retired. Not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -203,7 +203,7 @@
     "console": "Switch",
     "category": "Third-party network",
     "backend": "Demonware",
-    "status": "alpha",
+    "status": "requestable",
     "notes": "Research verdict only, no code. Auth+matchmaking over Demonware (racing itself is peer-to-peer), which is plausible and squarely what OpenPak does, but unproven and possibly unnecessary \u2014 the open question is whether an OpenPak console needs us for it at all. Publisher: Activision."
   },
   {
@@ -212,8 +212,8 @@
     "console": "Switch",
     "category": "Third-party network",
     "backend": "Epic/EOS",
-    "status": "alpha",
-    "notes": "Third-party network; becomes a candidate once its DNS is forwarded to OpenPak. Server-side scope TBD."
+    "status": "not-feasible",
+    "notes": "Epic live service: EOS identity, Mediatonic's Catapult login/matchmaking and Epic-hosted authoritative match servers that run the simulation, with no client-hosted mode. Not feasible (servers/fall-guys, docs only); the service is still live, so OpenPak leaves its names unredirected. Publisher: Epic/Mediatonic."
   },
   {
     "kind": "title",
@@ -221,8 +221,8 @@
     "console": "Switch",
     "category": "Third-party network",
     "backend": "Xbox / Demonware",
-    "status": "alpha",
-    "notes": "Third-party network; becomes a candidate once its DNS is forwarded to OpenPak. Server-side scope TBD."
+    "status": "requestable",
+    "notes": "No game-specific service to replace: online is a Microsoft account plus Xbox-network friends and invite sessions, peer-hosted. Waits on a shared Xbox Live adapter; nothing built (servers/minecraft-dungeons, docs only). Publisher: Mojang/Microsoft."
   },
   {
     "kind": "title",
@@ -230,8 +230,8 @@
     "console": "Switch",
     "category": "Third-party network",
     "backend": "Blaze/EA",
-    "status": "alpha",
-    "notes": "Third-party network; becomes a candidate once its DNS is forwarded to OpenPak. Server-side scope TBD."
+    "status": "not-feasible",
+    "notes": "Every online mode runs on EA-hosted authoritative dedicated servers allocated over Blaze, with no peer-hosted fallback on console; the open private servers are Windows DLL-injection projects. Not feasible now (servers/plants-vs-zombies, docs only). Publisher: EA/PopCap."
   },
   {
     "kind": "title",
@@ -248,8 +248,8 @@
     "console": "Switch",
     "category": "NPLN title",
     "backend": "NPLN",
-    "status": "requestable",
-    "notes": "NPLN-era; not started. Candidate for the request/vote menu. Publisher: Nintendo/The Pokemon Company."
+    "status": "alpha",
+    "notes": "0100A3D008C5C000 / 01008F6008C5E000. NPLN title. Deployed on servers/npln 2026-09-18 as openpak-pokemon-scarlet-violet (tenant t-50e39f8f from Kinnay's NPLN Servers list, 21102, session 22260) on Stardew's service set. One tenant for both games; tokens carry Scarlet's app_id, so Violet may be refused when it hosts. Never booted; not console-verified. Publisher: Nintendo/The Pokemon Company."
   },
   {
     "kind": "title",
@@ -303,16 +303,16 @@
     "category": "NEX title",
     "backend": "NEX",
     "status": "alpha",
-    "notes": "010047700D540000. Served by switch-nexd (servers/switch-nex) since 2026-09-16, block 22870, game server 2035BB00: matchmaking with the reference's create-time normalisation and account-setup DataStore answers. Not console-verified. Publisher: Nintendo."
+    "notes": "010047700D540000. Served by switch-nexd (servers/switch-nex) since 2026-09-16, block 22870, game server 2035BB00: matchmaking with the reference's create-time normalisation and account-setup DataStore answers. Never booted; not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
     "name": "Monster Hunter Rise",
     "console": "Switch",
-    "category": "NEX title",
-    "backend": "NEX (unconfirmed)",
-    "status": "requestable",
-    "notes": "Capcom title; backend not yet confirmed for OpenPak (MHGU used NEX). Not started. Publisher: Capcom."
+    "category": "NPLN title",
+    "backend": "NPLN",
+    "status": "alpha",
+    "notes": "0100B04011742000 (Sunbreak is the same title). NPLN title. Deployed on servers/npln 2026-09-18 as openpak-monster-hunter-rise (tenant t-e1c218b5 from Kinnay's NPLN Servers list, 21106, session 22280) on Stardew's service set. Never booted; not console-verified. Publisher: Capcom."
   },
   {
     "kind": "title",
@@ -384,7 +384,7 @@
     "category": "Session",
     "backend": "Photon / NPLN / NEX",
     "status": "partial",
-    "notes": "Photon (Outbound, Master->Game handoff) and NPLN (Stardew session documents) matchmaking work live. NEX matchmaking is built on the shared host but not console-verified."
+    "notes": "Photon (Outbound, Master->Game handoff) and NPLN (Stardew session documents; Dinkum room-code joins console <-> Ryujinx 2026-09-18) matchmaking work live. Switch NEX matchmaking is served by switch-nexd: Kirby's Dream Buffet matchmade on a console 2026-09-19 (room created, no second real player yet); other NEX titles not console-verified."
   },
   {
     "kind": "feature",
@@ -850,9 +850,9 @@
     "name": "Super Mario Party Jamboree",
     "console": "Switch",
     "category": "Party",
-    "backend": "unconfirmed",
-    "status": "requestable",
-    "notes": "Publisher: Nintendo. online board and minigames; backend unconfirmed."
+    "backend": "NPLN",
+    "status": "alpha",
+    "notes": "0100965017338000. NPLN title. Deployed on servers/npln 2026-09-18 as openpak-super-mario-party-jamboree (tenant t-adf89f68 from Kinnay's NPLN Servers list, 21100, session 22250) on Stardew's service set. Never booted; not console-verified. Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -995,8 +995,8 @@
     "console": "Switch",
     "category": "RPG \u2014 co-op",
     "backend": "Battle.net",
-    "status": "requestable",
-    "notes": "Publisher: Blizzard. online co-op; Blizzard Battle.net."
+    "status": "alpha",
+    "notes": "Publisher: Blizzard. Online co-op over Blizzard Battle.net. Being brought up: servers/battlenet (web tier + native logon gateway; research in servers/diablo-ii-resurrected) runs as openpak-battlenet. The logon completes and the client reaches the game-server stage, where it fails ('communicating with the game servers'). Not playable."
   },
   {
     "kind": "title",
@@ -1130,8 +1130,8 @@
     "console": "Switch",
     "category": "Co-op",
     "backend": "NPLN",
-    "status": "alpha",
-    "notes": "01000CA004DCA000. NPLN title (NPLN 1.41.1, Pia 6.42.0), found in our own dump. Registered in servers/npln 2026-09-18 (tenant 21124, session 22240) on Stardew's service set; not deployed \u2014 the tenant is resolved at runtime and has to come from a first boot. Publisher: Curve Games."
+    "status": "beta",
+    "notes": "01000CA004DCA000. NPLN title (NPLN 1.41.1, Pia 6.42.0), found in our own dump. Deployed on servers/npln 2026-09-18 as openpak-human-fall-flat (tenant t-5cbc0f31 from a Ryujinx boot, 21124, session 22240) on Stardew's service set. Joined from Ryujinx; not console-verified. Publisher: Curve Games."
   },
   {
     "kind": "title",
@@ -4174,5 +4174,59 @@
     "backend": "NPLN",
     "status": "beta",
     "notes": "0100A5A020D5E000. NPLN title (NPLN 1.43.3 with the WebRTC/QUIC P2P add-ons). Deployed on servers/npln 2026-09-18 (tenant t-35b7d576, 21122, session 22230) on Stardew's service set. Online play verified: Ryujinx hosted, a real console joined by room code, both ways; P2P went direct. Friend-list search and invites still open. Publisher: James Bendon / No More Robots."
+  },
+  {
+    "kind": "title",
+    "name": "Pokemon Legends: Arceus",
+    "console": "Switch",
+    "category": "NPLN title",
+    "backend": "NPLN",
+    "status": "alpha",
+    "notes": "01001F5010DFA000. NPLN title. Deployed on servers/npln 2026-09-18 as openpak-pokemon-legends-arceus (tenant t-e047112f from Kinnay's NPLN Servers list, 21104, session 22270) on Stardew's service set. Never booted; not console-verified. Publisher: Nintendo/The Pokemon Company."
+  },
+  {
+    "kind": "title",
+    "name": "Bayonetta 3",
+    "console": "Switch",
+    "category": "NPLN title",
+    "backend": "NPLN",
+    "status": "alpha",
+    "notes": "01004A4010FEA000. NPLN title. Deployed on servers/npln 2026-09-18 as openpak-bayonetta-3 (tenant t-2c06a4d3 from Kinnay's NPLN Servers list, 21110, session 22290) on Stardew's service set. Never booted; not console-verified. Publisher: Nintendo/PlatinumGames."
+  },
+  {
+    "kind": "title",
+    "name": "Endless Ocean Luminous",
+    "console": "Switch",
+    "category": "NPLN title",
+    "backend": "NPLN",
+    "status": "alpha",
+    "notes": "010067B017588000. NPLN title. Deployed on servers/npln 2026-09-18 as openpak-endless-ocean-luminous (tenant t-a71f7ea5 from Kinnay's NPLN Servers list, 21112, session 24500) on Stardew's service set. Never booted; not console-verified. Publisher: Nintendo/Arika."
+  },
+  {
+    "kind": "title",
+    "name": "Hamster Playground",
+    "console": "Switch",
+    "category": "NPLN title",
+    "backend": "NPLN",
+    "status": "alpha",
+    "notes": "010035901701A000. NPLN title. Deployed on servers/npln 2026-09-18 as openpak-hamster-playground (tenant t-b9dd3510 from Kinnay's NPLN Servers list, 21118, session 24510) on Stardew's service set. Never booted; not console-verified."
+  },
+  {
+    "kind": "title",
+    "name": "Wavecade",
+    "console": "Switch",
+    "category": "NPLN title",
+    "backend": "NPLN",
+    "status": "alpha",
+    "notes": "0100F7A017F4C000. NPLN title. Deployed on servers/npln 2026-09-18 as openpak-wavecade (tenant t-61cb5c35 from Kinnay's NPLN Servers list, 21120, session 24520) on Stardew's service set. Never booted; not console-verified."
+  },
+  {
+    "kind": "title",
+    "name": "Tetris: Axis",
+    "console": "3DS",
+    "category": "Puzzle \u2014 versus",
+    "backend": "NEX",
+    "status": "alpha",
+    "notes": "Game server: Pretendo's (AGPL) adapted into servers/nex/titles/tetris-axis on 2026-09-11 (block 22810), one container from the shared image. Not console-verified. Publisher: Nintendo/Hudson."
   }
 ]
