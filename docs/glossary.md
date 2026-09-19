@@ -61,7 +61,7 @@ status.openpak.org.
 | network | Netzwerk | réseau | rede | rete | red |
 | online (player) | online | en ligne | online | online | en línea |
 | Beta | Beta | Bêta | Beta | Beta | Beta |
-| Being built | Im Aufbau | En cours de développement | Em desenvolvimento | In sviluppo | En desarrollo |
+| Being built | Im Aufbau | En développement | Em desenvolvimento | In sviluppo | En desarrollo |
 | Planned | Geplant | Prévu | Planejado | Pianificato | Planeado |
 | Features | Funktionen | Fonctionnalités | Recursos | Funzionalità | Funciones |
 | Downloads | Downloads | Téléchargements | Downloads | Download | Descargas |
