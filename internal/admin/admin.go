@@ -53,6 +53,8 @@ type Server struct {
 	Mods *ModsAPI
 	// Registry is the registry service's read-only status; nil says "not configured".
 	Registry *RegistryAPI
+	// Ops is the host agents behind /admin/services; nil says "not configured".
+	Ops *OpsAPI
 
 	tmpl *template.Template
 	log  *slog.Logger
@@ -84,6 +86,8 @@ type base struct {
 	Path   string
 	Admin  bool
 	Nav    []navLink
+	// Updates is how many containers have a newer image, for the nav badge.
+	Updates int
 }
 
 // navLink is one entry of the admin sub-nav every admin page carries.
@@ -97,6 +101,7 @@ type navLink struct {
 var adminNav = []struct{ href, key string }{
 	{"/admin", "admin.nav.overview"},
 	{"/admin/monitor", "admin.monitor"},
+	{"/admin/services", "admin.services"},
 	{"/admin/news", "admin.news"},
 	{"/admin/titles", "admin.titles"},
 	{"/admin/mods", "admin.mods"},
@@ -148,7 +153,14 @@ func (s *Server) authorize(w http.ResponseWriter, r *http.Request) (store.WebSes
 func (s *Server) page(r *http.Request, ws store.WebSession, title string) base {
 	return base{Asset: pages.AssetVersion(), Admin: true, Path: r.URL.Path, Lang: "en", Title: title,
 		User: adminUser{ws.DisplayName, ws.Email}, CSRF: s.Sessions.CSRFToken(ws.CoreSessionID),
-		Nav: navFor(r.URL.Path)}
+		Nav: navFor(r.URL.Path), Updates: s.pendingUpdates(r.Context())}
+}
+
+func (s *Server) pendingUpdates(ctx context.Context) int {
+	if s.Ops == nil {
+		return 0
+	}
+	return s.Ops.Pending(ctx)
 }
 
 // authorizePost is authorize plus the CSRF check every state-changing admin
@@ -188,6 +200,9 @@ func (s *Server) render(w http.ResponseWriter, status int, name string, data any
 func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin", s.handleDashboard)
 	mux.HandleFunc("GET /admin/monitor", s.handleMonitor)
+	mux.HandleFunc("GET /admin/services", s.handleServices)
+	mux.HandleFunc("POST /admin/services/action", s.handleServiceAction)
+	mux.HandleFunc("POST /admin/services/check", s.handleServicesCheck)
 	mux.HandleFunc("GET /admin/news", s.handleNews)
 	mux.HandleFunc("GET /admin/news/new", s.handleNewsNew)
 	mux.HandleFunc("POST /admin/news", s.handleNewsSave)

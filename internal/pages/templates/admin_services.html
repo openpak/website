@@ -1,0 +1,79 @@
+{{template "header" .}}
+{{template "adminnav" .}}
+<div class="page-head"><h1>{{t .Lang "admin.services"}}</h1><p>{{t .Lang "admin.services.sub"}}</p></div>
+{{if .Error}}<p class="notice bad" role="alert">{{.Error}}</p>{{end}}
+{{if not .Configured}}
+<p class="notice" role="status">{{t .Lang "admin.services.off"}}</p>
+{{else}}
+<div class="mb-7 flex flex-wrap items-end gap-3">
+  {{/* A plain GET form: the filter works without JavaScript and the URL is shareable. */}}
+  <form method="get" action="/admin/services" class="flex flex-wrap items-end gap-2">
+    <label class="flex flex-col gap-1 text-sm text-ink-2"><span>{{t .Lang "admin.services.network"}}</span>
+      <select name="network" class="field">
+        <option value="">{{t .Lang "admin.services.all"}}</option>
+        {{range .Networks}}<option value="{{.}}"{{if eq . $.Network}} selected{{end}}>{{.}}</option>{{end}}
+      </select></label>
+    <label class="flex flex-col gap-1 text-sm text-ink-2"><span>{{t .Lang "admin.services.host"}}</span>
+      <select name="host" class="field">
+        <option value="">{{t .Lang "admin.services.all"}}</option>
+        {{range .HostNames}}<option value="{{.}}"{{if eq . $.Host}} selected{{end}}>{{.}}</option>{{end}}
+      </select></label>
+    <button type="submit" class="btn text-sm">{{t .Lang "admin.services.filter"}}</button>
+  </form>
+  <form method="post" action="/admin/services/check" class="ml-auto">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <button type="submit" class="btn text-sm">{{t .Lang "admin.services.check"}}</button>
+  </form>
+</div>
+{{range $h := .Hosts}}
+<section aria-label="{{$h.Name}}" class="mb-9">
+  <div class="section-head"><h2>{{$h.Name}}</h2>{{if $h.CheckedAt}}<p>{{t $.Lang "admin.services.checked"}} {{$h.CheckedAt}}</p>{{end}}</div>
+  {{if $h.Error}}<p class="notice bad" role="alert">{{$h.Error}}</p>
+  {{else if not $h.Services}}<p class="empty">{{t $.Lang "admin.services.none"}}</p>
+  {{else}}
+  <div class="table-wrap">
+  <table>
+    <thead><tr>
+      <th scope="col">{{t $.Lang "admin.services.col.service"}}</th>
+      <th scope="col">{{t $.Lang "admin.services.network"}}</th>
+      <th scope="col">{{t $.Lang "admin.services.col.state"}}</th>
+      <th scope="col">{{t $.Lang "admin.services.col.image"}}</th>
+      <th scope="col">{{t $.Lang "admin.services.col.actions"}}</th>
+    </tr></thead>
+    <tbody>
+    {{range .Services}}
+    <tr>
+      <td><b>{{.Name}}</b>{{if .UpdateAvailable}} <span class="badge warn">{{t $.Lang "admin.services.update"}}</span>{{end}}{{if .StartedAt}}<br><span class="sub">{{t $.Lang "admin.services.since"}} {{.StartedAt}}</span>{{end}}</td>
+      <td><span class="cl">{{t $.Lang "admin.services.network"}}: </span>{{range $i, $n := .Networks}}{{if $i}}, {{end}}{{$n}}{{end}}</td>
+      <td><span class="cl">{{t $.Lang "admin.services.col.state"}}: </span><span class="badge {{if eq .State "running"}}{{if eq .Health "unhealthy"}}bad{{else}}ok{{end}}{{else}}bad{{end}}">{{.State}}{{if ne .Health "none"}} · {{.Health}}{{end}}</span></td>
+      <td><span class="cl">{{t $.Lang "admin.services.col.image"}}: </span><code class="wrap">{{.Image}}</code></td>
+      <td>
+        {{if .Unit}}
+        {{$svc := .}}
+        {{range $a := $.Actions}}
+          {{if or (ne $a "start") (ne $svc.State "running")}}{{if or (ne $a "update") $svc.UpdateAvailable}}
+          <form method="post" action="/admin/services/action" class="inline">
+            <input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="host" value="{{$h.Name}}"><input type="hidden" name="name" value="{{$svc.Name}}"><input type="hidden" name="action" value="{{$a}}"><input type="hidden" name="network" value="{{$.Network}}"><input type="hidden" name="filter_host" value="{{$.Host}}">
+            <button type="submit" class="btn text-sm">{{t $.Lang (printf "admin.services.do.%s" $a)}}</button>
+          </form>
+          {{end}}{{end}}
+        {{end}}
+        {{if and (not .Protected) (eq .State "running")}}
+          <form method="post" action="/admin/services/action" class="inline">
+            <input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="host" value="{{$h.Name}}"><input type="hidden" name="name" value="{{.Name}}"><input type="hidden" name="action" value="stop"><input type="hidden" name="network" value="{{$.Network}}"><input type="hidden" name="filter_host" value="{{$.Host}}">
+            <label class="check text-sm"><input type="checkbox" name="confirm" value="yes" required> {{t $.Lang "admin.services.sure"}}</label>
+            <button type="submit" class="btn text-sm">{{t $.Lang "admin.services.do.stop"}}</button>
+          </form>
+        {{end}}
+        {{else}}<span class="sub">{{t $.Lang "admin.services.unmanaged"}}</span>{{end}}
+      </td>
+    </tr>
+    {{end}}
+    </tbody>
+  </table>
+  </div>
+  {{end}}
+</section>
+{{end}}
+{{end}}
+{{template "footer" .}}

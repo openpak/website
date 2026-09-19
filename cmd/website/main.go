@@ -185,6 +185,7 @@ func run(log *slog.Logger) error {
 	adminSrv.StatusAPI = envOr("STATUS_API_URL", "https://status.openpak.org/api/status")
 	adminSrv.Mods = admin.NewModsAPI(os.Getenv("MODS_INTERNAL_URL"), os.Getenv("MODS_INTERNAL_KEY"))
 	adminSrv.Registry = admin.NewRegistryAPI(os.Getenv("REGISTRY_INTERNAL_URL"), os.Getenv("REGISTRY_ADMIN_KEY"))
+	adminSrv.Ops = admin.NewOpsAPI(os.Getenv("WEBSITE_OPSD_HOSTS"), os.Getenv("WEBSITE_OPSD_KEY"))
 
 	// News: the public feed for the landing page, and the operator gRPC for
 	// /admin/news. Either can be absent; the landing page then has no news

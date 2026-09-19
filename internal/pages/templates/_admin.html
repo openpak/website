@@ -3,6 +3,6 @@
      on a phone every section stays one tap away. */}}
 {{define "adminnav"}}
 <nav aria-label="{{t .Lang "admin.nav"}}" class="mb-7 flex flex-wrap gap-1 border-b border-line pb-3">
-  {{range .Nav}}<a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if .Current}}font-semibold text-ink{{end}}" href="{{.Href}}" {{if .Current}}aria-current="page"{{end}}>{{.Label}}</a>{{end}}
+  {{range .Nav}}<a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if .Current}}font-semibold text-ink{{end}}" href="{{.Href}}" {{if .Current}}aria-current="page"{{end}}>{{.Label}}{{if and (eq .Href "/admin/services") $.Updates}} <span class="badge warn">{{$.Updates}} {{if eq $.Updates 1}}{{t $.Lang "admin.services.updates.one"}}{{else}}{{t $.Lang "admin.services.updates"}}{{end}}</span>{{end}}</a>{{end}}
 </nav>
 {{end}}
