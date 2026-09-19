@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/openpak/website/internal/accounts"
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/saves"
 )
@@ -332,31 +333,12 @@ func storageName(st saves.Storage) string {
 	return st.Bucket + " · " + st.Endpoint
 }
 
-// oauthState binds a consent round trip to the account without a database row: the player's
-// account id plus an HMAC the callback recomputes. The website session secret signs it, so a
-// state forged elsewhere never verifies.
-func (s *Server) oauthState(accountID string) string {
-	return accountID + "." + s.Sessions.HashToken("oauth:"+accountID)
-}
-
-func (s *Server) accountFromState(state string) (string, bool) {
-	i := strings.LastIndexByte(state, '.')
-	if i <= 0 {
-		return "", false
-	}
-	acct := state[:i]
-	if s.Sessions.HashToken("oauth:"+acct) != state[i+1:] {
-		return "", false
-	}
-	return acct, true
-}
-
 func (s *Server) oauthRedirect(r *http.Request, provider string) string {
 	scheme := "https"
 	if !s.Production {
 		scheme = "http"
 	}
-	return scheme + "://" + r.Host + "/account/saves/storage/oauth/" + provider + "/callback"
+	return accounts.StorageOAuthCallback(scheme, r.Host, provider)
 }
 
 // handleSavesOAuthStart sends the signed-in player to the provider's consent page.
@@ -366,7 +348,7 @@ func (s *Server) handleSavesOAuthStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	provider := r.PathValue("provider")
-	u, err := s.Saves.OAuthURL(r.Context(), provider, s.oauthRedirect(r, provider), s.oauthState(v.AccountID))
+	u, err := s.Saves.OAuthURL(r.Context(), provider, s.oauthRedirect(r, provider), accounts.StorageOAuthState(s.Sessions, v.AccountID))
 	if err != nil {
 		back(w, r, "storage-failed", err)
 		return
@@ -378,7 +360,7 @@ func (s *Server) handleSavesOAuthStart(w http.ResponseWriter, r *http.Request) {
 // account, so this works for a consent started from the app as well as from this site.
 func (s *Server) handleSavesOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	provider := r.PathValue("provider")
-	acct, ok := s.accountFromState(r.URL.Query().Get("state"))
+	acct, ok := accounts.AccountFromStorageOAuthState(s.Sessions, r.URL.Query().Get("state"))
 	if !ok {
 		back(w, r, "storage-failed", errors.New("the sign-in did not come back the way it left"))
 		return

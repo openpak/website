@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/openpak/website/internal/accounts"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/media"
@@ -186,9 +187,8 @@ func (s *Server) handleUnlink(w http.ResponseWriter, r *http.Request) {
 	redirectMsg(w, r, "/account", "saved")
 }
 
-// handleLinkWFC links a Wii or DS from a friend code the player read off a game. WFC has no
-// login and no way to type a code on the console, so this is the only link path; the core
-// holds the link ("wfc", console user id) and nn-wfc stores nothing.
+// handleLinkWFC links a Wii or DS from a friend code the player read off a game; the console
+// has no way to type a code itself.
 func (s *Server) handleLinkWFC(w http.ResponseWriter, r *http.Request) {
 	v, ok := s.postGuard(w, r)
 	if !ok {
@@ -198,21 +198,15 @@ func (s *Server) handleLinkWFC(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Wii/DS linking is not available", http.StatusServiceUnavailable)
 		return
 	}
-	profile, err := s.WFC.Resolve(r.Context(), r.PostFormValue("friend_code"))
-	switch {
-	case errors.Is(err, wfc.ErrNotFound):
-		redirectMsg(w, r, "/account", "wfc-notfound")
-		return
-	case err != nil:
-		s.log.Error("wfc resolve", "err", err)
-		http.Error(w, "could not reach the Wii/DS server", http.StatusBadGateway)
-		return
-	}
-	subject := strconv.FormatUint(profile.UserID, 10)
-	err = s.Links.Link(r.Context(), v.AccountID, "wfc", subject, "wfc:"+v.AccountID+":"+subject)
+	err := accounts.LinkWFC(r.Context(), s.WFC, s.Links, v.AccountID, r.PostFormValue("friend_code"))
 	switch {
 	case err == nil:
 		redirectMsg(w, r, "/account", "wfc-linked")
+	case errors.Is(err, wfc.ErrNotFound):
+		redirectMsg(w, r, "/account", "wfc-notfound")
+	case errors.Is(err, accounts.ErrWFCUnreachable):
+		s.log.Error("wfc resolve", "err", err)
+		http.Error(w, "could not reach the Wii/DS server", http.StatusBadGateway)
 	case errors.Is(err, core.ErrConflict):
 		redirectMsg(w, r, "/account", "wfc-taken")
 	default:

@@ -3,10 +3,10 @@ package api
 import (
 	"errors"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
+	"github.com/openpak/website/internal/accounts"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/store"
@@ -96,21 +96,15 @@ func (s *Server) handleLinkWFC(w http.ResponseWriter, r *http.Request, tok store
 		writeError(w, http.StatusServiceUnavailable, "Wii/DS linking is not available")
 		return
 	}
-	profile, err := s.WFC.Resolve(r.Context(), req.FriendCode)
-	switch {
-	case errors.Is(err, wfc.ErrNotFound):
-		writeError(w, http.StatusNotFound, "no Wii/DS profile has that friend code")
-		return
-	case err != nil:
-		s.log.Error("api wfc resolve", "err", err)
-		writeError(w, http.StatusBadGateway, "could not reach the Wii/DS server")
-		return
-	}
-	subject := strconv.FormatUint(profile.UserID, 10)
-	err = s.Links.Link(r.Context(), tok.AccountID, "wfc", subject, "wfc:"+tok.AccountID+":"+subject)
+	err := accounts.LinkWFC(r.Context(), s.WFC, s.Links, tok.AccountID, req.FriendCode)
 	switch {
 	case err == nil:
 		writeJSON(w, http.StatusCreated, map[string]any{"namespace": "wfc", "linked": true})
+	case errors.Is(err, wfc.ErrNotFound):
+		writeError(w, http.StatusNotFound, "no Wii/DS profile has that friend code")
+	case errors.Is(err, accounts.ErrWFCUnreachable):
+		s.log.Error("api wfc resolve", "err", err)
+		writeError(w, http.StatusBadGateway, "could not reach the Wii/DS server")
 	case errors.Is(err, core.ErrConflict):
 		writeError(w, http.StatusConflict, "that console is linked to another account")
 	default:

@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/openpak/website/internal/accounts"
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/store"
 )
@@ -187,9 +188,8 @@ func (s *Server) handleStorageOAuthURL(w http.ResponseWriter, r *http.Request, t
 	if r.TLS == nil && os.Getenv("WEBSITE_ENVIRONMENT") != "production" {
 		scheme = "http"
 	}
-	redirect := scheme + "://" + r.Host + "/account/saves/storage/oauth/" + provider + "/callback"
-	state := tok.AccountID + "." + s.Sessions.HashToken("oauth:"+tok.AccountID)
-	u, err := s.Saves.OAuthURL(r.Context(), provider, redirect, state)
+	redirect := accounts.StorageOAuthCallback(scheme, r.Host, provider)
+	u, err := s.Saves.OAuthURL(r.Context(), provider, redirect, accounts.StorageOAuthState(s.Sessions, tok.AccountID))
 	if err != nil {
 		savesErr(w, err)
 		return
