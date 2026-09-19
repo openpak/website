@@ -3,6 +3,26 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.45.0 — 2026-09-19
+
+- Registry: the v2 network registry runs as its own service, `cmd/openpak-registry` (same image,
+  command `/app/openpak-registry`, ports 20140/20142); the website no longer serves `/api/v2`,
+  holds the signing key or links sigstore/TUF. `GET /internal/status` for the admin page.
+- Admin: `/admin/monitor`, `/admin/services` (every container on every host via
+  `openpak-opsd`, filter by network, restart/start/stop/update, update badge), `/admin/news`,
+  `/admin/titles`, `/admin/mods`, `/admin/registry`; a shared sub-nav; title-status and banner
+  changes are audited; events show the newest 200.
+- `openpak-opsd`: the per-host agent behind the services page (docs/opsd.md).
+- Account: delete the account (password asked again), web and `DELETE /api/v1/me`; display name
+  editable on the web; friends list shows who is online; decline an invitation on the web.
+- Chat asks the core before sending, so a block is refused up front.
+- API: decline a friend request, `GET /api/v1/titles`, `POST /api/v1/password/reset`; a profile
+  edit that leaves out country or birthday keeps them.
+- Landing: the latest news articles, when the news service is configured.
+- Push: a fresh install starts at the newest event instead of replaying the history.
+- Pages and API share the Wii/DS link and storage OAuth state (`internal/accounts`).
+- OpenAPI validates; docs, example.env and CI (Go 1.27) brought up to date.
+
 ## v0.44.4 — 2026-09-19
 
 - Security: every `/admin` form checks a CSRF token (config, federation node create and
