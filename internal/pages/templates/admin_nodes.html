@@ -36,7 +36,7 @@
   <label for="name">{{t .Lang "admin.nodes.name"}}</label>
   <input id="name" name="name" type="text" required maxlength="64">
   <label for="country">{{t .Lang "admin.nodes.country"}}</label>
-  <input id="country" name="country" type="text" required minlength="2" maxlength="2" style="text-transform:uppercase">
+  <input id="country" name="country" type="text" required minlength="2" maxlength="2" class="uppercase">
   <button type="submit" class="primary">{{t .Lang "admin.nodes.create"}}</button>
 </form>
 {{template "footer" .}}

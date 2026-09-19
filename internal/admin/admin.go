@@ -8,11 +8,11 @@ package admin
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"log/slog"
 	"net/http"
 	"slices"
-	"strconv"
 
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
@@ -176,8 +176,9 @@ func (s *Server) handleConfigSave(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
+	// The banner is shown to every visitor, so what it said is part of the record.
 	_ = s.DB.AddAudit(r.Context(), ws.AccountID, "site_config.update",
-		"registrations_open="+strconv.FormatBool(cfg.RegistrationsOpen))
+		fmt.Sprintf("registrations_open=%t banner=%q", cfg.RegistrationsOpen, cfg.BannerMessage))
 	http.Redirect(w, r, "/admin/config", http.StatusSeeOther)
 }
 
@@ -186,9 +187,11 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	// Core invalidation events are the durable audit log (WEB-06). Poll
-	// from the beginning each view; the stream is small and append-only.
-	coreEvents, _, err := s.Core.Poll(r.Context(), 0, 200)
+	// Core invalidation events are the durable audit log (WEB-06). The push
+	// cursor trails the head by seconds when the notifier runs, so it is where
+	// the walk starts; without it the walk starts at the beginning.
+	cursor, _ := s.DB.PushCursor(r.Context())
+	coreEvents, _, err := newestEvents(r.Context(), s.Core, cursor, 200)
 	if err != nil {
 		s.log.Error("poll events", "err", err)
 	}

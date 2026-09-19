@@ -1,6 +1,9 @@
 package pages
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"slices"
 	"sort"
@@ -135,6 +138,40 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 // is partial, scaffold is code waiting on a fact, requestable is listed for votes.
 var allStatuses = []string{"live", "beta", "alpha", "scaffold", "requestable", "not-feasible"}
 
+// TitleStatuses is allStatuses for the admin pages, as a copy so no caller can edit the rule.
+func TitleStatuses() []string { return slices.Clone(allStatuses) }
+
+// ErrBadTitleStatus is a change that names no title, or a status outside allStatuses.
+var ErrBadTitleStatus = errors.New("a title id and one of the known statuses are required")
+
+// SetTitleStatus is the one way a title's status changes, from the public titles page or
+// the admin table: validate, write the row, and leave an audit entry saying what it was
+// before. Features are refused: their status follows the catalog, and a hand edit would be
+// overwritten on the next refresh anyway.
+func SetTitleStatus(ctx context.Context, db store.Store, actorID string, id int64, status, notes string) error {
+	if !slices.Contains(allStatuses, status) {
+		return ErrBadTitleStatus
+	}
+	titles, err := db.ListRequests(ctx, "title", "")
+	if err != nil {
+		return err
+	}
+	i := slices.IndexFunc(titles, func(t store.Request) bool { return t.ID == id })
+	if i < 0 {
+		return ErrBadTitleStatus
+	}
+	notes = strings.TrimSpace(notes)
+	if err := db.SetRequestStatus(ctx, id, status, notes); err != nil {
+		return err
+	}
+	old := titles[i]
+	detail := fmt.Sprintf("%d %s: %s -> %s", id, old.Name, old.Status, status)
+	if notes != old.Notes {
+		detail += fmt.Sprintf(" notes=%q", notes)
+	}
+	return db.AddAudit(ctx, actorID, "title.status", detail)
+}
+
 // handleSetTitleStatus is how a title changes status: an admin picks it on the titles page
 // and the database row changes. The site and the app read that row, so nothing is rebuilt.
 func (s *Server) handleSetTitleStatus(w http.ResponseWriter, r *http.Request) {
@@ -146,13 +183,13 @@ func (s *Server) handleSetTitleStatus(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "admins only", http.StatusForbidden)
 		return
 	}
-	id, err := strconv.ParseInt(r.PostFormValue("id"), 10, 64)
-	status := r.PostFormValue("status")
-	if err != nil || !slices.Contains(allStatuses, status) {
-		http.Error(w, "a title id and one of the known statuses are required", http.StatusBadRequest)
+	id, _ := strconv.ParseInt(r.PostFormValue("id"), 10, 64)
+	err := SetTitleStatus(r.Context(), s.DB, v.AccountID, id, r.PostFormValue("status"), r.PostFormValue("notes"))
+	if errors.Is(err, ErrBadTitleStatus) {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if err := s.DB.SetRequestStatus(r.Context(), id, status, strings.TrimSpace(r.PostFormValue("notes"))); err != nil {
+	if err != nil {
 		s.log.Error("set title status", "id", id, "err", err)
 		http.Error(w, "could not change the status", http.StatusInternalServerError)
 		return
