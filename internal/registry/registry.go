@@ -157,6 +157,13 @@ type Store interface {
 	// fetches answer 410 afterwards. Bytes stay for audit (AUTH-006: already
 	// distributed public bytes cannot be recalled).
 	Withdraw(ctx context.Context, bundleSHA256 string) error
+	// Operator listings for the registry's read-only status route. They
+	// never feed an authorization decision.
+	ListChannels(ctx context.Context) ([]ChannelState, error)
+	// ListRevisions answers the newest revisions first (by issue time),
+	// withdrawn ones included, at most limit of them.
+	ListRevisions(ctx context.Context, limit int) ([]Revision, error)
+	ListClients(ctx context.Context) ([]Client, error)
 
 	Close() error
 }

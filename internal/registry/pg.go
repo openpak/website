@@ -424,3 +424,56 @@ func (s *PG) Withdraw(ctx context.Context, bundleSHA256 string) error {
 	}
 	return nil
 }
+
+func (s *PG) ListChannels(ctx context.Context) ([]ChannelState, error) {
+	rows, err := s.pool.Query(ctx, `SELECT platform, channel, bundle_sha256, sequence, updated_at
+		FROM registry_channels ORDER BY platform, channel`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []ChannelState
+	for rows.Next() {
+		var c ChannelState
+		if err := rows.Scan(&c.Platform, &c.Channel, &c.BundleSHA256, &c.Sequence, &c.UpdatedAt); err != nil {
+			return nil, err
+		}
+		out = append(out, c)
+	}
+	return out, rows.Err()
+}
+
+func (s *PG) ListRevisions(ctx context.Context, limit int) ([]Revision, error) {
+	rows, err := s.pool.Query(ctx, `SELECT `+revisionColumns+`
+		FROM registry_revisions ORDER BY issued_at DESC, sequence DESC LIMIT $1`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []Revision
+	for rows.Next() {
+		r, err := scanRevision(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, r)
+	}
+	return out, rows.Err()
+}
+
+func (s *PG) ListClients(ctx context.Context) ([]Client, error) {
+	rows, err := s.pool.Query(ctx, `SELECT `+clientColumns+` FROM registry_clients ORDER BY id`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []Client
+	for rows.Next() {
+		c, err := scanClient(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, c)
+	}
+	return out, rows.Err()
+}

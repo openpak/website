@@ -118,6 +118,17 @@ func TestPGStoreParity(t *testing.T) {
 		t.Fatalf("session resolution: %q err=%v", res, err)
 	}
 
+	// The status listings read what was just written.
+	if chans, err := s1.ListChannels(ctx); err != nil || len(chans) != 1 || chans[0].BundleSHA256 != bundleSHA {
+		t.Fatalf("list channels: %+v err=%v", chans, err)
+	}
+	if revs, err := s1.ListRevisions(ctx, 50); err != nil || len(revs) != 1 || revs[0].Sequence != a1 {
+		t.Fatalf("list revisions: %+v err=%v", revs, err)
+	}
+	if clients, err := s1.ListClients(ctx); err != nil || len(clients) != 1 || clients[0].Status != ClientSuspended {
+		t.Fatalf("list clients: %+v err=%v", clients, err)
+	}
+
 	// The restart proof: a fresh pool must continue the counter exactly.
 	s1.Close()
 	s2, err := OpenPG(ctx, dsn)

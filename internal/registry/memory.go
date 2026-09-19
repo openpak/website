@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"sort"
 	"sync"
 	"time"
 )
@@ -275,6 +276,52 @@ func (m *MemStore) Withdraw(_ context.Context, bundleSHA256 string) error {
 		return ErrNotFound
 	}
 	return nil
+}
+
+func (m *MemStore) ListChannels(_ context.Context) ([]ChannelState, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	out := make([]ChannelState, 0, len(m.channels))
+	for _, c := range m.channels {
+		out = append(out, c)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Platform != out[j].Platform {
+			return out[i].Platform < out[j].Platform
+		}
+		return out[i].Channel < out[j].Channel
+	})
+	return out, nil
+}
+
+func (m *MemStore) ListRevisions(_ context.Context, limit int) ([]Revision, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	out := make([]Revision, 0, len(m.revs))
+	for _, r := range m.revs {
+		out = append(out, r)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if !out[i].IssuedAt.Equal(out[j].IssuedAt) {
+			return out[i].IssuedAt.After(out[j].IssuedAt)
+		}
+		return out[i].Sequence > out[j].Sequence
+	})
+	if len(out) > limit {
+		out = out[:limit]
+	}
+	return out, nil
+}
+
+func (m *MemStore) ListClients(_ context.Context) ([]Client, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	out := make([]Client, 0, len(m.clients))
+	for _, c := range m.clients {
+		out = append(out, c)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out, nil
 }
 
 // Close releases the store; memory contents are gone afterwards.
