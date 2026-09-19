@@ -3,7 +3,7 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
-## Unreleased
+## v0.46.0 — 2026-09-19
 
 Wired to the account core v0.9.0 contracts (stubs refreshed from account 7b87201).
 
@@ -30,7 +30,12 @@ Wired to the account core v0.9.0 contracts (stubs refreshed from account 7b87201
 - Admin pages follow the public site's design: row lists with status badges instead of wide
   tables, one page head, consistent buttons.
 - Account page: the profile, password, Wii/DS link and delete forms draw their inputs again (they
-  used an undefined `stack` class).
+  used an undefined `stack` class); the avatar picker is a modal again.
+- Downloads: the titles list's rows — logo, name, status, a Download button for the public
+  releases — instead of step lists, per-platform paragraphs and a four-column table.
+- Status: the switch-nexd titles are probed on their host health ports (switch-nex v0.2.16), and
+  3D World, Kirby's Dream Buffet and Clubhouse Games 51 get rows.
+- OpenAPI: the Switch, Wii U and 3DS emulator identity responses have schemas.
 
 ## v0.45.0 — 2026-09-19
 
