@@ -22,15 +22,15 @@
       {{if eq .Status "resolved"}}<span class="block text-sm text-muted break-anywhere">{{.Resolution}} · {{.ResolvedBy}}{{if not .ResolvedAt.IsZero}} · {{.ResolvedAt.Format "2 Jan 2006 15:04"}} UTC{{end}}</span>{{end}}
     </span>
     {{if eq .Status "open"}}
-    <form method="post" action="/admin/reports/{{.ID}}/resolve" class="ml-auto flex flex-wrap items-center gap-2">
+    <form method="post" action="/admin/reports/{{.ID}}/resolve" class="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
       <label class="sr-only" for="res-{{.ID}}">{{t $.Lang "admin.reports.resolution"}}</label>
-      <input id="res-{{.ID}}" name="resolution" class="field text-sm sm:w-56" placeholder="{{t $.Lang "admin.reports.resolution"}}" maxlength="2000" required>
+      <input id="res-{{.ID}}" name="resolution" class="field min-w-0 flex-1 sm:w-56 sm:flex-none" placeholder="{{t $.Lang "admin.reports.resolution"}}" maxlength="2000" required>
       <button type="submit" class="btn text-sm">{{t $.Lang "admin.reports.resolve"}}</button>
     </form>
     {{end}}
   </li>
   {{end}}
 </ul>
-{{else}}<p class="empty">{{t .Lang "admin.reports.none"}}</p>{{end}}
+{{else}}<p class="card p-4 text-muted">{{t .Lang "admin.reports.none"}}</p>{{end}}
 {{template "footer" .}}

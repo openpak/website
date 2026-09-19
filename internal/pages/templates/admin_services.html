@@ -1,7 +1,7 @@
 {{template "header" .}}
 {{template "adminnav" .}}
 <div class="page-head"><h1>{{t .Lang "admin.services"}}</h1><p>{{t .Lang "admin.services.sub"}}</p></div>
-{{if .Error}}<p class="notice bad" role="alert">{{.Error}}</p>{{end}}
+{{if .Error}}<p class="notice bad mb-6" role="alert">{{.Error}}</p>{{end}}
 {{if not .Configured}}
 <p class="notice" role="status">{{t .Lang "admin.services.off"}}</p>
 {{else}}
@@ -9,69 +9,61 @@
   {{/* A plain GET form: the filter works without JavaScript and the URL is shareable. */}}
   <form method="get" action="/admin/services" class="flex flex-wrap items-end gap-2">
     <label class="flex flex-col gap-1 text-sm text-ink-2"><span>{{t .Lang "admin.services.network"}}</span>
-      <select name="network" class="field">
+      <select name="network" class="field w-auto">
         <option value="">{{t .Lang "admin.services.all"}}</option>
         {{range .Networks}}<option value="{{.}}"{{if eq . $.Network}} selected{{end}}>{{.}}</option>{{end}}
       </select></label>
     <label class="flex flex-col gap-1 text-sm text-ink-2"><span>{{t .Lang "admin.services.host"}}</span>
-      <select name="host" class="field">
+      <select name="host" class="field w-auto">
         <option value="">{{t .Lang "admin.services.all"}}</option>
         {{range .HostNames}}<option value="{{.}}"{{if eq . $.Host}} selected{{end}}>{{.}}</option>{{end}}
       </select></label>
     <button type="submit" class="btn text-sm">{{t .Lang "admin.services.filter"}}</button>
   </form>
-  <form method="post" action="/admin/services/check" class="ml-auto">
+  <form method="post" action="/admin/services/check" class="sm:ml-auto">
     <input type="hidden" name="csrf" value="{{.CSRF}}">
     <button type="submit" class="btn text-sm">{{t .Lang "admin.services.check"}}</button>
   </form>
 </div>
 {{range $h := .Hosts}}
 <section aria-label="{{$h.Name}}" class="mb-9">
-  <div class="section-head"><h2>{{$h.Name}}</h2>{{if $h.CheckedAt}}<p>{{t $.Lang "admin.services.checked"}} {{$h.CheckedAt}}</p>{{end}}</div>
-  {{if $h.Error}}<p class="notice bad" role="alert">{{$h.Error}}</p>
-  {{else if not $h.Services}}<p class="empty">{{t $.Lang "admin.services.none"}}</p>
+  <div class="section-head"><h2>{{$h.Name}}</h2>{{if $h.CheckedAt}}<p class="text-sm">{{t $.Lang "admin.services.checked"}} {{$h.CheckedAt}}</p>{{end}}</div>
+  {{if $h.Error}}<p class="notice bad break-anywhere" role="alert">{{$h.Error}}</p>
+  {{else if not $h.Services}}<p class="card p-4 text-muted">{{t $.Lang "admin.services.none"}}</p>
   {{else}}
-  <div class="table-wrap">
-  <table>
-    <thead><tr>
-      <th scope="col">{{t $.Lang "admin.services.col.service"}}</th>
-      <th scope="col">{{t $.Lang "admin.services.network"}}</th>
-      <th scope="col">{{t $.Lang "admin.services.col.state"}}</th>
-      <th scope="col">{{t $.Lang "admin.services.col.image"}}</th>
-      <th scope="col">{{t $.Lang "admin.services.col.actions"}}</th>
-    </tr></thead>
-    <tbody>
+  <ul class="card list-none divide-y divide-line p-0">
     {{range .Services}}
-    <tr>
-      <td><b>{{.Name}}</b>{{if .UpdateAvailable}} <span class="badge warn">{{t $.Lang "admin.services.update"}}</span>{{end}}{{if .StartedAt}}<br><span class="sub">{{t $.Lang "admin.services.since"}} {{.StartedAt}}</span>{{end}}</td>
-      <td><span class="cl">{{t $.Lang "admin.services.network"}}: </span>{{range $i, $n := .Networks}}{{if $i}}, {{end}}{{$n}}{{end}}</td>
-      <td><span class="cl">{{t $.Lang "admin.services.col.state"}}: </span><span class="badge {{if eq .State "running"}}{{if eq .Health "unhealthy"}}bad{{else}}ok{{end}}{{else}}bad{{end}}">{{.State}}{{if ne .Health "none"}} · {{.Health}}{{end}}</span></td>
-      <td><span class="cl">{{t $.Lang "admin.services.col.image"}}: </span><code class="wrap">{{.Image}}</code></td>
-      <td>
+    {{$svc := .}}
+    <li class="flex flex-wrap items-center gap-3 p-4">
+      <span class="min-w-0">
+        <span class="font-semibold break-anywhere">{{.Name}}</span>
+        <span class="badge {{if eq .State "running"}}{{if eq .Health "unhealthy"}}bad{{else}}ok{{end}}{{else}}bad{{end}} ml-1">{{.State}}{{if ne .Health "none"}} · {{.Health}}{{end}}</span>
+        {{if .UpdateAvailable}}<span class="badge warn">{{t $.Lang "admin.services.update"}}</span>{{end}}
+        <span class="block text-sm text-muted break-anywhere">{{range $i, $n := .Networks}}{{if $i}}, {{end}}{{$n}}{{end}} · <code>{{.Image}}</code></span>
+        {{if .StartedAt}}<span class="block text-sm text-muted">{{t $.Lang "admin.services.since"}} {{.StartedAt}}</span>{{end}}
+      </span>
+      <span class="ml-auto flex flex-wrap items-center gap-2">
         {{if .Unit}}
-        {{$svc := .}}
         {{range $a := $.Actions}}
           {{if or (ne $a "start") (ne $svc.State "running")}}{{if or (ne $a "update") $svc.UpdateAvailable}}
-          <form method="post" action="/admin/services/action" class="inline">
+          <form method="post" action="/admin/services/action">
             <input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="host" value="{{$h.Name}}"><input type="hidden" name="name" value="{{$svc.Name}}"><input type="hidden" name="action" value="{{$a}}"><input type="hidden" name="network" value="{{$.Network}}"><input type="hidden" name="filter_host" value="{{$.Host}}">
-            <button type="submit" class="btn text-sm">{{t $.Lang (printf "admin.services.do.%s" $a)}}</button>
+            <button type="submit" class="btn text-sm {{if eq $a "update"}}primary{{end}}">{{t $.Lang (printf "admin.services.do.%s" $a)}}</button>
           </form>
           {{end}}{{end}}
         {{end}}
         {{if and (not .Protected) (eq .State "running")}}
-          <form method="post" action="/admin/services/action" class="inline">
+          <form method="post" action="/admin/services/action" class="flex items-center gap-2">
             <input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="host" value="{{$h.Name}}"><input type="hidden" name="name" value="{{.Name}}"><input type="hidden" name="action" value="stop"><input type="hidden" name="network" value="{{$.Network}}"><input type="hidden" name="filter_host" value="{{$.Host}}">
-            <label class="check text-sm"><input type="checkbox" name="confirm" value="yes" required> {{t $.Lang "admin.services.sure"}}</label>
-            <button type="submit" class="btn text-sm">{{t $.Lang "admin.services.do.stop"}}</button>
+            <label class="flex items-center gap-1 text-sm text-ink-2"><input type="checkbox" class="size-4" name="confirm" value="yes" required> {{t $.Lang "admin.services.sure"}}</label>
+            <button type="submit" class="btn text-sm danger">{{t $.Lang "admin.services.do.stop"}}</button>
           </form>
         {{end}}
-        {{else}}<span class="sub">{{t $.Lang "admin.services.unmanaged"}}</span>{{end}}
-      </td>
-    </tr>
+        {{else}}<span class="text-sm text-muted">{{t $.Lang "admin.services.unmanaged"}}</span>{{end}}
+      </span>
+    </li>
     {{end}}
-    </tbody>
-  </table>
-  </div>
+  </ul>
   {{end}}
 </section>
 {{end}}

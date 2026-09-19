@@ -4,17 +4,17 @@
   <h1>{{t .Lang "admin.title"}}</h1>
   <p>{{t .Lang "admin.sub"}}</p>
 </div>
-<div class="grid">
-  <a class="card" href="/admin/monitor"><h3>{{t .Lang "admin.monitor"}}</h3><p>{{t .Lang "admin.monitor.sub"}}</p></a>
-  <a class="card" href="/admin/services"><h3>{{t .Lang "admin.services"}}</h3><p>{{t .Lang "admin.services.sub"}}</p></a>
-  <a class="card" href="/admin/news"><h3>{{t .Lang "admin.news"}}</h3><p>{{t .Lang "admin.news.sub"}}</p></a>
-  <a class="card" href="/admin/titles"><h3>{{t .Lang "admin.titles"}}</h3><p>{{t .Lang "admin.titles.sub"}}</p></a>
-  <a class="card" href="/admin/mods"><h3>{{t .Lang "admin.mods"}}</h3><p>{{t .Lang "admin.mods.sub"}}</p></a>
-  <a class="card" href="/admin/registry"><h3>{{t .Lang "admin.registry"}}</h3><p>{{t .Lang "admin.registry.sub"}}</p></a>
-  <a class="card" href="/admin/users"><h3>{{t .Lang "admin.users"}}</h3><p>{{t .Lang "admin.users.sub"}}</p></a>
-  <a class="card" href="/admin/reports"><h3>{{t .Lang "admin.reports"}}</h3><p>{{t .Lang "admin.reports.sub"}}</p></a>
-  <a class="card" href="/admin/config"><h3>{{t .Lang "admin.config"}}</h3><p>{{t .Lang "admin.config.sub"}}</p></a>
-  <a class="card" href="/admin/events"><h3>{{t .Lang "admin.events"}}</h3><p>{{t .Lang "admin.events.sub"}}</p></a>
-  <a class="card" href="/admin/nodes"><h3>{{t .Lang "admin.nodes"}}</h3><p>{{t .Lang "admin.nodes.sub"}}</p></a>
-</div>
+<ul class="grid list-none p-0">
+  <li><a class="card block h-full p-5 no-underline hover:border-line-2 hover:bg-paper-2" href="/admin/monitor"><h3 class="text-ink">{{t .Lang "admin.monitor"}}</h3><p class="mb-0 text-sm text-muted">{{t .Lang "admin.monitor.sub"}}</p></a></li>
+  <li><a class="card block h-full p-5 no-underline hover:border-line-2 hover:bg-paper-2" href="/admin/services"><h3 class="text-ink">{{t .Lang "admin.services"}}</h3><p class="mb-0 text-sm text-muted">{{t .Lang "admin.services.sub"}}</p></a></li>
+  <li><a class="card block h-full p-5 no-underline hover:border-line-2 hover:bg-paper-2" href="/admin/news"><h3 class="text-ink">{{t .Lang "admin.news"}}</h3><p class="mb-0 text-sm text-muted">{{t .Lang "admin.news.sub"}}</p></a></li>
+  <li><a class="card block h-full p-5 no-underline hover:border-line-2 hover:bg-paper-2" href="/admin/titles"><h3 class="text-ink">{{t .Lang "admin.titles"}}</h3><p class="mb-0 text-sm text-muted">{{t .Lang "admin.titles.sub"}}</p></a></li>
+  <li><a class="card block h-full p-5 no-underline hover:border-line-2 hover:bg-paper-2" href="/admin/mods"><h3 class="text-ink">{{t .Lang "admin.mods"}}</h3><p class="mb-0 text-sm text-muted">{{t .Lang "admin.mods.sub"}}</p></a></li>
+  <li><a class="card block h-full p-5 no-underline hover:border-line-2 hover:bg-paper-2" href="/admin/nodes"><h3 class="text-ink">{{t .Lang "admin.nodes"}}</h3><p class="mb-0 text-sm text-muted">{{t .Lang "admin.nodes.sub"}}</p></a></li>
+  <li><a class="card block h-full p-5 no-underline hover:border-line-2 hover:bg-paper-2" href="/admin/registry"><h3 class="text-ink">{{t .Lang "admin.registry"}}</h3><p class="mb-0 text-sm text-muted">{{t .Lang "admin.registry.sub"}}</p></a></li>
+  <li><a class="card block h-full p-5 no-underline hover:border-line-2 hover:bg-paper-2" href="/admin/config"><h3 class="text-ink">{{t .Lang "admin.config"}}</h3><p class="mb-0 text-sm text-muted">{{t .Lang "admin.config.sub"}}</p></a></li>
+  <li><a class="card block h-full p-5 no-underline hover:border-line-2 hover:bg-paper-2" href="/admin/events"><h3 class="text-ink">{{t .Lang "admin.events"}}</h3><p class="mb-0 text-sm text-muted">{{t .Lang "admin.events.sub"}}</p></a></li>
+  <li><a class="card block h-full p-5 no-underline hover:border-line-2 hover:bg-paper-2" href="/admin/users"><h3 class="text-ink">{{t .Lang "admin.users"}}</h3><p class="mb-0 text-sm text-muted">{{t .Lang "admin.users.sub"}}</p></a></li>
+  <li><a class="card block h-full p-5 no-underline hover:border-line-2 hover:bg-paper-2" href="/admin/reports"><h3 class="text-ink">{{t .Lang "admin.reports"}}</h3><p class="mb-0 text-sm text-muted">{{t .Lang "admin.reports.sub"}}</p></a></li>
+</ul>
 {{template "footer" .}}

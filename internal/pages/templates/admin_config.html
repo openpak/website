@@ -1,11 +1,12 @@
 {{template "header" .}}
 {{template "adminnav" .}}
 <div class="page-head"><h1>{{t .Lang "admin.config"}}</h1><p>{{t .Lang "admin.config.sub"}}</p></div>
-<form method="post" action="/admin/config" class="form-stack max-w-md">
+<form method="post" action="/admin/config" class="form-stack card max-w-md p-5">
   <input type="hidden" name="csrf" value="{{.CSRF}}">
-  <label class="flex items-center gap-2"><input type="checkbox" class="size-5 min-h-0 p-0" name="registrations_open" {{if .RegistrationsOpen}}checked{{end}}> {{t .Lang "admin.registrations"}}</label>
+  <label class="flex items-center gap-2 text-base text-ink"><input type="checkbox" class="size-5 min-h-0 p-0" name="registrations_open" {{if .RegistrationsOpen}}checked{{end}}> {{t .Lang "admin.registrations"}}</label>
   <label for="banner">{{t .Lang "admin.banner"}}</label>
   <input id="banner" name="banner" type="text" value="{{.BannerMessage}}" maxlength="200">
+  <p class="hint">{{t .Lang "admin.banner.hint"}}</p>
   <button type="submit" class="btn primary">{{t .Lang "admin.save"}}</button>
 </form>
 {{template "footer" .}}

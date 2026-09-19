@@ -4,39 +4,48 @@
 {{if not .Configured}}
 <p class="notice" role="status">{{t .Lang "admin.mods.off"}}</p>
 {{else}}
-{{if .Error}}<p class="notice bad" role="alert">{{.Error}}</p>{{end}}
-<h2>{{t .Lang "admin.mods.queue"}}</h2>
-{{if not .Queue}}<p class="empty">{{t .Lang "admin.mods.none"}}</p>{{end}}
-{{range .Queue}}
-<article class="card mb-4 p-5">
-  <h3 class="mb-1 break-anywhere">{{.Name}} <span class="font-normal text-muted">{{.Version}}</span></h3>
-  <p class="text-sm text-muted break-anywhere"><code>{{.ID}}</code> · {{.TitleID}} · {{.Author}} · {{.Licence}} · {{.Layout}} · {{.Size}} B</p>
-  {{if .Summary}}<p>{{.Summary}}</p>{{end}}
-  <p class="text-sm break-anywhere">{{t $.Lang "admin.mods.source"}}: <a href="{{.SourceURL}}" rel="noopener noreferrer nofollow">{{.SourceURL}}</a><br><span class="text-muted">sha256 <code>{{.SHA256}}</code></span></p>
-  <div class="flex flex-wrap items-end gap-3">
-    <form method="post" action="/admin/mods/{{.ID}}/publish">
-      <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      <button type="submit" class="btn primary">{{t $.Lang "admin.mods.publish"}}</button>
-    </form>
-    <form method="post" action="/admin/mods/{{.ID}}/reject" class="flex flex-1 flex-wrap gap-2">
-      <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      <label class="sr-only" for="r{{.ID}}">{{t $.Lang "admin.mods.reason"}}</label>
-      <input id="r{{.ID}}" name="reason" type="text" class="field min-w-48 flex-1" required maxlength="500" placeholder="{{t $.Lang "admin.mods.reason"}}">
-      <button type="submit" class="btn">{{t $.Lang "admin.mods.reject"}}</button>
-    </form>
-  </div>
-</article>
-{{end}}
+{{if .Error}}<p class="notice bad mb-6" role="alert">{{.Error}}</p>{{end}}
+<section aria-labelledby="mq-h" class="mb-9">
+  <div class="section-head"><h2 id="mq-h">{{t .Lang "admin.mods.queue"}}</h2></div>
+  {{if .Queue}}
+  <ul class="card list-none divide-y divide-line p-0">
+    {{range .Queue}}
+    <li class="flex flex-col gap-3 p-4">
+      <span class="min-w-0">
+        <span class="font-semibold break-anywhere">{{.Name}}</span> <span class="text-muted">{{.Version}}</span>
+        <span class="block text-sm text-muted break-anywhere">{{.Author}} · {{.Licence}} · {{.Layout}} · {{.Size}} B · <code>{{.TitleID}}</code> · <code>{{.ID}}</code></span>
+        {{with .Summary}}<span class="mt-1 block break-anywhere">{{.}}</span>{{end}}
+        <span class="mt-1 block text-sm break-anywhere">{{t $.Lang "admin.mods.source"}}: <a href="{{.SourceURL}}" rel="noopener noreferrer nofollow">{{.SourceURL}}</a></span>
+        <span class="block text-sm text-muted break-anywhere">sha256 <code>{{.SHA256}}</code></span>
+      </span>
+      <span class="flex flex-wrap items-center gap-2">
+        <form method="post" action="/admin/mods/{{.ID}}/publish">
+          <input type="hidden" name="csrf" value="{{$.CSRF}}">
+          <button type="submit" class="btn text-sm primary">{{t $.Lang "admin.mods.publish"}}</button>
+        </form>
+        <form method="post" action="/admin/mods/{{.ID}}/reject" class="flex min-w-0 flex-1 basis-full items-center gap-2 sm:basis-auto">
+          <input type="hidden" name="csrf" value="{{$.CSRF}}">
+          <label class="sr-only" for="r{{.ID}}">{{t $.Lang "admin.mods.reason"}}</label>
+          <input id="r{{.ID}}" name="reason" type="text" class="field min-w-0 flex-1 sm:max-w-sm" required maxlength="500" placeholder="{{t $.Lang "admin.mods.reason"}}">
+          <button type="submit" class="btn text-sm danger">{{t $.Lang "admin.mods.reject"}}</button>
+        </form>
+      </span>
+    </li>
+    {{end}}
+  </ul>
+  {{else}}<p class="card p-4 text-muted">{{t .Lang "admin.mods.none"}}</p>{{end}}
+</section>
 
-<h2 class="mt-9">{{t .Lang "admin.mods.takedown"}}</h2>
-<p class="text-muted">{{t .Lang "admin.mods.takedown.sub"}}</p>
-<form method="post" action="/admin/mods/takedown" class="form-stack max-w-md">
-  <input type="hidden" name="csrf" value="{{.CSRF}}">
-  <label for="td-id">{{t .Lang "admin.mods.id"}}</label>
-  <input id="td-id" name="id" type="text" required maxlength="80">
-  <label for="td-reason">{{t .Lang "admin.mods.reason"}}</label>
-  <input id="td-reason" name="reason" type="text" required maxlength="500">
-  <button type="submit" class="btn">{{t .Lang "admin.mods.takedown"}}</button>
-</form>
+<section aria-labelledby="mt-h">
+  <div class="section-head"><h2 id="mt-h">{{t .Lang "admin.mods.takedown"}}</h2><p>{{t .Lang "admin.mods.takedown.sub"}}</p></div>
+  <form method="post" action="/admin/mods/takedown" class="form-stack max-w-md">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <label for="td-id">{{t .Lang "admin.mods.id"}}</label>
+    <input id="td-id" name="id" type="text" required maxlength="80">
+    <label for="td-reason">{{t .Lang "admin.mods.reason"}}</label>
+    <input id="td-reason" name="reason" type="text" required maxlength="500">
+    <button type="submit" class="btn danger">{{t .Lang "admin.mods.takedown"}}</button>
+  </form>
+</section>
 {{end}}
 {{template "footer" .}}

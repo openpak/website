@@ -24,12 +24,12 @@
       {{with .BanReason}}<span class="block text-sm text-muted break-anywhere">{{t $.Lang "admin.users.banreason"}}: {{.}}</span>{{end}}
     </span>
     {{if or (eq .Status "active") (eq .Status "banned")}}
-    <form method="post" action="/admin/users/{{.ID}}/ban" class="ml-auto flex flex-wrap items-center gap-2">
+    <form method="post" action="/admin/users/{{.ID}}/ban" class="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
       <input type="hidden" name="q" value="{{$.Query}}">
       <input type="hidden" name="banned" value="{{if eq .Status "banned"}}0{{else}}1{{end}}">
       <label class="sr-only" for="reason-{{.ID}}">{{t $.Lang "admin.users.reason"}}</label>
-      <input id="reason-{{.ID}}" name="reason" class="field text-sm sm:w-56" placeholder="{{t $.Lang "admin.users.reason"}}" maxlength="2000" required>
+      <input id="reason-{{.ID}}" name="reason" class="field min-w-0 flex-1 sm:w-56 sm:flex-none" placeholder="{{t $.Lang "admin.users.reason"}}" maxlength="2000" required>
       {{if eq .Status "banned"}}<button type="submit" class="btn text-sm">{{t $.Lang "admin.users.unban"}}</button>
       {{else}}<button type="submit" class="btn text-sm danger">{{t $.Lang "admin.users.ban"}}</button>{{end}}
     </form>
@@ -37,6 +37,6 @@
   </li>
   {{end}}
 </ul>
-{{else}}<p class="empty">{{t .Lang "admin.users.none"}}</p>{{end}}
+{{else}}<p class="card p-4 text-muted">{{t .Lang "admin.users.none"}}</p>{{end}}
 {{end}}
 {{template "footer" .}}

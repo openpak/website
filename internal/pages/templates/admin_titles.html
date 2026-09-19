@@ -1,26 +1,30 @@
 {{template "header" .}}
 {{template "adminnav" .}}
-{{/* One form per title rather than a table: a form cannot span table cells,
-     and a list of rows reads just as well on a phone. */}}
+{{/* One form per row: a form cannot span table cells, and a row list reads
+     just as well on a phone. */}}
 <div class="page-head"><h1>{{t .Lang "admin.titles"}}</h1><p>{{t .Lang "admin.titles.sub"}}</p></div>
-{{if not .Titles}}<p class="empty">{{t .Lang "admin.titles.none"}}</p>{{end}}
-<div class="card divide-y divide-line p-0">
+{{if .Titles}}
+<ul class="card list-none divide-y divide-line p-0">
   {{range .Titles}}
-  <form method="post" action="/admin/titles" id="t{{.ID}}" class="flex flex-wrap items-center gap-3 p-4">
-    <input type="hidden" name="csrf" value="{{$.CSRF}}">
-    <input type="hidden" name="id" value="{{.ID}}">
-    <div class="min-w-48 flex-1">
-      <span class="font-semibold break-anywhere">{{.Name}}</span>
-      <span class="block text-sm text-muted">{{.Console}} · {{.Votes}} {{t $.Lang "admin.titles.votes"}}</span>
-    </div>
-    <label class="sr-only" for="s{{.ID}}">{{t $.Lang "admin.news.col.state"}}</label>
-    <select id="s{{.ID}}" name="status" class="field w-auto">
-      {{$cur := .Status}}{{range $.Statuses}}<option value="{{.}}" {{if eq . $cur}}selected{{end}}>{{.}}</option>{{end}}
-    </select>
-    <label class="sr-only" for="n{{.ID}}">{{t $.Lang "admin.titles.notes"}}</label>
-    <input id="n{{.ID}}" name="notes" type="text" value="{{.Notes}}" class="field min-w-48 flex-1" maxlength="500" placeholder="{{t $.Lang "admin.titles.notes"}}">
-    <button type="submit" class="btn text-sm">{{t $.Lang "admin.save"}}</button>
-  </form>
+  <li id="t{{.ID}}">
+    <form method="post" action="/admin/titles" class="flex flex-wrap items-center gap-3 p-4">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <input type="hidden" name="id" value="{{.ID}}">
+      <span class="min-w-0 basis-full md:basis-64 md:flex-1">
+        <span class="font-semibold break-anywhere">{{.Name}}</span>
+        <span class="badge {{badgeClass .Status}} ml-1">{{.Status}}</span>
+        <span class="block text-sm text-muted">{{.Console}} · {{.Votes}} {{t $.Lang "admin.titles.votes"}}</span>
+      </span>
+      <label class="sr-only" for="s{{.ID}}">{{t $.Lang "admin.titles.status"}}</label>
+      <select id="s{{.ID}}" name="status" class="field basis-full md:basis-auto md:w-auto">
+        {{$cur := .Status}}{{range $.Statuses}}<option value="{{.}}" {{if eq . $cur}}selected{{end}}>{{.}}</option>{{end}}
+      </select>
+      <label class="sr-only" for="n{{.ID}}">{{t $.Lang "admin.titles.notes"}}</label>
+      <input id="n{{.ID}}" name="notes" type="text" value="{{.Notes}}" class="field w-auto min-w-0 flex-1 md:max-w-xs" maxlength="500" placeholder="{{t $.Lang "admin.titles.notes"}}">
+      <button type="submit" class="btn text-sm">{{t $.Lang "admin.save"}}</button>
+    </form>
+  </li>
   {{end}}
-</div>
+</ul>
+{{else}}<p class="card p-4 text-muted">{{t .Lang "admin.titles.none"}}</p>{{end}}
 {{template "footer" .}}

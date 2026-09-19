@@ -9,35 +9,52 @@
 <section aria-labelledby="rc-h" class="mb-9">
   <div class="section-head"><h2 id="rc-h">{{t .Lang "admin.registry.channels"}}</h2></div>
   {{if .Status.Channels}}
-  <div class="table-wrap">
-  <table>
-    <thead><tr><th scope="col">{{t .Lang "admin.registry.col.channel"}}</th><th scope="col">{{t .Lang "admin.registry.col.revision"}}</th><th scope="col">{{t .Lang "admin.registry.col.sequence"}}</th><th scope="col">{{t .Lang "admin.news.col.updated"}}</th></tr></thead>
-    <tbody>{{range .Status.Channels}}<tr><td>{{.Name}}</td><td><span class="cl">{{t $.Lang "admin.registry.col.revision"}}: </span><code>{{.Revision}}</code></td><td><span class="cl">{{t $.Lang "admin.registry.col.sequence"}}: </span>{{.Sequence}}</td><td><span class="cl">{{t $.Lang "admin.news.col.updated"}}: </span>{{.UpdatedAt.UTC.Format "2006-01-02 15:04"}}</td></tr>{{end}}</tbody>
-  </table>
-  </div>
-  {{else}}<p class="empty">{{t .Lang "admin.registry.none"}}</p>{{end}}
+  <ul class="card list-none divide-y divide-line p-0">
+    {{range .Status.Channels}}
+    <li class="flex items-center gap-3 p-4">
+      <span class="min-w-0">
+        <span class="font-semibold break-anywhere">{{.Name}}</span>
+        <span class="block text-sm text-muted">{{t $.Lang "admin.registry.col.sequence"}} <span>{{.Sequence}}</span> · {{t $.Lang "admin.news.col.updated"}} {{.UpdatedAt.UTC.Format "2 Jan 2006 15:04"}} UTC</span>
+      </span>
+      <code class="ml-auto shrink-0">{{.Revision}}</code>
+    </li>
+    {{end}}
+  </ul>
+  {{else}}<p class="card p-4 text-muted">{{t .Lang "admin.registry.none"}}</p>{{end}}
 </section>
+
 <section aria-labelledby="rr-h" class="mb-9">
   <div class="section-head"><h2 id="rr-h">{{t .Lang "admin.registry.revisions"}}</h2></div>
   {{if .Status.Revisions}}
-  <div class="table-wrap">
-  <table>
-    <thead><tr><th scope="col">{{t .Lang "admin.registry.col.revision"}}</th><th scope="col">{{t .Lang "admin.registry.col.policy"}}</th><th scope="col">{{t .Lang "admin.registry.col.created"}}</th><th scope="col">{{t .Lang "admin.news.col.state"}}</th></tr></thead>
-    <tbody>{{range .Status.Revisions}}<tr><td><code>{{.ID}}</code></td><td><span class="cl">{{t $.Lang "admin.registry.col.policy"}}: </span>{{.PolicyID}}</td><td><span class="cl">{{t $.Lang "admin.registry.col.created"}}: </span>{{.CreatedAt.UTC.Format "2006-01-02 15:04"}}</td><td><span class="cl">{{t $.Lang "admin.news.col.state"}}: </span>{{if .WithdrawnAt}}<span class="badge bad">{{t $.Lang "admin.registry.withdrawn"}} {{.WithdrawnAt.UTC.Format "2006-01-02"}}</span>{{else}}<span class="badge ok">{{t $.Lang "admin.registry.active"}}</span>{{end}}</td></tr>{{end}}</tbody>
-  </table>
-  </div>
-  {{else}}<p class="empty">{{t .Lang "admin.registry.none"}}</p>{{end}}
+  <ul class="card list-none divide-y divide-line p-0">
+    {{range .Status.Revisions}}
+    <li class="flex items-center gap-3 p-4">
+      <span class="min-w-0">
+        <code class="font-semibold">{{.ID}}</code>
+        <span class="block text-sm text-muted break-anywhere">{{t $.Lang "admin.registry.col.policy"}} {{.PolicyID}} · {{t $.Lang "admin.registry.col.created"}} {{.CreatedAt.UTC.Format "2 Jan 2006 15:04"}} UTC</span>
+      </span>
+      <span class="ml-auto shrink-0">{{if .WithdrawnAt}}<span class="badge bad">{{t $.Lang "admin.registry.withdrawn"}} {{.WithdrawnAt.UTC.Format "2006-01-02"}}</span>{{else}}<span class="badge ok">{{t $.Lang "admin.registry.active"}}</span>{{end}}</span>
+    </li>
+    {{end}}
+  </ul>
+  {{else}}<p class="card p-4 text-muted">{{t .Lang "admin.registry.none"}}</p>{{end}}
 </section>
+
 <section aria-labelledby="rk-h">
   <div class="section-head"><h2 id="rk-h">{{t .Lang "admin.registry.clients"}}</h2></div>
   {{if .Status.Clients}}
-  <div class="table-wrap">
-  <table>
-    <thead><tr><th scope="col">{{t .Lang "admin.registry.col.client"}}</th><th scope="col">{{t .Lang "admin.registry.col.id"}}</th><th scope="col">{{t .Lang "admin.news.col.state"}}</th></tr></thead>
-    <tbody>{{range .Status.Clients}}<tr><td>{{.Name}}</td><td><code>{{.ID}}</code></td><td><span class="cl">{{t $.Lang "admin.news.col.state"}}: </span>{{.Status}}</td></tr>{{end}}</tbody>
-  </table>
-  </div>
-  {{else}}<p class="empty">{{t .Lang "admin.registry.none"}}</p>{{end}}
+  <ul class="card list-none divide-y divide-line p-0">
+    {{range .Status.Clients}}
+    <li class="flex items-center gap-3 p-4">
+      <span class="min-w-0">
+        <span class="font-semibold break-anywhere">{{.Name}}</span>
+        <span class="block text-sm text-muted break-anywhere"><code>{{.ID}}</code></span>
+      </span>
+      <span class="ml-auto shrink-0"><span class="badge {{badgeClass .Status}}">{{.Status}}</span></span>
+    </li>
+    {{end}}
+  </ul>
+  {{else}}<p class="card p-4 text-muted">{{t .Lang "admin.registry.none"}}</p>{{end}}
 </section>
 {{end}}
 {{template "footer" .}}

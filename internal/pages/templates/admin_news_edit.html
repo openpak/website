@@ -1,7 +1,10 @@
 {{template "header" .}}
 {{template "adminnav" .}}
-<div class="page-head"><h1>{{.Title}}</h1><p>{{t .Lang "admin.news.form.sub"}}</p></div>
-{{if .Error}}<p class="notice bad" role="alert">{{.Error}}</p>{{end}}
+<div class="page-head">
+  <h1>{{.Title}}{{if .ID}} <span class="badge {{if .Published}}ok{{end}} align-middle">{{if .Published}}{{t .Lang "admin.news.published"}}{{else}}{{t .Lang "admin.news.draft"}}{{end}}</span>{{end}}</h1>
+  <p>{{t .Lang "admin.news.form.sub"}}</p>
+</div>
+{{if .Error}}<p class="notice bad mb-6" role="alert">{{.Error}}</p>{{end}}
 <form method="post" action="/admin/news{{if .ID}}/{{.ID}}{{end}}" class="form-stack max-w-2xl">
   <input type="hidden" name="csrf" value="{{.CSRF}}">
   <label for="slug">{{t .Lang "admin.news.slug"}}</label>
@@ -20,9 +23,9 @@
   <button type="submit" class="btn primary">{{t .Lang "admin.save"}}</button>
 </form>
 {{if .ID}}
-<form method="post" action="/admin/news/{{.ID}}/{{if .Published}}unpublish{{else}}publish{{end}}" class="mt-6">
+<form method="post" action="/admin/news/{{.ID}}/{{if .Published}}unpublish{{else}}publish{{end}}" class="mt-6 max-w-2xl border-t border-line pt-6">
   <input type="hidden" name="csrf" value="{{.CSRF}}">
-  <button type="submit" class="btn">{{if .Published}}{{t .Lang "admin.news.unpublish"}}{{else}}{{t .Lang "admin.news.publish"}}{{end}}</button>
+  <button type="submit" class="btn text-sm">{{if .Published}}{{t .Lang "admin.news.unpublish"}}{{else}}{{t .Lang "admin.news.publish"}}{{end}}</button>
 </form>
 {{end}}
 {{template "footer" .}}
