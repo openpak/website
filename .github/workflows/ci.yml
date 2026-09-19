@@ -6,7 +6,9 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # The OpenPak self-hosted runner, like the release jobs: GitHub-hosted minutes are not
+    # used for private repositories.
+    runs-on: [self-hosted, linux, podman]
     steps:
       - uses: actions/checkout@v4
       # The account-core contracts are vendored in internal/accountpb, so no
