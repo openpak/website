@@ -669,6 +669,21 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, tok
 		writeError(w, http.StatusBadRequest, "invalid body")
 		return
 	}
+	// The core keeps a blank display name but stores country and birthday as sent, so a
+	// field the app left out is filled from the account before it can be erased.
+	if req.Country == "" || req.Birthday == "" {
+		acct, err := s.Identity.GetAccount(r.Context(), tok.AccountID)
+		if err != nil {
+			writeError(w, http.StatusBadGateway, "could not read the account")
+			return
+		}
+		if req.Country == "" {
+			req.Country = acct.Country
+		}
+		if req.Birthday == "" {
+			req.Birthday = acct.Birthday
+		}
+	}
 	err := s.Core.UpdateProfile(r.Context(), tok.CoreSessionID, req.Country, req.Birthday, req.DisplayName)
 	if err != nil {
 		// The core validates: a two-letter country, an ISO date, a name of a

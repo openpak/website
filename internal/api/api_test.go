@@ -134,7 +134,7 @@ func (f *fakeCore) ResolveAccount(_ context.Context, email, password string) (co
 	return core.Account{ID: "acct-" + email, Email: email}, nil
 }
 func (f *fakeCore) GetAccount(_ context.Context, id string) (core.Account, error) {
-	return core.Account{ID: id}, nil
+	return core.Account{ID: id, Country: f.profile[0], Birthday: f.profile[1]}, nil
 }
 
 // The accounts are keyed by email and their ids are "acct-" + email, so the
@@ -508,6 +508,16 @@ func TestProfileEditing(t *testing.T) {
 	}
 	if fc.profile[0] != "IE" {
 		t.Errorf("core received %v", fc.profile)
+	}
+	// A screen that edits only one field must not erase the others: the core stores
+	// country and birthday exactly as sent.
+	_ = do(t, s, http.MethodPost, "/api/v1/me/profile", a.Token, map[string]string{"birthday": "1990-01-02"})
+	if rec := do(t, s, http.MethodPost, "/api/v1/me/profile", a.Token,
+		map[string]string{"display_name": "Ana"}); rec.Code != http.StatusOK {
+		t.Fatalf("name only: %d %s", rec.Code, rec.Body.String())
+	}
+	if fc.profile != [3]string{"IE", "1990-01-02", "Ana"} {
+		t.Errorf("a name-only edit erased the rest: core received %v", fc.profile)
 	}
 	// A bad date is the user's problem to fix, so the reason has to survive.
 	rec = do(t, s, http.MethodPost, "/api/v1/me/profile", a.Token,
