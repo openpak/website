@@ -185,8 +185,8 @@
     "console": "Switch",
     "category": "NEX title",
     "backend": "NEX",
-    "status": "beta",
-    "notes": "0100A8E016236000. Served by switch-nexd (servers/switch-nex) since 2026-09-18, v0.2.15, block 22380: game server 25374500 and access key 6wVacwwe read from our own dump (NEX 4.6.6). Console-played 2026-09-19: login, secure stage and online matchmaking work; no unimplemented call. Not yet matched against a second real player (the game fills empty seats with CPUs after ~10 s). Publisher: Nintendo."
+    "status": "live",
+    "notes": "0100A8E016236000. Served by switch-nexd (servers/switch-nex), block 22380: game server 25374500 and access key 6wVacwwe read from our own dump (NEX 4.6.6). Plays online: 2026-09-19 a console and Ryujinx met through random match and played full matches (v0.2.21). The console needs the OpenPak nro that redirects *.s.n.srv.nintendo.net. A room stays open ~10 s after it opens, then the game fills empty seats with CPUs, so search within a few seconds of each other. Publisher: Nintendo."
   },
   {
     "kind": "title",
