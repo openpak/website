@@ -27,6 +27,10 @@ Wired to the account core v0.9.0 contracts (stubs refreshed from account 7b87201
   in `admin_audit`.
 - `GET /api/v1/news`: the latest published articles for the app; empty when no news service is
   configured.
+- Admin pages follow the public site's design: row lists with status badges instead of wide
+  tables, one page head, consistent buttons.
+- Account page: the profile, password, Wii/DS link and delete forms draw their inputs again (they
+  used an undefined `stack` class).
 
 ## v0.45.0 — 2026-09-19
 
