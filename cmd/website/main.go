@@ -174,6 +174,7 @@ func run(log *slog.Logger) error {
 	}
 	adminSrv := admin.New(tmpl, coreGRPC, db, sessions, cfg.AdminAccountIDs, log)
 	adminSrv.Federation = coreGRPC
+	adminSrv.Moderation = coreGRPC
 	// The monitor's sources. Each is optional and reads as "not configured"
 	// when absent; a typed nil must not reach an interface field, or it would
 	// read as configured and broken.

@@ -1,0 +1,36 @@
+{{template "header" .}}
+{{template "adminnav" .}}
+<div class="page-head">
+  <h1>{{t .Lang "admin.reports"}}</h1>
+  <p>{{t .Lang "admin.reports.help"}}</p>
+</div>
+
+<nav class="mb-4 flex flex-wrap gap-2" aria-label="{{t .Lang "admin.reports.filter"}}">
+  {{range .Filters}}<a class="btn text-sm {{if eq . $.Status}}primary{{end}}" href="/admin/reports?status={{.}}" {{if eq . $.Status}}aria-current="page"{{end}}>{{t $.Lang (printf "admin.reports.%s" .)}}</a>{{end}}
+</nav>
+
+{{if .Reports}}
+<ul class="card list-none divide-y divide-line p-0">
+  {{range .Reports}}
+  <li class="flex flex-wrap items-center gap-3 p-4">
+    <span class="min-w-0">
+      <span class="font-semibold break-anywhere">{{if .SubjectName}}{{.SubjectName}}{{else}}{{.SubjectID}}{{end}}</span>
+      <span class="badge ml-1">{{.Kind}}</span>
+      <span class="badge {{badgeClass .Status}}">{{.Status}}</span>
+      {{with .Detail}}<span class="block break-anywhere">{{.}}</span>{{end}}
+      <span class="block text-sm text-muted break-anywhere">{{t $.Lang "admin.reports.by"}} {{if .ReporterName}}{{.ReporterName}}{{else}}{{.ReporterID}}{{end}} · {{.CreatedAt.Format "2 Jan 2006 15:04"}} UTC · <a href="/admin/users?q={{.SubjectID}}">{{t $.Lang "admin.reports.account"}}</a></span>
+      {{if eq .Status "resolved"}}<span class="block text-sm text-muted break-anywhere">{{.Resolution}} · {{.ResolvedBy}}{{if not .ResolvedAt.IsZero}} · {{.ResolvedAt.Format "2 Jan 2006 15:04"}} UTC{{end}}</span>{{end}}
+    </span>
+    {{if eq .Status "open"}}
+    <form method="post" action="/admin/reports/{{.ID}}/resolve" class="ml-auto flex flex-wrap items-center gap-2">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <label class="sr-only" for="res-{{.ID}}">{{t $.Lang "admin.reports.resolution"}}</label>
+      <input id="res-{{.ID}}" name="resolution" class="field text-sm sm:w-56" placeholder="{{t $.Lang "admin.reports.resolution"}}" maxlength="2000" required>
+      <button type="submit" class="btn text-sm">{{t $.Lang "admin.reports.resolve"}}</button>
+    </form>
+    {{end}}
+  </li>
+  {{end}}
+</ul>
+{{else}}<p class="empty">{{t .Lang "admin.reports.none"}}</p>{{end}}
+{{template "footer" .}}

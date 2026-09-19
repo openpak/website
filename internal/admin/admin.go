@@ -1,9 +1,8 @@
 // Package admin serves role-gated moderation and operator pages (WEB-06,
 // WEB-07). Authorization is fail-closed: only account ids listed in
-// WEBSITE_ADMIN_ACCOUNT_IDS may open any /admin route. Ban/unban and the
-// reports queue require admin contracts in the account core (CR-5, CR-6)
-// and render explicit pending notices until those land — the website never
-// touches core storage and never forks the core.
+// WEBSITE_ADMIN_ACCOUNT_IDS may open any /admin route. Account search,
+// ban/unban and the reports queue go through the core's Moderation service
+// (CR-5, CR-6) — the website never touches core storage.
 package admin
 
 import (
@@ -29,6 +28,9 @@ import (
 type Server struct {
 	// Federation is set by main; nil hides the region page's actions.
 	Federation core.Federation
+	// Moderation is the core's account search, bans and reports; nil says
+	// "not configured" on /admin/users and /admin/reports.
+	Moderation core.Moderation
 	Core       core.Events
 	DB         store.Store
 	Sessions   sessionView
@@ -220,7 +222,9 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/config", s.handleConfigSave)
 	mux.HandleFunc("GET /admin/events", s.handleEvents)
 	mux.HandleFunc("GET /admin/users", s.handleUsers)
+	mux.HandleFunc("POST /admin/users/{id}/ban", s.handleBan)
 	mux.HandleFunc("GET /admin/reports", s.handleReports)
+	mux.HandleFunc("POST /admin/reports/{id}/resolve", s.handleResolveReport)
 	mux.HandleFunc("GET /admin/nodes", s.handleNodes)
 	mux.HandleFunc("POST /admin/nodes", s.handleNodeCreate)
 	mux.HandleFunc("POST /admin/nodes/{id}/approve", s.handleNodeApprove)
@@ -298,28 +302,4 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 		s.page(r, ws, i18n.T("en", "admin.events")),
 		coreEvents, siteAudit,
 	})
-}
-
-// handleUsers: user search and ban/unban are fail-closed pending CR-5.
-func (s *Server) handleUsers(w http.ResponseWriter, r *http.Request) {
-	ws, ok := s.authorize(w, r)
-	if !ok {
-		return
-	}
-	s.render(w, http.StatusOK, "admin_pending.html", struct {
-		base
-		Notice string
-	}{s.page(r, ws, i18n.T("en", "admin.users")), i18n.T("en", "admin.pending.cr5")})
-}
-
-// handleReports: the reports queue is fail-closed pending CR-6.
-func (s *Server) handleReports(w http.ResponseWriter, r *http.Request) {
-	ws, ok := s.authorize(w, r)
-	if !ok {
-		return
-	}
-	s.render(w, http.StatusOK, "admin_pending.html", struct {
-		base
-		Notice string
-	}{s.page(r, ws, i18n.T("en", "admin.reports")), i18n.T("en", "admin.pending.cr6")})
 }

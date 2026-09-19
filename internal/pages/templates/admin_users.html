@@ -1,0 +1,42 @@
+{{template "header" .}}
+{{template "adminnav" .}}
+<div class="page-head">
+  <h1>{{t .Lang "admin.users"}}</h1>
+  <p>{{t .Lang "admin.users.help"}}</p>
+</div>
+
+<form method="get" action="/admin/users" role="search" class="row-form mb-6">
+  <label class="sr-only" for="users-q">{{t .Lang "admin.users.search"}}</label>
+  <input id="users-q" name="q" type="search" value="{{.Query}}" placeholder="{{t .Lang "admin.users.search"}}" autocomplete="off" required>
+  <button type="submit" class="btn text-sm primary">{{t .Lang "admin.users.find"}}</button>
+</form>
+
+{{if .Searched}}
+{{if .Accounts}}
+<ul class="card list-none divide-y divide-line p-0">
+  {{range .Accounts}}
+  <li class="flex flex-wrap items-center gap-3 p-4">
+    <span class="min-w-0">
+      <span class="font-semibold break-anywhere">{{if .DisplayName}}{{.DisplayName}}{{else}}{{.ID}}{{end}}</span>
+      <span class="badge {{badgeClass .Status}} ml-1">{{.Status}}</span>
+      <span class="block text-sm text-muted break-anywhere">{{.Email}}{{if not .EmailVerified}} · {{t $.Lang "admin.users.unverified"}}{{end}}{{if not .CreatedAt.IsZero}} · {{t $.Lang "admin.users.since"}} {{.CreatedAt.Format "2 Jan 2006"}}{{end}}</span>
+      <span class="block text-sm text-muted break-anywhere"><code>{{.ID}}</code>{{range .MatchedSubjects}} · <code>{{.}}</code>{{end}}</span>
+      {{with .BanReason}}<span class="block text-sm text-muted break-anywhere">{{t $.Lang "admin.users.banreason"}}: {{.}}</span>{{end}}
+    </span>
+    {{if or (eq .Status "active") (eq .Status "banned")}}
+    <form method="post" action="/admin/users/{{.ID}}/ban" class="ml-auto flex flex-wrap items-center gap-2">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <input type="hidden" name="q" value="{{$.Query}}">
+      <input type="hidden" name="banned" value="{{if eq .Status "banned"}}0{{else}}1{{end}}">
+      <label class="sr-only" for="reason-{{.ID}}">{{t $.Lang "admin.users.reason"}}</label>
+      <input id="reason-{{.ID}}" name="reason" class="field text-sm sm:w-56" placeholder="{{t $.Lang "admin.users.reason"}}" maxlength="2000" required>
+      {{if eq .Status "banned"}}<button type="submit" class="btn text-sm">{{t $.Lang "admin.users.unban"}}</button>
+      {{else}}<button type="submit" class="btn text-sm danger">{{t $.Lang "admin.users.ban"}}</button>{{end}}
+    </form>
+    {{end}}
+  </li>
+  {{end}}
+</ul>
+{{else}}<p class="empty">{{t .Lang "admin.users.none"}}</p>{{end}}
+{{end}}
+{{template "footer" .}}

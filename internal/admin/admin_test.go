@@ -108,12 +108,12 @@ func TestAdminConfigAndEvents(t *testing.T) {
 		t.Fatalf("events page: %d called=%v", rec.Code, ev.called)
 	}
 
-	// Users and reports pages render the pending-contract notices.
+	// Without the core's moderation service, users and reports say so.
 	for _, path := range []string{"/admin/users", "/admin/reports"} {
 		rec = httptest.NewRecorder()
 		mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
-		if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "CR-") {
-			t.Fatalf("%s must render pending-contract notice: %d", path, rec.Code)
+		if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "not configured") {
+			t.Fatalf("%s must say moderation is not configured: %d", path, rec.Code)
 		}
 	}
 }

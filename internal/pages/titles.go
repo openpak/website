@@ -247,10 +247,12 @@ func consoleSlug(console string) string {
 // neutral (no class) for the not-yet-started long tail.
 func badgeClass(status string) string {
 	switch status {
-	case "live", "working":
+	case "live", "working", "active":
 		return "ok"
-	case "beta", "alpha", "partial":
+	case "beta", "alpha", "partial", "open", "deletion-pending":
 		return "warn"
+	case "banned":
+		return "bad"
 	case "scaffold": // code in the tree, waiting on a fact a console has to reveal
 		return "warn"
 	case "not-feasible", "broken":
