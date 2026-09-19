@@ -55,3 +55,20 @@ func TestLinkWiiFromFriendCode(t *testing.T) {
 		t.Fatalf("second account: %d %s", rec.Code, rec.Header().Get("Location"))
 	}
 }
+
+// TestUnlinkOnlyOwnLink: the revoke form names a link id, and a signed-in account that
+// posts somebody else's must not revoke it.
+func TestUnlinkOnlyOwnLink(t *testing.T) {
+	s, fc, _ := newTestServer(t)
+	fc.accounts["b@x.test"], fc.verified["b@x.test"] = "password-B-1", true
+	fc.links["acct-a@x.test"] = "0123456789ab"
+	b := login(t, s, "b@x.test", "password-B-1")
+
+	rec := authedRequest(s, b, http.MethodPost, "/account/link/revoke", &url.Values{"link_id": {"link-acct-a@x.test"}})
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("revoking another account's link: %d", rec.Code)
+	}
+	if _, ok := fc.links["acct-a@x.test"]; !ok {
+		t.Fatal("A's link was revoked by B")
+	}
+}

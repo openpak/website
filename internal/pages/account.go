@@ -166,6 +166,17 @@ func (s *Server) handleUnlink(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "link required", http.StatusBadRequest)
 		return
 	}
+	// The form names a link id; only one of the viewer's own links may be revoked.
+	owned := false
+	for _, ns := range []string{"switch", "wfc"} {
+		if l, err := s.Links.ActiveLinkByAccount(r.Context(), ns, v.AccountID); err == nil && l.LinkID == linkID {
+			owned = true
+		}
+	}
+	if !owned {
+		http.Error(w, "link not found", http.StatusNotFound)
+		return
+	}
 	key := "unlink:" + v.AccountID + ":" + linkID
 	if err := s.Links.Unlink(r.Context(), linkID, key); err != nil {
 		s.log.Error("unlink", "err", err)
