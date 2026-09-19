@@ -337,9 +337,15 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request, tok store.APIT
 		// So the app can offer "resend the link" and show whether 2FA is on.
 		"email_verified":     acct.EmailVerified,
 		"two_factor_enabled": acct.TwoFactorEnabled,
+		// The Identity contract does not carry the address; the session's whoami does.
+		// Empty rather than an error if that call fails: the rest of /me still stands.
+		"email": "",
 		// Null when the account has never chosen one, so a client shows its own
 		// fallback rather than a broken image. Relative to the site.
 		"avatar_url": nil,
+	}
+	if me, err := s.Core.Whoami(r.Context(), tok.CoreSessionID); err == nil {
+		resp["email"] = me.Email
 	}
 	if s.Media != nil {
 		// Always set: every account has a picture, its own or the preset its

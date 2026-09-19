@@ -1791,6 +1791,7 @@ components:
         display_name: { type: string }
         country: { type: string, description: Empty when the account has never set one. }
         birthday: { type: string, description: Empty when the account has never set one. }
+        email: { type: string, description: "The account's email address; empty if the core could not be asked." }
         email_verified: { type: boolean, description: "False until the address is confirmed; POST /me/verify/resend sends the link again." }
         two_factor_enabled: { type: boolean }
         avatar_url:

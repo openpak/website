@@ -419,6 +419,9 @@ func TestTokenLifecycle(t *testing.T) {
 	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `"linked_platforms":[]`) {
 		t.Fatalf("me: %d %s", rec.Code, rec.Body.String())
 	}
+	if !strings.Contains(rec.Body.String(), `"email":"a@x.test"`) {
+		t.Errorf("me should carry the address (from whoami): %s", rec.Body.String())
+	}
 
 	// Core session revocation (ban/logout) kills the bearer.
 	for sid := range fc.sessions {
