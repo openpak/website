@@ -32,7 +32,12 @@ import (
 )
 
 func main() {
-	log := slog.New(slog.NewTextHandler(os.Stderr, nil))
+	// WEBSITE_LOG_LEVEL=debug also logs every request; anything else is info.
+	level := slog.LevelInfo
+	if os.Getenv("WEBSITE_LOG_LEVEL") == "debug" {
+		level = slog.LevelDebug
+	}
+	log := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level}))
 	if err := run(log); err != nil {
 		log.Error("fatal", "err", err)
 		os.Exit(1)
