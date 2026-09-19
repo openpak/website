@@ -148,6 +148,10 @@ func flashText(code string) string {
 		return i18n.T("en", "account.profile.failed")
 	case "delete-unconfirmed":
 		return i18n.T("en", "account.delete.unconfirmed")
+	case "chat-blocked":
+		return i18n.T("en", "chat.blocked")
+	case "chat-notfriends":
+		return i18n.T("en", "chat.notfriends")
 	case "storage-saved":
 		return i18n.T("en", "saves.storage.ok")
 	case "storage-warning":

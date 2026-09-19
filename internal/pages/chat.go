@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/openpak/website/internal/chat"
+	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
 )
 
@@ -144,6 +145,20 @@ func (s *Server) handleChatSend(w http.ResponseWriter, r *http.Request) {
 	}
 	if body == "" || peer == "" {
 		http.Redirect(w, r, back+"&m=Write+a+message+first", http.StatusSeeOther)
+		return
+	}
+	// The core decides who may message whom; the chat service only checks friendship, and a
+	// block does not end a friendship.
+	switch err := s.Social.CanMessage(r.Context(), v.AccountID, peer); {
+	case errors.Is(err, core.ErrBlocked):
+		http.Redirect(w, r, back+"&m=chat-blocked", http.StatusSeeOther)
+		return
+	case errors.Is(err, core.ErrNotAllowed):
+		http.Redirect(w, r, back+"&m=chat-notfriends", http.StatusSeeOther)
+		return
+	case err != nil:
+		s.log.Error("chat: check interaction", "err", err)
+		http.Redirect(w, r, back+"&m=The+message+could+not+be+sent", http.StatusSeeOther)
 		return
 	}
 	if _, err := s.Chat.Send(r.Context(), v.AccountID, peer, body, ""); err != nil {

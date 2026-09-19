@@ -2,9 +2,12 @@ package pages
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
+
+	"github.com/openpak/website/internal/chat"
 )
 
 // Deleting the account asks for the tick box and the password; with both, the account goes,
@@ -38,5 +41,38 @@ func TestDeleteAccount(t *testing.T) {
 	}
 	if _, err := db.GetWebSession(t.Context(), "sess-"+emailA); err == nil {
 		t.Fatal("the web session row outlived the account")
+	}
+}
+
+// A block stops a chat message before it reaches the chat service, which only checks
+// friendship and would otherwise deliver it: blocking does not end a friendship.
+func TestChatSendRefusedWhenBlocked(t *testing.T) {
+	s, fc, _ := newTestServer(t)
+	sent := 0
+	svc := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		sent++
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_, _ = w.Write([]byte(`{"message":{"id":1,"body":"hi"}}`))
+	}))
+	defer svc.Close()
+	s.Chat = chat.New(svc.URL, "k")
+	emailA, emailB := seedTwoAccounts(fc)
+	idA, idB := "acct-"+emailA, "acct-"+emailB
+	fc.friends = []friendRow{{requester: idA, addressee: idB, accepted: true}}
+	fc.blocks = [][2]string{{idB, idA}}
+	a := login(t, s, emailA, "password-A-1")
+
+	rec := authedRequest(s, a, http.MethodPost, "/account/chat/send", &url.Values{"peer": {idB}, "body": {"hi"}})
+	if rec.Code != http.StatusSeeOther || !strings.Contains(rec.Header().Get("Location"), "m=chat-blocked") || sent != 0 {
+		t.Fatalf("blocked: %d %s, %d sent", rec.Code, rec.Header().Get("Location"), sent)
+	}
+	if !strings.Contains(flashText("chat-blocked"), "blocked") {
+		t.Fatal("the refusal has no words")
+	}
+	fc.blocks = nil
+	rec = authedRequest(s, a, http.MethodPost, "/account/chat/send", &url.Values{"peer": {idB}, "body": {"hi"}})
+	if rec.Code != http.StatusSeeOther || strings.Contains(rec.Header().Get("Location"), "m=") || sent != 1 {
+		t.Fatalf("unblocked: %d %s, %d sent", rec.Code, rec.Header().Get("Location"), sent)
 	}
 }

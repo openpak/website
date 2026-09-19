@@ -12,6 +12,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -32,6 +33,7 @@ type fakeCore struct {
 	wfcLinks       map[string]string // namespace "wfc": the console a typed friend code resolved to
 	subjectToAc    map[string]string
 	deleted        []string // accounts whose deletion was requested
+	blocks         [][2]string
 	invitations    []core.PendingInvitation
 	presence       map[string]core.Presence
 	players        []core.TitlePlayers
@@ -162,8 +164,22 @@ func (f *fakeCore) ListOutgoing(_ context.Context, _ string) ([]core.Friend, err
 func (f *fakeCore) Relationship(_ context.Context, _, _ string) (core.Relationship, error) {
 	return core.RelNone, nil
 }
-func (f *fakeCore) Block(_ context.Context, _, _ string) error   { return nil }
+func (f *fakeCore) Block(_ context.Context, blocker, blocked string) error {
+	f.blocks = append(f.blocks, [2]string{blocker, blocked})
+	return nil
+}
 func (f *fakeCore) Unblock(_ context.Context, _, _ string) error { return nil }
+func (f *fakeCore) CanMessage(_ context.Context, actorID, targetID string) error {
+	for _, b := range f.blocks {
+		if (b[0] == actorID && b[1] == targetID) || (b[0] == targetID && b[1] == actorID) {
+			return core.ErrBlocked
+		}
+	}
+	if !slices.Contains(f.friends[actorID], targetID) && !slices.Contains(f.friends[targetID], actorID) {
+		return core.ErrNotAllowed
+	}
+	return nil
+}
 func (f *fakeCore) ActiveLinkByAccount(_ context.Context, namespace, accountID string) (core.Link, error) {
 	links := f.links
 	if namespace == "wfc" {

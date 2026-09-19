@@ -247,6 +247,18 @@ func (f *fakeCore) Unblock(_ context.Context, blocker, blocked string) error {
 	return nil
 }
 
+func (f *fakeCore) CanMessage(_ context.Context, actorID, targetID string) error {
+	for _, b := range f.blocks {
+		if (b[0] == actorID && b[1] == targetID) || (b[0] == targetID && b[1] == actorID) {
+			return core.ErrBlocked
+		}
+	}
+	if r := f.findFriend(actorID, targetID); r == nil || !r.accepted {
+		return core.ErrNotAllowed
+	}
+	return nil
+}
+
 func (f *fakeCore) ActiveLinkByAccount(_ context.Context, namespace, accountID string) (core.Link, error) {
 	if namespace == "wfc" {
 		sub, ok := f.wfcLinks[accountID]

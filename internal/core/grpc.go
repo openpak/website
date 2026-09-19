@@ -253,6 +253,22 @@ func (g *GRPC) Unblock(ctx context.Context, blockerID, blockedID string) error {
 	return mapGRPC(err)
 }
 
+func (g *GRPC) CanMessage(ctx context.Context, actorID, targetID string) error {
+	c := accountv1.NewSocialClient(g.conn)
+	resp, err := c.CheckInteraction(ctx, &accountv1.CheckInteractionRequest{
+		ActorId: actorID, TargetId: targetID, Kind: accountv1.InteractionKind_INTERACTION_KIND_MESSAGE})
+	switch {
+	case err != nil:
+		return mapGRPC(err)
+	case resp.GetAllowed():
+		return nil
+	case resp.GetReason() == accountv1.DenialReason_DENIAL_REASON_BLOCKED:
+		return ErrBlocked
+	default:
+		return ErrNotAllowed
+	}
+}
+
 // --- Links ---
 
 // switchNamespace is the adapter namespace of the Switch link whose subject

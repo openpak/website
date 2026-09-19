@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/openpak/website/internal/chat"
+	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/store"
 )
 
@@ -77,6 +78,20 @@ func (s *Server) handleChatSend(w http.ResponseWriter, r *http.Request, tok stor
 	}
 	if strings.TrimSpace(in.Body) == "" {
 		writeError(w, http.StatusBadRequest, "body required")
+		return
+	}
+	// The core decides who may message whom; the chat service only checks friendship, and a
+	// block does not end a friendship.
+	switch err := s.Social.CanMessage(r.Context(), tok.AccountID, r.PathValue("peer")); {
+	case errors.Is(err, core.ErrBlocked):
+		writeError(w, http.StatusForbidden, "you cannot message this account")
+		return
+	case errors.Is(err, core.ErrNotAllowed):
+		writeError(w, http.StatusForbidden, "you can only message friends")
+		return
+	case err != nil:
+		s.log.Error("api chat: check interaction", "err", err)
+		writeError(w, http.StatusBadGateway, "could not check who may be messaged")
 		return
 	}
 	m, err := s.Chat.Send(r.Context(), tok.AccountID, r.PathValue("peer"), in.Body, "")

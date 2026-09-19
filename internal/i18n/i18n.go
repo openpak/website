@@ -181,6 +181,8 @@ var languages = map[string]Catalogue{
 		"chat.send":                        "Send",
 		"chat.open":                        "Open",
 		"chat.you":                         "you",
+		"chat.blocked":                     "That message was not sent: one of you has blocked the other.",
+		"chat.notfriends":                  "That message was not sent: you can only message friends.",
 		"saves.title":                      "Cloud saves",
 		"saves.sub":                        "Every save under this account, whichever machine made it. OpenPak keeps a small allowance; connect your own storage for everything beyond it.",
 		"saves.unavailable":                "Cloud saves are not running on this deployment yet.",

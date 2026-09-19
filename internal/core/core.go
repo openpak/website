@@ -17,6 +17,7 @@ var (
 	ErrNotFound           = errors.New("core: not found")
 	ErrConflict           = errors.New("core: conflicting state")
 	ErrBlocked            = errors.New("core: blocked")
+	ErrNotAllowed         = errors.New("core: interaction not allowed")
 	ErrBanned             = errors.New("core: account banned")
 	ErrContractPending    = errors.New("core: contract not yet available (see Contract requests)")
 )
@@ -124,6 +125,11 @@ type Social interface {
 	Relationship(ctx context.Context, accountID, otherID string) (Relationship, error)
 	Block(ctx context.Context, blockerID, blockedID string) error
 	Unblock(ctx context.Context, blockerID, blockedID string) error
+	// CanMessage is the core's enforcement answer for actorID messaging targetID
+	// (CheckInteraction, kind MESSAGE). A block in either direction is
+	// ErrBlocked; any other refusal (not friends, an inactive account) is
+	// ErrNotAllowed.
+	CanMessage(ctx context.Context, actorID, targetID string) error
 }
 
 // Links projects adapter links owned by the core. The friend code shown on

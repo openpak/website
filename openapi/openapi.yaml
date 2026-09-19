@@ -437,6 +437,14 @@ paths:
                   message: { $ref: "#/components/schemas/ChatMessage" }
         "400": { description: body is empty. }
         "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: |
+            The account core refuses the message: one side has blocked the
+            other, or the two are not friends. Nothing was sent.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "502": { description: Whether the message is allowed could not be checked. }
         "503": { description: Chat is not available on this deployment. }
   /regions:
     get:
