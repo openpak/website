@@ -107,7 +107,7 @@ type viewUser struct {
 
 // data builds baseData for a request.
 func (s *Server) data(r *http.Request, v *viewer, title string) baseData {
-	d := baseData{Asset: assetVersion(), Lang: i18n.Lang(r.Header.Get("Accept-Language")), Title: title, Path: r.URL.Path}
+	d := baseData{Asset: assetVersion(), Lang: i18n.FromRequest(r), Title: title, Path: r.URL.Path}
 	if cfg, err := s.DB.GetSiteConfig(r.Context()); err == nil {
 		d.Banner = cfg.BannerMessage
 		d.RegOpen = cfg.RegistrationsOpen
@@ -339,6 +339,9 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /features", s.handleFeatures)
 	mux.HandleFunc("GET /downloads", s.handleDownloads)
 	mux.HandleFunc("GET /status", s.handleStatus)
+	mux.HandleFunc("GET /lang", s.handleLang)
+	mux.HandleFunc("GET /feed/news.xml", s.handleNewsFeed)
+	mux.HandleFunc("GET /feed/titles.xml", s.handleTitlesFeed)
 	// Console linking: the page itself lives in the Switch adapter, but a phone must reach it
 	// under a name with a certificate it trusts — a QR pointing at a bare IP means a warning
 	// page, and one pointing at accounts.nintendo.com only resolves on the console.
@@ -826,4 +829,18 @@ var countries = []country{
 	{"BE", "Belgium"}, {"SE", "Sweden"}, {"NO", "Norway"}, {"DK", "Denmark"},
 	{"FI", "Finland"}, {"PL", "Poland"}, {"BR", "Brazil"}, {"MX", "Mexico"},
 	{"JP", "Japan"}, {"KR", "South Korea"},
+}
+
+// handleLang stores the footer's language choice and returns to the page it
+// came from (same-site paths only).
+func (s *Server) handleLang(w http.ResponseWriter, r *http.Request) {
+	if l := i18n.Match(r.URL.Query().Get("l")); l != "" {
+		http.SetCookie(w, &http.Cookie{Name: i18n.CookieName, Value: l, Path: "/", MaxAge: 365 * 24 * 3600,
+			HttpOnly: true, Secure: s.Sessions.Secure, SameSite: http.SameSiteLaxMode})
+	}
+	back := r.URL.Query().Get("back")
+	if !strings.HasPrefix(back, "/") || strings.HasPrefix(back, "//") || strings.HasPrefix(back, "/\\") {
+		back = "/"
+	}
+	http.Redirect(w, r, back, http.StatusSeeOther)
 }

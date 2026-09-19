@@ -16,6 +16,8 @@
 <title>{{.Title}} · OpenPak</title>
 <link rel="icon" href="/static/icon.svg?v={{.Asset}}" type="image/svg+xml">
 <link rel="stylesheet" href="/static/site.css?v={{.Asset}}">
+<link rel="alternate" type="application/atom+xml" title="OpenPak news" href="/feed/news.xml">
+<link rel="alternate" type="application/atom+xml" title="OpenPak title status" href="/feed/titles.xml">
 </head>
 <body class="min-h-screen flex flex-col">
 <a class="sr-only focus:not-sr-only focus:absolute focus:m-3 focus:p-3 focus:card" href="#main">{{t .Lang "nav.skip"}}</a>
@@ -103,6 +105,12 @@
       <a class="text-muted no-underline hover:text-ink hover:underline" href="/#titles">{{t .Lang "landing.titles"}}</a>
       <a class="text-muted no-underline hover:text-ink hover:underline" href="/register">{{t .Lang "nav.register"}}</a>
     </nav>
+    {{if gt (len langs) 1}}<form action="/lang" method="get" class="flex items-baseline gap-2">
+      <input type="hidden" name="back" value="{{.Path}}">
+      <label for="footer-lang">{{t .Lang "footer.language"}}</label>
+      <select id="footer-lang" name="l" class="rounded border border-line bg-transparent px-1 py-0.5">{{range langs}}<option value="{{.}}" lang="{{.}}"{{if eq . $.Lang}} selected{{end}}>{{t . "lang.name"}}</option>{{end}}</select>
+      <button type="submit" class="rounded border border-line px-2 py-0.5 hover:text-ink">{{t .Lang "footer.language.set"}}</button>
+    </form>{{end}}
     <p class="m-0 max-w-prose sm:ml-auto">{{t .Lang "footer.note"}}</p>
   </div>
 </footer>

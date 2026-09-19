@@ -199,7 +199,7 @@ func (s *Server) handleSetTitleStatus(w http.ResponseWriter, r *http.Request) {
 
 // d0Lang reads the request language the same way s.data does, so the page title
 // is localised without threading baseData through.
-func d0Lang(r *http.Request) string { return i18n.Lang(r.Header.Get("Accept-Language")) }
+func d0Lang(r *http.Request) string { return i18n.FromRequest(r) }
 
 // backPath is where a vote returns the viewer, preserving the sort view.
 func backPath(base string, byVotes bool) string {

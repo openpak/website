@@ -3,6 +3,16 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## Unreleased
+
+- Languages: the UI language follows Accept-Language (q-values; `pt` and `pt-PT` read
+  `pt-BR`, `de-AT` reads `de`), and a `lang` cookie set by a footer form (`GET /lang`, no
+  JavaScript) beats it. The form shows once a second catalogue exists; missing keys fall
+  back to English, and a test fails when a non-admin key is missing from any language.
+- Atom feeds: `/feed/news.xml` (published articles) and `/feed/titles.xml` (title status
+  changes from the `title.status` audit rows; notes and the admin stay out), linked from
+  every page and cached five minutes.
+
 ## v0.46.0 — 2026-09-19
 
 Wired to the account core v0.9.0 contracts (stubs refreshed from account 7b87201).

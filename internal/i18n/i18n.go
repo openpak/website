@@ -2,7 +2,12 @@
 // referenced by key so a second language is one new map.
 package i18n
 
-import "strings"
+import (
+	"net/http"
+	"sort"
+	"strconv"
+	"strings"
+)
 
 // Catalogue is the string catalogue for one language.
 type Catalogue map[string]string
@@ -497,6 +502,9 @@ var languages = map[string]Catalogue{
 		"admin.news.body.hint":             "Plain text. A blank line starts a new paragraph; the landing page shows the first one.",
 		"msg.saved":                        "Saved.",
 		"msg.error":                        "Something went wrong. Please try again.",
+		"lang.name":                        "English",
+		"footer.language":                  "Language",
+		"footer.language.set":              "Change",
 		"footer.note":                      "OpenPak is an independent community network. Not affiliated with any console vendor.",
 	},
 }
@@ -515,12 +523,77 @@ func T(lang, key string) string {
 	return key
 }
 
-// Lang resolves the UI language from an Accept-Language header. English is
-// the only catalogue today; the negotiation point is here so more languages
-// are a catalogue away.
+// CookieName holds a language chosen on the footer form; it beats
+// Accept-Language.
+const CookieName = "lang"
+
+// Supported lists the languages with a catalogue, English first.
+func Supported() []string {
+	out := []string{"en"}
+	for l := range languages {
+		if l != "en" {
+			out = append(out, l)
+		}
+	}
+	sort.Strings(out[1:])
+	return out
+}
+
+// Match returns the catalogue for a language tag: an exact match
+// (case-insensitive) or the one sharing its primary subtag, so de-AT reads
+// de and pt or pt-PT read pt-BR. "" when none.
+func Match(tag string) string {
+	tag = strings.ToLower(strings.TrimSpace(tag))
+	base, _, _ := strings.Cut(tag, "-")
+	for l := range languages {
+		if strings.ToLower(l) == tag {
+			return l
+		}
+	}
+	for l := range languages {
+		if b, _, _ := strings.Cut(strings.ToLower(l), "-"); b == base && base != "" {
+			return l
+		}
+	}
+	return ""
+}
+
+// Lang resolves the UI language from an Accept-Language header, honouring
+// q-values; English when nothing matches.
 func Lang(acceptLanguage string) string {
-	if strings.HasPrefix(strings.ToLower(strings.TrimSpace(acceptLanguage)), "en") || acceptLanguage == "" {
-		return "en"
+	type pref struct {
+		tag string
+		q   float64
+	}
+	var prefs []pref
+	for _, part := range strings.Split(acceptLanguage, ",") {
+		tag, params, _ := strings.Cut(part, ";")
+		q := 1.0
+		if v, ok := strings.CutPrefix(strings.TrimSpace(params), "q="); ok {
+			if f, err := strconv.ParseFloat(v, 64); err == nil {
+				q = f
+			}
+		}
+		if q > 0 {
+			prefs = append(prefs, pref{tag, q})
+		}
+	}
+	sort.SliceStable(prefs, func(i, j int) bool { return prefs[i].q > prefs[j].q })
+	for _, p := range prefs {
+		if l := Match(p.tag); l != "" {
+			return l
+		}
 	}
 	return "en"
+}
+
+// FromRequest is the language for a request: the lang cookie, else
+// Accept-Language.
+func FromRequest(r *http.Request) string {
+	if c, err := r.Cookie(CookieName); err == nil {
+		if l := Match(c.Value); l != "" {
+			return l
+		}
+	}
+	return Lang(r.Header.Get("Accept-Language"))
 }
