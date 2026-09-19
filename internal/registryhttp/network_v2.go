@@ -174,7 +174,8 @@ func (s *Server) networkV2(next func(http.ResponseWriter, *http.Request, v2Auth)
 	}
 }
 
-// RegisterRoutes mounts the protected distribution surface.
+// RegisterRoutes mounts the protected distribution surface and the
+// operator's read-only status route.
 func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v2/network/build-sessions", s.handleBuildSessions)
 	mux.HandleFunc("POST /api/v2/network/resolve", s.networkV2(s.handleResolve))
@@ -182,6 +183,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v2/network/bundles/{sha256}", s.networkV2(s.handleBundle))
 	mux.HandleFunc("GET /api/v2/network/artifacts/{sha256}", s.networkV2(s.handleArtifact))
 	mux.HandleFunc("GET /api/v2/network/clients/self", s.networkV2(s.handleClientSelf))
+	mux.HandleFunc("GET /internal/status", s.handleInternalStatus)
 }
 
 // handleBuildSessions exchanges a verified CI assertion plus a client hash

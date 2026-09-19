@@ -1,8 +1,9 @@
 // Command openpak-registry serves the v2 network distribution surface
-// (/api/v2/network/*, PRD emulators/prds/universal-tls-forwarding/01). It is
-// its own process because the registry is its own trust domain: the online
-// signing key, the registry database and the CI identity never load into the
-// website. Traefik routes openpak.org/api/v2/ here; see docs/registry.md.
+// (/api/v2/network/*, PRD emulators/prds/universal-tls-forwarding/01) and the
+// operator's GET /internal/status. It is its own process because the
+// registry is its own trust domain: the online signing key, the registry
+// database and the CI identity never load into the website. Traefik routes
+// openpak.org/api/v2/ here; see docs/registry.md.
 package main
 
 import (
@@ -57,6 +58,10 @@ func run(log *slog.Logger) error {
 		log.Info("network registry: REGISTRY_* not set; /api/v2/network/* answers 503")
 	}
 	regSrv := registryhttp.New(svc, ci, log)
+	regSrv.AdminKey = os.Getenv("REGISTRY_ADMIN_KEY")
+	if regSrv.AdminKey == "" {
+		log.Info("REGISTRY_ADMIN_KEY not set; /internal/status answers 404")
+	}
 
 	mux := http.NewServeMux()
 	regSrv.RegisterRoutes(mux)

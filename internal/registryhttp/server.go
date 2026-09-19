@@ -30,7 +30,9 @@ type Server struct {
 	V2Bytes              *v2ByteMeter
 	// Auth is the per-IP limiter on build-session issuance.
 	Auth *ratelimit.Limiter
-	log  *slog.Logger
+	// AdminKey authorizes GET /internal/status. Empty disables the route.
+	AdminKey string
+	log      *slog.Logger
 }
 
 // New builds the server with the production quotas. svc and ci may be nil:
