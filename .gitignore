@@ -1,5 +1,7 @@
 # Build/test artifacts
 /website
+/openpak-policy
+/openpak-network
 /storage/
 *.test
 *.out
