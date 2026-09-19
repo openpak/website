@@ -221,6 +221,10 @@ func TestNetworks(t *testing.T) {
 	if got := a.networks("openpak-nn-boss", "3ds"); !reflect.DeepEqual(got, []string{"3ds"}) {
 		t.Errorf("label beats map = %v", got)
 	}
+	a.netMap, _ = parseNetworkMap([]byte(`{"^openpak-nn-friends$": "wiiu, 3ds"}`))
+	if got := a.networks("openpak-nn-friends", ""); !reflect.DeepEqual(got, []string{"wiiu", "3ds"}) {
+		t.Errorf("map value list = %v", got)
+	}
 	if _, err := parseNetworkMap([]byte(`{"(": "x"}`)); err == nil {
 		t.Error("bad regexp accepted")
 	}

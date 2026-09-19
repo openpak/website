@@ -202,21 +202,28 @@ func health(status string) string {
 }
 
 func (a *agent) networks(name, label string) []string {
-	var nets []string
-	for _, n := range strings.Split(label, ",") {
-		if n = strings.TrimSpace(n); n != "" {
-			nets = append(nets, n)
-		}
-	}
-	if len(nets) > 0 {
+	if nets := splitList(label); len(nets) > 0 {
 		return nets
 	}
+	// A map value may name several networks too ("wiiu,3ds"), like the label.
 	for _, r := range a.netMap {
 		if r.re.MatchString(name) {
-			return []string{r.network}
+			if nets := splitList(r.network); len(nets) > 0 {
+				return nets
+			}
 		}
 	}
 	return []string{"unassigned"}
+}
+
+func splitList(s string) []string {
+	var out []string
+	for _, n := range strings.Split(s, ",") {
+		if n = strings.TrimSpace(n); n != "" {
+			out = append(out, n)
+		}
+	}
+	return out
 }
 
 // isProtected accepts either the container name or the unit's base name, so
