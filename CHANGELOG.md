@@ -1,7 +1,7 @@
 # Changelog — website
 
-Generated from git history on 2026-09-15. `git log` stays the source
-of truth; this file is the readable summary.
+Written by hand for recent releases; older entries are the commit subjects of each
+release, taken from git history. `git log` stays the source of truth.
 
 ## v0.44.4 — 2026-09-19
 
@@ -23,6 +23,7 @@ of truth; this file is the readable summary.
 
 ## v0.44.3 — 2026-09-19
 
+- Catalog: Dinkum and Kirby's Dream Buffet are beta.
 - Saves: the list is sorted by game name.
 - API: `POST /api/v1/register` and `POST /api/v1/password/forgot` (public, rate limited per IP,
   same answer whether or not the address exists); `POST /api/v1/me/password`.
@@ -67,253 +68,275 @@ of truth; this file is the readable summary.
   (served by switch-nexd) and Human Fall Flat and Dinkum (registered in npln) are alpha.
 - `POST /api/v1/me/switch/link`: the console-link token for a signed-in emulator.
 
+## v0.42.1 — 2026-09-15
+
+- api: a half-configured registry names its missing variables
+
 ## v0.42.0 — 2026-09-15
 
-
+- registry: the root is provisioned once, not minted at every restart
 
 ## v0.41.4 — 2026-09-14
 
-
+- fetchtool: materialize nested payload paths
 
 ## v0.41.3 — 2026-09-14
 
-
+- openpak-network: authenticate exchanges the CI identity for a build credential
 
 ## v0.41.2 — 2026-09-14
 
-
+- registry: an empty registration scope is an empty array, not a null
 
 ## v0.41.1 — 2026-09-14
 
-
+- Dockerfile: the builder image tracks go.mod's 1.27
 
 ## v0.41.0 — 2026-09-14
 
-
+- netprofile: battle.net joins the universe
+- policy: the v2 canonical policy, its schema and deterministic generation
+- registry: revisions, sequences, atomic promotion and TUF signing
+- api: the /api/v2/network distribution surface
+- openpak-network: the certified build-time fetch tool
+- openpak-policy: the operator console for the registry
+- release: publish static openpak-network binaries and checksums
 
 ## v0.40.0 — 2026-09-13
 
-
+- netprofile: names with an address of their own
 
 ## v0.39.0 — 2026-09-12
 
-
+- release: build on the self-hosted runner with podman; private-repo minutes are metered
+- release: job-scoped registry auth file
+- WD-0: the app sees the Wii/DS link
+- NP-0..NP-3: the network profile, generated from the live routing
+- chat + catalog + friend-code lookup: land the remaining working tree
+- release: REGISTRY_AUTH_FILE belongs on the steps
 
 ## v0.38.0 — 2026-09-11
 
-
+- API: /me/wiiu and /me/3ds, the account's console identity from nn-account
+- gofmt
 
 ## v0.37.0 — 2026-09-11
 
-
+- Titles: the list is what has a server; the long tail is a Request-a-game dialog
 
 ## v0.36.0 — 2026-09-11
 
-
+- Titles: the database is the source of truth for status
 
 ## v0.35.0 — 2026-09-11
 
-
+- Titles: playable first, by console, alphabetically
 
 ## v0.34.0 — 2026-09-11
 
-
+- Catalog: fetch the live openpak/catalog on a timer and reseed
 
 ## v0.33.0 — 2026-09-11
 
-
+- Catalog: Mario vs. Donkey Kong: Tipping Stars
 
 ## v0.32.0 — 2026-09-11
 
-
+- Catalog: fourteen more Wii U/3DS servers and Mario Kart 8 (Wii U)
 
 ## v0.31.0 — 2026-09-11
 
-
+- Catalog: sync with docs/catalog (Wii U/3DS game servers, NPLN and Switch additions, statuses)
 
 ## v0.30.0 — 2026-09-11
 
-
+- Proxy the mod catalogue under /api/v1 when MODS_URL is set
 
 ## v0.29.0 — 2026-09-10
 
-
+- Link a Wii or DS from a friend code
 
 ## v0.28.0 — 2026-09-10
 
-
+- Push: tell the requester when a friend request is accepted
 
 ## v0.27.1 — 2026-09-10
 
-
+- Saves page: one-click clouds first, the bucket and WebDAV forms behind advanced
 
 ## v0.27.0 — 2026-09-10
 
-
+- Storage of every kind: S3, WebDAV, Google Drive and OneDrive
 
 ## v0.26.0 — 2026-09-10
 
-
+- Storage settings on the mobile API
 
 ## v0.25.1 — 2026-09-10
 
-
+- Send the adapter the header it checks
 
 ## v0.25.0 — 2026-09-10
 
-
+- The emulator surface: /api/v1/me/switch and the CA
 
 ## v0.24.2 — 2026-09-10
 
-
+- Console marks: their real colours, and a variant that survives dark mode
 
 ## v0.24.1 — 2026-09-10
 
-
+- Console marks: the real logos in a 3:2 slot, with credits
 
 ## v0.24.0 — 2026-09-10
 
-
+- Cloud saves: the saves page, your own storage, and the emulator API
 
 ## v0.23.0 — 2026-09-10
 
-
+- catalog: games for all eleven consoles, not just Switch
 
 ## v0.22.0 — 2026-09-10
 
-
+- titles/features: match the app — coloured status pills, single-line feature rows
 
 ## v0.21.0 — 2026-09-10
 
-
+- titles: console logo + name left, status pill or Request button right; ranking is admin-only
 
 ## v0.20.0 — 2026-09-10
 
-
+- requests: votes for not-yet-playable games only; features display-only
+- requests: enforce the votable rule server-side, not just in the UI
 
 ## v0.19.1 — 2026-09-10
 
-
+- requests API: optional-auth list + path-param vote for the app
 
 ## v0.19.0 — 2026-09-10
 
-
+- requests: votable titles + features seeded from the catalog
+- site: embed the full 157-entry catalog (132 titles) for request seeding
 
 ## v0.18.1 — 2026-09-10
 
-
+- site: fix /titles 500 (use $.Lang inside the titles range) + render test
 
 ## v0.18.0 — 2026-09-10
 
-
+- site: featured titles on the landing page + a filterable/searchable /titles catalogue
 
 ## v0.17.0 — 2026-09-10
 
-
+- site: list the 15 NEX titles + Splatoon 3 in the catalog and game-servers health page
+- site: alphabetize the title catalog and game-servers list
 
 ## v0.16.0 — 2026-09-09
 
-
+- Region nodes: public list, announce relay, admin page
 
 ## v0.15.5 — 2026-09-08
 
-
+- Say online where the number means online
+- Show the friend code, not the console's user id dressed as one
 
 ## v0.15.4 — 2026-09-08
 
-
+- console.jpg answers for every account, not just consoles that uploaded
 
 ## v0.15.3 — 2026-09-08
 
-
+- Every account has a face
 
 ## v0.15.2 — 2026-09-08
 
-
+- The console's avatar reaches the site but never moves its version
 
 ## v0.15.1 — 2026-09-08
 
-
+- docs: bring website's docs in line with what is deployed
+- A core that cannot answer must not sign a phone out
 
 ## v0.15.0 — 2026-09-08
 
-
+- An avatar set on a console is the account's avatar
 
 ## v0.14.1 — 2026-09-08
 
-
+- Status rows are one line
 
 ## v0.14.0 — 2026-09-08
 
-
+- Status rows carry their state in the tint
 
 ## v0.13.0 — 2026-09-08
 
-
+- Rebuild the site on Tailwind, mobile first
 
 ## v0.12.0 — 2026-09-08
 
-
+- Document the status page's health checks and the off switch
+- Make the site behave on a phone
 
 ## v0.11.0 — 2026-09-08
 
+- Check the game servers for real, and publish the numbers
 
+## v0.10.0 — 2026-09-08
+
+- Game servers and console networks on the status page
 
 ## v0.9.0 — 2026-09-08
 
-
+- A status page about games and players, not about processes
 
 ## v0.8.0 — 2026-09-08
 
-
+- Profile editing and avatars on the mobile API
 
 ## v0.7.0 — 2026-09-08
 
-
+- Push notifications, driven by the core's event stream
 
 ## v0.6.0 — 2026-09-08
 
-
+- Presence and an invitations inbox on the mobile API
 
 ## v0.5.1 — 2026-09-08
 
-
+- Country and date of birth on the account page
 
 ## v0.5.0 — 2026-09-07
 
-
+- Ask for country and date of birth when creating an account
 
 ## v0.4.0 — 2026-09-07
 
-
+- Give the site the brand's colour and more presence
 
 ## v0.3.0 — 2026-09-07
 
-
+- Change your password from the account page, and stop caches serving stale CSS
 
 ## v0.2.1 — 2026-09-07
 
-
+- Adopt the OpenPak logo: site icon and header mark
 
 ## v0.2.0 — 2026-09-07
 
-
+- Site UI pass: new landing/features/downloads, avatar presets, friend codes
 
 ## v0.1.2 — 2026-09-07
 
-
+- CI: drop the sibling account checkout, the contracts are vendored
+- Verification links worked nowhere: JoinPath ate the query string
 
 ## v0.1.1 — 2026-09-07
 
-
-
-## v0.1.0 — 2026-09-07
-
-
+- Vendor the account-core stubs so the image builds outside the workspace
 
 ## v0.1.0 — 2026-09-07
 
 - Ship a container image on tag: rootless-ready Dockerfile + ghcr release workflow [d7df6d3]
 - store: idempotent migration SQL (safe re-run after schema_migrations loss) [f970d78]
 - website: openpak.org site, account portal, mobile /api/v1 (W1-W4) [dac898e]
-
