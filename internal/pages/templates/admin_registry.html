@@ -1,0 +1,43 @@
+{{template "header" .}}
+{{template "adminnav" .}}
+<div class="page-head"><h1>{{t .Lang "admin.registry"}}</h1><p>{{t .Lang "admin.registry.sub"}}</p></div>
+{{if not .Configured}}
+<p class="notice" role="status">{{t .Lang "admin.registry.off"}}</p>
+{{else if .Error}}
+<p class="notice bad" role="alert">{{.Error}}</p>
+{{else}}
+<section aria-labelledby="rc-h" class="mb-9">
+  <div class="section-head"><h2 id="rc-h">{{t .Lang "admin.registry.channels"}}</h2></div>
+  {{if .Status.Channels}}
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th scope="col">{{t .Lang "admin.registry.col.channel"}}</th><th scope="col">{{t .Lang "admin.registry.col.revision"}}</th><th scope="col">{{t .Lang "admin.registry.col.sequence"}}</th><th scope="col">{{t .Lang "admin.news.col.updated"}}</th></tr></thead>
+    <tbody>{{range .Status.Channels}}<tr><td>{{.Name}}</td><td><span class="cl">{{t $.Lang "admin.registry.col.revision"}}: </span><code>{{.Revision}}</code></td><td><span class="cl">{{t $.Lang "admin.registry.col.sequence"}}: </span>{{.Sequence}}</td><td><span class="cl">{{t $.Lang "admin.news.col.updated"}}: </span>{{.UpdatedAt.UTC.Format "2006-01-02 15:04"}}</td></tr>{{end}}</tbody>
+  </table>
+  </div>
+  {{else}}<p class="empty">{{t .Lang "admin.registry.none"}}</p>{{end}}
+</section>
+<section aria-labelledby="rr-h" class="mb-9">
+  <div class="section-head"><h2 id="rr-h">{{t .Lang "admin.registry.revisions"}}</h2></div>
+  {{if .Status.Revisions}}
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th scope="col">{{t .Lang "admin.registry.col.revision"}}</th><th scope="col">{{t .Lang "admin.registry.col.policy"}}</th><th scope="col">{{t .Lang "admin.registry.col.created"}}</th><th scope="col">{{t .Lang "admin.news.col.state"}}</th></tr></thead>
+    <tbody>{{range .Status.Revisions}}<tr><td><code>{{.ID}}</code></td><td><span class="cl">{{t $.Lang "admin.registry.col.policy"}}: </span>{{.PolicyID}}</td><td><span class="cl">{{t $.Lang "admin.registry.col.created"}}: </span>{{.CreatedAt.UTC.Format "2006-01-02 15:04"}}</td><td><span class="cl">{{t $.Lang "admin.news.col.state"}}: </span>{{if .WithdrawnAt}}<span class="badge bad">{{t $.Lang "admin.registry.withdrawn"}} {{.WithdrawnAt.UTC.Format "2006-01-02"}}</span>{{else}}<span class="badge ok">{{t $.Lang "admin.registry.active"}}</span>{{end}}</td></tr>{{end}}</tbody>
+  </table>
+  </div>
+  {{else}}<p class="empty">{{t .Lang "admin.registry.none"}}</p>{{end}}
+</section>
+<section aria-labelledby="rk-h">
+  <div class="section-head"><h2 id="rk-h">{{t .Lang "admin.registry.clients"}}</h2></div>
+  {{if .Status.Clients}}
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th scope="col">{{t .Lang "admin.registry.col.client"}}</th><th scope="col">{{t .Lang "admin.registry.col.id"}}</th><th scope="col">{{t .Lang "admin.news.col.state"}}</th></tr></thead>
+    <tbody>{{range .Status.Clients}}<tr><td>{{.Name}}</td><td><code>{{.ID}}</code></td><td><span class="cl">{{t $.Lang "admin.news.col.state"}}: </span>{{.Status}}</td></tr>{{end}}</tbody>
+  </table>
+  </div>
+  {{else}}<p class="empty">{{t .Lang "admin.registry.none"}}</p>{{end}}
+</section>
+{{end}}
+{{template "footer" .}}

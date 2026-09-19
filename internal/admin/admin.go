@@ -51,9 +51,11 @@ type Server struct {
 	News newsv1.NewsClient
 	// Mods is the mods service's curation API; nil says "not configured".
 	Mods *ModsAPI
+	// Registry is the registry service's read-only status; nil says "not configured".
+	Registry *RegistryAPI
 
-	tmpl       *template.Template
-	log        *slog.Logger
+	tmpl *template.Template
+	log  *slog.Logger
 }
 
 // sessionView is the minimal session interface admin needs (avoids an
@@ -99,6 +101,7 @@ var adminNav = []struct{ href, key string }{
 	{"/admin/titles", "admin.titles"},
 	{"/admin/mods", "admin.mods"},
 	{"/admin/nodes", "admin.nodes"},
+	{"/admin/registry", "admin.registry"},
 	{"/admin/config", "admin.nav.config"},
 	{"/admin/events", "admin.nav.events"},
 	{"/admin/users", "admin.nav.users"},
@@ -197,6 +200,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/mods", s.handleMods)
 	mux.HandleFunc("POST /admin/mods/{action}", s.handleModDecision)
 	mux.HandleFunc("POST /admin/mods/{id}/{action}", s.handleModDecision)
+	mux.HandleFunc("GET /admin/registry", s.handleRegistry)
 	mux.HandleFunc("GET /admin/config", s.handleConfig)
 	mux.HandleFunc("POST /admin/config", s.handleConfigSave)
 	mux.HandleFunc("GET /admin/events", s.handleEvents)
