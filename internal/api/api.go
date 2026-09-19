@@ -67,6 +67,7 @@ type Server struct {
 	MediaLimit *ratelimit.Limiter
 	DB         store.Store
 	Sessions   *session.Manager
+	AdminIDs   []string           // WEBSITE_ADMIN_ACCOUNT_IDS: may write the catalog with a session
 	Auth       *ratelimit.Limiter // per IP, token minting
 	PerToken   *ratelimit.Limiter // per token, API calls
 	log        *slog.Logger
@@ -132,6 +133,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	// Public: the title catalogue as the website's /titles page lists it.
 	g("/titles", s.handleTitles)
 	h("/requests/{id}/vote", s.auth(s.handleVoteRequest))
+	s.registerCatalog(mux)
 	// Public: no bearer. A status endpoint that needed an account could not
 	// be read by the thing most likely to want it — someone whose sign-in is
 	// the part that is broken. Registered through the same helper as
@@ -876,11 +878,9 @@ func (s *Server) handleListRequests(w http.ResponseWriter, r *http.Request) {
 	}
 	items := make([]map[string]any, 0, len(reqs))
 	for _, q := range reqs {
-		items = append(items, map[string]any{
-			"id": q.ID, "kind": q.Kind, "name": q.Name, "console": q.Console,
-			"category": q.Category, "backend": q.Backend, "status": q.Status,
-			"notes": q.Notes, "votes": q.Votes, "voted": q.Voted,
-		})
+		m := requestJSON(q)
+		m["votes"], m["voted"] = q.Votes, q.Voted
+		items = append(items, m)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"items": items})
 }

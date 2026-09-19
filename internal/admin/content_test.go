@@ -35,6 +35,13 @@ func TestTitlesAdmin(t *testing.T) {
 	if titles[0].Status != "live" || titles[0].Notes != "verified on hardware" || len(audit) != 1 || !strings.Contains(audit[0].Detail, "beta -> live") {
 		t.Fatalf("saved %+v, audit %+v", titles[0], audit)
 	}
+	// The form writes through the same store call as the API: logged, and last_updated moved.
+	if ch := db.RequestChanges(titles[0].ID); len(ch) != 1 || ch[0].Changes["status"].New != "live" || !titles[0].LastUpdated.After(titles[0].DateAdded) {
+		t.Fatalf("change log %+v, dates %v %v", ch, titles[0].DateAdded, titles[0].LastUpdated)
+	}
+	if rec := post(mux, "/admin/titles", url.Values{"csrf": {"tok-sess-admin"}, "id": {id}, "status": {"shipped"}}); rec.Code != http.StatusBadRequest {
+		t.Fatalf("bad status: %d", rec.Code)
+	}
 }
 
 func TestModsAdmin(t *testing.T) {

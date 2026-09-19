@@ -4,9 +4,7 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
 	"errors"
-	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -59,21 +57,6 @@ func run(log *slog.Logger) error {
 		return err
 	}
 	defer db.Close()
-	if cfg.SeedTitles {
-		reqs, err := store.CatalogRequests()
-		if err != nil {
-			return err
-		}
-		// Upsert: new rows and feature statuses come from the catalog, title statuses
-		// stay the database's, and votes (user data) are left untouched.
-		if err := db.SeedRequests(ctx, reqs); err != nil {
-			log.Warn("seed requests", "err", err)
-		}
-		if cfg.CatalogURL != "" {
-			go refreshCatalog(ctx, db, cfg.CatalogURL, cfg.CatalogRefresh, log)
-		}
-	}
-
 	// Core clients: versioned HTTP + gRPC contracts only.
 	coreHTTP, err := core.NewHTTP(cfg.CoreBaseURL, cfg.CoreHTTPTimeout)
 	if err != nil {
@@ -133,6 +116,7 @@ func run(log *slog.Logger) error {
 	apiSrv.Saves = savesCli
 	apiSrv.SaveTitle = pages.SaveTitle
 	apiSrv.Chat = chatCli
+	apiSrv.AdminIDs = cfg.AdminAccountIDs
 
 	// The network profile (PRD prds/network-profile-service-prd.md): generated from
 	// the live Traefik routing, so adding a title is a server deploy, not six
@@ -276,60 +260,5 @@ func logRequests(log *slog.Logger) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			log.Debug("http", "method", r.Method, "path", r.URL.Path, "dur", time.Since(start).String())
 		})
-	}
-}
-
-// refreshCatalog keeps the title list in step with the live catalog: fetch, and when the body
-// changed since last time, reseed (an upsert; votes are untouched). A failed fetch keeps the
-// last good state, so the page never goes empty because GitHub blinked.
-func refreshCatalog(ctx context.Context, db store.Store, url string, every time.Duration, log *slog.Logger) {
-	client := &http.Client{Timeout: 20 * time.Second}
-	var last [32]byte
-	fetch := func() {
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-		if err != nil {
-			return
-		}
-		resp, err := client.Do(req)
-		if err != nil {
-			log.Warn("catalog refresh", "err", err)
-			return
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-			log.Warn("catalog refresh", "status", resp.Status)
-			return
-		}
-		body, err := io.ReadAll(io.LimitReader(resp.Body, 8<<20))
-		if err != nil {
-			log.Warn("catalog refresh", "err", err)
-			return
-		}
-		sum := sha256.Sum256(body)
-		if sum == last {
-			return
-		}
-		reqs, err := store.ParseCatalog(body)
-		if err != nil {
-			log.Warn("catalog refresh: bad catalog.json, keeping the previous one", "err", err)
-			return
-		}
-		if err := db.SeedRequests(ctx, reqs); err != nil {
-			log.Warn("catalog refresh: seed", "err", err)
-			return
-		}
-		last = sum
-		log.Info("catalog refreshed", "entries", len(reqs))
-	}
-	fetch()
-	ticker := time.NewTicker(every)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			fetch()
-		}
 	}
 }

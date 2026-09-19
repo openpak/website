@@ -68,30 +68,6 @@ func idOf(t *testing.T, m *Memory, name string) int64 {
 	return 0
 }
 
-func TestCatalogParses(t *testing.T) {
-	reqs, err := CatalogRequests()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(reqs) < 40 {
-		t.Fatalf("catalog has %d entries; expected the full list", len(reqs))
-	}
-	var titles, features int
-	for _, r := range reqs {
-		switch r.Kind {
-		case "title":
-			titles++
-		case "feature":
-			features++
-		default:
-			t.Errorf("unexpected kind %q for %q", r.Kind, r.Name)
-		}
-	}
-	if titles == 0 || features == 0 {
-		t.Fatalf("expected both titles and features, got %d/%d", titles, features)
-	}
-}
-
 func TestVoteToggleOnePerAccountIdempotent(t *testing.T) {
 	ctx := context.Background()
 	m := NewMemory()
@@ -136,65 +112,5 @@ func TestVoteToggleOnePerAccountIdempotent(t *testing.T) {
 				t.Error("A should read voted=false after unvote")
 			}
 		}
-	}
-}
-
-// Reseeding never wipes votes (they are user data) and never changes a status the database
-// already holds: the database is the source of truth for status.
-func TestReseedPreservesVotes(t *testing.T) {
-	ctx := context.Background()
-	m := NewMemory()
-	_ = m.SeedRequests(ctx, []Request{{Kind: "title", Name: "Among Us", Status: "alpha", Sort: 1}})
-	id := idOf(t, m, "Among Us")
-	_, _ = m.ToggleVote(ctx, id, "acct-a")
-
-	// Reseed with a new status.
-	_ = m.SeedRequests(ctx, []Request{{Kind: "title", Name: "Among Us", Status: "beta", Sort: 1}})
-	reqs, _ := m.ListRequests(ctx, "title", "acct-a")
-	if len(reqs) != 1 {
-		t.Fatalf("reseed duplicated the row: %d rows", len(reqs))
-	}
-	if reqs[0].Status != "alpha" {
-		t.Errorf("status = %q, want the database's alpha kept over the catalog's beta", reqs[0].Status)
-	}
-	if reqs[0].Votes != 1 || !reqs[0].Voted {
-		t.Errorf("reseed lost the vote: votes=%d voted=%v", reqs[0].Votes, reqs[0].Voted)
-	}
-	if reqs[0].ID != id {
-		t.Errorf("reseed changed the id: %d -> %d", id, reqs[0].ID)
-	}
-}
-
-// A feature has no admin status control, so its status follows the catalog; and a row the
-// catalog drops goes away unless someone voted for it.
-func TestReseedFeaturesFollowCatalogAndPrunes(t *testing.T) {
-	ctx := context.Background()
-	m := NewMemory()
-	_ = m.SeedRequests(ctx, []Request{
-		{Kind: "feature", Name: "nimbus", Console: "3DS", Status: "planned"},
-		{Kind: "feature", Name: "Nintendo DS network", Console: "DS", Status: "planned"},
-		{Kind: "title", Name: "Voted", Console: "DS", Status: "requestable"},
-		{Kind: "title", Name: "Unvoted", Console: "DS", Status: "requestable"},
-	})
-	if _, err := m.ToggleVote(ctx, idOf(t, m, "Voted"), "acct-a"); err != nil {
-		t.Fatal(err)
-	}
-	_ = m.SeedRequests(ctx, []Request{{Kind: "feature", Name: "nimbus", Console: "3DS", Status: "alpha"}})
-	reqs, _ := m.ListRequests(ctx, "", "")
-	got := map[string]string{}
-	for _, r := range reqs {
-		got[r.Name] = r.Status
-	}
-	if got["nimbus"] != "alpha" {
-		t.Errorf("feature status = %q, want the catalog's alpha", got["nimbus"])
-	}
-	if _, ok := got["Nintendo DS network"]; ok {
-		t.Error("a feature the catalog dropped should be deleted")
-	}
-	if _, ok := got["Unvoted"]; ok {
-		t.Error("an unvoted title the catalog dropped should be deleted")
-	}
-	if _, ok := got["Voted"]; !ok {
-		t.Error("a title with votes must survive being dropped from the catalog")
 	}
 }

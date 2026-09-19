@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"slices"
 	"sort"
 	"sync"
 	"time"
@@ -14,6 +15,7 @@ type Memory struct {
 	cfg         SiteConfig
 	tokens      map[string]APIToken // by hash
 	requests    []Request
+	changes     []RequestChange
 	votes       map[int64]map[string]bool // request id -> account id -> voted
 	nextReqID   int64
 	audit       []AuditEntry
@@ -195,45 +197,109 @@ func (m *Memory) ListRequests(_ context.Context, kind, viewerAccountID string) (
 	return out, nil
 }
 
-// SeedRequests upserts by (kind, name, console), preserving ids and votes, with the same
-// status and pruning rules as PG.SeedRequests.
+// SeedRequests is a test fixture: it adds rows as given, without the change log.
 func (m *Memory) SeedRequests(_ context.Context, reqs []Request) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if m.votes == nil {
-		m.votes = map[int64]map[string]bool{}
-	}
-	byKey := map[[3]string]int{}
-	for i, r := range m.requests {
-		byKey[[3]string{r.Kind, r.Name, r.Console}] = i
-	}
 	for _, r := range reqs {
-		key := [3]string{r.Kind, r.Name, r.Console}
-		if i, ok := byKey[key]; ok {
-			existing := m.requests[i]
-			r.ID = existing.ID
-			if existing.Kind != "feature" {
-				r.Status, r.Notes = existing.Status, existing.Notes
-			}
-			m.requests[i] = r
-			continue
-		}
 		m.nextReqID++
-		r.ID = m.nextReqID
+		r.ID, r.DateAdded, r.LastUpdated = m.nextReqID, time.Now(), time.Now()
 		m.requests = append(m.requests, r)
-		byKey[key] = len(m.requests) - 1
 	}
-	listed := map[[3]string]bool{}
-	for _, r := range reqs {
-		listed[[3]string{r.Kind, r.Name, r.Console}] = true
-	}
-	kept := m.requests[:0]
-	for _, r := range m.requests {
-		if listed[[3]string{r.Kind, r.Name, r.Console}] || len(m.votes[r.ID]) > 0 {
-			kept = append(kept, r)
+	return nil
+}
+
+func (m *Memory) indexOf(id int64) int {
+	return slices.IndexFunc(m.requests, func(r Request) bool { return r.ID == id })
+}
+
+func (m *Memory) taken(r Request, except int64) bool {
+	return slices.ContainsFunc(m.requests, func(o Request) bool {
+		return o.ID != except && o.Kind == r.Kind && o.Name == r.Name && o.Console == r.Console
+	})
+}
+
+func (m *Memory) log(id int64, actor, action string, ch map[string]FieldChange) {
+	m.changes = append(m.changes, RequestChange{RequestID: id, Actor: actor, Action: action, At: time.Now(), Changes: ch})
+}
+
+// RequestChanges is the change log of one request, oldest first (tests read it).
+func (m *Memory) RequestChanges(id int64) []RequestChange {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	var out []RequestChange
+	for _, c := range m.changes {
+		if c.RequestID == id {
+			out = append(out, c)
 		}
 	}
-	m.requests = kept
+	return out
+}
+
+func (m *Memory) CreateRequest(_ context.Context, r Request, actor string) (Request, error) {
+	r, err := normalize(r)
+	if err != nil {
+		return r, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.taken(r, 0) {
+		return r, ErrDuplicate
+	}
+	if r.Sort < 0 {
+		r.Sort = 0
+		for _, o := range m.requests {
+			r.Sort = max(r.Sort, o.Sort+1)
+		}
+	}
+	m.nextReqID++
+	r.ID, r.DateAdded, r.LastUpdated, r.Votes, r.Voted = m.nextReqID, time.Now(), time.Now(), 0, false
+	m.requests = append(m.requests, r)
+	m.log(r.ID, actor, "create", diff(nil, fields(r)))
+	return r, nil
+}
+
+func (m *Memory) UpdateRequest(_ context.Context, id int64, p RequestPatch, actor string) (Request, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	i := m.indexOf(id)
+	if i < 0 {
+		return Request{}, ErrNotFound
+	}
+	old := m.requests[i]
+	r, err := normalize(p.apply(old))
+	if err != nil {
+		return old, err
+	}
+	ch := diff(fields(old), fields(r))
+	if len(ch) == 0 {
+		return old, nil
+	}
+	if m.taken(r, id) {
+		return old, ErrDuplicate
+	}
+	r.LastUpdated = time.Now()
+	m.requests[i] = r
+	m.log(id, actor, "update", ch)
+	if d := statusAudit(id, old, r); d != "" {
+		m.auditSeq++
+		m.audit = append(m.audit, AuditEntry{ID: m.auditSeq, ActorID: actor, Action: "title.status", Detail: d, CreatedAt: time.Now()})
+	}
+	return r, nil
+}
+
+func (m *Memory) DeleteRequest(_ context.Context, id int64, actor string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	i := m.indexOf(id)
+	if i < 0 {
+		return ErrNotFound
+	}
+	if len(m.votes[id]) > 0 {
+		return ErrHasVotes
+	}
+	m.log(id, actor, "delete", diff(fields(m.requests[i]), nil))
+	m.requests = slices.Delete(m.requests, i, i+1)
 	return nil
 }
 
@@ -315,17 +381,4 @@ func (m *Memory) SetPushCursor(_ context.Context, v uint64) error {
 	defer m.mu.Unlock()
 	m.pushCursor = v
 	return nil
-}
-
-// SetRequestStatus changes one title's status and notes in place.
-func (m *Memory) SetRequestStatus(_ context.Context, id int64, status, notes string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	for i := range m.requests {
-		if m.requests[i].ID == id {
-			m.requests[i].Status, m.requests[i].Notes = status, notes
-			return nil
-		}
-	}
-	return ErrNotFound
 }

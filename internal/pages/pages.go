@@ -377,7 +377,7 @@ func (s *Server) handleLanding(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleFeatures is the honest feature matrix: every network feature and its
-// real status (working/broken/partial/planned/…), seeded from the catalog.
+// real status (working/broken/partial/planned/…), from the requests table.
 // Display-only — voting is for games, so there are no vote controls here.
 func (s *Server) handleFeatures(w http.ResponseWriter, r *http.Request) {
 	v := s.viewerOf(w, r)

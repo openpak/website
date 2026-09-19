@@ -248,6 +248,14 @@ manage cloud saves. Account security has the same parity: two-factor
 (`/me/2fa/setup|enable|disable`), email change (`POST /me/email`, and
 `POST /email/confirm` for an app that opens the link itself), verification
 resend (`POST /me/verify/resend`) and the block list (`GET /me/blocked`).
+The title and feature catalog is the `requests` table; the database is its only source.
+`POST /api/v1/admin/titles`, `PATCH`/`DELETE /api/v1/admin/titles/{id}` write it, as a
+signed-in admin (with the page's CSRF token as `X-CSRF-Token`) or with the
+`WEBSITE_CATALOG_KEY` bearer (unset: no bearer path). Every write bumps `last_updated` and
+logs each changed field's old and new value in `request_changes`, in the same transaction;
+the admin title forms call the same store method. `GET /api/v1/catalog.json` is a public,
+read-only export in the old `openpak/catalog` file's shape plus `date_added` and
+`last_updated`.
 `GET /api/v1/news` is public: the latest published articles from the news
 service (`NEWS_URL`), an empty list when none is configured. Where the site and the API do the same thing they share
 `internal/accounts`. `contract_test.go` fails the build when a served

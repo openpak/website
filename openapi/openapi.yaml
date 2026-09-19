@@ -724,8 +724,96 @@ paths:
                         backend: { type: string }
                         status: { type: string, examples: ["requestable"] }
                         notes: { type: string }
+                        sort: { type: integer }
+                        date_added: { type: string, format: date-time }
+                        last_updated: { type: string, format: date-time }
                         votes: { type: integer }
                         voted: { type: boolean }
+  /catalog.json:
+    get:
+      summary: Every title and feature, in the old catalog.json shape
+      security: []
+      description: |
+        Public, read-only. A bare array in catalog order; each entry has kind, name,
+        console, category, backend, status, notes, date_added and last_updated. The
+        database is the source; this replaces openpak/catalog's catalog.json.
+        Rate limited per client address.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CatalogEntry" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /admin/titles:
+    post:
+      summary: Add a title or feature to the catalog
+      security: [{ catalogKey: [] }, { adminSession: [] }]
+      description: |
+        kind (title|feature), name and status are required. status is one of live,
+        working, beta, alpha, partial, planned, requestable, not-feasible. sort
+        omitted files the entry last. The write and its request_changes row are one
+        transaction. Unknown fields are refused.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CatalogWrite" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CatalogEntry" }
+        "400": { description: Invalid body or status }
+        "401": { description: No valid key or session }
+        "403": { description: Signed in but not an admin, or no X-CSRF-Token }
+        "409": { description: The same kind, name and console exists }
+  /admin/titles/{id}:
+    patch:
+      summary: Change any of a catalog entry's fields
+      security: [{ catalogKey: [] }, { adminSession: [] }]
+      description: |
+        Partial update: only the fields sent change (kind cannot). Bumps
+        last_updated and logs the old and new value of each changed field in
+        request_changes. A body that changes nothing writes nothing.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CatalogWrite" }
+      responses:
+        "200":
+          description: The entry after the change
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CatalogEntry" }
+        "400": { description: Invalid body or status }
+        "401": { description: No valid key or session }
+        "403": { description: Signed in but not an admin, or no X-CSRF-Token }
+        "404": { description: No such entry }
+        "409": { description: Renamed onto an existing kind, name and console }
+    delete:
+      summary: Remove a catalog entry nobody voted for
+      security: [{ catalogKey: [] }, { adminSession: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Deleted and logged }
+        "401": { description: No valid key or session }
+        "403": { description: Signed in but not an admin, or no X-CSRF-Token }
+        "404": { description: No such entry }
+        "409": { description: The entry has votes }
   /titles:
     get:
       summary: The title catalogue, as the website lists it
@@ -1612,6 +1700,15 @@ components:
       type: http
       scheme: bearer
       description: Token from POST /token.
+    catalogKey:
+      type: http
+      scheme: bearer
+      description: WEBSITE_CATALOG_KEY, for the catalog write routes only. Unset, no key works.
+    adminSession:
+      type: apiKey
+      in: cookie
+      name: opak_session
+      description: A signed-in admin (WEBSITE_ADMIN_ACCOUNT_IDS), with the page's CSRF token as X-CSRF-Token.
   responses:
     SavesUnavailable:
       description: Cloud saves are not available on this deployment.
@@ -1647,6 +1744,32 @@ components:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
   schemas:
+    CatalogWrite:
+      type: object
+      additionalProperties: false
+      properties:
+        kind: { type: string, enum: [title, feature], description: "Create only." }
+        name: { type: string }
+        console: { type: string }
+        category: { type: string }
+        backend: { type: string }
+        status: { type: string, enum: [live, working, beta, alpha, partial, planned, requestable, not-feasible] }
+        notes: { type: string }
+        sort: { type: integer, minimum: 0 }
+    CatalogEntry:
+      type: object
+      properties:
+        id: { type: integer, description: "Not in GET /catalog.json." }
+        kind: { type: string }
+        name: { type: string }
+        console: { type: string }
+        category: { type: string }
+        backend: { type: string }
+        status: { type: string }
+        notes: { type: string }
+        sort: { type: integer, description: "Not in GET /catalog.json." }
+        date_added: { type: string, format: date-time }
+        last_updated: { type: string, format: date-time }
     ConsoleIdentity:
       type: object
       required: [account_id, pid, username, nex_password, mii_name, mii_data, device_type]

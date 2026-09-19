@@ -110,6 +110,24 @@ var migrations = map[string]string{
 	// row and its own votes.
 	"0004_requests_per_console": `ALTER TABLE requests DROP CONSTRAINT IF EXISTS requests_kind_name_key;
 	CREATE UNIQUE INDEX IF NOT EXISTS requests_kind_name_console_key ON requests(kind, name, console);`,
+
+	// The database is the catalog: requests are written through the store (API and admin
+	// forms), never seeded from catalog.json. Existing rows start at the migration time;
+	// scripts/backfill-request-dates sets them from the catalog repository's history.
+	// request_changes has no foreign key on purpose: a delete is logged too.
+	"0005_request_changes": `ALTER TABLE requests
+		ADD COLUMN IF NOT EXISTS date_added timestamptz NOT NULL DEFAULT now(),
+		ADD COLUMN IF NOT EXISTS last_updated timestamptz NOT NULL DEFAULT now();
+
+	CREATE TABLE IF NOT EXISTS request_changes (
+		id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+		request_id bigint NOT NULL,
+		actor text NOT NULL,
+		action text NOT NULL,
+		changed_at timestamptz NOT NULL DEFAULT now(),
+		changes jsonb NOT NULL
+	);
+	CREATE INDEX IF NOT EXISTS request_changes_request_idx ON request_changes(request_id);`,
 }
 
 // Ping verifies database connectivity (status page).

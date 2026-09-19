@@ -35,14 +35,7 @@ type Config struct {
 	// account — without it FCM reaches Android only.
 	FCMCredentialsFile string
 
-	MediaDir   string // filesystem storage root for avatars
-	SeedTitles bool   // WEBSITE_SEED_TITLES: upsert requests from the catalog on boot
-	// CatalogURL is the live catalog.json (the openpak/catalog repository's raw file); the site
-	// refetches it every CatalogRefresh and reseeds, so a new title or a feature's status
-	// change needs no release. A title's status is set by an admin on the titles page.
-	// Empty disables the refresh and the embedded copy is all there is.
-	CatalogURL     string        // CATALOG_URL
-	CatalogRefresh time.Duration // CATALOG_REFRESH, default 10m
+	MediaDir string // filesystem storage root for avatars
 
 	// NetProfileTraefikFile is the read-only mount of Traefik's dynamic
 	// configuration; the network profile (PRD prds/network-profile-service-prd.md) is
@@ -72,9 +65,6 @@ func Load() (Config, error) {
 		SessionSecret:         os.Getenv("WEBSITE_SESSION_SECRET"),
 		Environment:           env("WEBSITE_ENVIRONMENT", "development"),
 		MediaDir:              env("WEBSITE_MEDIA_DIR", "storage/media"),
-		SeedTitles:            env("WEBSITE_SEED_TITLES", "") != "",
-		CatalogURL:            env("CATALOG_URL", "https://raw.githubusercontent.com/openpak/catalog/main/catalog.json"),
-		CatalogRefresh:        duration("CATALOG_REFRESH", 10*time.Minute),
 		NetProfileTraefikFile: os.Getenv("NETPROFILE_TRAEFIK_FILE"),
 		NetProfilePlatformMap: os.Getenv("NETPROFILE_PLATFORM_MAP"),
 	}
@@ -97,13 +87,4 @@ func env(key, def string) string {
 		return v
 	}
 	return def
-}
-
-func duration(key string, fallback time.Duration) time.Duration {
-	if v := os.Getenv(key); v != "" {
-		if d, err := time.ParseDuration(v); err == nil {
-			return d
-		}
-	}
-	return fallback
 }

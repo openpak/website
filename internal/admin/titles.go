@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"errors"
 	"net/http"
 	"sort"
 	"strconv"
@@ -12,8 +11,7 @@ import (
 )
 
 // handleTitles is every title with its status and notes, editable in place.
-// Titles only: a feature row's status follows the catalog, so editing it here
-// would be undone by the next catalog refresh.
+// Titles only; features change through the API (PATCH /api/v1/admin/titles/{id}).
 func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 	ws, ok := s.authorize(w, r)
 	if !ok {
@@ -45,9 +43,8 @@ func (s *Server) handleTitleSave(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	id, _ := strconv.ParseInt(r.PostFormValue("id"), 10, 64)
-	err := pages.SetTitleStatus(r.Context(), s.DB, ws.AccountID, id, r.PostFormValue("status"), r.PostFormValue("notes"))
-	if errors.Is(err, pages.ErrBadTitleStatus) {
+	id, err := pages.UpdateTitleStatus(r.Context(), s.DB, ws.AccountID, r)
+	if pages.BadTitleEdit(err) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

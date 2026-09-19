@@ -2,13 +2,16 @@ package store
 
 import (
 	"context"
-	_ "embed"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"slices"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // ErrNotVotable is returned when a vote targets a request that cannot be voted
@@ -16,13 +19,6 @@ import (
 // signal for what to build next, so counting them on finished work would only
 // pollute the scoreboard.
 var ErrNotVotable = errors.New("store: request is not votable")
-
-// catalogJSON is the honest status source of truth (docs/catalog/catalog.json).
-// Embedded, not read from disk: the container build copies only the repo, so
-// the file must ship inside the binary.
-//
-//go:embed catalog.json
-var catalogJSON []byte
 
 // Request is one votable item: a game (kind=title) or a network feature
 // (kind=feature). Votes/Voted are per-query projections, not columns.
@@ -35,9 +31,12 @@ type Request struct {
 	Backend  string
 	Status   string
 	Notes    string
-	Sort     int // catalog order; lower first
+	Sort     int // catalog order; lower first. Negative on create: after every other row.
 	Votes    int
 	Voted    bool // did the querying account vote for this one
+	// DateAdded is set once when the row is created; LastUpdated moves with every change.
+	DateAdded   time.Time
+	LastUpdated time.Time
 }
 
 // Votable reports whether this request accepts votes: only games (kind=title)
@@ -99,74 +98,12 @@ func CatalogOrder(reqs []Request) []Request {
 	return out
 }
 
-// CatalogRequests parses the embedded catalog: the fallback when the live one
-// (CatalogURL) has not been fetched yet. Sort follows catalog order, which is
-// already curated (live titles first, then the long tail).
-func CatalogRequests() ([]Request, error) { return ParseCatalog(catalogJSON) }
-
-// ParseCatalog parses a catalog.json body, from the embedded copy or from the
-// catalog repository's raw file.
-func ParseCatalog(catalogJSON []byte) ([]Request, error) {
-	var raw []struct {
-		Kind     string `json:"kind"`
-		Name     string `json:"name"`
-		Console  string `json:"console"`
-		Category string `json:"category"`
-		Backend  string `json:"backend"`
-		Status   string `json:"status"`
-		Notes    string `json:"notes"`
-	}
-	if err := json.Unmarshal(catalogJSON, &raw); err != nil {
-		return nil, err
-	}
-	out := make([]Request, len(raw))
-	for i, e := range raw {
-		out[i] = Request{Kind: e.Kind, Name: e.Name, Console: e.Console, Category: e.Category,
-			Backend: e.Backend, Status: e.Status, Notes: e.Notes, Sort: i}
-	}
-	return out, nil
-}
-
-// SeedRequests adds catalog rows by (kind, name, console) and refreshes their category,
-// backend and sort. A title's status and notes are never touched once the row exists: the
-// database is the source of truth for those (SetRequestStatus from the titles page). A
-// feature has no such control and cannot be voted on, so its status and notes follow the
-// catalog. A row the catalog no longer lists is deleted unless someone voted for it — votes
-// are user data and request_votes is never touched otherwise.
-func (s *PG) SeedRequests(ctx context.Context, reqs []Request) error {
-	tx, err := s.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(ctx)
-	kinds, names, consoles := make([]string, len(reqs)), make([]string, len(reqs)), make([]string, len(reqs))
-	for i, r := range reqs {
-		kinds[i], names[i], consoles[i] = r.Kind, r.Name, r.Console
-		if _, err := tx.Exec(ctx, `INSERT INTO requests(kind, name, console, category, backend, status, notes, sort)
-			VALUES($1,$2,$3,$4,$5,$6,$7,$8)
-			ON CONFLICT (kind, name, console) DO UPDATE SET
-				category=EXCLUDED.category, backend=EXCLUDED.backend, sort=EXCLUDED.sort,
-				status=CASE WHEN requests.kind = 'feature' THEN EXCLUDED.status ELSE requests.status END,
-				notes=CASE WHEN requests.kind = 'feature' THEN EXCLUDED.notes ELSE requests.notes END`,
-			r.Kind, r.Name, r.Console, r.Category, r.Backend, r.Status, r.Notes, r.Sort); err != nil {
-			return err
-		}
-	}
-	if _, err := tx.Exec(ctx, `DELETE FROM requests r
-		WHERE (r.kind, r.name, r.console) NOT IN (SELECT * FROM unnest($1::text[], $2::text[], $3::text[]))
-		AND NOT EXISTS (SELECT 1 FROM request_votes v WHERE v.request_id = r.id)`,
-		kinds, names, consoles); err != nil {
-		return err
-	}
-	return tx.Commit(ctx)
-}
-
 // ListRequests returns requests (kind="" for all) with a live vote count and,
 // for a signed-in viewer, whether they voted. Ordered by catalog sort then name.
 func (s *PG) ListRequests(ctx context.Context, kind, viewerAccountID string) ([]Request, error) {
 	rows, err := s.pool.Query(ctx, `
 		SELECT r.id, r.kind, r.name, r.console, r.category, r.backend, r.status, r.notes, r.sort,
-			count(v.account_id) AS votes,
+			r.date_added, r.last_updated, count(v.account_id) AS votes,
 			COALESCE(bool_or(v.account_id = $2), false) AS voted
 		FROM requests r
 		LEFT JOIN request_votes v ON v.request_id = r.id
@@ -181,7 +118,7 @@ func (s *PG) ListRequests(ctx context.Context, kind, viewerAccountID string) ([]
 	for rows.Next() {
 		var r Request
 		if err := rows.Scan(&r.ID, &r.Kind, &r.Name, &r.Console, &r.Category, &r.Backend,
-			&r.Status, &r.Notes, &r.Sort, &r.Votes, &r.Voted); err != nil {
+			&r.Status, &r.Notes, &r.Sort, &r.DateAdded, &r.LastUpdated, &r.Votes, &r.Voted); err != nil {
 			return nil, err
 		}
 		out = append(out, r)
@@ -230,15 +167,212 @@ func (s *PG) RequestVotes(ctx context.Context, requestID int64, accountID string
 	return votes, voted, err
 }
 
-// SetRequestStatus changes one title's status and notes. This is how a game becomes beta or
-// live on the site and in the app: a row update, no release.
-func (s *PG) SetRequestStatus(ctx context.Context, id int64, status, notes string) error {
-	tag, err := s.pool.Exec(ctx, `UPDATE requests SET status=$2, notes=$3 WHERE id=$1`, id, status, notes)
+// Statuses is every status a request may hold. A write naming anything else is refused.
+var Statuses = []string{"live", "working", "beta", "alpha", "partial", "planned", "requestable", "not-feasible"}
+
+var (
+	// ErrInvalid is a request that fails validation; the wrapped message says why.
+	ErrInvalid = errors.New("invalid request")
+	// ErrDuplicate is a create or rename onto an existing (kind, name, console).
+	ErrDuplicate = errors.New("a request with that kind, name and console exists")
+	// ErrHasVotes refuses deleting a request someone voted for: votes are user data.
+	ErrHasVotes = errors.New("the request has votes")
+)
+
+// RequestPatch is a partial update: nil fields stay as they are. Kind is fixed at creation.
+type RequestPatch struct {
+	Name, Console, Category, Backend, Status, Notes *string
+	Sort                                            *int
+}
+
+// RequestChange is one row of request_changes: who created, updated or deleted a request,
+// when, and each changed field's old and new value (nil on the side that did not exist).
+type RequestChange struct {
+	RequestID int64
+	Actor     string // an admin account id, or "api-key"
+	Action    string // create | update | delete
+	At        time.Time
+	Changes   map[string]FieldChange
+}
+
+type FieldChange struct {
+	Old any `json:"old"`
+	New any `json:"new"`
+}
+
+func (p RequestPatch) apply(r Request) Request {
+	for _, f := range []struct{ dst, src *string }{{&r.Name, p.Name}, {&r.Console, p.Console},
+		{&r.Category, p.Category}, {&r.Backend, p.Backend}, {&r.Status, p.Status}, {&r.Notes, p.Notes}} {
+		if f.src != nil {
+			*f.dst = *f.src
+		}
+	}
+	if p.Sort != nil {
+		r.Sort = *p.Sort
+	}
+	return r
+}
+
+// normalize trims the text fields and validates the row. Every write goes through it.
+func normalize(r Request) (Request, error) {
+	for _, f := range []*string{&r.Kind, &r.Name, &r.Console, &r.Category, &r.Backend, &r.Status, &r.Notes} {
+		*f = strings.TrimSpace(*f)
+	}
+	switch {
+	case r.Kind != "title" && r.Kind != "feature":
+		return r, fmt.Errorf("%w: kind must be title or feature", ErrInvalid)
+	case r.Name == "":
+		return r, fmt.Errorf("%w: name is required", ErrInvalid)
+	case !slices.Contains(Statuses, r.Status):
+		return r, fmt.Errorf("%w: status must be one of %s", ErrInvalid, strings.Join(Statuses, ", "))
+	}
+	return r, nil
+}
+
+// fields is what request_changes compares and records.
+func fields(r Request) map[string]any {
+	return map[string]any{"kind": r.Kind, "name": r.Name, "console": r.Console, "category": r.Category,
+		"backend": r.Backend, "status": r.Status, "notes": r.Notes, "sort": r.Sort}
+}
+
+// diff is every field whose value differs; a nil map is the side that does not exist.
+func diff(old, new map[string]any) map[string]FieldChange {
+	out := map[string]FieldChange{}
+	for _, k := range []string{"kind", "name", "console", "category", "backend", "status", "notes", "sort"} {
+		if old[k] != new[k] {
+			out[k] = FieldChange{old[k], new[k]}
+		}
+	}
+	return out
+}
+
+// statusAudit is the admin_audit line for a title's status change, which /feed/titles.xml
+// and the admin events page read; empty when there is nothing to say.
+func statusAudit(id int64, old, new Request) string {
+	if new.Kind != "title" || old.Status == new.Status {
+		return ""
+	}
+	return fmt.Sprintf("%d %s: %s -> %s", id, new.Name, old.Status, new.Status)
+}
+
+const requestCols = `id, kind, name, console, category, backend, status, notes, sort, date_added, last_updated`
+
+func scanRequest(row pgx.Row) (Request, error) {
+	var r Request
+	err := row.Scan(&r.ID, &r.Kind, &r.Name, &r.Console, &r.Category, &r.Backend, &r.Status,
+		&r.Notes, &r.Sort, &r.DateAdded, &r.LastUpdated)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return r, ErrNotFound
+	}
+	return r, err
+}
+
+func logChange(ctx context.Context, tx pgx.Tx, id int64, actor, action string, ch map[string]FieldChange) error {
+	b, err := json.Marshal(ch)
 	if err != nil {
 		return err
 	}
-	if tag.RowsAffected() == 0 {
-		return ErrNotFound
+	_, err = tx.Exec(ctx, `INSERT INTO request_changes(request_id, actor, action, changes) VALUES($1,$2,$3,$4)`,
+		id, actor, action, b)
+	return err
+}
+
+func isUniqueViolation(err error) bool {
+	var pg *pgconn.PgError
+	return errors.As(err, &pg) && pg.Code == "23505"
+}
+
+// CreateRequest adds a title or feature and logs it, in one transaction.
+func (s *PG) CreateRequest(ctx context.Context, r Request, actor string) (Request, error) {
+	r, err := normalize(r)
+	if err != nil {
+		return r, err
 	}
-	return nil
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return r, err
+	}
+	defer tx.Rollback(ctx)
+	r, err = scanRequest(tx.QueryRow(ctx, `INSERT INTO requests(kind, name, console, category, backend, status, notes, sort)
+		VALUES($1,$2,$3,$4,$5,$6,$7, CASE WHEN $8 < 0 THEN (SELECT COALESCE(max(sort)+1, 0) FROM requests) ELSE $8 END)
+		RETURNING `+requestCols, r.Kind, r.Name, r.Console, r.Category, r.Backend, r.Status, r.Notes, r.Sort))
+	if isUniqueViolation(err) {
+		return r, ErrDuplicate
+	}
+	if err != nil {
+		return r, err
+	}
+	if err := logChange(ctx, tx, r.ID, actor, "create", diff(nil, fields(r))); err != nil {
+		return r, err
+	}
+	return r, tx.Commit(ctx)
+}
+
+// UpdateRequest applies a partial update, bumps last_updated and logs the changed fields, in
+// one transaction. This is the only way a request changes: the API and the admin forms both
+// call it. A patch that changes nothing writes nothing.
+func (s *PG) UpdateRequest(ctx context.Context, id int64, p RequestPatch, actor string) (Request, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return Request{}, err
+	}
+	defer tx.Rollback(ctx)
+	old, err := scanRequest(tx.QueryRow(ctx, `SELECT `+requestCols+` FROM requests WHERE id=$1 FOR UPDATE`, id))
+	if err != nil {
+		return old, err
+	}
+	r, err := normalize(p.apply(old))
+	if err != nil {
+		return old, err
+	}
+	ch := diff(fields(old), fields(r))
+	if len(ch) == 0 {
+		return old, nil
+	}
+	r, err = scanRequest(tx.QueryRow(ctx, `UPDATE requests SET name=$2, console=$3, category=$4, backend=$5,
+		status=$6, notes=$7, sort=$8, last_updated=now() WHERE id=$1 RETURNING `+requestCols,
+		id, r.Name, r.Console, r.Category, r.Backend, r.Status, r.Notes, r.Sort))
+	if isUniqueViolation(err) {
+		return old, ErrDuplicate
+	}
+	if err != nil {
+		return old, err
+	}
+	if err := logChange(ctx, tx, id, actor, "update", ch); err != nil {
+		return r, err
+	}
+	if d := statusAudit(id, old, r); d != "" {
+		if _, err := tx.Exec(ctx, `INSERT INTO admin_audit(actor_id, action, detail) VALUES($1,'title.status',$2)`, actor, d); err != nil {
+			return r, err
+		}
+	}
+	return r, tx.Commit(ctx)
+}
+
+// DeleteRequest removes a request nobody voted for, and logs it, in one transaction.
+func (s *PG) DeleteRequest(ctx context.Context, id int64, actor string) error {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	// FOR UPDATE also holds off a vote: its foreign key needs a lock this one blocks.
+	old, err := scanRequest(tx.QueryRow(ctx, `SELECT `+requestCols+` FROM requests WHERE id=$1 FOR UPDATE`, id))
+	if err != nil {
+		return err
+	}
+	var voted bool
+	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM request_votes WHERE request_id=$1)`, id).Scan(&voted); err != nil {
+		return err
+	}
+	if voted {
+		return ErrHasVotes
+	}
+	if _, err := tx.Exec(ctx, `DELETE FROM requests WHERE id=$1`, id); err != nil {
+		return err
+	}
+	if err := logChange(ctx, tx, id, actor, "delete", diff(fields(old), nil)); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
 }

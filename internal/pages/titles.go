@@ -3,12 +3,10 @@ package pages
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"slices"
 	"sort"
 	"strconv"
-	"strings"
 
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/store"
@@ -133,43 +131,28 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 	s.render(w, http.StatusOK, "titles.html", titlesPage{d, reqs, requestable, consoles, statuses, allStatuses, byVotes, backPath("/titles", byVotes)})
 }
 
-// allStatuses is every status a title can be set to, in rank order. The word means the same
+// allStatuses is every status the title forms offer, in rank order. The word means the same
 // thing everywhere: live works on hardware, beta is deployed and not console-verified, alpha
-// is partial, scaffold is code waiting on a fact, requestable is listed for votes.
-var allStatuses = []string{"live", "beta", "alpha", "scaffold", "requestable", "not-feasible"}
+// is partial, requestable is listed for votes. store.Statuses is what a write accepts.
+var allStatuses = []string{"live", "beta", "alpha", "requestable", "not-feasible"}
 
 // TitleStatuses is allStatuses for the admin pages, as a copy so no caller can edit the rule.
 func TitleStatuses() []string { return slices.Clone(allStatuses) }
 
-// ErrBadTitleStatus is a change that names no title, or a status outside allStatuses.
-var ErrBadTitleStatus = errors.New("a title id and one of the known statuses are required")
+// UpdateTitleStatus is the admin forms' status change (the titles page and /admin/titles). It
+// goes through store.UpdateRequest like the API does, so the change log, last_updated and the
+// title.status audit row come from one place. A bad id or status is store.ErrNotFound or
+// store.ErrInvalid.
+func UpdateTitleStatus(ctx context.Context, db store.Store, actorID string, r *http.Request) (int64, error) {
+	id, _ := strconv.ParseInt(r.PostFormValue("id"), 10, 64)
+	status, notes := r.PostFormValue("status"), r.PostFormValue("notes")
+	_, err := db.UpdateRequest(ctx, id, store.RequestPatch{Status: &status, Notes: &notes}, actorID)
+	return id, err
+}
 
-// SetTitleStatus is the one way a title's status changes, from the public titles page or
-// the admin table: validate, write the row, and leave an audit entry saying what it was
-// before. Features are refused: their status follows the catalog, and a hand edit would be
-// overwritten on the next refresh anyway.
-func SetTitleStatus(ctx context.Context, db store.Store, actorID string, id int64, status, notes string) error {
-	if !slices.Contains(allStatuses, status) {
-		return ErrBadTitleStatus
-	}
-	titles, err := db.ListRequests(ctx, "title", "")
-	if err != nil {
-		return err
-	}
-	i := slices.IndexFunc(titles, func(t store.Request) bool { return t.ID == id })
-	if i < 0 {
-		return ErrBadTitleStatus
-	}
-	notes = strings.TrimSpace(notes)
-	if err := db.SetRequestStatus(ctx, id, status, notes); err != nil {
-		return err
-	}
-	old := titles[i]
-	detail := fmt.Sprintf("%d %s: %s -> %s", id, old.Name, old.Status, status)
-	if notes != old.Notes {
-		detail += fmt.Sprintf(" notes=%q", notes)
-	}
-	return db.AddAudit(ctx, actorID, "title.status", detail)
+// BadTitleEdit is an error the form's sender caused: answer 400, not 500.
+func BadTitleEdit(err error) bool {
+	return errors.Is(err, store.ErrInvalid) || errors.Is(err, store.ErrNotFound)
 }
 
 // handleSetTitleStatus is how a title changes status: an admin picks it on the titles page
@@ -183,9 +166,8 @@ func (s *Server) handleSetTitleStatus(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "admins only", http.StatusForbidden)
 		return
 	}
-	id, _ := strconv.ParseInt(r.PostFormValue("id"), 10, 64)
-	err := SetTitleStatus(r.Context(), s.DB, v.AccountID, id, r.PostFormValue("status"), r.PostFormValue("notes"))
-	if errors.Is(err, ErrBadTitleStatus) {
+	id, err := UpdateTitleStatus(r.Context(), s.DB, v.AccountID, r)
+	if BadTitleEdit(err) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

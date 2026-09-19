@@ -3,6 +3,25 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.48.0 — 2026-09-19
+
+The database is the catalog. openpak/catalog's catalog.json no longer feeds the site.
+
+- Write API: `POST /api/v1/admin/titles`, `PATCH` and `DELETE /api/v1/admin/titles/{id}`,
+  for titles and features alike. Auth is a signed-in admin (plus `X-CSRF-Token`) or the new
+  `WEBSITE_CATALOG_KEY` bearer. Status must be one of live, working, beta, alpha, partial,
+  planned, requestable, not-feasible (`scaffold` is gone from the admin forms). A duplicate
+  (kind, name, console) and deleting a title with votes are 409s.
+- `requests` gains `date_added` and `last_updated`; a new `request_changes` table logs every
+  create, update and delete (actor, time, old and new value per field) in the write's
+  transaction. The admin title forms go through the same store call.
+- `GET /api/v1/requests` carries `sort`, `date_added` and `last_updated`; `GET
+  /api/v1/catalog.json` exports the catalog in the old file's shape plus the two dates.
+- Removed: the catalog refresh loop, the embedded catalog.json, `CATALOG_URL`,
+  `CATALOG_REFRESH` and `WEBSITE_SEED_TITLES`.
+- `scripts/backfill-request-dates`: the one-off that dates existing rows from the catalog
+  repository's history, run once after migration 0005.
+
 ## v0.47.0 — 2026-09-19
 
 The site speaks German, French, Brazilian Portuguese, Italian and Spanish.
