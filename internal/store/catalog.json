@@ -185,8 +185,8 @@
     "console": "Switch",
     "category": "NEX title",
     "backend": "NEX",
-    "status": "alpha",
-    "notes": "0100A8E016236000. Served by switch-nexd (servers/switch-nex) since 2026-09-18, v0.2.15, block 22380: game server 25374500 and access key 6wVacwwe read from our own dump (NEX 4.6.6). Matchmaking, DataStore and Ranking2 \u2014 what its binary links; nothing measured yet. Login verified end to end without a console; not console-verified. Publisher: Nintendo."
+    "status": "beta",
+    "notes": "0100A8E016236000. Served by switch-nexd (servers/switch-nex) since 2026-09-18, v0.2.15, block 22380: game server 25374500 and access key 6wVacwwe read from our own dump (NEX 4.6.6). Console-played 2026-09-19: login, secure stage and online matchmaking work; no unimplemented call. Not yet matched against a second real player (the game fills empty seats with CPUs after ~10 s). Publisher: Nintendo."
   },
   {
     "kind": "title",
@@ -4181,7 +4181,7 @@
     "console": "Switch",
     "category": "Co-op",
     "backend": "NPLN",
-    "status": "alpha",
-    "notes": "0100A5A020D5E000. NPLN title (NPLN 1.43.3 with the WebRTC/QUIC P2P add-ons), found in our own dump. Registered in servers/npln 2026-09-18 (tenant 21122, session 22230) on Stardew's service set; not deployed \u2014 the tenant is resolved at runtime and has to come from a first boot. Publisher: James Bendon / No More Robots."
+    "status": "beta",
+    "notes": "0100A5A020D5E000. NPLN title (NPLN 1.43.3 with the WebRTC/QUIC P2P add-ons). Deployed on servers/npln 2026-09-18 (tenant t-35b7d576, 21122, session 22230) on Stardew's service set. Online play verified: Ryujinx hosted, a real console joined by room code, both ways; P2P went direct. Friend-list search and invites still open. Publisher: James Bendon / No More Robots."
   }
 ]
