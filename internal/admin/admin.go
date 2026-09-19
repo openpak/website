@@ -36,6 +36,8 @@ type Server struct {
 // import cycle with pages).
 type sessionView interface {
 	CoreSessionID(r *http.Request) string
+	CSRFToken(coreSessionID string) string
+	CheckCSRF(coreSessionID, token string) bool
 }
 
 // New builds the admin server.
@@ -75,7 +77,32 @@ func (s *Server) authorize(w http.ResponseWriter, r *http.Request) (store.WebSes
 		s.render(w, http.StatusForbidden, "message.html", struct {
 			base
 			Message string
-		}{base{Asset: pages.AssetVersion(), Admin: true, Path: r.URL.Path, Lang: "en", Title: "Admin", User: adminUser{ws.DisplayName, ws.Email}}, i18n.T("en", "admin.denied")})
+		}{s.page(r, ws, "Admin"), i18n.T("en", "admin.denied")})
+		return ws, false
+	}
+	return ws, true
+}
+
+// page is the shared view base. CSRF is filled for every page so the admin
+// forms and the layout's sign-out form both carry a valid token.
+func (s *Server) page(r *http.Request, ws store.WebSession, title string) base {
+	return base{Asset: pages.AssetVersion(), Admin: true, Path: r.URL.Path, Lang: "en", Title: title,
+		User: adminUser{ws.DisplayName, ws.Email}, CSRF: s.Sessions.CSRFToken(ws.CoreSessionID)}
+}
+
+// authorizePost is authorize plus the CSRF check every state-changing admin
+// form needs; the SameSite cookie alone is not the defence.
+func (s *Server) authorizePost(w http.ResponseWriter, r *http.Request) (store.WebSession, bool) {
+	ws, ok := s.authorize(w, r)
+	if !ok {
+		return ws, false
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid form", http.StatusBadRequest)
+		return ws, false
+	}
+	if !s.Sessions.CheckCSRF(ws.CoreSessionID, r.PostFormValue("csrf")) {
+		http.Error(w, "invalid CSRF token", http.StatusForbidden)
 		return ws, false
 	}
 	return ws, true
@@ -114,7 +141,7 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	s.render(w, http.StatusOK, "admin.html", base{Asset: pages.AssetVersion(), Admin: true, Path: r.URL.Path, Lang: "en", Title: i18n.T("en", "admin.title"), User: adminUser{ws.DisplayName, ws.Email}})
+	s.render(w, http.StatusOK, "admin.html", s.page(r, ws, i18n.T("en", "admin.title")))
 }
 
 func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
@@ -132,16 +159,12 @@ func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
 		base
 		store.SiteConfig
 	}
-	s.render(w, http.StatusOK, "admin_config.html", cfgView{base{Asset: pages.AssetVersion(), Admin: true, Path: r.URL.Path, Lang: "en", Title: i18n.T("en", "admin.config"), User: adminUser{ws.DisplayName, ws.Email}}, cfg})
+	s.render(w, http.StatusOK, "admin_config.html", cfgView{s.page(r, ws, i18n.T("en", "admin.config")), cfg})
 }
 
 func (s *Server) handleConfigSave(w http.ResponseWriter, r *http.Request) {
-	ws, ok := s.authorize(w, r)
+	ws, ok := s.authorizePost(w, r)
 	if !ok {
-		return
-	}
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid form", http.StatusBadRequest)
 		return
 	}
 	cfg := store.SiteConfig{
@@ -179,7 +202,7 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 		SiteAudit  []store.AuditEntry
 	}
 	s.render(w, http.StatusOK, "admin_events.html", eventsView{
-		base{Asset: pages.AssetVersion(), Admin: true, Path: r.URL.Path, Lang: "en", Title: i18n.T("en", "admin.events"), User: adminUser{ws.DisplayName, ws.Email}},
+		s.page(r, ws, i18n.T("en", "admin.events")),
 		coreEvents, siteAudit,
 	})
 }
@@ -193,7 +216,7 @@ func (s *Server) handleUsers(w http.ResponseWriter, r *http.Request) {
 	s.render(w, http.StatusOK, "admin_pending.html", struct {
 		base
 		Notice string
-	}{base{Asset: pages.AssetVersion(), Admin: true, Path: r.URL.Path, Lang: "en", Title: i18n.T("en", "admin.users"), User: adminUser{ws.DisplayName, ws.Email}}, i18n.T("en", "admin.pending.cr5")})
+	}{s.page(r, ws, i18n.T("en", "admin.users")), i18n.T("en", "admin.pending.cr5")})
 }
 
 // handleReports: the reports queue is fail-closed pending CR-6.
@@ -205,5 +228,5 @@ func (s *Server) handleReports(w http.ResponseWriter, r *http.Request) {
 	s.render(w, http.StatusOK, "admin_pending.html", struct {
 		base
 		Notice string
-	}{base{Asset: pages.AssetVersion(), Admin: true, Path: r.URL.Path, Lang: "en", Title: i18n.T("en", "admin.reports"), User: adminUser{ws.DisplayName, ws.Email}}, i18n.T("en", "admin.pending.cr6")})
+	}{s.page(r, ws, i18n.T("en", "admin.reports")), i18n.T("en", "admin.pending.cr6")})
 }

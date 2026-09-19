@@ -15,6 +15,7 @@
     <div class="muted">{{.Seen}}{{range $k, $v := .Services}} · {{$k}} {{$v}}{{end}}</div>
   </div>
   <form method="post" action="/admin/nodes/{{.ID}}/approve">
+    <input type="hidden" name="csrf" value="{{$.CSRF}}">
     {{if .Approved}}
     <input type="hidden" name="approved" value="false">
     <span class="pill">● {{t $.Lang "admin.nodes.approved"}}</span>
@@ -29,6 +30,7 @@
 {{end}}
 <h2>{{t .Lang "admin.nodes.new"}}</h2>
 <form method="post" action="/admin/nodes" class="stack">
+  <input type="hidden" name="csrf" value="{{.CSRF}}">
   <label for="id">{{t .Lang "admin.nodes.id"}}</label>
   <input id="id" name="id" type="text" required pattern="[a-z0-9][a-z0-9-]{1,31}" maxlength="32">
   <label for="name">{{t .Lang "admin.nodes.name"}}</label>

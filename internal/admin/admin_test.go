@@ -25,6 +25,8 @@ func (f *fakeEvents) Poll(_ context.Context, _ uint64, _ int32) ([]core.Event, u
 type fakeSessions struct{ id string }
 
 func (f *fakeSessions) CoreSessionID(_ *http.Request) string { return f.id }
+func (f *fakeSessions) CSRFToken(id string) string           { return "tok-" + id }
+func (f *fakeSessions) CheckCSRF(id, tok string) bool        { return tok != "" && tok == "tok-"+id }
 
 func newAdmin(t *testing.T) (*Server, *store.Memory, *fakeEvents) {
 	t.Helper()
@@ -67,10 +69,23 @@ func TestAdminConfigAndEvents(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("admin dashboard: %d", rec.Code)
 	}
+	if !strings.Contains(rec.Body.String(), `name="csrf" value="tok-sess-admin"`) {
+		t.Fatal("admin pages must carry the CSRF token (sign-out form)")
+	}
+
+	// A forged post without the token is refused and changes nothing.
+	forged := url.Values{"registrations_open": {"on"}, "banner": {"Pwned"}}
+	req := httptest.NewRequest(http.MethodPost, "/admin/config", strings.NewReader(forged.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rec = httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if cfg, _ := db.GetSiteConfig(context.Background()); rec.Code != http.StatusForbidden || cfg.BannerMessage != "" {
+		t.Fatalf("post without csrf must be 403 and not saved: %d %+v", rec.Code, cfg)
+	}
 
 	// Save config → audit entry written.
-	form := url.Values{"registrations_open": {"on"}, "banner": {"Hello"}}
-	req := httptest.NewRequest(http.MethodPost, "/admin/config", strings.NewReader(form.Encode()))
+	form := url.Values{"registrations_open": {"on"}, "banner": {"Hello"}, "csrf": {"tok-sess-admin"}}
+	req = httptest.NewRequest(http.MethodPost, "/admin/config", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec = httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
