@@ -1,9 +1,9 @@
 // Package media implements the avatar pipeline (WEB-03): validate PNG/JPEG
 // uploads, resize server-side to 256 and 512 px, store bytes behind a
 // filesystem-first object-storage interface, and record metadata in the
-// website database. Publishing avatars to the account core (so adapters can
-// serve them to consoles) is pending contract request CR-2; until then the
-// website serves avatars itself from /media/.
+// website database. Every stored avatar is also published to the account
+// core's Media service (CR-2), best effort, so adapters can serve it to
+// consoles; the website keeps serving its own copies from /media/.
 package media
 
 import (
@@ -15,6 +15,7 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -91,6 +92,16 @@ func (s *FSStorage) Get(_ context.Context, key string) ([]byte, error) {
 // Service processes and stores avatars.
 type Service struct {
 	store Storage
+	// Publisher receives both PNGs after every store (the core's Media
+	// service). Nil publishes nothing. A failure is logged, never returned:
+	// the website's own copy is already saved and served.
+	Publisher Publisher
+	Log       *slog.Logger
+}
+
+// Publisher is where finished avatars go beyond the website's own storage.
+type Publisher interface {
+	PutAvatar(ctx context.Context, accountID string, png256, png512 []byte) error
 }
 
 // New builds the service over a Storage.
@@ -136,6 +147,7 @@ func ConsoleKey(accountID string) string {
 // putDerivatives writes every derivative of one decoded image: the two PNGs the
 // website serves and the JPEG the console path needs.
 func (s *Service) putDerivatives(ctx context.Context, accountID string, img image.Image) error {
+	pngs := map[int][]byte{}
 	for _, size := range []int{SizeLarge, SizeSmall} {
 		var buf bytes.Buffer
 		if err := png.Encode(&buf, square(img, size)); err != nil {
@@ -144,12 +156,25 @@ func (s *Service) putDerivatives(ctx context.Context, accountID string, img imag
 		if err := s.store.Put(ctx, AvatarKey(accountID, size), buf.Bytes()); err != nil {
 			return err
 		}
+		pngs[size] = buf.Bytes()
 	}
 	var jb bytes.Buffer
 	if err := jpeg.Encode(&jb, square(img, SizeConsole), &jpeg.Options{Quality: ConsoleJPEGQuality}); err != nil {
 		return err
 	}
-	return s.store.Put(ctx, ConsoleKey(accountID), jb.Bytes())
+	if err := s.store.Put(ctx, ConsoleKey(accountID), jb.Bytes()); err != nil {
+		return err
+	}
+	if s.Publisher != nil {
+		if err := s.Publisher.PutAvatar(ctx, accountID, pngs[SizeSmall], pngs[SizeLarge]); err != nil {
+			log := s.Log
+			if log == nil {
+				log = slog.Default()
+			}
+			log.Warn("media: publishing the avatar to the core failed; consoles keep the previous one", "account", accountID, "err", err)
+		}
+	}
+	return nil
 }
 
 // StorePreset stores one of the built-in avatars for an account.

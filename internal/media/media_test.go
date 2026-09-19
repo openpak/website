@@ -93,3 +93,40 @@ func TestPresetsProduceConsoleJPEG(t *testing.T) {
 		t.Fatal("unknown preset must be rejected")
 	}
 }
+
+type fakePublisher struct {
+	account      string
+	small, large []byte
+	err          error
+}
+
+func (f *fakePublisher) PutAvatar(_ context.Context, accountID string, png256, png512 []byte) error {
+	f.account, f.small, f.large = accountID, png256, png512
+	return f.err
+}
+
+// Every stored avatar goes to the core too (CR-2), with the sizes the core
+// checks; a core that refuses it does not fail the upload.
+func TestStoreAvatarPublishesToCore(t *testing.T) {
+	st, _ := NewFSStorage(t.TempDir())
+	svc := New(st)
+	pub := &fakePublisher{}
+	svc.Publisher = pub
+	ctx := context.Background()
+	if err := svc.StoreAvatar(ctx, "acct-1", bytes.NewReader(pngBytes(600))); err != nil {
+		t.Fatal(err)
+	}
+	if pub.account != "acct-1" {
+		t.Fatalf("published for %q", pub.account)
+	}
+	for size, b := range map[int][]byte{SizeSmall: pub.small, SizeLarge: pub.large} {
+		img, err := png.Decode(bytes.NewReader(b))
+		if err != nil || img.Bounds().Dx() != size || img.Bounds().Dy() != size {
+			t.Fatalf("published %d: err=%v", size, err)
+		}
+	}
+	pub.err = context.DeadlineExceeded
+	if err := svc.StorePreset(ctx, "acct-1", PresetIDs[0]); err != nil {
+		t.Fatalf("a core failure must not fail the store: %v", err)
+	}
+}

@@ -90,6 +90,9 @@ func run(log *slog.Logger) error {
 	var mediaSvc *media.Service
 	if st, err := media.NewFSStorage(cfg.MediaDir); err == nil {
 		mediaSvc = media.New(st)
+		// Every stored avatar also goes to the core's Media service (CR-2), so
+		// adapters can serve it to consoles. Best effort: a failure is logged.
+		mediaSvc.Publisher, mediaSvc.Log = coreGRPC, log
 	} else {
 		log.Warn("media storage unavailable; avatar uploads disabled", "err", err)
 	}
