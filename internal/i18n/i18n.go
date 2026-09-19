@@ -312,6 +312,7 @@ var languages = map[string]Catalogue{
 		"friends.send":                     "Send request",
 		"friends.list.none":                "No friends yet. Add someone by their friend code.",
 		"friends.pending":                  "Pending",
+		"friends.online":                   "Online",
 		"friends.accept":                   "Accept",
 		"friends.decline":                  "Decline",
 		"friends.remove":                   "Remove",

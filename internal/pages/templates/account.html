@@ -46,6 +46,7 @@
 
   {{if .Friends}}
   <ul class="rows">{{range .Friends}}<li><span class="name">{{.DisplayName}}</span>
+    {{if index $.Online .AccountID}}<span class="badge ok">{{t $.Lang "friends.online"}}</span>{{with index $.Playing .AccountID}}<span class="sub">{{.}}</span>{{end}}{{end}}
     <form method="post" action="/account/friends/remove" class="inline">
       <input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="account_id" value="{{.AccountID}}">
       <button type="submit" class="small">{{t $.Lang "friends.remove"}}</button></form>

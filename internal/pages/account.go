@@ -404,6 +404,8 @@ type friendsData struct {
 	Friends, Incoming, Outgoing []core.Friend
 	BlockedNote                 []string // ids the viewer blocked
 	Invites                     []core.PendingInvitation
+	Online                      map[string]bool   // friend account id -> holds a live session
+	Playing                     map[string]string // friend account id -> title name, when known
 }
 
 // handleFriends keeps the old URL working; friends are a section of the
@@ -419,6 +421,23 @@ func (s *Server) handleFriends(w http.ResponseWriter, r *http.Request) {
 func (s *Server) loadFriends(ctx context.Context, accountID string) friendsData {
 	var d friendsData
 	d.Friends, _ = s.Social.ListFriends(ctx, accountID)
+	// Presence is best-effort, as in the API: a friends list that loads with
+	// everyone shown offline beats one that does not load.
+	ids := make([]string, 0, len(d.Friends))
+	for _, f := range d.Friends {
+		ids = append(ids, f.AccountID)
+	}
+	presence, err := s.Invites.Presence(ctx, ids)
+	if err != nil {
+		s.log.Error("presence", "err", err)
+	}
+	d.Online, d.Playing = map[string]bool{}, map[string]string{}
+	for id, p := range presence {
+		d.Online[id] = true
+		if p.TitleID != "" {
+			d.Playing[id] = titleName(p.TitleID)
+		}
+	}
 	d.Incoming, _ = s.Social.ListIncoming(ctx, accountID)
 	d.Outgoing, _ = s.Social.ListOutgoing(ctx, accountID)
 	// Read-only here: the core's ListInvitations consumes nothing, so showing

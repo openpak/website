@@ -6,8 +6,10 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/openpak/website/internal/chat"
+	"github.com/openpak/website/internal/core"
 )
 
 // Deleting the account asks for the tick box and the password; with both, the account goes,
@@ -65,6 +67,25 @@ func TestDisplayNameCanBeChanged(t *testing.T) {
 	authedRequest(s, a, http.MethodPost, "/account/profile", &url.Values{"display_name": {""}})
 	if fc.names["acct-"+emailA] != "Leia" {
 		t.Fatalf("an empty name field erased the name: %q", fc.names["acct-"+emailA])
+	}
+}
+
+// The friends list says who is online and what they are playing, from the same presence the
+// API reads; a friend with no live session shows nothing.
+func TestFriendsShowPresence(t *testing.T) {
+	s, fc, _ := newTestServer(t)
+	emailA, emailB := seedTwoAccounts(fc)
+	fc.accounts["c@x.test"], fc.verified["c@x.test"] = "password-C-1", true
+	fc.friends = []friendRow{
+		{requester: "acct-" + emailA, addressee: "acct-" + emailB, accepted: true},
+		{requester: "acct-" + emailA, addressee: "acct-c@x.test", accepted: true},
+	}
+	fc.presence = map[string]core.Presence{"acct-" + emailB: {Namespace: "switch", TitleID: "0100E65002BB8000", Since: time.Now()}}
+	a := login(t, s, emailA, "password-A-1")
+
+	body := authedRequest(s, a, http.MethodGet, "/account", nil).Body.String()
+	if strings.Count(body, ">Online<") != 1 || !strings.Contains(body, "Stardew Valley") {
+		t.Fatalf("presence is not shown for exactly the online friend:\n%s", body)
 	}
 }
 
