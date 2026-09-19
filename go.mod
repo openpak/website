@@ -34,6 +34,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260720155508-bb71a54f79dc // indirect
 )
 
-// The account core is consumed strictly through its versioned contracts
-// (generated protobuf stubs). The sibling checkout is pinned by CI; see
-// README.md "Building".
+// The account core is consumed strictly through its versioned contracts: the
+// generated protobuf stubs are vendored in internal/accountpb (see its README).
