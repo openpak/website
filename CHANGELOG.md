@@ -3,6 +3,20 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.44.3 — 2026-09-19
+
+- Saves: the list is sorted by game name.
+- API: `POST /api/v1/register` and `POST /api/v1/password/forgot` (public, rate limited per IP,
+  same answer whether or not the address exists); `POST /api/v1/me/password`.
+- API: `POST /api/v1/me/links/wfc` links a Wii/DS by friend code; `DELETE /api/v1/me/links/{namespace}`
+  unlinks the caller's own console.
+- API: `POST /api/v1/me/avatar` also takes a multipart photo upload (`avatar`, PNG/JPEG ≤ 4 MiB);
+  choosing an avatar through the API now stamps the media row, so consoles pick up the change.
+- API: chat conversations serialise as `peer`/`newest` (were `Peer`/`Newest`).
+- Security: `/account/link/revoke` only revokes one of the signed-in account's own links.
+- OpenAPI: chat, saves, storage and `/me/switch*` routes documented; the contract test now reads
+  every route file in `internal/api`, not only `api.go`.
+
 ## v0.44.2 — 2026-09-18
 
 - API: restore, download and delete a save version (`/api/v1/me/saves/versions/{id}`), the

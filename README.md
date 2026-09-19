@@ -176,6 +176,13 @@ so bans/logouts/password resets end mobile access with the core's
 revocation window. Rate limits: 10 mints/min per client, 120 calls/min per
 token.
 
+The app can do everything the account pages do: register and request a reset
+mail (public, sharing the per-client mint limit), change the password, link a
+Wii/DS by friend code and unlink a console by namespace, upload an avatar
+(multipart) or pick a preset, chat, and manage cloud saves. The password reset
+itself stays on the website, where the mail links. `contract_test.go` fails
+the build when a served `/api/v1` route is missing from the spec.
+
 ### Network profile (NP-0..NP-4)
 
 `GET /api/v1/network/profile?platform=<switch|wiiu|3ds|wii|ds>` answers what
