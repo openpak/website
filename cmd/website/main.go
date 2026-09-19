@@ -232,8 +232,10 @@ func run(log *slog.Logger) error {
 	}()
 
 	srv := &http.Server{
-		Addr:              cfg.HTTPAddr,
-		Handler:           metrics.Middleware(logRequests(log)(mux)),
+		Addr: cfg.HTTPAddr,
+		Handler: metrics.Middleware(logRequests(log)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			mux.ServeHTTP(w, r.WithContext(core.WithLang(r.Context(), i18n.FromRequest(r))))
+		}))),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 

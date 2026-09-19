@@ -133,3 +133,20 @@ func TestTwoFactorAndEmailErrors(t *testing.T) {
 		t.Errorf("confirm: %v", err)
 	}
 }
+
+func TestWithLangSendsAcceptLanguage(t *testing.T) {
+	var got string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = r.Header.Get("Accept-Language")
+		w.Write([]byte(`{}`))
+	}))
+	defer srv.Close()
+	c, err := NewHTTP(srv.URL, time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = c.Register(WithLang(context.Background(), "pt-BR"), "a@x.test", "pw", "A")
+	if got != "pt-BR" {
+		t.Errorf("Accept-Language %q", got)
+	}
+}

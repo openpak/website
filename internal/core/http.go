@@ -40,6 +40,14 @@ func NewHTTP(baseURL string, timeout time.Duration) (*HTTPClient, error) {
 	}, nil
 }
 
+type langKey struct{}
+
+// WithLang marks ctx with the language of the person being served; calls made
+// with it send Accept-Language, which picks the language of the core's emails.
+func WithLang(ctx context.Context, lang string) context.Context {
+	return context.WithValue(ctx, langKey{}, lang)
+}
+
 // call performs one JSON round trip. coreSessionID, when non-empty, is sent
 // as the core's session cookie. No cookie jar is used: the website serves
 // many users from one client and presents each session id deliberately.
@@ -62,6 +70,9 @@ func (c *HTTPClient) call(ctx context.Context, method, path string, body any, co
 	}
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
+	}
+	if lang, _ := ctx.Value(langKey{}).(string); lang != "" {
+		req.Header.Set("Accept-Language", lang)
 	}
 	if coreSessionID != "" {
 		req.AddCookie(&http.Cookie{Name: coreSessionCookie, Value: coreSessionID})
