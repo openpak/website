@@ -334,6 +334,8 @@ var catalogueDE = Catalogue{
 	"nav.footer":                       "Fußzeile",
 	"page.home":                        "Startseite",
 	"page.verify":                      "E-Mail-Adresse bestätigen",
+	"date.pattern":                     "{d}. {m} {y}",
+	"date.months":                      "Januar Februar März April Mai Juni Juli August September Oktober November Dezember",
 	"lang.name":                        "Deutsch",
 	"footer.language":                  "Sprache",
 	"footer.language.set":              "Ändern",

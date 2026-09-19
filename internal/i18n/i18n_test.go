@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 // Every non-admin key must exist in every language, so new copy cannot land
@@ -42,5 +43,19 @@ func TestLang(t *testing.T) {
 	r.AddCookie(&http.Cookie{Name: CookieName, Value: "pt-BR"})
 	if got := FromRequest(r); got != "pt-BR" {
 		t.Errorf("cookie ignored: %q", got)
+	}
+}
+
+func TestDate(t *testing.T) {
+	d := time.Date(2026, 3, 2, 12, 0, 0, 0, time.UTC)
+	for lang, want := range map[string]string{"en": "2 March 2026", "de": "2. März 2026", "pt-BR": "2 de março de 2026"} {
+		if got := Date(lang, d); got != want {
+			t.Errorf("Date(%s) = %q, want %q", lang, got, want)
+		}
+	}
+	for _, lang := range Supported() {
+		if n := len(strings.Fields(T(lang, "date.months"))); n != 12 {
+			t.Errorf("%s: %d months", lang, n)
+		}
 	}
 }

@@ -23,7 +23,7 @@
     {{range .News}}
     <article class="card p-5">
       <h3>{{.Title}}</h3>
-      <p class="text-sm text-muted"><time datetime="{{.Published.UTC.Format "2006-01-02"}}">{{.Published.UTC.Format "2 January 2006"}}</time></p>
+      <p class="text-sm text-muted"><time datetime="{{.Published.UTC.Format "2006-01-02"}}">{{date $.Lang .Published.UTC}}</time></p>
       <p class="mb-0 text-ink-2">{{.Summary}}</p>
     </article>
     {{end}}

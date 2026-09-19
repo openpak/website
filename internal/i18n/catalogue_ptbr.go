@@ -334,6 +334,8 @@ var cataloguePTBR = Catalogue{
 	"nav.footer":                       "Rodapé",
 	"page.home":                        "Início",
 	"page.verify":                      "Confirmar e-mail",
+	"date.pattern":                     "{d} de {m} de {y}",
+	"date.months":                      "janeiro fevereiro março abril maio junho julho agosto setembro outubro novembro dezembro",
 	"lang.name":                        "Português (Brasil)",
 	"footer.language":                  "Idioma",
 	"footer.language.set":              "Alterar",

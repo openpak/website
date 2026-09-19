@@ -334,6 +334,8 @@ var catalogueES = Catalogue{
 	"nav.footer":                       "Pie de página",
 	"page.home":                        "Inicio",
 	"page.verify":                      "Confirmar correo electrónico",
+	"date.pattern":                     "{d} de {m} de {y}",
+	"date.months":                      "enero febrero marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre",
 	"lang.name":                        "Español",
 	"footer.language":                  "Idioma",
 	"footer.language.set":              "Cambiar",

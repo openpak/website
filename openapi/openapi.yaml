@@ -1782,8 +1782,15 @@ components:
         recheck_after: { type: integer, description: "Seconds; a hint, not a contract." }
     Error:
       type: object
+      required: [error, code]
       properties:
-        error: { type: string }
+        error: { type: string, description: "English, for logs; show the code's translation instead." }
+        code:
+          type: string
+          description: |
+            Stable identifier for clients to translate. Unknown codes may be added; treat one
+            like its HTTP status.
+          enum: [account_suspended, avatar_invalid, avatars_unavailable, bad_request, challenge_expired, chat_blocked, chat_not_friends, chat_unavailable, conflict, console_taken, forbidden, friend_code_unknown, friend_conflict, friend_self, internal, invalid_credentials, link_expired, no_pending_request, not_found, not_votable, quota_exceeded, rate_limited, registrations_closed, saves_unavailable, service_unavailable, session_expired, two_factor_locked, two_factor_required, unauthorized, wfc_not_found, wfc_unavailable, wrong_code, wrong_password]
     Account:
       type: object
       properties:

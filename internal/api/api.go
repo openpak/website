@@ -165,8 +165,71 @@ func writeJSON(w http.ResponseWriter, code int, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
+// writeError answers {"error": English message, "code": stable id}. Clients
+// translate the code; the message is for logs and curl.
 func writeError(w http.ResponseWriter, code int, msg string) {
-	writeJSON(w, code, map[string]string{"error": msg})
+	writeJSON(w, code, map[string]string{"error": msg, "code": errorCode(code, msg)})
+}
+
+// errorCodes names the messages a person can meet; everything else gets its
+// status's code. A message changed here changes its code, so keep them paired.
+var errorCodes = map[string]string{
+	"rate limited":                                  "rate_limited",
+	"too many changes; slow down":                   "rate_limited",
+	"too many wrong codes; try again in 15 minutes": "two_factor_locked",
+	"invalid credentials":                           "invalid_credentials",
+	"wrong password":                                "wrong_password",
+	"invalid code":                                  "wrong_code",
+	"wrong code":                                    "wrong_code",
+	"invalid code, or the challenge has expired; sign in again": "challenge_expired",
+	"invalid or expired token":                                  "session_expired",
+	"bearer token required":                                     "session_expired",
+	"this account is suspended":                                 "account_suspended",
+	"registrations are closed":                                  "registrations_closed",
+	"the account service did not answer":                        "service_unavailable",
+	"the account service is not answering; try again":           "service_unavailable",
+	"cloud saves are not available on this deployment":          "saves_unavailable",
+	"saves service error":                                       "saves_unavailable",
+	"chat is not available on this deployment":                  "chat_unavailable",
+	"chat service error":                                        "chat_unavailable",
+	"avatars are not configured":                                "avatars_unavailable",
+	"Wii/DS linking is not available":                           "wfc_unavailable",
+	"could not reach the Wii/DS server":                         "wfc_unavailable",
+	"no Wii/DS profile has that friend code":                    "wfc_not_found",
+	"that console is linked to another account":                 "console_taken",
+	"no account for that friend code":                           "friend_code_unknown",
+	"cannot befriend yourself":                                  "friend_self",
+	"request exists or relationship conflicts":                  "friend_conflict",
+	"no pending request":                                        "no_pending_request",
+	"you can only message friends":                              "chat_not_friends",
+	"you cannot message this account":                           "chat_blocked",
+	"this request is not votable":                               "not_votable",
+	"upload a PNG or JPEG up to 4 MiB":                          "avatar_invalid",
+	"upload a PNG or JPEG up to 4 MiB in the avatar field":      "avatar_invalid",
+	"not an image we can store":                                 "avatar_invalid",
+	"unknown avatar":                                            "avatar_invalid",
+	"the reset link is invalid or has expired":                  "link_expired",
+	"the confirmation link is invalid or has expired":           "link_expired",
+	"no such version":                                           "not_found",
+	"session not found":                                         "not_found",
+}
+
+var statusCodes = map[int]string{
+	http.StatusBadRequest: "bad_request", http.StatusUnauthorized: "unauthorized",
+	http.StatusForbidden: "forbidden", http.StatusNotFound: "not_found",
+	http.StatusConflict: "conflict", http.StatusLengthRequired: "bad_request",
+	http.StatusTooManyRequests: "rate_limited", http.StatusBadGateway: "service_unavailable",
+	http.StatusServiceUnavailable: "service_unavailable",
+}
+
+func errorCode(status int, msg string) string {
+	if c, ok := errorCodes[msg]; ok {
+		return c
+	}
+	if c, ok := statusCodes[status]; ok {
+		return c
+	}
+	return "internal"
 }
 
 type tokenRequest struct {

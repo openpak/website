@@ -139,7 +139,7 @@ func (s *Server) handleDeleteAccount(w http.ResponseWriter, r *http.Request, tok
 		writeError(w, http.StatusForbidden, "wrong password")
 	case errors.Is(err, core.ErrSecondFactorRequired):
 		writeJSON(w, http.StatusForbidden, map[string]any{
-			"error": "this account has two-factor authentication: send a code", "two_factor_required": true})
+			"error": "this account has two-factor authentication: send a code", "code": "two_factor_required", "two_factor_required": true})
 	case errors.Is(err, core.ErrInvalidCode):
 		writeError(w, http.StatusForbidden, "wrong code")
 	case errors.Is(err, core.ErrTwoFactorLocked):

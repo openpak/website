@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Catalogue is the string catalogue for one language.
@@ -511,6 +512,8 @@ var languages = map[string]Catalogue{
 		"nav.footer":                       "Footer",
 		"page.home":                        "Home",
 		"page.verify":                      "Verify email",
+		"date.pattern":                     "{d} {m} {y}",
+		"date.months":                      "January February March April May June July August September October November December",
 		"lang.name":                        "English",
 		"footer.language":                  "Language",
 		"footer.language.set":              "Change",
@@ -530,6 +533,17 @@ func T(lang, key string) string {
 		return s
 	}
 	return key
+}
+
+// Date writes a day in the language's long form, e.g. "2 January 2006" or
+// "2. Januar 2006", from its date.pattern and date.months.
+func Date(lang string, t time.Time) string {
+	months := strings.Fields(T(lang, "date.months"))
+	if len(months) != 12 {
+		return t.Format("2006-01-02")
+	}
+	return strings.NewReplacer("{d}", strconv.Itoa(t.Day()), "{m}", months[t.Month()-1],
+		"{y}", strconv.Itoa(t.Year())).Replace(T(lang, "date.pattern"))
 }
 
 // CookieName holds a language chosen on the footer form; it beats

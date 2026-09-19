@@ -39,7 +39,7 @@ func savesErr(w http.ResponseWriter, err error) {
 	case errors.Is(err, saves.ErrUnavailable):
 		writeError(w, http.StatusServiceUnavailable, "cloud saves are not available on this deployment")
 	case errors.As(err, &se) && se.Code == "quota_exceeded":
-		writeJSON(w, http.StatusInsufficientStorage, map[string]any{"error": "quota_exceeded", "used": se.Used, "limit": se.Limit,
+		writeJSON(w, http.StatusInsufficientStorage, map[string]any{"error": "quota_exceeded", "code": "quota_exceeded", "used": se.Used, "limit": se.Limit,
 			"hint": "connect your own storage at openpak.org/account/saves"})
 	case errors.As(err, &se):
 		writeError(w, http.StatusBadGateway, se.Error())

@@ -334,6 +334,8 @@ var catalogueFR = Catalogue{
 	"nav.footer":                       "Pied de page",
 	"page.home":                        "Accueil",
 	"page.verify":                      "Confirmer l'adresse e-mail",
+	"date.pattern":                     "{d} {m} {y}",
+	"date.months":                      "janvier février mars avril mai juin juillet août septembre octobre novembre décembre",
 	"lang.name":                        "Français",
 	"footer.language":                  "Langue",
 	"footer.language.set":              "Changer",

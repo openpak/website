@@ -88,7 +88,7 @@
   <ul class="rows">
     {{range .Blocked}}<li>
       <span class="name">{{if .DisplayName}}{{.DisplayName}}{{else}}{{.AccountID}}{{end}}</span>
-      {{if not .BlockedAt.IsZero}}<time class="sub" datetime="{{.BlockedAt.Format "2006-01-02"}}">{{t $.Lang "friends.blocked.since"}} {{.BlockedAt.UTC.Format "2 Jan 2006"}}</time>{{end}}
+      {{if not .BlockedAt.IsZero}}<time class="sub" datetime="{{.BlockedAt.Format "2006-01-02"}}">{{t $.Lang "friends.blocked.since"}} {{date $.Lang .BlockedAt.UTC}}</time>{{end}}
       <form method="post" action="/account/friends/unblock" class="inline">
         <input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="account_id" value="{{.AccountID}}">
         <button type="submit" class="small">{{t $.Lang "friends.unblock"}}</button></form>
