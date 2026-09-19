@@ -66,6 +66,7 @@ type titleBody struct {
 	Status   *string `json:"status"`
 	Notes    *string `json:"notes"`
 	Sort     *int    `json:"sort"`
+	TitleID  *string `json:"title_id"`
 }
 
 // decodeStrict reads a small JSON body and refuses unknown fields: a misspelt "stauts" must
@@ -92,7 +93,7 @@ func (s *Server) handleCreateTitle(w http.ResponseWriter, r *http.Request, actor
 		return *p
 	}
 	req := store.Request{Kind: str(b.Kind), Name: str(b.Name), Console: str(b.Console), Category: str(b.Category),
-		Backend: str(b.Backend), Status: str(b.Status), Notes: str(b.Notes), Sort: -1}
+		Backend: str(b.Backend), Status: str(b.Status), Notes: str(b.Notes), TitleID: str(b.TitleID), Sort: -1}
 	if b.Sort != nil {
 		if *b.Sort < 0 {
 			writeError(w, http.StatusBadRequest, "sort must not be negative")
@@ -127,7 +128,8 @@ func (s *Server) handleUpdateTitle(w http.ResponseWriter, r *http.Request, actor
 		return
 	}
 	updated, err := s.DB.UpdateRequest(r.Context(), id, store.RequestPatch{Name: b.Name, Console: b.Console,
-		Category: b.Category, Backend: b.Backend, Status: b.Status, Notes: b.Notes, Sort: b.Sort}, actor)
+		Category: b.Category, Backend: b.Backend, Status: b.Status, Notes: b.Notes, Sort: b.Sort,
+		TitleID: b.TitleID}, actor)
 	if err != nil {
 		s.catalogError(w, err)
 		return
@@ -167,7 +169,7 @@ func requestJSON(q store.Request) map[string]any {
 	return map[string]any{
 		"id": q.ID, "kind": q.Kind, "name": q.Name, "console": q.Console,
 		"category": q.Category, "backend": q.Backend, "status": q.Status, "notes": q.Notes,
-		"sort": q.Sort, "date_added": q.DateAdded.UTC().Format(time.RFC3339),
+		"sort": q.Sort, "title_id": q.TitleID, "date_added": q.DateAdded.UTC().Format(time.RFC3339),
 		"last_updated": q.LastUpdated.UTC().Format(time.RFC3339),
 	}
 }

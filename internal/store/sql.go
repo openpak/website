@@ -128,6 +128,14 @@ var migrations = map[string]string{
 		changes jsonb NOT NULL
 	);
 	CREATE INDEX IF NOT EXISTS request_changes_request_idx ON request_changes(request_id);`,
+
+	// A title's console id, so emulators and tools join on it instead of on the name. Filled
+	// here from the notes that lead with one; the rest are set through the API, which logs
+	// them. Unique when set: one id is one game.
+	"0006_request_title_id": `ALTER TABLE requests ADD COLUMN IF NOT EXISTS title_id text NOT NULL DEFAULT '';
+	UPDATE requests SET title_id = upper(substring(notes from '^([0-9A-Fa-f]{16})'))
+		WHERE kind = 'title' AND title_id = '' AND notes ~ '^[0-9A-Fa-f]{16}([^0-9A-Za-z]|$)';
+	CREATE UNIQUE INDEX IF NOT EXISTS requests_title_id_key ON requests(title_id) WHERE title_id <> '';`,
 }
 
 // Ping verifies database connectivity (status page).

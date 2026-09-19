@@ -165,6 +165,37 @@ func TestCatalogWriteAuth(t *testing.T) {
 	}
 }
 
+// title_id is upper-cased, must be 16 hex digits, and names one title only.
+func TestCatalogTitleID(t *testing.T) {
+	t.Setenv("WEBSITE_CATALOG_KEY", "k3y")
+	s, _, db := newTestAPI(t)
+	const key = "Bearer k3y"
+	rec := catalogDo(t, s, "POST", "/api/v1/admin/titles", key, map[string]any{
+		"kind": "title", "name": "Splatoon 3", "console": "Switch", "status": "beta", "title_id": "0100c2500fc20000"})
+	var e struct {
+		ID      int64  `json:"id"`
+		TitleID string `json:"title_id"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &e)
+	if rec.Code != http.StatusCreated || e.TitleID != "0100C2500FC20000" {
+		t.Fatalf("create: %d %s", rec.Code, rec.Body)
+	}
+	other, _ := db.CreateRequest(context.Background(), store.Request{Kind: "title", Name: "ARMS", Console: "Switch", Status: "beta"}, "t")
+	path := "/api/v1/admin/titles/" + strconv.FormatInt(other.ID, 10)
+	if rec := catalogDo(t, s, "PATCH", path, key, map[string]any{"title_id": "0100C2500FC20000"}); rec.Code != http.StatusConflict {
+		t.Errorf("a second title with the same id: %d", rec.Code)
+	}
+	if rec := catalogDo(t, s, "PATCH", path, key, map[string]any{"title_id": "ARMS"}); rec.Code != http.StatusBadRequest {
+		t.Errorf("a malformed id: %d", rec.Code)
+	}
+	if rec := catalogDo(t, s, "PATCH", path, key, map[string]any{"title_id": "01009B500007C000"}); rec.Code != http.StatusOK {
+		t.Fatalf("set id: %d %s", rec.Code, rec.Body)
+	}
+	if ch := db.RequestChanges(other.ID); ch[len(ch)-1].Changes["title_id"] != (store.FieldChange{Old: "", New: "01009B500007C000"}) {
+		t.Errorf("title_id change not logged: %+v", ch)
+	}
+}
+
 // The export is the old catalog.json: a bare array without ids, plus the two dates.
 func TestCatalogExport(t *testing.T) {
 	s, _, db := newTestAPI(t)
@@ -174,7 +205,7 @@ func TestCatalogExport(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil || rec.Code != http.StatusOK || len(got) != 1 {
 		t.Fatalf("export: %d %s", rec.Code, rec.Body)
 	}
-	for _, k := range []string{"kind", "name", "console", "category", "backend", "status", "notes", "date_added", "last_updated"} {
+	for _, k := range []string{"kind", "name", "console", "category", "backend", "status", "notes", "title_id", "date_added", "last_updated"} {
 		if _, ok := got[0][k]; !ok {
 			t.Errorf("export lacks %q", k)
 		}

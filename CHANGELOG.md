@@ -3,6 +3,14 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.49.0 — 2026-09-19
+
+- Catalog entries carry `title_id`: the console's 16-hex title id, upper case, unique when
+  set, empty when unknown. Written through the catalog API like any field (logged, bumps
+  last_updated) and returned by `/requests`, `/titles` and `/catalog.json`, so emulators and
+  tools join on the id instead of the name. Migration 0006 fills it from notes that lead with
+  one (14 Switch titles).
+
 ## v0.48.0 — 2026-09-19
 
 The database is the catalog. openpak/catalog's catalog.json no longer feeds the site.

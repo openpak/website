@@ -725,6 +725,7 @@ paths:
                         status: { type: string, examples: ["requestable"] }
                         notes: { type: string }
                         sort: { type: integer }
+                        title_id: { type: string, description: "16 hex digits, upper case; empty when unknown." }
                         date_added: { type: string, format: date-time }
                         last_updated: { type: string, format: date-time }
                         votes: { type: integer }
@@ -841,6 +842,7 @@ paths:
                         name: { type: string, examples: ["Stardew Valley"] }
                         console: { type: string, examples: ["Switch"] }
                         category: { type: string }
+                        title_id: { type: string, examples: ["0100E65002BB8000"] }
                         status: { type: string, examples: ["live"] }
                         notes: { type: string }
                         requestable: { type: boolean }
@@ -1756,6 +1758,7 @@ components:
         status: { type: string, enum: [live, working, beta, alpha, partial, planned, requestable, not-feasible] }
         notes: { type: string }
         sort: { type: integer, minimum: 0 }
+        title_id: { type: string, pattern: "^[0-9A-Fa-f]{16}$|^$", description: "The console's title id; stored upper case, unique when set." }
     CatalogEntry:
       type: object
       properties:
@@ -1768,6 +1771,7 @@ components:
         status: { type: string }
         notes: { type: string }
         sort: { type: integer, description: "Not in GET /catalog.json." }
+        title_id: { type: string, description: "16 hex digits, upper case; empty when unknown." }
         date_added: { type: string, format: date-time }
         last_updated: { type: string, format: date-time }
     ConsoleIdentity:

@@ -215,7 +215,8 @@ func (m *Memory) indexOf(id int64) int {
 
 func (m *Memory) taken(r Request, except int64) bool {
 	return slices.ContainsFunc(m.requests, func(o Request) bool {
-		return o.ID != except && o.Kind == r.Kind && o.Name == r.Name && o.Console == r.Console
+		return o.ID != except && (o.Kind == r.Kind && o.Name == r.Name && o.Console == r.Console ||
+			r.TitleID != "" && o.TitleID == r.TitleID)
 	})
 }
 

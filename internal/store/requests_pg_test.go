@@ -40,6 +40,13 @@ func TestPGRequestWrites(t *testing.T) {
 	if _, err := s.CreateRequest(ctx, Request{Kind: "title", Name: "Kirby's Dream Buffet", Console: "Switch", Status: "live"}, "api-key"); !errors.Is(err, ErrDuplicate) {
 		t.Fatalf("duplicate: %v", err)
 	}
+	if _, err := s.CreateRequest(ctx, Request{Kind: "title", Name: "Other", Status: "beta", TitleID: "0100a8e016236000"}, "api-key"); err != nil {
+		t.Fatal(err)
+	}
+	dupID := "0100A8E016236000"
+	if _, err := s.UpdateRequest(ctx, r.ID, RequestPatch{TitleID: &dupID}, "api-key"); !errors.Is(err, ErrDuplicate) {
+		t.Fatalf("duplicate title_id: %v", err)
+	}
 	if _, err := s.CreateRequest(ctx, Request{Kind: "title", Name: "X", Status: "done"}, "api-key"); !errors.Is(err, ErrInvalid) {
 		t.Fatalf("bad status: %v", err)
 	}
