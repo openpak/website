@@ -1,4 +1,9 @@
-// The v2 network distribution surface (PRD emulators/prds/universal-tls-forwarding/01).
+// Package registryhttp serves the v2 network distribution surface (PRD
+// emulators/prds/universal-tls-forwarding/01) as its own service,
+// cmd/openpak-registry. It is a separate trust domain from the website: its
+// own database, blob store, online signing key and CI identity, so none of
+// that is loaded into the process that serves openpak.org's pages.
+//
 // Unlike the v1 profile, everything here is protected: a route change is a
 // release input, not a launch-time answer, and the bytes a certified client
 // embeds come from an authenticated, signed registry. Credentials ride
@@ -14,7 +19,7 @@
 //
 // Every request re-authorizes, conditional ones included: a cached ETag
 // never answers before the credential does.
-package api
+package registryhttp
 
 import (
 	"context"
@@ -169,8 +174,8 @@ func (s *Server) networkV2(next func(http.ResponseWriter, *http.Request, v2Auth)
 	}
 }
 
-// registerNetworkV2 mounts the protected distribution surface.
-func (s *Server) registerNetworkV2(mux *http.ServeMux) {
+// RegisterRoutes mounts the protected distribution surface.
+func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v2/network/build-sessions", s.handleBuildSessions)
 	mux.HandleFunc("POST /api/v2/network/resolve", s.networkV2(s.handleResolve))
 	mux.HandleFunc("GET /api/v2/network/metadata/{name}", s.networkV2(s.handleMetadataV2))
@@ -452,10 +457,10 @@ func isSHA256Hex(s string) bool {
 	return true
 }
 
-// ConfigureV2Registry builds the registry service from REGISTRY_* variables.
-// Absent configuration leaves the surface answering 503, like Profiles. The
-// returned closer releases the store; a nil service means not configured.
-func ConfigureV2Registry(log *slog.Logger) (*registry.Service, registry.CIVerifier, func()) {
+// Configure builds the registry service from REGISTRY_* variables. Absent
+// configuration leaves the surface answering 503. The returned closer
+// releases the store; a nil service means not configured.
+func Configure(log *slog.Logger) (*registry.Service, registry.CIVerifier, func()) {
 	databaseURL := os.Getenv("REGISTRY_DATABASE_URL")
 	blobDir := os.Getenv("REGISTRY_BLOB_DIR")
 	onlineKeyFile := os.Getenv("REGISTRY_ONLINE_KEY_FILE")

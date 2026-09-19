@@ -1,5 +1,6 @@
-// Package metrics serves the minimal metrics/pprof listener on the
-// website's +2 port (port plan: WEBSITE_METRICS_ADDR, default :20012).
+// Package metrics serves the minimal metrics/pprof listener on a service's
+// +2 port (port plan: WEBSITE_METRICS_ADDR, default :20012; the registry's
+// REGISTRY_METRICS_ADDR, default :20142).
 // Hand-rolled Prometheus text output: process uptime and HTTP request
 // counters. pprof is mounted alongside for live debugging.
 package metrics
@@ -18,11 +19,16 @@ type Metrics struct {
 	mu       sync.Mutex
 	requests map[string]uint64 // key: "code|method"
 	start    time.Time
+	prefix   string // "openpak_<service>_"
 }
 
-// New starts the clock.
-func New() *Metrics {
-	return &Metrics{requests: map[string]uint64{}, start: time.Now()}
+// New starts the clock for the website's series.
+func New() *Metrics { return NewFor("website") }
+
+// NewFor starts the clock for another service in this repository; its
+// series are named openpak_<service>_*, so two processes never collide.
+func NewFor(service string) *Metrics {
+	return &Metrics{requests: map[string]uint64{}, start: time.Now(), prefix: "openpak_" + service + "_"}
 }
 
 // IncRequest records one finished HTTP request.
@@ -57,22 +63,22 @@ func (m *Metrics) render() string {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	var b []byte
-	b = append(b, "# HELP openpak_website_uptime_seconds Process uptime in seconds.\n"...)
-	b = append(b, "# TYPE openpak_website_uptime_seconds gauge\n"...)
-	b = append(b, fmt.Sprintf("openpak_website_uptime_seconds %d\n", int64(time.Since(m.start).Seconds()))...)
+	b = append(b, "# HELP "+m.prefix+"uptime_seconds Process uptime in seconds.\n"...)
+	b = append(b, "# TYPE "+m.prefix+"uptime_seconds gauge\n"...)
+	b = append(b, fmt.Sprintf("%suptime_seconds %d\n", m.prefix, int64(time.Since(m.start).Seconds()))...)
 	keys := make([]string, 0, len(m.requests))
 	for k := range m.requests {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	b = append(b, "# HELP openpak_website_http_requests_total HTTP requests processed.\n"...)
-	b = append(b, "# TYPE openpak_website_http_requests_total counter\n"...)
+	b = append(b, "# HELP "+m.prefix+"http_requests_total HTTP requests processed.\n"...)
+	b = append(b, "# TYPE "+m.prefix+"http_requests_total counter\n"...)
 	for _, k := range keys {
 		var code int
 		var method string
 		if _, err := fmt.Sscanf(k, "%d|%s", &code, &method); err == nil {
-			b = append(b, fmt.Sprintf("openpak_website_http_requests_total{code=\"%d\",method=\"%s\"} %d\n",
-				code, method, m.requests[k])...)
+			b = append(b, fmt.Sprintf("%shttp_requests_total{code=\"%d\",method=\"%s\"} %d\n",
+				m.prefix, code, method, m.requests[k])...)
 		}
 	}
 	return string(b)

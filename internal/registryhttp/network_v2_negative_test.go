@@ -1,4 +1,4 @@
-package api
+package registryhttp
 
 import (
 	"context"
@@ -163,7 +163,7 @@ func assertErrorShape(t *testing.T, code int, body map[string]any) {
 }
 
 // TestV2Unconfigured pins the 503 behavior when the REGISTRY_* variables are
-// absent: the routes exist, nothing else works, the rest of the site does.
+// absent: the routes exist and nothing behind them works.
 func TestV2Unconfigured(t *testing.T) {
 	ts := bareV2Server(t)
 	code, _, body := v2POST(t, ts, "/api/v2/network/build-sessions", "", `{}`)

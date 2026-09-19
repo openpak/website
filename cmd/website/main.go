@@ -151,20 +151,8 @@ func run(log *slog.Logger) error {
 		log.Info("network profile: NETPROFILE_TRAEFIK_FILE not set; /api/v1/network/* answers 503")
 	}
 
-	// The v2 bundle registry (PRD emulators/prds/universal-tls-forwarding/01): signed,
-	// authenticated, build-time distribution. Absent REGISTRY_* variables is
-	// a supported configuration: /api/v2/network/* answers 503 while the
-	// rest of the site is unaffected, exactly like the v1 profile surface
-	// before it.
-	registrySvc, registryCI, closeRegistry := api.ConfigureV2Registry(log)
-	defer closeRegistry()
-	if registrySvc != nil {
-		apiSrv.Registry = registrySvc
-		apiSrv.CIVerifier = registryCI
-		log.Info("network registry enabled", "policy", registrySvc.PolicyID)
-	} else {
-		log.Info("network registry: REGISTRY_* not set; /api/v2/network/* answers 503")
-	}
+	// The v2 bundle registry (/api/v2/network/*) is a separate process,
+	// cmd/openpak-registry: its signing key and database never load here.
 
 	// Push. Absent credentials is a supported configuration: the site runs, the
 	// app can still register a token, and nothing is delivered until a service

@@ -16,11 +16,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/openpak/website/internal/api"
 	"github.com/openpak/website/internal/netprofile"
 	"github.com/openpak/website/internal/policy"
 	"github.com/openpak/website/internal/ratelimit"
 	"github.com/openpak/website/internal/registry"
+	"github.com/openpak/website/internal/registryhttp"
 )
 
 // harness is the whole stack: registry, routes, and one promoted revision.
@@ -115,7 +115,7 @@ platforms:
 	}); err != nil {
 		t.Fatal(err)
 	}
-	s := &api.Server{
+	s := &registryhttp.Server{
 		Registry: svc,
 		CIVerifier: registry.StaticCIVerifier{Token: "ci-token-1", Assertion: registry.CIAssertion{
 			Issuer:      "https://token.actions.githubusercontent.com",
