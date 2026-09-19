@@ -14,8 +14,8 @@ import (
 )
 
 // The account actions the website had and the app did not: creating an account, the
-// forgotten-password mail, changing the password, deleting the account, linking a Wii/DS and
-// unlinking a console.
+// forgotten-password mail and the reset, changing the password, deleting the account, linking
+// a Wii/DS and unlinking a console.
 
 // handleRegister: POST /api/v1/register. The same answer whether or not the email is
 // taken; the core resends to a taken-but-unverified address, so nothing is enumerable.
@@ -47,7 +47,7 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleForgotPassword: POST /api/v1/password/forgot. The mail links to the website's
-// reset page, so the reset itself needs no route here.
+// reset page; an app that opens that link itself finishes with /password/reset.
 func (s *Server) handleForgotPassword(w http.ResponseWriter, r *http.Request) {
 	if !s.Auth.Allow(clientKey(r)) {
 		writeError(w, http.StatusTooManyRequests, "rate limited")
@@ -61,6 +61,32 @@ func (s *Server) handleForgotPassword(w http.ResponseWriter, r *http.Request) {
 	}
 	_ = s.Core.ForgotPassword(r.Context(), strings.ToLower(strings.TrimSpace(req.Email)))
 	writeJSON(w, http.StatusAccepted, map[string]string{"message": "if the address has an account, a reset mail is on its way"})
+}
+
+// handleResetPassword: POST /api/v1/password/reset {"token","password"}, the same step as the
+// website's reset page. The core revokes every session of the account, and with them every
+// bearer, so the app signs in again afterwards.
+func (s *Server) handleResetPassword(w http.ResponseWriter, r *http.Request) {
+	if !s.Auth.Allow(clientKey(r)) {
+		writeError(w, http.StatusTooManyRequests, "rate limited")
+		return
+	}
+	var req struct {
+		Token    string `json:"token"`
+		Password string `json:"password"`
+	}
+	if !decodeSmall(w, r, &req) {
+		return
+	}
+	if req.Token == "" || req.Password == "" {
+		writeError(w, http.StatusBadRequest, "token and password are required")
+		return
+	}
+	if err := s.Core.ResetPassword(r.Context(), req.Token, req.Password); err != nil {
+		writeError(w, http.StatusBadRequest, "the reset link is invalid or has expired")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"reset": true})
 }
 
 // handleChangePassword: POST /api/v1/me/password. The core checks the current password and

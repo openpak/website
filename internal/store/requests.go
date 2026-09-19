@@ -5,6 +5,8 @@ import (
 	_ "embed"
 	"encoding/json"
 	"errors"
+	"sort"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -51,6 +53,50 @@ func (r Request) Votable() bool {
 		return true
 	}
 	return false
+}
+
+// statusRank orders statuses: what can be played now first, then what is being
+// built, then the long tail. The console grouping and alphabet come after it.
+func statusRank(status string) int {
+	switch status {
+	case "live", "working":
+		return 0
+	case "beta":
+		return 1
+	case "alpha", "partial":
+		return 2
+	case "scaffold":
+		return 3
+	case "requestable", "planned":
+		return 4
+	default: // not-feasible, broken, anything new
+		return 5
+	}
+}
+
+// playable is the top block of the list: live, beta, alpha and the rest in flight.
+func playable(status string) bool { return statusRank(status) <= 3 }
+
+// CatalogOrder is the one ordering every view of the title list shares, the /titles page and
+// GET /api/v1/titles alike: playable titles on top, grouped by console and alphabetical inside
+// each; then the long tail the same way. The keys are chosen so that hiding rows for a console filter leaves the rest ordered by status
+// then name, and hiding for a status filter leaves them ordered by console then name.
+func CatalogOrder(reqs []Request) []Request {
+	out := append([]Request(nil), reqs...)
+	sort.SliceStable(out, func(i, j int) bool {
+		a, b := out[i], out[j]
+		if playable(a.Status) != playable(b.Status) {
+			return playable(a.Status)
+		}
+		if a.Console != b.Console {
+			return a.Console < b.Console
+		}
+		if statusRank(a.Status) != statusRank(b.Status) {
+			return statusRank(a.Status) < statusRank(b.Status)
+		}
+		return strings.ToLower(a.Name) < strings.ToLower(b.Name)
+	})
+	return out
 }
 
 // CatalogRequests parses the embedded catalog: the fallback when the live one

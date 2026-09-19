@@ -117,9 +117,16 @@ func (f *fakeCore) UpdateProfile(_ context.Context, _, country, birthday, displa
 func (f *fakeCore) RegisterWithProfile(ctx context.Context, email, password, displayName, _, _ string) error {
 	return f.Register(ctx, email, password, displayName)
 }
-func (f *fakeCore) ForgotPassword(_ context.Context, _ string) error   { return nil }
-func (f *fakeCore) ResetPassword(_ context.Context, _, _ string) error { return nil }
-func (f *fakeCore) Healthy(_ context.Context) error                    { return nil }
+func (f *fakeCore) ForgotPassword(_ context.Context, _ string) error { return nil }
+func (f *fakeCore) ResetPassword(_ context.Context, token, password string) error {
+	// Mirror the core: a token it did not issue is refused.
+	if token != "reset-a" {
+		return core.ErrNotFound
+	}
+	f.accounts["a@x.test"] = password
+	return nil
+}
+func (f *fakeCore) Healthy(_ context.Context) error { return nil }
 func (f *fakeCore) ResolveAccount(_ context.Context, email, password string) (core.Account, error) {
 	if pw, ok := f.accounts[email]; !ok || pw != password {
 		return core.Account{}, core.ErrInvalidCredentials
@@ -147,7 +154,12 @@ func (f *fakeCore) RequestFriend(_ context.Context, requester, addressee string)
 	return nil
 }
 func (f *fakeCore) AcceptFriend(_ context.Context, _, _ string) error { return nil }
-func (f *fakeCore) RemoveFriend(_ context.Context, _, _ string) error { return nil }
+func (f *fakeCore) RemoveFriend(_ context.Context, accountID, otherID string) error {
+	// Either direction, as the core's pending and accepted rows can be.
+	f.friends[accountID] = slices.DeleteFunc(f.friends[accountID], func(id string) bool { return id == otherID })
+	f.friends[otherID] = slices.DeleteFunc(f.friends[otherID], func(id string) bool { return id == accountID })
+	return nil
+}
 func (f *fakeCore) ListFriends(_ context.Context, id string) ([]core.Friend, error) {
 	var out []core.Friend
 	for _, other := range f.friends[id] {

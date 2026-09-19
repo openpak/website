@@ -102,6 +102,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	g("/me/friends/requests", s.auth(s.handleRequests))
 	h("/me/friends/requests", s.auth(s.handleSendRequest)) // POST: add by friend code
 	h("/me/friends/requests/accept", s.auth(s.handleAccept))
+	h("/me/friends/requests/decline", s.auth(s.handleDecline))
 	h("/me/friends/remove", s.auth(s.handleRemove))
 	h("/me/friends/block", s.auth(s.handleBlock))
 	h("/me/friends/unblock", s.auth(s.handleUnblock))
@@ -117,11 +118,14 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	// an account, or without its password, does.
 	h("/register", s.handleRegister)
 	h("/password/forgot", s.handleForgotPassword)
+	h("/password/reset", s.handleResetPassword)
 	g("/avatars", s.auth(s.handleAvatarChoices))
 	// Requests + votes: the same scoreboard the website shows, for the app's
 	// Titles tab. GET is public (a bearer only personalises `voted`); voting
 	// needs one.
 	g("/requests", s.handleListRequests)
+	// Public: the title catalogue as the website's /titles page lists it.
+	g("/titles", s.handleTitles)
 	h("/requests/{id}/vote", s.auth(s.handleVoteRequest))
 	// Public: no bearer. A status endpoint that needed an account could not
 	// be read by the thing most likely to want it — someone whose sign-in is
@@ -438,6 +442,23 @@ func (s *Server) handleAccept(w http.ResponseWriter, r *http.Request, tok store.
 	writeJSON(w, http.StatusOK, map[string]string{"message": "friend added"})
 }
 
+// handleDecline: POST /api/v1/me/friends/requests/decline {"account_id"}. As on the website,
+// declining removes the pending row; /me/friends/remove does the same, and this is the name a
+// client looking for "decline" finds.
+func (s *Server) handleDecline(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	var req struct {
+		AccountID string `json:"account_id"`
+	}
+	if !decodeSmall(w, r, &req) {
+		return
+	}
+	if err := s.Social.RemoveFriend(r.Context(), tok.AccountID, req.AccountID); err != nil {
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"message": "declined"})
+}
+
 func (s *Server) handleRemove(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
 	var req struct {
 		AccountID string `json:"account_id"`
@@ -724,6 +745,32 @@ func (s *Server) handleListRequests(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+}
+
+// handleTitles: GET /api/v1/titles → the title catalogue in the order the website's /titles
+// page shows it, each with its status. `requestable` marks the long tail the page keeps behind
+// "Request a game"; votes stay on /requests.
+func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
+	// The per-token budget, keyed by address instead: a catalogue read must not spend the
+	// sign-in budget that s.Auth keeps for the same address.
+	if !s.PerToken.Allow("ip:" + clientKey(r)) {
+		writeError(w, http.StatusTooManyRequests, "rate limited")
+		return
+	}
+	reqs, err := s.DB.ListRequests(r.Context(), "title", "")
+	if err != nil {
+		s.log.Error("api: list titles", "err", err)
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	titles := make([]map[string]any, 0, len(reqs))
+	for _, t := range store.CatalogOrder(reqs) {
+		titles = append(titles, map[string]any{
+			"id": t.ID, "name": t.Name, "console": t.Console, "category": t.Category,
+			"status": t.Status, "notes": t.Notes, "requestable": t.Votable(),
+		})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"titles": titles})
 }
 
 // handleVoteRequest: POST /api/v1/requests/{id}/vote → toggles the caller's vote

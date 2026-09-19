@@ -374,6 +374,40 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Message" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /password/reset:
+    post:
+      summary: Choose a new password with a reset token
+      security: []
+      description: |
+        Public: the step the website's reset page performs, for an app that
+        opens the reset mail's link itself. The token is the `token` query
+        parameter of that link. The core revokes every session of the account,
+        and with them every bearer, so the app signs in again afterwards.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token: { type: string }
+                password: { type: string, minLength: 8 }
+      responses:
+        "200":
+          description: The password was changed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reset: { type: boolean }
+        "400":
+          description: A field is missing, or the token is invalid or expired.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "429": { $ref: "#/components/responses/RateLimited" }
   /me/chat:
     get:
       summary: Conversations, newest message first
@@ -616,6 +650,37 @@ paths:
                         notes: { type: string }
                         votes: { type: integer }
                         voted: { type: boolean }
+  /titles:
+    get:
+      summary: The title catalogue, as the website lists it
+      security: []
+      description: |
+        Public. Every title with its status, in the website's /titles order:
+        what can be played first, grouped by console and alphabetical, then
+        the long tail the same way. `requestable` marks the titles the page
+        keeps behind "Request a game"; their votes are on GET /requests.
+        Rate limited per client address.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  titles:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: integer, examples: [42] }
+                        name: { type: string, examples: ["Stardew Valley"] }
+                        console: { type: string, examples: ["Switch"] }
+                        category: { type: string }
+                        status: { type: string, examples: ["live"] }
+                        notes: { type: string }
+                        requestable: { type: boolean }
+        "429": { $ref: "#/components/responses/RateLimited" }
   /requests/{id}/vote:
     post:
       summary: Toggle the caller's vote on a request
@@ -814,6 +879,24 @@ paths:
         "200": { description: Friend added }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "409": { description: No pending request }
+  /me/friends/requests/decline:
+    post:
+      summary: Decline a pending incoming request
+      description: |
+        Removes the pending request, as the website's Decline button does.
+        Declining one that is already gone is not an error.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AccountIDBody" }
+      responses:
+        "200":
+          description: Declined
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Message" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
   /me/friends/remove:
     post:
       summary: Remove a friendship or decline a pending request

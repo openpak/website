@@ -68,50 +68,6 @@ func mostRequested(reqs []store.Request) []store.Request {
 	return out
 }
 
-// statusRank orders statuses: what can be played now first, then what is being
-// built, then the long tail. The console grouping and alphabet come after it.
-func statusRank(status string) int {
-	switch status {
-	case "live", "working":
-		return 0
-	case "beta":
-		return 1
-	case "alpha", "partial":
-		return 2
-	case "scaffold":
-		return 3
-	case "requestable", "planned":
-		return 4
-	default: // not-feasible, broken, anything new
-		return 5
-	}
-}
-
-// playable is the top block of the page: live, beta, alpha and the rest in flight.
-func playable(status string) bool { return statusRank(status) <= 3 }
-
-// catalogOrder is the one ordering every view of the list shares: playable titles on top,
-// grouped by console and alphabetical inside each; then the long tail the same way. The
-// keys are chosen so that hiding rows for a console filter leaves the rest ordered by status
-// then name, and hiding for a status filter leaves them ordered by console then name.
-func catalogOrder(reqs []store.Request) []store.Request {
-	out := append([]store.Request(nil), reqs...)
-	sort.SliceStable(out, func(i, j int) bool {
-		a, b := out[i], out[j]
-		if playable(a.Status) != playable(b.Status) {
-			return playable(a.Status)
-		}
-		if a.Console != b.Console {
-			return a.Console < b.Console
-		}
-		if statusRank(a.Status) != statusRank(b.Status) {
-			return statusRank(a.Status) < statusRank(b.Status)
-		}
-		return strings.ToLower(a.Name) < strings.ToLower(b.Name)
-	})
-	return out
-}
-
 // handleTitles is the full, filterable catalogue: every title, filtered
 // client-side by console and status and searched by name. `?sort=votes` turns it
 // into the scoreboard — most requested first — which is the point of the
@@ -135,7 +91,7 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 	if byVotes {
 		reqs = mostRequested(reqs)
 	} else {
-		reqs = catalogOrder(reqs)
+		reqs = store.CatalogOrder(reqs)
 		var served []store.Request
 		for _, t := range reqs {
 			if t.Votable() {

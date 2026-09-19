@@ -1,15 +1,11 @@
-package pages
+package store
 
-import (
-	"testing"
-
-	"github.com/openpak/website/internal/store"
-)
+import "testing"
 
 // The list shows what can be played first, by console, alphabetically; the long tail follows
 // the same way. Filtering by console or status must not disturb that, so the keys are fixed.
 func TestCatalogOrder(t *testing.T) {
-	in := []store.Request{
+	in := []Request{
 		{Name: "Zelda", Console: "3DS", Status: "requestable"},
 		{Name: "Splatoon", Console: "Wii U", Status: "beta"},
 		{Name: "ARMS", Console: "Switch", Status: "beta"},
@@ -18,7 +14,7 @@ func TestCatalogOrder(t *testing.T) {
 		{Name: "Animal Crossing: New Horizons", Console: "Switch", Status: "beta"},
 		{Name: "Bayonetta 2", Console: "Wii U", Status: "requestable"},
 	}
-	got := catalogOrder(in)
+	got := CatalogOrder(in)
 	want := []string{"Mario Kart 7", "Stardew Valley", "Animal Crossing: New Horizons", "ARMS", "Splatoon", "Zelda", "Bayonetta 2"}
 	for i, w := range want {
 		if got[i].Name != w {
@@ -27,7 +23,7 @@ func TestCatalogOrder(t *testing.T) {
 	}
 }
 
-func names(rs []store.Request) []string {
+func names(rs []Request) []string {
 	out := make([]string, len(rs))
 	for i, r := range rs {
 		out[i] = r.Name
