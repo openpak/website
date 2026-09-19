@@ -573,6 +573,21 @@ func (s *Server) handleInvitations(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/account/friends#invitations", http.StatusSeeOther)
 }
 
+// handleDeclineInvitation turns an invitation down. One already gone (expired, delivered, or
+// declined from the phone) is not an error: the page just no longer lists it.
+func (s *Server) handleDeclineInvitation(w http.ResponseWriter, r *http.Request) {
+	v, ok := s.postGuard(w, r)
+	if !ok {
+		return
+	}
+	if _, err := s.Invites.Decline(r.Context(), v.AccountID, r.PostFormValue("invitation_id")); err != nil {
+		s.log.Error("decline invitation", "err", err)
+		http.Error(w, "could not decline the invitation", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/account?m=saved#invitations", http.StatusSeeOther)
+}
+
 // handleStatus is the public status page (journey 5).
 // handleStatus is the network's own status page: what is running, and who is
 // playing what. The availability page on a separate host answers "is OpenPak

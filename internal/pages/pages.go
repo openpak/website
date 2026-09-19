@@ -292,6 +292,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /account/friends/block", s.handleFriendBlock)
 	mux.HandleFunc("POST /account/friends/unblock", s.handleFriendUnblock)
 	mux.HandleFunc("GET /account/invitations", s.handleInvitations)
+	mux.HandleFunc("POST /account/invitations/decline", s.handleDeclineInvitation)
 	mux.HandleFunc("GET /account/chat", s.handleChat)
 	mux.HandleFunc("POST /account/chat/send", s.handleChatSend)
 	mux.HandleFunc("GET /account/saves", s.handleSaves)

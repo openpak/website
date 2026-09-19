@@ -325,6 +325,7 @@ var languages = map[string]Catalogue{
 		"invitations.title":                "Invitations",
 		"invitations.sub":                  "Game invitations waiting for you.",
 		"invitations.none":                 "No pending invitations.",
+		"invitations.decline":              "Decline",
 		"status.title":                     "Network status",
 		"status.sub":                       "What is running, and who is playing right now.",
 		"status.core":                      "Account core",

@@ -89,6 +89,21 @@ func TestFriendsShowPresence(t *testing.T) {
 	}
 }
 
+// An invitation can be declined from the account page, as from the phone.
+func TestDeclineInvitation(t *testing.T) {
+	s, fc, _ := newTestServer(t)
+	emailA, _ := seedTwoAccounts(fc)
+	fc.invitations = []core.PendingInvitation{{ID: "inv-1", FromName: "Leia", TitleID: "0100E65002BB8000", ExpiresAt: time.Now().Add(time.Minute)}}
+	a := login(t, s, emailA, "password-A-1")
+	if body := authedRequest(s, a, http.MethodGet, "/account", nil).Body.String(); !strings.Contains(body, `name="invitation_id" value="inv-1"`) {
+		t.Fatal("the invitation has no Decline button")
+	}
+	rec := authedRequest(s, a, http.MethodPost, "/account/invitations/decline", &url.Values{"invitation_id": {"inv-1"}})
+	if rec.Code != http.StatusSeeOther || len(fc.invitations) != 0 {
+		t.Fatalf("decline: %d, %d left", rec.Code, len(fc.invitations))
+	}
+}
+
 // A block stops a chat message before it reaches the chat service, which only checks
 // friendship and would otherwise deliver it: blocking does not end a friendship.
 func TestChatSendRefusedWhenBlocked(t *testing.T) {

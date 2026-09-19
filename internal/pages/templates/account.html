@@ -90,6 +90,9 @@
       <span class="name">{{.FromName}}</span>
       <code>{{.TitleID}}</code>
       <time class="sub" datetime="{{.ExpiresAt.Format "2006-01-02T15:04:05Z07:00"}}">{{.ExpiresAt.UTC.Format "2006-01-02 15:04 UTC"}}</time>
+      <form method="post" action="/account/invitations/decline" class="inline">
+        <input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="invitation_id" value="{{.ID}}">
+        <button type="submit" class="small">{{t $.Lang "invitations.decline"}}</button></form>
     </li>{{end}}
   </ul>
   {{else}}<p class="empty">{{t .Lang "invitations.none"}}</p>{{end}}
