@@ -16,6 +16,21 @@
   </div>
 </section>
 
+{{if .News}}
+<section aria-labelledby="news-h" class="mb-12">
+  <h2 id="news-h">{{t .Lang "landing.news"}}</h2>
+  <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {{range .News}}
+    <article class="card p-5">
+      <h3>{{.Title}}</h3>
+      <p class="text-sm text-muted"><time datetime="{{.Published.UTC.Format "2006-01-02"}}">{{.Published.UTC.Format "2 January 2006"}}</time></p>
+      <p class="mb-0 text-ink-2">{{.Summary}}</p>
+    </article>
+    {{end}}
+  </div>
+</section>
+{{end}}
+
 <section aria-labelledby="what" class="mb-12">
   <h2 id="what">{{t .Lang "landing.what"}}</h2>
   <p class="max-w-prose text-muted">{{t .Lang "landing.what.sub"}}</p>

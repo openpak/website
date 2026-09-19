@@ -1,0 +1,28 @@
+{{template "header" .}}
+{{template "adminnav" .}}
+<div class="page-head"><h1>{{.Title}}</h1><p>{{t .Lang "admin.news.form.sub"}}</p></div>
+{{if .Error}}<p class="notice bad" role="alert">{{.Error}}</p>{{end}}
+<form method="post" action="/admin/news{{if .ID}}/{{.ID}}{{end}}" class="form-stack max-w-2xl">
+  <input type="hidden" name="csrf" value="{{.CSRF}}">
+  <label for="slug">{{t .Lang "admin.news.slug"}}</label>
+  {{/* The service keys an article by its slug and has no rename, so it is
+       fixed once the article exists. */}}
+  <input id="slug" name="slug" type="text" value="{{.Slug}}" {{if .ID}}readonly{{else}}required maxlength="80"{{end}}>
+  <label for="platforms">{{t .Lang "admin.news.platforms"}}</label>
+  <input id="platforms" name="platforms" type="text" value="{{.Platforms}}">
+  <label for="language">{{t .Lang "admin.news.language"}}</label>
+  <input id="language" name="language" type="text" value="{{.Language}}" required maxlength="35">
+  <label for="title">{{t .Lang "admin.news.col.title"}}</label>
+  <input id="title" name="title" type="text" value="{{.Heading}}" required maxlength="200">
+  <label for="body">{{t .Lang "admin.news.body"}}</label>
+  <textarea id="body" name="body" rows="14" required>{{.Body}}</textarea>
+  <p class="hint">{{t .Lang "admin.news.body.hint"}}</p>
+  <button type="submit" class="btn primary">{{t .Lang "admin.save"}}</button>
+</form>
+{{if .ID}}
+<form method="post" action="/admin/news/{{.ID}}/{{if .Published}}unpublish{{else}}publish{{end}}" class="mt-6">
+  <input type="hidden" name="csrf" value="{{.CSRF}}">
+  <button type="submit" class="btn">{{if .Published}}{{t .Lang "admin.news.unpublish"}}{{else}}{{t .Lang "admin.news.publish"}}{{end}}</button>
+</form>
+{{end}}
+{{template "footer" .}}

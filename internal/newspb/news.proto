@@ -1,0 +1,135 @@
+// OpenPak news: authoring gRPC consumed by the website's role-gated pages
+// (PRD NB-2 / NB-4). Operators only; authenticated with the shared operator
+// key, never with console or player credentials.
+syntax = "proto3";
+
+package news.v1;
+
+option go_package = "github.com/openpak/news/gen/news/v1;newsv1";
+
+// Article: one record, delivered to every channel (PRD §1). Audience
+// targeting is platform-neutral; an empty dimension means "all".
+message Article {
+  string id = 1;
+  string slug = 2;
+  Audience audience = 3;
+  string published_at = 4; // RFC 3339, empty = draft (never served)
+  string expires_at = 5;   // RFC 3339, empty = never expires
+  repeated ArticleLocale locales = 6;
+  repeated ArticleImage images = 7;
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+message Audience {
+  repeated string platforms = 1; // switch, wiiu, 3ds, web, android, ios, ... ; empty = all
+  repeated string title_ids = 2; // per-platform title ids; empty = all titles
+  repeated string regions = 3;   // ISO 3166-1 alpha-2; empty = all regions
+  repeated string languages = 4; // BCP 47; empty = all languages
+}
+
+message ArticleLocale {
+  string language = 1; // BCP 47, e.g. en-US
+  string title = 2;
+  string body = 3; // plain text, \n\n paragraphs
+}
+
+message ArticleImage {
+  string id = 1;
+  string language = 2; // empty = all languages
+  string file_name = 3;
+  string url = 4; // public URL on the bcat-data host
+  int64 size = 5;
+  string sha256 = 6;
+  string md5 = 7;
+}
+
+// Dataset: per-title Switch BCAT data (schedules, seasonal content).
+message Dataset {
+  string id = 1;
+  string title_id = 2;
+  string valid_from = 3;  // RFC 3339
+  string valid_until = 4; // RFC 3339, empty = open end
+  bool sealed = 5;        // only sealed datasets are served
+  repeated DatasetFile files = 6;
+}
+
+message DatasetFile {
+  string path = 1; // relative destination path, no leading '/', no '..'
+  int64 size = 2;
+  string sha256 = 3;
+}
+
+service News {
+  rpc CreateArticle(CreateArticleRequest) returns (Article);
+  rpc UpdateArticle(UpdateArticleRequest) returns (Article);
+  rpc PublishArticle(PublishArticleRequest) returns (Article);
+  rpc UnpublishArticle(ArticleRef) returns (Article);
+  rpc GetArticle(ArticleRef) returns (Article);
+  rpc ListArticles(ListArticlesRequest) returns (ListArticlesResponse);
+  rpc UploadImage(UploadImageRequest) returns (ArticleImage);
+  rpc RenderPreview(ArticleRef) returns (RenderPreviewResponse);
+
+  rpc CreateDataset(CreateDatasetRequest) returns (Dataset);
+  rpc PutDatasetFile(PutDatasetFileRequest) returns (DatasetFile);
+  rpc SealDataset(SealDatasetRequest) returns (Dataset);
+  rpc ListDatasets(ListDatasetsRequest) returns (ListDatasetsResponse);
+}
+
+message CreateArticleRequest {
+  string slug = 1;
+  Audience audience = 2;
+  repeated ArticleLocale locales = 3;
+}
+
+message UpdateArticleRequest {
+  string id = 1;
+  Audience audience = 2; // fields present replace; use "all" to clear a dimension
+  repeated ArticleLocale locales = 3; // upserts locales by language
+}
+
+message PublishArticleRequest {
+  string id = 1;
+  string published_at = 2; // RFC 3339; empty = now
+  string expires_at = 3;   // RFC 3339; empty = never
+}
+
+message ArticleRef {
+  string id = 1;
+  string slug = 2; // alternative to id
+}
+
+message ListArticlesRequest {
+  bool include_unpublished = 1;
+  string platform = 2; // optional filter
+  string title_id = 3; // optional filter
+}
+
+message ListArticlesResponse { repeated Article articles = 1; }
+
+message UploadImageRequest {
+  string article_id = 1;
+  string language = 2; // empty = all languages
+  string file_name = 3;
+  bytes content = 4; // jpeg/png/webp, <= 8 MiB
+}
+
+message RenderPreviewResponse { string html = 1; }
+
+message CreateDatasetRequest {
+  string title_id = 1;
+  string valid_from = 2;  // RFC 3339; empty = now
+  string valid_until = 3; // RFC 3339; empty = open end
+}
+
+message PutDatasetFileRequest {
+  string dataset_id = 1;
+  string path = 2;
+  bytes content = 3; // <= 64 MiB
+}
+
+message SealDatasetRequest { string dataset_id = 1; }
+
+message ListDatasetsRequest { string title_id = 1; }
+
+message ListDatasetsResponse { repeated Dataset datasets = 1; }

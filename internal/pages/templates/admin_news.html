@@ -1,0 +1,25 @@
+{{template "header" .}}
+{{template "adminnav" .}}
+<div class="page-head"><h1>{{t .Lang "admin.news"}}</h1><p>{{t .Lang "admin.news.sub"}}</p></div>
+{{if .Error}}<p class="notice bad" role="alert">{{.Error}}</p>{{end}}
+<p class="mb-6"><a class="btn primary" href="/admin/news/new">{{t .Lang "admin.news.new"}}</a></p>
+{{if .Articles}}
+<div class="table-wrap">
+<table>
+  <thead><tr><th scope="col">{{t .Lang "admin.news.col.title"}}</th><th scope="col">{{t .Lang "admin.news.col.state"}}</th><th scope="col">{{t .Lang "admin.news.col.updated"}}</th><th scope="col"><span class="sr-only">{{t .Lang "admin.col.actions"}}</span></th></tr></thead>
+  <tbody>{{range .Articles}}
+  <tr>
+    <td><a href="/admin/news/{{.ID}}">{{if .Title}}{{.Title}}{{else}}{{.Slug}}{{end}}</a> <span class="muted">{{.Slug}}</span></td>
+    <td><span class="cl">{{t $.Lang "admin.news.col.state"}}: </span><span class="badge {{if .Published}}ok{{end}}">{{if .Published}}{{t $.Lang "admin.news.published"}}{{else}}{{t $.Lang "admin.news.draft"}}{{end}}</span></td>
+    <td><span class="cl">{{t $.Lang "admin.news.col.updated"}}: </span>{{.Updated}}</td>
+    <td>
+      <form method="post" action="/admin/news/{{.ID}}/{{if .Published}}unpublish{{else}}publish{{end}}">
+        <input type="hidden" name="csrf" value="{{$.CSRF}}">
+        <button type="submit" class="btn text-sm {{if not .Published}}primary{{end}}">{{if .Published}}{{t $.Lang "admin.news.unpublish"}}{{else}}{{t $.Lang "admin.news.publish"}}{{end}}</button>
+      </form>
+    </td>
+  </tr>{{end}}</tbody>
+</table>
+</div>
+{{else if not .Error}}<p class="empty">{{t .Lang "admin.news.none"}}</p>{{end}}
+{{template "footer" .}}

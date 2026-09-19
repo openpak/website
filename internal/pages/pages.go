@@ -29,6 +29,7 @@ import (
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/media"
+	"github.com/openpak/website/internal/news"
 	"github.com/openpak/website/internal/ratelimit"
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/session"
@@ -53,7 +54,9 @@ type Server struct {
 	// Saves is the cloud saves service; nil renders the page as "not available".
 	Saves *saves.Client
 	// Chat is the neutral chat service; nil renders the page as "not available".
-	Chat       *chat.Client
+	Chat *chat.Client
+	// News is the public news feed for the landing page; nil shows none.
+	News       *news.Feed
 	Sessions   *session.Manager
 	Production bool
 	// AdminAccountIDs mirrors the admin allowlist so the portal can show
@@ -336,8 +339,11 @@ func (s *Server) handleLanding(w http.ResponseWriter, r *http.Request) {
 		baseData
 		Titles      []store.Request
 		TitlesTotal int
+		News        []news.Article
 	}
-	s.render(w, http.StatusOK, "landing.html", landing{d, popularTitles(titles), len(titles)})
+	// News is a nice-to-have on this page: unset or failing, the section is
+	// simply not drawn.
+	s.render(w, http.StatusOK, "landing.html", landing{d, popularTitles(titles), len(titles), s.News.Latest(r.Context(), 3)})
 }
 
 // handleFeatures is the honest feature matrix: every network feature and its

@@ -19,6 +19,7 @@ import (
 	"github.com/openpak/website/internal/chat"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
+	newsv1 "github.com/openpak/website/internal/newspb"
 	"github.com/openpak/website/internal/pages"
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/store"
@@ -46,6 +47,8 @@ type Server struct {
 	PushOn bool
 	// StatusAPI is the availability page's JSON (STATUS_API_URL).
 	StatusAPI string
+	// News is the news service's operator gRPC; nil says "not configured".
+	News newsv1.NewsClient
 
 	tmpl       *template.Template
 	log        *slog.Logger
@@ -90,6 +93,7 @@ type navLink struct {
 var adminNav = []struct{ href, key string }{
 	{"/admin", "admin.nav.overview"},
 	{"/admin/monitor", "admin.monitor"},
+	{"/admin/news", "admin.news"},
 	{"/admin/nodes", "admin.nodes"},
 	{"/admin/config", "admin.nav.config"},
 	{"/admin/events", "admin.nav.events"},
@@ -177,6 +181,13 @@ func (s *Server) render(w http.ResponseWriter, status int, name string, data any
 func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin", s.handleDashboard)
 	mux.HandleFunc("GET /admin/monitor", s.handleMonitor)
+	mux.HandleFunc("GET /admin/news", s.handleNews)
+	mux.HandleFunc("GET /admin/news/new", s.handleNewsNew)
+	mux.HandleFunc("POST /admin/news", s.handleNewsSave)
+	mux.HandleFunc("GET /admin/news/{id}", s.handleNewsEdit)
+	mux.HandleFunc("POST /admin/news/{id}", s.handleNewsSave)
+	mux.HandleFunc("POST /admin/news/{id}/publish", s.handleNewsPublish)
+	mux.HandleFunc("POST /admin/news/{id}/unpublish", s.handleNewsPublish)
 	mux.HandleFunc("GET /admin/config", s.handleConfig)
 	mux.HandleFunc("POST /admin/config", s.handleConfigSave)
 	mux.HandleFunc("GET /admin/events", s.handleEvents)

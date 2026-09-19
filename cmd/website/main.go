@@ -23,6 +23,7 @@ import (
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/metrics"
 	"github.com/openpak/website/internal/netprofile"
+	"github.com/openpak/website/internal/news"
 	"github.com/openpak/website/internal/pages"
 	"github.com/openpak/website/internal/push"
 	"github.com/openpak/website/internal/ratelimit"
@@ -182,6 +183,21 @@ func run(log *slog.Logger) error {
 	adminSrv.Chat = chatCli
 	adminSrv.PushOn = pushOn
 	adminSrv.StatusAPI = envOr("STATUS_API_URL", "https://status.openpak.org/api/status")
+
+	// News: the public feed for the landing page, and the operator gRPC for
+	// /admin/news. Either can be absent; the landing page then has no news
+	// section and the admin page says the service is not configured.
+	pageSrv.News = news.NewFeed(os.Getenv("NEWS_URL"))
+	if addr, key := os.Getenv("NEWS_GRPC_ADDR"), os.Getenv("NEWS_OPERATOR_KEY"); addr != "" && key != "" {
+		newsCli, conn, err := news.DialOperator(addr, key)
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
+		adminSrv.News = newsCli
+	} else {
+		log.Info("news: NEWS_GRPC_ADDR/NEWS_OPERATOR_KEY not set; /admin/news says so")
+	}
 
 	mux := http.NewServeMux()
 	pageSrv.RegisterRoutes(mux)
