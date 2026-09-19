@@ -487,12 +487,13 @@ func TestStatusPageShowsWhoIsPlaying(t *testing.T) {
 	}
 	// Photon and Stardew are really checked, and unreachable in a test means
 	// "down" — which the banner must then admit, however healthy the core is.
-	// The switch-nexd titles have no health endpoint and say so.
+	// Every server has a health endpoint now (switch-nexd since v0.2.16), so every row is
+	// really checked.
 	if !strings.Contains(body, "Degraded") || !strings.Contains(body, "Some things are having trouble") {
 		t.Error("a game server that does not answer must show as down and flip the banner")
 	}
-	if !strings.Contains(body, "Not checked") {
-		t.Error("switch-nexd titles cannot be probed and should say so")
+	if strings.Contains(body, "Not checked") {
+		t.Error("every game server has a health endpoint and should be checked")
 	}
 }
 

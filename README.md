@@ -141,12 +141,12 @@ That renders every page, signed-in ones included, from the test harness.
 
 `/status` shows game servers, console networks and who is playing. Each game
 server row has a `*_HEALTH_URL` (the full list and defaults are in
-`internal/pages/gameservers.go` and `example.env`). Four have a default probe —
-`MHGU_`, `PHOTON_`, `SPLATOON3_` and `STARDEW_HEALTH_URL`; set one to `off` for a
-server this deployment does not run and its row says "not checked" rather than
-reporting an absent server as down. The Switch-era NEX titles default to
-unchecked because `switch-nexd` has no health listener yet; set their variable
-once it does. A server that is checked and not answering turns the banner red.
+`internal/pages/gameservers.go` and `example.env`); every one has a default probe.
+Set one to `off` for a server this deployment does not run and its row says "not
+checked" rather than reporting an absent server as down. The Switch-era NEX
+titles run in `switch-nexd` on the host network, so their defaults are
+`http://host.containers.internal:<base+2>/healthz`. A server that is checked and
+not answering turns the banner red.
 `GET /api/v1/status`
 is the same counts as JSON, with no bearer, because the people most likely to
 check status are the ones who cannot sign in.
