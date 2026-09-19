@@ -9,14 +9,22 @@ info:
     account core's public HTTP contract and binds a random bearer to it.
     Revoking the underlying session (logout, ban, password reset) ends
     bearer validity within the core's revocation window. Rate limits: 10
-    token mints per minute per client, 120 calls per minute per token.
+    token mints per minute per client (register and forgot-password share it),
+    120 calls per minute per token, and 120 per minute per client for the
+    public title catalogue.
+
+    One host, several services: the mods routes (tagged `x-served-by: mods`)
+    are routed by Traefik to the mods service; everything else is the website.
+    Outside this base URL: `GET /ca.pem` (the OpenPak CA) is served by the
+    website at the root, and `/api/v2/network/*` (build-time network policy
+    distribution) is the registry service's, documented in docs/registry.md.
   license:
     name: AGPL-3.0-only
     identifier: AGPL-3.0-only
 servers:
   - url: https://openpak.org/api/v1
     description: Production
-  - url: http://localhost:8080/api/v1
+  - url: http://localhost:20010/api/v1
     description: Development
 security:
   - bearerAuth: []
@@ -270,7 +278,7 @@ paths:
                 type: object
                 properties:
                   changed: { type: boolean }
-        "400": { description: A field is missing, or the core rejected the change; the message says why. }
+        "400": { description: "A field is missing, or the core rejected the change; the message says why." }
         "401": { $ref: "#/components/responses/Unauthorized" }
   /me/links/wfc:
     post:
@@ -543,7 +551,7 @@ paths:
                 properties:
                   node_id: { type: string }
                   approved: { type: boolean }
-        "401": { description: No node key, or one the core does not know. }
+        "401": { description: "No node key, or one the core does not know." }
   /network/profile:
     get:
       summary: The OpenPak network profile — what to redirect, and where
@@ -761,7 +769,7 @@ paths:
                 type: object
                 properties:
                   saved: { type: boolean }
-        "400": { description: preset is required or unknown, or the upload is not a PNG/JPEG within 4 MiB }
+        "400": { description: "preset is required or unknown, or the upload is not a PNG/JPEG within 4 MiB" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "429": { $ref: "#/components/responses/RateLimited" }
         "503": { description: Avatars are not configured on this deployment. }
@@ -931,12 +939,14 @@ paths:
         "200": { description: Unblocked }
         "401": { $ref: "#/components/responses/Unauthorized" }
   /titles/{title_id}/mods:
+    x-served-by: mods
     get:
-      summary: Published mods for a title (served by the mods service)
+      summary: Published mods for a title
       parameters: [{ name: title_id, in: path, required: true, schema: { type: string } }]
       responses:
         "200": { description: "Manifest: id, slug, version, sha256, size, licence, summary, package_url" }
   /mods/{id}:
+    x-served-by: mods
     get:
       summary: One mod entry
       parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
@@ -944,6 +954,7 @@ paths:
         "200": { description: The entry }
         "404": { description: Not published }
   /mods/{id}/package:
+    x-served-by: mods
     get:
       summary: The mod package (zip); ETag is the sha256, honours If-None-Match
       parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
@@ -952,25 +963,29 @@ paths:
         "304": { description: Unchanged }
         "404": { description: Not published }
   /submissions:
+    x-served-by: mods
     post:
       summary: Submit a mod package (multipart field "package") for curation
       responses:
         "202": { description: Accepted into the queue }
-        "422": { description: Refused by the provenance gate, with the reason }
+        "422": { description: "Refused by the provenance gate, with the reason" }
         "401": { $ref: "#/components/responses/Unauthorized" }
   /me/submissions:
+    x-served-by: mods
     get:
       summary: The caller's submissions and their status
       responses:
         "200": { description: List }
         "401": { $ref: "#/components/responses/Unauthorized" }
   /me/favourites:
+    x-served-by: mods
     get:
       summary: The caller's favourite mods
       responses:
         "200": { description: List }
         "401": { $ref: "#/components/responses/Unauthorized" }
   /me/favourites/{id}:
+    x-served-by: mods
     put:
       summary: Favourite a mod
       parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
@@ -1373,7 +1388,7 @@ components:
             properties:
               id: { type: string }
               url: { type: string }
-        recheck_after: { type: integer, description: Seconds; a hint, not a contract. }
+        recheck_after: { type: integer, description: "Seconds; a hint, not a contract." }
     Error:
       type: object
       properties:
@@ -1430,7 +1445,7 @@ components:
       properties:
         platform: { type: string }
         title_id: { type: string }
-        name: { type: string, description: The game's name, or the title id when unknown. }
+        name: { type: string, description: "The game's name, or the title id when unknown." }
         icon: { type: string, description: A path on this site; absent when there is no icon. }
         versions:
           type: array
@@ -1455,7 +1470,7 @@ components:
         insecure: { type: boolean }
         url: { type: string, description: WebDAV. }
         username: { type: string, description: WebDAV. }
-        account: { type: string, description: Google Drive / OneDrive, the address the provider reported. }
+        account: { type: string, description: "Google Drive / OneDrive, the address the provider reported." }
         last_test_at: { type: [string, "null"], format: date-time }
         last_test_ok: { type: [boolean, "null"] }
         last_error: { type: string }
