@@ -164,3 +164,37 @@ func TestReseedPreservesVotes(t *testing.T) {
 		t.Errorf("reseed changed the id: %d -> %d", id, reqs[0].ID)
 	}
 }
+
+// A feature has no admin status control, so its status follows the catalog; and a row the
+// catalog drops goes away unless someone voted for it.
+func TestReseedFeaturesFollowCatalogAndPrunes(t *testing.T) {
+	ctx := context.Background()
+	m := NewMemory()
+	_ = m.SeedRequests(ctx, []Request{
+		{Kind: "feature", Name: "nimbus", Console: "3DS", Status: "planned"},
+		{Kind: "feature", Name: "Nintendo DS network", Console: "DS", Status: "planned"},
+		{Kind: "title", Name: "Voted", Console: "DS", Status: "requestable"},
+		{Kind: "title", Name: "Unvoted", Console: "DS", Status: "requestable"},
+	})
+	if _, err := m.ToggleVote(ctx, idOf(t, m, "Voted"), "acct-a"); err != nil {
+		t.Fatal(err)
+	}
+	_ = m.SeedRequests(ctx, []Request{{Kind: "feature", Name: "nimbus", Console: "3DS", Status: "alpha"}})
+	reqs, _ := m.ListRequests(ctx, "", "")
+	got := map[string]string{}
+	for _, r := range reqs {
+		got[r.Name] = r.Status
+	}
+	if got["nimbus"] != "alpha" {
+		t.Errorf("feature status = %q, want the catalog's alpha", got["nimbus"])
+	}
+	if _, ok := got["Nintendo DS network"]; ok {
+		t.Error("a feature the catalog dropped should be deleted")
+	}
+	if _, ok := got["Unvoted"]; ok {
+		t.Error("an unvoted title the catalog dropped should be deleted")
+	}
+	if _, ok := got["Voted"]; !ok {
+		t.Error("a title with votes must survive being dropped from the catalog")
+	}
+}

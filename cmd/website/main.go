@@ -58,8 +58,8 @@ func run(log *slog.Logger) error {
 		if err != nil {
 			return err
 		}
-		// Upsert, never truncate: statuses and notes refresh from the catalog,
-		// but votes (user data) are left untouched.
+		// Upsert: new rows and feature statuses come from the catalog, title statuses
+		// stay the database's, and votes (user data) are left untouched.
 		if err := db.SeedRequests(ctx, reqs); err != nil {
 			log.Warn("seed requests", "err", err)
 		}

@@ -555,11 +555,10 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		CountsOK                bool
 	}
 	view := statusView{
-		baseData:    s.data(r, s.viewerOf(w, r), i18n.T("en", "status.title")),
-		CoreOK:      coreOK,
-		DBOk:        dbOK,
-		StorageOK:   storeOK,
-		Operational: coreOK && dbOK && storeOK,
+		baseData:  s.data(r, s.viewerOf(w, r), i18n.T("en", "status.title")),
+		CoreOK:    coreOK,
+		DBOk:      dbOK,
+		StorageOK: storeOK,
 	}
 	// Player counts come from the live session leases, so an empty list means
 	// nobody is playing rather than that something is broken. A failure to
@@ -584,13 +583,20 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	for _, t := range titlesRaw {
 		byTitle[t.TitleID] = t.Players
 	}
+	serversOK := true
 	for _, g := range gameServers() {
 		row := serverRow{Name: g.Name, Players: byTitle[g.TitleID], Checkable: g.Health != ""}
 		if row.Checkable {
 			row.Up = healthy(ctx, g.Health)
 		}
 		view.Servers = append(view.Servers, row)
+		if row.Checkable && !row.Up {
+			serversOK = false
+		}
 	}
+	// The banner is the page's summary, so a game server that is not answering
+	// counts; one this deployment cannot check does not.
+	view.Operational = coreOK && dbOK && storeOK && serversOK
 
 	// Every network we intend to replace, with numbers only where something is
 	// actually deployed. A network still being written says so; showing it as

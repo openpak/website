@@ -6,6 +6,21 @@
 
 <p class="notice" role="status">{{t .Lang "downloads.prerelease"}}</p>
 
+<section aria-labelledby="retro-h">
+  <div class="section-head">
+    <h2 id="retro-h">{{t .Lang "downloads.retro"}}</h2>
+    <p>{{t .Lang "downloads.retro.sub"}}</p>
+  </div>
+  <ul class="rows">
+    <li><a class="name" href="https://github.com/openpak/nn-inkay/releases/latest">{{t .Lang "downloads.inkay"}}</a><span class="badge">{{t .Lang "features.alpha"}}</span></li>
+    <li><a class="name" href="https://github.com/openpak/nn-nimbus/releases/latest">{{t .Lang "downloads.nimbus"}}</a><span class="badge">{{t .Lang "features.alpha"}}</span></li>
+    <li><a class="name" href="https://github.com/openpak/nn-wfc-patcher-wii/releases/latest">{{t .Lang "downloads.wfcpatcher"}}</a><span class="badge">{{t .Lang "features.alpha"}}</span></li>
+    <li><a class="name" href="https://github.com/openpak/azahar/releases/latest">{{t .Lang "downloads.azahar"}}</a><span class="badge">{{t .Lang "features.beta"}}</span></li>
+    <li><a class="name" href="https://github.com/openpak/dolphin/releases/latest">{{t .Lang "downloads.dolphin"}}</a><span class="badge">{{t .Lang "features.beta"}}</span></li>
+    <li><a class="name" href="https://github.com/openpak/melonds/releases/latest">{{t .Lang "downloads.melonds"}}</a><span class="badge">{{t .Lang "features.beta"}}</span></li>
+  </ul>
+</section>
+
 <section aria-labelledby="emu-h">
   <div class="section-head">
     <h2 id="emu-h">{{t .Lang "downloads.emu"}}</h2>
@@ -27,7 +42,7 @@
     <p>{{t .Lang "downloads.hw.sub"}}</p>
   </div>
   <ul class="rows">
-    <li><span class="name">{{t .Lang "downloads.hw.nro"}}</span><span class="badge">{{t .Lang "features.planned"}}</span></li>
+    <li><span class="name">{{t .Lang "downloads.hw.nro"}}</span><span class="badge">{{t .Lang "features.wip"}}</span></li>
   </ul>
   <ol class="steps-list">
     <li>{{t .Lang "downloads.hw.1"}}</li>
@@ -54,15 +69,15 @@
     <tbody>
       <tr><td><b>Nintendo Switch</b><br><span class="sub">{{t .Lang "platforms.switch"}}</span></td>
         <td><span class="cl">{{t .Lang "platforms.col.hardware"}}: </span>{{t .Lang "platforms.yes"}}</td><td><span class="cl">{{t .Lang "platforms.col.emulator"}}: </span>{{t .Lang "platforms.yes"}}</td>
-        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.wip"}}</span></td></tr>
+        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.live"}}</span></td></tr>
 
       <tr><td><b>Wii U</b><br><span class="sub">{{t .Lang "platforms.wiiu"}}</span></td>
         <td><span class="cl">{{t .Lang "platforms.col.hardware"}}: </span>{{t .Lang "platforms.yes"}}</td><td><span class="cl">{{t .Lang "platforms.col.emulator"}}: </span>{{t .Lang "platforms.yes"}}</td>
-        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.planned"}}</span></td></tr>
+        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.beta"}}</span></td></tr>
 
       <tr><td><b>Nintendo 3DS</b><br><span class="sub">{{t .Lang "platforms.3ds"}}</span></td>
         <td><span class="cl">{{t .Lang "platforms.col.hardware"}}: </span>{{t .Lang "platforms.yes"}}</td><td><span class="cl">{{t .Lang "platforms.col.emulator"}}: </span>{{t .Lang "platforms.yes"}}</td>
-        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.planned"}}</span></td></tr>
+        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.beta"}}</span></td></tr>
 
       <tr><td><b>PlayStation 3</b><br><span class="sub">{{t .Lang "platforms.ps3"}}</span></td>
         <td><span class="cl">{{t .Lang "platforms.col.hardware"}}: </span>{{t .Lang "platforms.no"}}</td><td><span class="cl">{{t .Lang "platforms.col.emulator"}}: </span>{{t .Lang "platforms.yes"}}</td>
@@ -74,11 +89,11 @@
 
       <tr><td><b>Wii</b><br><span class="sub">{{t .Lang "platforms.wii"}}</span></td>
         <td><span class="cl">{{t .Lang "platforms.col.hardware"}}: </span>{{t .Lang "platforms.yes"}}</td><td><span class="cl">{{t .Lang "platforms.col.emulator"}}: </span>{{t .Lang "platforms.yes"}}</td>
-        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.exploring"}}</span></td></tr>
+        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.beta"}}</span></td></tr>
 
       <tr><td><b>Nintendo DS</b><br><span class="sub">{{t .Lang "platforms.ds"}}</span></td>
         <td><span class="cl">{{t .Lang "platforms.col.hardware"}}: </span>{{t .Lang "platforms.yes"}}</td><td><span class="cl">{{t .Lang "platforms.col.emulator"}}: </span>{{t .Lang "platforms.yes"}}</td>
-        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.exploring"}}</span></td></tr>
+        <td><span class="cl">{{t .Lang "features.col.state"}}: </span><span class="badge">{{t .Lang "features.beta"}}</span></td></tr>
 
       <tr><td><b>PlayStation 2</b><br><span class="sub">{{t .Lang "platforms.ps2"}}</span></td>
         <td><span class="cl">{{t .Lang "platforms.col.hardware"}}: </span>{{t .Lang "platforms.yes"}}</td><td><span class="cl">{{t .Lang "platforms.col.emulator"}}: </span>{{t .Lang "platforms.yes"}}</td>

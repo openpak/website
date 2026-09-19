@@ -38,7 +38,8 @@ type Config struct {
 	MediaDir   string // filesystem storage root for avatars
 	SeedTitles bool   // WEBSITE_SEED_TITLES: upsert requests from the catalog on boot
 	// CatalogURL is the live catalog.json (the openpak/catalog repository's raw file); the site
-	// refetches it every CatalogRefresh and reseeds, so a status change needs no release.
+	// refetches it every CatalogRefresh and reseeds, so a new title or a feature's status
+	// change needs no release. A title's status is set by an admin on the titles page.
 	// Empty disables the refresh and the embedded copy is all there is.
 	CatalogURL     string        // CATALOG_URL
 	CatalogRefresh time.Duration // CATALOG_REFRESH, default 10m

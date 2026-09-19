@@ -479,16 +479,20 @@ func TestStatusPageShowsWhoIsPlaying(t *testing.T) {
 	}
 	// Networks nobody has written yet must not read as healthy: the row is
 	// amber or grey, never the green used for something that works.
-	if !strings.Contains(body, "Planned") || !strings.Contains(body, "Being built") {
+	if !strings.Contains(body, "Planned") || !strings.Contains(body, "Beta") {
 		t.Error("unfinished networks should say so rather than show as online")
 	}
 	if !strings.Contains(body, "state-row warn") || !strings.Contains(body, "state-row idle") {
-		t.Error("being-built should tint amber and planned grey")
+		t.Error("beta should tint amber and planned grey")
 	}
-	// Both game servers have health endpoints now, so both are really checked;
-	// unreachable in a test means "down", which is the honest answer here.
-	if strings.Contains(body, "Not checked") {
-		t.Error("both servers have health endpoints and should be checked")
+	// Photon and Stardew are really checked, and unreachable in a test means
+	// "down" — which the banner must then admit, however healthy the core is.
+	// The switch-nexd titles have no health endpoint and say so.
+	if !strings.Contains(body, "Degraded") || !strings.Contains(body, "Some things are having trouble") {
+		t.Error("a game server that does not answer must show as down and flip the banner")
+	}
+	if !strings.Contains(body, "Not checked") {
+		t.Error("switch-nexd titles cannot be probed and should say so")
 	}
 }
 

@@ -33,10 +33,11 @@
 <h2 class="mb-3 text-xs font-bold uppercase tracking-widest text-muted">{{t .Lang "status.networks"}}</h2>
 <div class="mb-9">
   {{range .Networks}}
-  <div class="state-row {{if eq .State "live"}}ok{{else if eq .State "building"}}warn{{else}}idle{{end}}">
+  <div class="state-row {{if eq .State "live"}}ok{{else if or (eq .State "beta") (eq .State "building")}}warn{{else}}idle{{end}}">
     <span class="name">{{.Name}}</span>
     <span class="pill">
       {{if eq .State "live"}}{{if eq .Players 1}}{{t $.Lang "status.pill.online.one"}}{{else}}{{.Players}} {{t $.Lang "status.pill.online.many"}}{{end}}
+      {{else if eq .State "beta"}}{{t $.Lang "status.net.beta"}}
       {{else if eq .State "building"}}{{t $.Lang "status.net.building"}}
       {{else}}{{t $.Lang "status.net.planned"}}{{end}}
     </span>

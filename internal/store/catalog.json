@@ -483,7 +483,7 @@
     "category": "Console network",
     "backend": "nn-account + nn-friends (NNAS/NASC)",
     "status": "beta",
-    "notes": "Same deployment as the Wii U network (nn-account NASC on nasc.nintendowifi.net, nn-friends, nn-nncs). 3DS Mii decoding is off until an operator supplies PN_FRIENDS_CONFIG_MII_DECRYPT_KEY. Not console-verified; the console side is now forked: nn-nimbus (Luma patches with *.openpak.org names, SSL check disabled); built 2026-09-12 via docker/build.sh (openpak-v1); hardware untested. networks.go: building."
+    "notes": "Same deployment as the Wii U network (nn-account NASC on nasc.nintendowifi.net, nn-friends, nn-nncs). 3DS Mii decoding is off until an operator supplies PN_FRIENDS_CONFIG_MII_DECRYPT_KEY. Not console-verified; the console side is now forked: nn-nimbus (Luma patches with *.openpak.org names, SSL check disabled); built 2026-09-12 via docker/build.sh (openpak-v1); hardware untested."
   },
   {
     "kind": "feature",
@@ -493,15 +493,6 @@
     "backend": "Nintendo WFC / GameSpy",
     "status": "beta",
     "notes": "WiiLink's wfc-server forked as nn-wfc (AGPL, Go) and deployed 2026-09-10: NAS on port 80 via Traefik (nas/naswii/dls1/sake/gamestats/race names), GameSpy 28910/29900/29901/29920 tcp and 27900/27901 udp on the host, Postgres wwfc. A Wii reaches it by pointing its DNS at nn-sssl-dns (no CFW). Not console-verified; cloud security lists still block the UDP/TCP game ports."
-  },
-  {
-    "kind": "feature",
-    "name": "Nintendo DS network",
-    "console": "DS",
-    "category": "Console network",
-    "backend": "Nintendo WFC / GameSpy",
-    "status": "planned",
-    "notes": "No adapter yet. Same WiiLink24/wfc-server (Go) covers DS alongside Wii."
   },
   {
     "kind": "feature",

@@ -82,23 +82,35 @@ func ParseCatalog(catalogJSON []byte) ([]Request, error) {
 }
 
 // SeedRequests adds catalog rows by (kind, name, console) and refreshes their category,
-// backend and sort. It never touches status or notes on a row that exists: the database is
-// the source of truth for those (SetRequestStatus), the catalog only introduces titles. It
-// never touches request_votes either — votes are user data.
+// backend and sort. A title's status and notes are never touched once the row exists: the
+// database is the source of truth for those (SetRequestStatus from the titles page). A
+// feature has no such control and cannot be voted on, so its status and notes follow the
+// catalog. A row the catalog no longer lists is deleted unless someone voted for it — votes
+// are user data and request_votes is never touched otherwise.
 func (s *PG) SeedRequests(ctx context.Context, reqs []Request) error {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(ctx)
-	for _, r := range reqs {
+	kinds, names, consoles := make([]string, len(reqs)), make([]string, len(reqs)), make([]string, len(reqs))
+	for i, r := range reqs {
+		kinds[i], names[i], consoles[i] = r.Kind, r.Name, r.Console
 		if _, err := tx.Exec(ctx, `INSERT INTO requests(kind, name, console, category, backend, status, notes, sort)
 			VALUES($1,$2,$3,$4,$5,$6,$7,$8)
 			ON CONFLICT (kind, name, console) DO UPDATE SET
-				category=EXCLUDED.category, backend=EXCLUDED.backend, sort=EXCLUDED.sort`,
+				category=EXCLUDED.category, backend=EXCLUDED.backend, sort=EXCLUDED.sort,
+				status=CASE WHEN requests.kind = 'feature' THEN EXCLUDED.status ELSE requests.status END,
+				notes=CASE WHEN requests.kind = 'feature' THEN EXCLUDED.notes ELSE requests.notes END`,
 			r.Kind, r.Name, r.Console, r.Category, r.Backend, r.Status, r.Notes, r.Sort); err != nil {
 			return err
 		}
+	}
+	if _, err := tx.Exec(ctx, `DELETE FROM requests r
+		WHERE (r.kind, r.name, r.console) NOT IN (SELECT * FROM unnest($1::text[], $2::text[], $3::text[]))
+		AND NOT EXISTS (SELECT 1 FROM request_votes v WHERE v.request_id = r.id)`,
+		kinds, names, consoles); err != nil {
+		return err
 	}
 	return tx.Commit(ctx)
 }

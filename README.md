@@ -123,7 +123,10 @@ That renders every page, signed-in ones included, from the test harness.
 `/status` shows game servers, console networks and who is playing; every server
 is asked its own `/health`. Set `PHOTON_HEALTH_URL` or `STARDEW_HEALTH_URL` to
 `off` for a server this deployment does not run — its row then says "not
-checked" rather than reporting an absent server as down. `GET /api/v1/status`
+checked" rather than reporting an absent server as down. Every game server has a
+`*_HEALTH_URL` (see `internal/pages/gameservers.go`); the Switch-era NEX titles default to
+unchecked because `switch-nexd` has no health listener yet. A server that is checked and not
+answering turns the banner red. `GET /api/v1/status`
 is the same counts as JSON, with no bearer, because the people most likely to
 check status are the ones who cannot sign in.
 

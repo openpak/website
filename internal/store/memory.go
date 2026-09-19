@@ -195,7 +195,8 @@ func (m *Memory) ListRequests(_ context.Context, kind, viewerAccountID string) (
 	return out, nil
 }
 
-// SeedRequests upserts by (kind, name, console), preserving ids and votes.
+// SeedRequests upserts by (kind, name, console), preserving ids and votes, with the same
+// status and pruning rules as PG.SeedRequests.
 func (m *Memory) SeedRequests(_ context.Context, reqs []Request) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -210,7 +211,10 @@ func (m *Memory) SeedRequests(_ context.Context, reqs []Request) error {
 		key := [3]string{r.Kind, r.Name, r.Console}
 		if i, ok := byKey[key]; ok {
 			existing := m.requests[i]
-			r.ID, r.Status, r.Notes = existing.ID, existing.Status, existing.Notes
+			r.ID = existing.ID
+			if existing.Kind != "feature" {
+				r.Status, r.Notes = existing.Status, existing.Notes
+			}
 			m.requests[i] = r
 			continue
 		}
@@ -219,6 +223,17 @@ func (m *Memory) SeedRequests(_ context.Context, reqs []Request) error {
 		m.requests = append(m.requests, r)
 		byKey[key] = len(m.requests) - 1
 	}
+	listed := map[[3]string]bool{}
+	for _, r := range reqs {
+		listed[[3]string{r.Kind, r.Name, r.Console}] = true
+	}
+	kept := m.requests[:0]
+	for _, r := range m.requests {
+		if listed[[3]string{r.Kind, r.Name, r.Console}] || len(m.votes[r.ID]) > 0 {
+			kept = append(kept, r)
+		}
+	}
+	m.requests = kept
 	return nil
 }
 

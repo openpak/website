@@ -3,6 +3,24 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.44.4 — 2026-09-19
+
+- Security: every `/admin` form checks a CSRF token (config, federation node create and
+  approve/revoke); signing out from an admin page works again.
+- Status: the Switch-era NEX titles run inside `switch-nexd`, which has no health endpoint, so
+  their rows say "Not checked" instead of reporting running servers as down. The banner now
+  counts a game server that is not answering.
+- Status: Wii U, 3DS, Wii and DS networks read "Beta" (DS was missing).
+- Downloads: links to the published Wii U, 3DS, Wii and DS clients (Inkay, nimbus, the WFC
+  patcher, Azahar, Dolphin, melonDS); platform states match the deployed networks.
+- Copy: supported titles no longer claim to be "known to work"; invitations say joining from one
+  does not work yet; landing mentions chat, cloud saves and Wii/DS linking; stale feature
+  strings removed from the catalogue.
+- Catalog: feature statuses follow the catalog (title statuses stay admin-owned), and a row the
+  catalog drops is removed unless someone voted for it. The duplicate "Nintendo DS network"
+  row is gone.
+- Repository: the accidentally committed `openpak-policy` binary is removed and ignored.
+
 ## v0.44.3 — 2026-09-19
 
 - Saves: the list is sorted by game name.
