@@ -6,7 +6,7 @@ profile with friend code and console links, friends, invitations view,
 moderation, site configuration, status, and the versioned mobile API under
 `/api/v1`. No JavaScript is required for any journey (WEB-10).
 
-- Module `github.com/openpak/website`, Go 1.26, AGPL-3.0-only (`LICENSE`).
+- Module `github.com/openpak/website`, Go 1.27, AGPL-3.0-only (`LICENSE`).
 - The account core is consumed **only** through its versioned contracts:
   HTTP `/v1/*` for the web journeys and gRPC (Identity, Links, Social,
   Events) for everything else. The website never reads core storage and
@@ -15,18 +15,40 @@ moderation, site configuration, status, and the versioned mobile API under
 ## Layout
 
 ```
-cmd/website/            entrypoint
+cmd/website/            the openpak.org server (site, portal, /admin, /api/v1)
+cmd/openpak-registry/   v2 network registry service, /api/v2/network/* (docs/registry.md)
+cmd/openpak-opsd/       per-host agent behind /admin/services (docs/opsd.md)
+cmd/openpak-policy/     operator console for v2 policy: publish, rollback, withdraw, inspect
+cmd/openpak-network/    CI-side fetch tool: authenticate, fetch, verify a v2 bundle
+internal/accounts/      account actions shared by the pages and the API
+internal/accountpb/     vendored account-core gRPC stubs + .proto sources
+internal/adapter/       client for the Switch (and Wii U/3DS) adapter internal API
+internal/admin/         role-gated operator/moderation pages under /admin
+internal/api/           /api/v1 mobile API (+ openapi/openapi.yaml contract)
+internal/chat/          client for the chat service's internal API
 internal/config/        environment configuration
 internal/core/          account-core clients (HTTP /v1/*, gRPC) + interfaces
-internal/session/       cookie session wrapper, CSRF, bearer hashing
-internal/store/         website-owned Postgres (config, tokens, audit, media)
-internal/pages/         server-rendered pages + embedded templates
-internal/admin/         role-gated moderation/operator pages
-internal/api/           /api/v1 mobile API (+ openapi/openapi.yaml contract)
-internal/media/         avatar pipeline (validate, resize 256/512, storage)
+internal/fetchtool/     library behind cmd/openpak-network
 internal/i18n/          single string catalogue (WEB-09)
+internal/media/         avatar pipeline (validate, resize 256/512, storage)
+internal/metrics/       minimal /metrics + pprof listener on a service's +2 port
+internal/netprofile/    /api/v1/network profile generated from Traefik routing
+internal/news/          news service client (public read API + operator gRPC)
+internal/newspb/        generated news service gRPC stubs
+internal/pages/         server-rendered pages + embedded templates
+internal/policy/        v2 canonical policy, schemas, deterministic generation
+internal/push/          FCM notifier driven by the core event stream
 internal/ratelimit/     fixed-window limiter (login, token minting, API)
-web/static/             site.css + icon.svg (no build step, no JavaScript)
+internal/registry/      v2 revisions, promotion and TUF signing
+internal/registryhttp/  HTTP surface of the registry service (/api/v2, /internal/status)
+internal/saves/         client for the saves service's internal API
+internal/session/       cookie session wrapper, CSRF, bearer hashing
+internal/store/         website-owned Postgres (config, tokens, audit, media, titles)
+internal/wfc/           asks nn-wfc which console a Wii/DS friend code belongs to
+web/src/                Tailwind input (input.css)
+web/static/             built site.css (committed), icon.svg, consoles/ icons,
+                        saves.js + titles.js (progressive enhancement only)
+scripts/                css.sh — rebuilds web/static/site.css with Tailwind
 ```
 
 ### UI
@@ -47,22 +69,18 @@ no inline `style` attributes.
 
 ## Building
 
-Local development expects a sibling checkout of the account core (the
-generated contract stubs are imported from `openpak/account`, pinned in
-`go.mod` via `replace`):
+Everything needed is in this repository. The account core's contract stubs are
+vendored in `internal/accountpb` (see its README for how to refresh them when
+the core's contracts move), so no sibling checkout of `account` is required —
+locally or in CI.
 
 ```
 git clone git@github.com:Openpak/website.git
-git clone git@github.com:Openpak/account.git   # sibling directory
 cd website
 cp example.env .env 2>/dev/null || true        # then export the values
 go vet ./... && go test -race ./...
 go run ./cmd/website
 ```
-
-CI checks out `Openpak/account` at the pinned ref next to the workspace —
-bump the `ref` in `.github/workflows/ci.yml` (and the local checkout) when
-the core's contracts move.
 
 ## Runbook
 
@@ -89,7 +107,8 @@ website and the app show — an avatar is an account fact, not an adapter one.
 It is authenticated with `WEBSITE_INTERNAL_KEY`, compared in constant time.
 **An unset key disables the route** rather than leaving it open: a deployment
 that has not configured this should refuse the call, not accept it from anyone.
-The adapter needs the same value plus `WEBSITE_INTERNAL_URL`.
+`WEBSITE_INTERNAL_URL` is not read here: it is the **adapter's** variable (where
+it finds this site), and the adapter must hold the same `WEBSITE_INTERNAL_KEY`.
 
 ## Styling
 
@@ -120,13 +139,15 @@ That renders every page, signed-in ones included, from the test harness.
 
 ## Status page
 
-`/status` shows game servers, console networks and who is playing; every server
-is asked its own `/health`. Set `PHOTON_HEALTH_URL` or `STARDEW_HEALTH_URL` to
-`off` for a server this deployment does not run — its row then says "not
-checked" rather than reporting an absent server as down. Every game server has a
-`*_HEALTH_URL` (see `internal/pages/gameservers.go`); the Switch-era NEX titles default to
-unchecked because `switch-nexd` has no health listener yet. A server that is checked and not
-answering turns the banner red. `GET /api/v1/status`
+`/status` shows game servers, console networks and who is playing. Each game
+server row has a `*_HEALTH_URL` (the full list and defaults are in
+`internal/pages/gameservers.go` and `example.env`). Four have a default probe —
+`MHGU_`, `PHOTON_`, `SPLATOON3_` and `STARDEW_HEALTH_URL`; set one to `off` for a
+server this deployment does not run and its row says "not checked" rather than
+reporting an absent server as down. The Switch-era NEX titles default to
+unchecked because `switch-nexd` has no health listener yet; set their variable
+once it does. A server that is checked and not answering turns the banner red.
+`GET /api/v1/status`
 is the same counts as JSON, with no bearer, because the people most likely to
 check status are the ones who cannot sign in.
 
@@ -158,17 +179,37 @@ open `/admin` — empty means nobody, by design (fail closed).
 
 - **Health**: `GET /healthz` (liveness), `GET /status` (core reachability,
   database, media storage).
-- **Registrations open/closed + banner**: `/admin/config` (WEB-07). Saves
-  are audited in `admin_audit`.
-- **Audit log**: `/admin/events` renders the core's durable invalidation
-  event stream plus website audit entries.
-- **Moderation (ban/unban/search, reports)**: fail-closed pending core
-  contracts CR-5/CR-6 — see "Contract requests".
+- **Admin** (`/admin`, only for `WEBSITE_ADMIN_ACCOUNT_IDS`; one sub-nav across
+  every page). A page whose backend is not configured says so instead of
+  failing:
+  - `/admin` — overview linking the pages below.
+  - `/admin/monitor` — core, database, media, saves and chat health, game
+    servers, push-notifier lag, and the external availability JSON (`STATUS_API_URL`; `off` hides it).
+  - `/admin/services` — every container on every host, grouped by network,
+    with start/stop/restart/update (stop needs a confirm tick) and a re-check (`WEBSITE_OPSD_HOSTS`,
+    `WEBSITE_OPSD_KEY`; see [docs/opsd.md](docs/opsd.md)).
+  - `/admin/news` — draft, edit, publish and unpublish articles
+    (`NEWS_GRPC_ADDR`, `NEWS_OPERATOR_KEY`).
+  - `/admin/titles` — supported-title statuses (website database; changes are
+    audited).
+  - `/admin/mods` — the mods review queue (`MODS_INTERNAL_URL`,
+    `MODS_INTERNAL_KEY`).
+  - `/admin/nodes` — federation regions: create (key shown once), approve,
+    last seen (core Federation contract).
+  - `/admin/registry` — read-only v2 registry status (`REGISTRY_INTERNAL_URL`,
+    `REGISTRY_ADMIN_KEY`).
+  - `/admin/config` — registrations open/closed + banner (WEB-07); saves are
+    audited in `admin_audit`.
+  - `/admin/events` — the core's durable invalidation event stream plus
+    website audit entries (newest 200).
+  - `/admin/users`, `/admin/reports` — moderation (ban/unban/search, reports)
+    is fail-closed pending core contracts CR-5/CR-6 — see "Contract requests".
 - **Avatars**: uploaded avatars are validated, center-cropped and resized
   server-side to 256 and 512 px PNG under `WEBSITE_MEDIA_DIR` (filesystem
   first; `internal/media.Storage` is the S3-compatible seam). Serving to
   consoles moves to the adapter once CR-2 lands.
-- **Logs**: structured to stderr; requests at debug level.
+- **Logs**: structured to stderr at info; set `WEBSITE_LOG_LEVEL=debug` to also
+  log every request.
 
 ### Mobile API (WEB-08)
 
@@ -179,12 +220,19 @@ so bans/logouts/password resets end mobile access with the core's
 revocation window. Rate limits: 10 mints/min per client, 120 calls/min per
 token.
 
-The app can do everything the account pages do: register and request a reset
-mail (public, sharing the per-client mint limit), change the password, link a
-Wii/DS by friend code and unlink a console by namespace, upload an avatar
-(multipart) or pick a preset, chat, and manage cloud saves. The password reset
-itself stays on the website, where the mail links. `contract_test.go` fails
-the build when a served `/api/v1` route is missing from the spec.
+The app can do everything the account pages do: register, request a reset
+mail and complete the reset (`POST /api/v1/password/reset`; public, sharing the
+per-client mint limit), change the password, delete the account
+(`DELETE /api/v1/me` with the password), link a Wii/DS by friend code and unlink
+a console by namespace, upload an avatar (multipart) or pick a preset, accept or
+decline a friend request (`/me/friends/requests/decline`), decline an
+invitation, read the public title catalogue (`GET /api/v1/titles`), chat, and
+manage cloud saves. Where the site and the API do the same thing they share
+`internal/accounts`. `contract_test.go` fails the build when a served
+`/api/v1` route is missing from the spec.
+
+`/api/v2/network/*` is **not** served by this binary: it belongs to the
+registry service (below).
 
 ### Network profile (NP-0..NP-4)
 
@@ -205,6 +253,23 @@ family may leave. One conditional GET per launch: ETag in, 304 out.
   the console's clients already compile in.
 - `nn-sssl-dns` reads the same map (NP-4), so the real-console resolver and
   the emulators cannot drift apart.
+
+## Registry service
+
+The v2 network registry runs as its own process, `cmd/openpak-registry`, from
+the same image (command `/app/openpak-registry`): it serves `/api/v2/network/*`
+and the operator's `GET /internal/status`, and its signing key and database
+never load into the website. Its variables (`REGISTRY_*`) belong to that
+container, except `REGISTRY_ADMIN_KEY`, which the website also holds for
+`/admin/registry`. Ports, configuration and the steps that must happen before
+releasing a website without the in-process registry: [docs/registry.md](docs/registry.md).
+
+## Host agent (openpak-opsd)
+
+`cmd/openpak-opsd` runs once per host, outside any container, and is the only
+thing that talks to podman; the website never holds the podman socket.
+`/admin/services` asks each agent listed in `WEBSITE_OPSD_HOSTS` with the shared
+`WEBSITE_OPSD_KEY`. Install and configuration: [docs/opsd.md](docs/opsd.md).
 
 ## Sessions model (WEB-02)
 
@@ -249,8 +314,9 @@ Carried from the PRD, plus what this implementation discovered:
   invalidation events. Blocks the W3 gate ("ban stops a live session") —
   the website pages are built and fail closed until this lands.
 - **CR-6** Reports read model (queue + resolve) for the moderation queue.
-- **CR-7** `SetDisplayName(account_id, name)` — profile display name is
-  currently read-only.
+- ~~**CR-7** `SetDisplayName(account_id, name)`~~ — **delivered**: the core
+  accepts `display_name` on `POST /v1/profile`, and both the profile form and
+  `POST /api/v1/me/profile` send it.
 
 ## Testing
 
