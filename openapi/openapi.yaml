@@ -1002,14 +1002,24 @@ paths:
     get:
       summary: The account's Wii U identity (PNID, NEX credentials, Mii), minted on first sight
       responses:
-        "200": { description: "account_id, pid, username, nex_password, mii_name, mii_data, device_type" }
+        "200":
+          description: The identity as nn-account reports it; the emulator writes it into its emulated console.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConsoleIdentity" }
+        "502": { description: nn-account did not answer. }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "503": { description: Not configured }
   /me/3ds:
     get:
       summary: The account's 3DS identity (PNID, NEX credentials, friend code, Mii), minted on first sight
       responses:
-        "200": { description: "account_id, pid, username, friend_code, nex_password, mii_name, mii_data, device_type" }
+        "200":
+          description: The identity as nn-account reports it; the emulator writes it into its emulated console.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConsoleIdentity" }
+        "502": { description: nn-account did not answer. }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "503": { description: Not configured }
   /me/switch:
@@ -1017,7 +1027,11 @@ paths:
       summary: The account's Switch identity for an emulator, minted on first sight
       description: The PID and friend code games see, the openpak token, and the friend graph with presence and requests.
       responses:
-        "200": { description: The identity as the Switch adapter reports it. }
+        "200":
+          description: The identity as the Switch adapter (nx-baas /internal/switch/emulator) reports it.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SwitchIdentity" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "502": { description: The Switch adapter did not answer. }
   /me/switch/friend:
@@ -1064,8 +1078,9 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [id_token]
                 properties:
-                  id_token: { type: string }
+                  id_token: { type: string, description: "Nintendo-Account id_token (JWT) that /1.0.0/federation binds the device account with." }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "502": { description: The Switch adapter did not answer. }
   /me/saves:
@@ -1321,6 +1336,47 @@ components:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
   schemas:
+    ConsoleIdentity:
+      type: object
+      required: [account_id, pid, username, nex_password, mii_name, mii_data, device_type]
+      properties:
+        account_id: { type: string }
+        pid: { type: integer, format: int64 }
+        username: { type: string, description: "The PNID." }
+        friend_code: { type: string, description: "3DS only." }
+        nex_password: { type: string }
+        mii_name: { type: string }
+        mii_data: { type: string, format: byte, description: "Base64 FFLStoreData." }
+        device_type: { type: string }
+        password_cache: { type: string, format: byte, description: "Base64 of the 32 account.dat cache bytes, when present." }
+        country: { type: string, description: "NNAS country, e.g. US, when present." }
+        language: { type: string, description: "e.g. en, when present." }
+    SwitchFriend:
+      type: object
+      required: [pid, name, friend_code, presence]
+      properties:
+        pid: { type: integer, format: int64, description: "Switch PID (uint64 on the wire; may exceed 2^53 — parse as a big integer)." }
+        account_id: { type: string, description: "The friend's OpenPak account id; empty when the PID has no OpenPak account." }
+        name: { type: string, description: "Console nickname." }
+        friend_code: { type: string, description: "SW-xxxx-xxxx-xxxx." }
+        presence:
+          type: object
+          required: [status]
+          properties:
+            status: { type: integer, description: "The console's presence state as the game servers report it (0 offline)." }
+            app_field: { type: string, description: "Game-defined presence payload." }
+            app_id: { type: string, description: "Title id of the game being played, hex." }
+    SwitchIdentity:
+      type: object
+      required: [pid, username, friend_code, baas_user_id, token, friends, requests]
+      properties:
+        pid: { type: integer, format: int64, description: "Switch PID (uint64 on the wire; may exceed 2^53)." }
+        username: { type: string, description: "Console nickname." }
+        friend_code: { type: string, description: "SW-xxxx-xxxx-xxxx." }
+        baas_user_id: { type: string, description: "BaaS user id, hex." }
+        token: { type: string, description: "The openpak token title servers use to identify the player." }
+        friends: { type: array, items: { $ref: "#/components/schemas/SwitchFriend" } }
+        requests: { type: array, items: { $ref: "#/components/schemas/SwitchFriend" }, description: "Pending incoming friend requests." }
     TokenResponse:
       type: object
       properties:
