@@ -9,9 +9,9 @@ info:
     account core's public HTTP contract and binds a random bearer to it.
     Revoking the underlying session (logout, ban, password reset) ends
     bearer validity within the core's revocation window. Rate limits: 10
-    token mints per minute per client (register and forgot-password share it),
-    120 calls per minute per token, and 120 per minute per client for the
-    public title catalogue.
+    token mints per minute per client (register, forgot-password, the 2FA
+    step and email confirmation share it), 120 calls per minute per token,
+    and 120 per minute per client for the public title catalogue and news.
 
     One host, several services: the mods routes (tagged `x-served-by: mods`)
     are routed by Traefik to the mods service; everything else is the website.
@@ -43,6 +43,10 @@ paths:
               properties:
                 email: { type: string, format: email }
                 password: { type: string, minLength: 8 }
+      description: |
+        An account with two-factor authentication answers 202 with a challenge
+        and no token; redeem it at `POST /token/2fa` with a code from the
+        authenticator app or a recovery code.
       responses:
         "201":
           description: Token minted
@@ -50,7 +54,17 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TokenResponse"
+        "202":
+          description: Password right; a second factor is owed (no token yet).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TwoFactorChallenge" }
         "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: The account is suspended.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
         "429": { $ref: "#/components/responses/RateLimited" }
     delete:
       summary: Revoke the presented token (ends the core session too)
@@ -61,6 +75,50 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Message" }
         "401": { $ref: "#/components/responses/Unauthorized" }
+  /token/2fa:
+    post:
+      summary: Finish a two-factor sign-in and mint the bearer
+      security: []
+      description: |
+        Send the challenge from `POST /token` with either `code` (six digits
+        from the authenticator app) or `recovery_code` (single use). A
+        challenge lasts 10 minutes and dies after 5 wrong codes; after 5 wrong
+        codes in 15 minutes the account's second factor is locked (429). Shares
+        the token-minting rate limit.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [challenge]
+              properties:
+                challenge: { type: string }
+                code: { type: string, examples: ["123456"] }
+                recovery_code: { type: string, examples: ["abcde-fghij"] }
+      responses:
+        "201":
+          description: Token minted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenResponse" }
+        "400":
+          description: The challenge, or both codes, are missing.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401":
+          description: Wrong code, or the challenge is spent; sign in again.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "403":
+          description: The account is suspended.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "429": { $ref: "#/components/responses/TwoFactorLocked" }
+        "502": { description: The account core did not answer. }
   /status:
     get:
       summary: Who is online, per title and per console network
@@ -112,8 +170,11 @@ paths:
       summary: Delete the account
       description: |
         Needs the password again, so a bearer on its own cannot end the
-        account. The core disables the account at once and revokes every
-        session; every bearer of the account, this one included, stops working.
+        account. An account with two-factor authentication also needs a
+        current code or a recovery code (`code` or `recovery_code`); without
+        one the answer is 403 with `two_factor_required: true`. The core
+        disables the account at once and revokes every session; every bearer
+        of the account, this one included, stops working.
       requestBody:
         required: true
         content:
@@ -123,6 +184,8 @@ paths:
               required: [password]
               properties:
                 password: { type: string }
+                code: { type: string, description: "Authenticator code, or a recovery code." }
+                recovery_code: { type: string }
       responses:
         "200":
           description: Deletion started
@@ -135,10 +198,15 @@ paths:
         "400": { description: password is required }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403":
-          description: Wrong password; nothing was deleted.
+          description: Wrong password or code, or a code is owed; nothing was deleted.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Error" }
+              schema:
+                type: object
+                properties:
+                  error: { type: string }
+                  two_factor_required: { type: boolean, description: Set when the account needs a code and none was sent. }
+        "429": { $ref: "#/components/responses/TwoFactorLocked" }
   /me/sessions:
     get:
       summary: List live core web sessions (devices)
@@ -938,6 +1006,241 @@ paths:
       responses:
         "200": { description: Unblocked }
         "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/blocked:
+    get:
+      summary: Accounts the caller has blocked
+      description: Unblock with `POST /me/friends/unblock`.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [blocked]
+                properties:
+                  blocked:
+                    type: array
+                    items: { $ref: "#/components/schemas/BlockedAccount" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/2fa/setup:
+    post:
+      summary: Start two-factor enrolment
+      description: |
+        Asks for the password even though the caller is signed in, so a
+        borrowed token cannot tie the account to someone else's phone.
+        Calling it again before enabling replaces the pending secret.
+        Consoles that sign in with the account password (Switch, Wii U, 3DS)
+        cannot complete a second factor yet: once 2FA is on, their password
+        sign-in fails until their adapters support it. Tell the user before
+        they enable it.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password: { type: string }
+      responses:
+        "200":
+          description: The secret for an authenticator app, as text and as an otpauth URI.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [secret, otpauth_uri]
+                properties:
+                  secret: { type: string, description: Base32 TOTP secret. }
+                  otpauth_uri: { type: string, examples: ["otpauth://totp/OpenPak:a%40x.test?secret=JBSWY3DPEHPK3PXP&issuer=OpenPak"] }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: Wrong password.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "409":
+          description: Two-factor authentication is already on.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /me/2fa/enable:
+    post:
+      summary: Finish enrolment with a first code
+      description: Returns the ten recovery codes. They are shown once and never again.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code: { type: string, examples: ["123456"] }
+      responses:
+        "200":
+          description: Two-factor authentication is on.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [recovery_codes]
+                properties:
+                  recovery_codes:
+                    type: array
+                    minItems: 10
+                    maxItems: 10
+                    items: { type: string, examples: ["abcde-fghij"] }
+        "401":
+          description: Wrong code, or a missing or expired bearer token.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "409":
+          description: No pending setup.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "429": { $ref: "#/components/responses/TwoFactorLocked" }
+  /me/2fa/disable:
+    post:
+      summary: Turn two-factor authentication off
+      description: Needs the password and a current code; a recovery code counts as a code.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password, code]
+              properties:
+                password: { type: string }
+                code: { type: string }
+      responses:
+        "200":
+          description: Off
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  disabled: { type: boolean }
+        "401":
+          description: Wrong code, or a missing or expired bearer token.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "403":
+          description: Wrong password.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "409":
+          description: Two-factor authentication is not on.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "429": { $ref: "#/components/responses/TwoFactorLocked" }
+  /me/email:
+    post:
+      summary: Start changing the account's email address
+      description: |
+        Needs the password. A confirmation link goes to the new address (and a
+        notice to the old one); nothing changes until the link is opened, on
+        the website's `/email/confirm` page or through `POST /email/confirm`.
+        The answer never says whether the new address belongs to someone else.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [new_email, password]
+              properties:
+                new_email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "202":
+          description: Accepted; a link is on its way if the address can be used.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Message" }
+        "400":
+          description: Not an address, or already the account's own.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: Wrong password.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /email/confirm:
+    post:
+      summary: Apply an email change from its mailed token
+      security: []
+      description: Public; the token is the credential. Shares the token-minting rate limit.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+      responses:
+        "200":
+          description: Changed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  changed: { type: boolean }
+        "400":
+          description: The token is invalid or has expired.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /me/verify/resend:
+    post:
+      summary: Send the email verification link again
+      description: |
+        The same answer whether a mail went out, was throttled (one per 10
+        minutes) or the address is already verified.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Message" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /news:
+    get:
+      summary: The latest published news articles
+      security: []
+      description: |
+        Public, newest first, on the same per-client budget as `/titles`. An
+        empty list when the deployment has no news service configured.
+      parameters:
+        - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 50, default: 10 } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [articles]
+                properties:
+                  articles:
+                    type: array
+                    items: { $ref: "#/components/schemas/NewsArticle" }
+        "429": { $ref: "#/components/responses/RateLimited" }
   /titles/{title_id}/mods:
     x-served-by: mods
     get:
@@ -1335,6 +1638,14 @@ components:
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
+    TwoFactorLocked:
+      description: Too many wrong codes; the second factor is locked for 15 minutes.
+      headers:
+        Retry-After:
+          schema: { type: integer, examples: [900] }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
   schemas:
     ConsoleIdentity:
       type: object
@@ -1389,6 +1700,30 @@ components:
       type: object
       properties:
         message: { type: string }
+    TwoFactorChallenge:
+      type: object
+      required: [two_factor_required, challenge]
+      properties:
+        two_factor_required: { type: boolean, const: true }
+        challenge:
+          type: string
+          description: Single use, valid 10 minutes, burned after 5 wrong codes.
+    BlockedAccount:
+      type: object
+      required: [account_id, display_name, blocked_at]
+      properties:
+        account_id: { type: string }
+        display_name: { type: string }
+        blocked_at: { type: string, format: date-time }
+    NewsArticle:
+      type: object
+      required: [slug, title, summary, body, published_at]
+      properties:
+        slug: { type: string }
+        title: { type: string }
+        summary: { type: string, description: The first paragraph of the body. }
+        body: { type: string, description: Plain text; paragraphs are separated by a blank line. }
+        published_at: { type: string, format: date-time }
     NetworkProfile:
       type: object
       description: |
@@ -1456,6 +1791,8 @@ components:
         display_name: { type: string }
         country: { type: string, description: Empty when the account has never set one. }
         birthday: { type: string, description: Empty when the account has never set one. }
+        email_verified: { type: boolean, description: "False until the address is confirmed; POST /me/verify/resend sends the link again." }
+        two_factor_enabled: { type: boolean }
         avatar_url:
           type: ['string', 'null']
           description: |
@@ -1464,7 +1801,9 @@ components:
             image.
         friend_code:
           type: [string, "null"]
-          description: Present only when a console link exists (CR-3 projection).
+          description: |
+            Present only when a Switch link exists: the code the adapter
+            published on the link, else the adapter's own answer.
         linked_platforms:
           type: array
           items:

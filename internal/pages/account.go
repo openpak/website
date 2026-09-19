@@ -34,6 +34,11 @@ type accountView struct {
 	Birthday       string
 	Countries      []country
 	MaxBirthday    string
+	// Security: the address as the core has it, whether it is confirmed, and
+	// whether a second factor is on.
+	Email            string
+	EmailVerified    bool
+	TwoFactorEnabled bool
 	friendsData
 }
 
@@ -57,9 +62,9 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 	if link, err := s.Links.ActiveLinkByAccount(ctx, "switch", v.AccountID); err == nil {
 		// The subject is the console's own user id. The friend code is a
 		// separate thing the adapter mints -- twelve digits, unique, the one
-		// people read out to each other -- so ask for it rather than
-		// formatting the id into something that merely looks like one.
-		view.FriendCode = s.Adapter.FriendCode(ctx, v.AccountID)
+		// people read out to each other. The core carries it once the adapter
+		// publishes it on the link; until then, ask the adapter.
+		view.FriendCode = accounts.FriendCode(ctx, link, s.Adapter, v.AccountID)
 		view.HasFriendCode = view.FriendCode != ""
 		view.Links = append(view.Links, linkRow{Namespace: "Switch", Subject: link.SubjectID, LinkID: link.LinkID})
 	}
@@ -84,6 +89,19 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 		view.DisplayName, view.Country, view.Birthday = acct.DisplayName, acct.Country, acct.Birthday
 	} else {
 		s.log.Error("get account", "err", err)
+	}
+	// The security section reads the session's own account: the address may
+	// have changed since sign-in (email change), and the cached row follows.
+	view.Email = v.Email
+	if me, err := s.Core.Whoami(ctx, v.CoreSessionID); err == nil {
+		view.Email, view.EmailVerified, view.TwoFactorEnabled = me.Email, me.EmailVerified, me.TwoFactorEnabled
+		if me.Email != v.Email {
+			s.refreshSession(r, v)
+			view.User.Email = me.Email
+		}
+	} else {
+		s.log.Error("whoami", "err", err)
+		view.EmailVerified = true // unknown: do not nag
 	}
 
 	// No existence check: the URL always resolves, to the account's own
@@ -153,12 +171,16 @@ func (s *Server) handleDeleteAccount(w http.ResponseWriter, r *http.Request) {
 		redirectMsg(w, r, "/account", "delete-unconfirmed")
 		return
 	}
-	err := accounts.Delete(r.Context(), s.Identity, s.DB, v.AccountID, r.PostFormValue("password"))
-	if errors.Is(err, core.ErrInvalidCredentials) {
-		s.render(w, http.StatusForbidden, "message.html", struct {
-			baseData
-			Message string
-		}{s.data(r, v, i18n.T("en", "account.delete.title")), i18n.T("en", "account.delete.wrongpassword")})
+	err := accounts.Delete(r.Context(), s.Identity, s.DB, v.AccountID, r.PostFormValue("password"), r.PostFormValue("code"))
+	switch {
+	case errors.Is(err, core.ErrInvalidCredentials):
+		s.renderMessage(w, r, v, http.StatusForbidden, "account.delete.title", "account.delete.wrongpassword")
+		return
+	case errors.Is(err, core.ErrSecondFactorRequired), errors.Is(err, core.ErrInvalidCode):
+		s.renderMessage(w, r, v, http.StatusForbidden, "account.delete.title", "account.delete.wrongcode")
+		return
+	case errors.Is(err, core.ErrTwoFactorLocked):
+		s.renderMessage(w, r, v, http.StatusTooManyRequests, "account.delete.title", "auth.2fa.locked")
 		return
 	}
 	if err != nil {
@@ -402,7 +424,7 @@ func (s *Server) writeWithValidators(w http.ResponseWriter, r *http.Request, acc
 // pending requests in both directions, and invitations (WEB-04, WEB-05).
 type friendsData struct {
 	Friends, Incoming, Outgoing []core.Friend
-	BlockedNote                 []string // ids the viewer blocked
+	Blocked                     []core.Blocked
 	Invites                     []core.PendingInvitation
 	Online                      map[string]bool   // friend account id -> holds a live session
 	Playing                     map[string]string // friend account id -> title name, when known
@@ -440,6 +462,9 @@ func (s *Server) loadFriends(ctx context.Context, accountID string) friendsData 
 	}
 	d.Incoming, _ = s.Social.ListIncoming(ctx, accountID)
 	d.Outgoing, _ = s.Social.ListOutgoing(ctx, accountID)
+	if d.Blocked, err = s.Social.ListBlocks(ctx, accountID); err != nil {
+		s.log.Error("list blocks", "err", err)
+	}
 	// Read-only here: the core's ListInvitations consumes nothing, so showing
 	// someone their inbox cannot disturb delivery to their console.
 	inv, err := s.Invites.ListPending(ctx, accountID)
@@ -455,15 +480,16 @@ func (s *Server) handleFriendRequest(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	code := normalizeFriendCode(r.PostFormValue("friend_code"))
+	typed := strings.TrimSpace(r.PostFormValue("friend_code"))
+	code := normalizeFriendCode(typed)
 	if code == "" {
 		http.Error(w, "friend code required", http.StatusBadRequest)
 		return
 	}
-	// Resolve the code to an account through the Links contract: the code
-	// IS the adapter-owned link subject (CR-3 interim).
-	target, err := s.Links.AccountBySubject(r.Context(), "switch", code)
-	if err != nil || target == "" {
+	// The published code first, then the adapter, then the link subject
+	// (the same order as the API).
+	target := accounts.AccountByFriendCode(r.Context(), s.Links, s.Adapter, typed, code)
+	if target == "" {
 		redirectMsg(w, r, "/account", "funknown")
 		return
 	}

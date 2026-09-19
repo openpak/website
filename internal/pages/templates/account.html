@@ -79,6 +79,24 @@
   {{else}}<p class="empty">{{t .Lang "friends.requests.none"}}</p>{{end}}
 </section>
 
+<section aria-labelledby="blocked-h" id="blocked">
+  <div class="section-head">
+    <h2 id="blocked-h">{{t .Lang "friends.blocked"}}</h2>
+    <p>{{t .Lang "friends.blocked.sub"}}</p>
+  </div>
+  {{if .Blocked}}
+  <ul class="rows">
+    {{range .Blocked}}<li>
+      <span class="name">{{if .DisplayName}}{{.DisplayName}}{{else}}{{.AccountID}}{{end}}</span>
+      {{if not .BlockedAt.IsZero}}<time class="sub" datetime="{{.BlockedAt.Format "2006-01-02"}}">{{t $.Lang "friends.blocked.since"}} {{.BlockedAt.UTC.Format "2 Jan 2006"}}</time>{{end}}
+      <form method="post" action="/account/friends/unblock" class="inline">
+        <input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="account_id" value="{{.AccountID}}">
+        <button type="submit" class="small">{{t $.Lang "friends.unblock"}}</button></form>
+    </li>{{end}}
+  </ul>
+  {{else}}<p class="empty">{{t .Lang "friends.blocked.none"}}</p>{{end}}
+</section>
+
 <section aria-labelledby="inv-h" id="invitations">
   <div class="section-head">
     <h2 id="inv-h">{{t .Lang "invitations.title"}}</h2>
@@ -162,6 +180,58 @@
   </form>
 </section>
 
+<section aria-labelledby="security-h" id="security">
+  <div class="section-head">
+    <h2 id="security-h">{{t .Lang "account.security"}}</h2>
+    <p>{{t .Lang "account.security.sub"}}</p>
+  </div>
+
+  <h3>{{t .Lang "account.email.title"}}</h3>
+  <ul class="rows">
+    <li><span class="name">{{.Email}}</span>
+      {{if .EmailVerified}}<span class="badge ok">{{t .Lang "account.email.verified"}}</span>
+      {{else}}<span class="badge warn">{{t .Lang "account.email.unverified"}}</span>
+      <form method="post" action="/account/verify/resend" class="inline">
+        <input type="hidden" name="csrf" value="{{.CSRF}}">
+        <button type="submit" class="small">{{t .Lang "account.verify.resend"}}</button></form>{{end}}
+    </li>
+  </ul>
+  <form method="post" action="/account/email" class="stack">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <label for="email-new">{{t .Lang "account.email.new"}}</label>
+    <input id="email-new" name="new_email" type="email" required autocomplete="email">
+    <label for="email-password">{{t .Lang "account.password.current"}}</label>
+    <input id="email-password" name="password" type="password" required autocomplete="current-password">
+    <p class="hint">{{t .Lang "account.email.hint"}}</p>
+    <button type="submit">{{t .Lang "account.email.submit"}}</button>
+  </form>
+
+  <h3>{{t .Lang "account.2fa.title"}}</h3>
+  {{if .TwoFactorEnabled}}
+  <ul class="rows"><li><span class="name">{{t .Lang "account.2fa.on"}}</span><span class="badge ok">{{t .Lang "account.2fa.badge.on"}}</span></li></ul>
+  <form method="post" action="/account/2fa/disable" class="stack">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <label for="2fa-off-password">{{t .Lang "account.password.current"}}</label>
+    <input id="2fa-off-password" name="password" type="password" required autocomplete="current-password">
+    <label for="2fa-off-code">{{t .Lang "auth.2fa.code"}}</label>
+    <input id="2fa-off-code" name="code" type="text" required autocomplete="one-time-code" autocapitalize="off" spellcheck="false">
+    <p class="hint">{{t .Lang "auth.2fa.recovery"}}</p>
+    <button type="submit" class="danger">{{t .Lang "account.2fa.disable"}}</button>
+  </form>
+  {{else}}
+  <p class="muted">{{t .Lang "account.2fa.off"}}</p>
+  {{/* Said before anything is switched on: consoles sign in with the
+       password alone and cannot be asked for a code yet. */}}
+  <p class="notice">{{t .Lang "account.2fa.consoles"}}</p>
+  <form method="post" action="/account/2fa/setup" class="stack">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <label for="2fa-password">{{t .Lang "account.password.current"}}</label>
+    <input id="2fa-password" name="password" type="password" required autocomplete="current-password">
+    <button type="submit">{{t .Lang "account.2fa.setup"}}</button>
+  </form>
+  {{end}}
+</section>
+
 <section aria-labelledby="sessions-h">
   <div class="section-head">
     <h2 id="sessions-h">{{t .Lang "account.sessions"}}</h2>
@@ -188,6 +258,11 @@
     <input type="hidden" name="csrf" value="{{.CSRF}}">
     <label for="delete-password">{{t .Lang "account.password.current"}}</label>
     <input id="delete-password" type="password" name="password" autocomplete="current-password" required>
+    {{if .TwoFactorEnabled}}
+    <label for="delete-code">{{t .Lang "auth.2fa.code"}}</label>
+    <input id="delete-code" type="text" name="code" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" required>
+    <p class="hint">{{t .Lang "auth.2fa.recovery"}}</p>
+    {{end}}
     <label><input type="checkbox" name="confirm" value="yes" required> {{t .Lang "account.delete.confirm"}}</label>
     <button type="submit" class="danger">{{t .Lang "account.delete.submit"}}</button>
   </form>

@@ -20,11 +20,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/openpak/website/internal/accounts"
 	"github.com/openpak/website/internal/adapter"
 	"github.com/openpak/website/internal/chat"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/netprofile"
+	"github.com/openpak/website/internal/news"
 	"github.com/openpak/website/internal/ratelimit"
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/session"
@@ -57,9 +59,11 @@ type Server struct {
 	Saves     *saves.Client
 	// SaveTitle names a save's game and says whether /titles/icon/{id} draws it; the pages
 	// package owns the lookup. Nil lists bare title ids.
-	SaveTitle  func(ctx context.Context, platform, id string) (name string, icon bool)
-	Chat       *chat.Client
-	WFC        *wfc.Client // resolves Wii/DS friend codes; nil answers 503 on /me/links/wfc
+	SaveTitle func(ctx context.Context, platform, id string) (name string, icon bool)
+	Chat      *chat.Client
+	WFC       *wfc.Client // resolves Wii/DS friend codes; nil answers 503 on /me/links/wfc
+	// News is the public news feed; nil answers an empty list on /news.
+	News       *news.Feed
 	MediaLimit *ratelimit.Limiter
 	DB         store.Store
 	Sessions   *session.Manager
@@ -90,6 +94,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	d := func(pattern string, h http.HandlerFunc) { mux.HandleFunc("DELETE /api/v1"+pattern, h) }
 
 	h("/token", s.handleMintToken)              // POST /api/v1/token
+	h("/token/2fa", s.handleMintToken2FA)       // POST /api/v1/token/2fa
 	d("/token", s.auth(s.handleRevokeToken))    // DELETE /api/v1/token
 	g("/me", s.auth(s.handleMe))                // GET /api/v1/me
 	d("/me", s.auth(s.handleDeleteAccount))     // DELETE /api/v1/me {"password"}
@@ -149,6 +154,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 
 	s.registerInternal(mux)
 	h("/me/avatar", s.auth(s.handleChooseAvatar))
+	s.registerSecurity(mux)
 }
 
 // writeJSON mirrors the core's response conventions.
@@ -180,18 +186,70 @@ func (s *Server) handleMintToken(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
-	// Establish the core web session through the public HTTP contract.
+	// Establish the core web session through the public HTTP contract. A 2FA
+	// account answers with a challenge instead, which POST /token/2fa redeems.
 	coreSession, err := s.Core.Login(r.Context(), req.Email, req.Password)
+	var challenge *core.LoginChallenge
+	if errors.As(err, &challenge) {
+		writeJSON(w, http.StatusAccepted, map[string]any{
+			"two_factor_required": true, "challenge": challenge.Challenge,
+		})
+		return
+	}
 	if err != nil {
 		writeError(w, http.StatusUnauthorized, "invalid credentials")
 		return
 	}
-	// Resolve the account via the Identity contract (interim whoami, CR-4).
-	acct, err := s.Identity.ResolveAccount(r.Context(), req.Email, req.Password)
+	s.mintBearer(w, r, coreSession)
+}
+
+// handleMintToken2FA: POST /api/v1/token/2fa {challenge, code | recovery_code}
+// finishes a sign-in that POST /token answered with a challenge.
+func (s *Server) handleMintToken2FA(w http.ResponseWriter, r *http.Request) {
+	if !s.Auth.Allow(clientKey(r)) {
+		writeError(w, http.StatusTooManyRequests, "rate limited")
+		return
+	}
+	var req struct {
+		Challenge    string `json:"challenge"`
+		Code         string `json:"code"`
+		RecoveryCode string `json:"recovery_code"`
+	}
+	if !decodeSmall(w, r, &req) {
+		return
+	}
+	if req.Challenge == "" || (req.Code == "" && req.RecoveryCode == "") {
+		writeError(w, http.StatusBadRequest, "challenge and a code or recovery_code are required")
+		return
+	}
+	coreSession, err := s.Core.Login2FA(r.Context(), req.Challenge, strings.TrimSpace(req.Code), strings.TrimSpace(req.RecoveryCode))
+	switch {
+	case err == nil:
+		s.mintBearer(w, r, coreSession)
+	case errors.Is(err, core.ErrInvalidCode):
+		writeError(w, http.StatusUnauthorized, "invalid code, or the challenge has expired; sign in again")
+	case errors.Is(err, core.ErrTwoFactorLocked):
+		w.Header().Set("Retry-After", "900")
+		writeError(w, http.StatusTooManyRequests, "too many wrong codes; try again in 15 minutes")
+	default:
+		s.log.Error("mint token: 2fa", "err", err)
+		writeError(w, http.StatusBadGateway, "the account service did not answer")
+	}
+}
+
+// mintBearer binds a new bearer to a fresh core session. Whoami (CR-4) names
+// the account; the password is never checked a second time.
+func (s *Server) mintBearer(w http.ResponseWriter, r *http.Request, coreSession string) {
+	acct, err := s.Core.Whoami(r.Context(), coreSession)
 	if err != nil {
 		_ = s.Core.Logout(context.Background(), coreSession)
-		s.log.Error("mint token: resolve account", "err", err)
+		s.log.Error("mint token: whoami", "err", err)
 		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	if acct.Status == "banned" {
+		_ = s.Core.Logout(context.Background(), coreSession)
+		writeError(w, http.StatusForbidden, "this account is suspended")
 		return
 	}
 	raw, err := session.NewBearer()
@@ -276,6 +334,9 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request, tok store.APIT
 		"display_name": acct.DisplayName,
 		"country":      acct.Country,
 		"birthday":     acct.Birthday,
+		// So the app can offer "resend the link" and show whether 2FA is on.
+		"email_verified":     acct.EmailVerified,
+		"two_factor_enabled": acct.TwoFactorEnabled,
 		// Null when the account has never chosen one, so a client shows its own
 		// fallback rather than a broken image. Relative to the site.
 		"avatar_url": nil,
@@ -291,10 +352,10 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request, tok store.APIT
 	// no single code to project here — the console being listed is the point.
 	platforms := []map[string]string{}
 	if link, err := s.Links.ActiveLinkByAccount(r.Context(), "switch", tok.AccountID); err == nil {
-		// The link subject is the console's user id, not a friend code. Ask
-		// the adapter, which mints the codes; show none rather than dressing
-		// up a hex id as one.
-		if code := s.Adapter.FriendCode(r.Context(), tok.AccountID); code != "" {
+		// The link subject is the console's user id, not a friend code. The
+		// code the adapter published on the link, else the adapter's own
+		// answer; none rather than dressing up a hex id as one.
+		if code := accounts.FriendCode(r.Context(), link, s.Adapter, tok.AccountID); code != "" {
 			resp["friend_code"] = code
 		}
 		platforms = append(platforms, map[string]string{"namespace": "switch", "link_id": link.LinkID})
@@ -397,18 +458,11 @@ func (s *Server) handleSendRequest(w http.ResponseWriter, r *http.Request, tok s
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
-	// Ask the Switch adapter, not the core. The core's "switch" link subject is
-	// the BAAS user id; the friend code is minted by the adapter and held only
-	// there, so looking a code up as a link subject answered "no account found"
-	// for every code anyone has ever typed. The core lookup stays as a
-	// fallback for a subject someone pastes verbatim.
-	target := s.Adapter.AccountByFriendCode(r.Context(), req.FriendCode)
-	if target == "" {
-		code := normalizeCode(req.FriendCode)
-		if got, err := s.Links.AccountBySubject(r.Context(), "switch", code); err == nil {
-			target = got
-		}
-	}
+	// The core's "switch" link subject is the BAAS user id, not the friend
+	// code: the adapter mints codes and publishes them on the link. So the
+	// published code first, the adapter while codes are not published yet, and
+	// the subject last, for someone who pastes that verbatim.
+	target := accounts.AccountByFriendCode(r.Context(), s.Links, s.Adapter, req.FriendCode, normalizeCode(req.FriendCode))
 	if target == "" {
 		writeError(w, http.StatusNotFound, "no account for that friend code")
 		return

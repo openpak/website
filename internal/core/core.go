@@ -20,7 +20,30 @@ var (
 	ErrNotAllowed         = errors.New("core: interaction not allowed")
 	ErrBanned             = errors.New("core: account banned")
 	ErrContractPending    = errors.New("core: contract not yet available (see Contract requests)")
+	// ErrInvalidCode is a wrong or reused second-factor code (TOTP or recovery),
+	// or a sign-in challenge that is no longer valid.
+	ErrInvalidCode = errors.New("core: invalid code")
+	// ErrTwoFactorLocked is the core's per-account lock after five wrong codes
+	// in 15 minutes (HTTP 429, gRPC ResourceExhausted).
+	ErrTwoFactorLocked = errors.New("core: too many wrong codes; try again in 15 minutes")
+	// ErrSecondFactorRequired is a step-up on a 2FA account that came without
+	// its code.
+	ErrSecondFactorRequired = errors.New("core: second factor required")
 )
+
+// LoginChallenge is what Login returns when the password was right but the
+// account has two-factor authentication: no session yet, only a challenge
+// (10 minutes, single use) for Login2FA.
+type LoginChallenge struct{ Challenge string }
+
+func (e *LoginChallenge) Error() string { return "core: second factor required to sign in" }
+
+// TwoFactorSecret is a pending enrolment: the base32 secret for an
+// authenticator app and the same thing as an otpauth:// URI.
+type TwoFactorSecret struct {
+	Secret     string
+	OTPAuthURI string
+}
 
 // Session is one live core web session as reported by GET /v1/sessions.
 type Session struct {
@@ -39,6 +62,10 @@ type Account struct {
 	// accounts created before registration collected them.
 	Country  string
 	Birthday string
+	// Status is active, banned, deletion-pending or deleted.
+	Status           string
+	EmailVerified    bool
+	TwoFactorEnabled bool
 }
 
 // Friend is a friend or pending request counterparty.
@@ -64,6 +91,16 @@ type Link struct {
 	LinkID    string
 	Namespace string
 	SubjectID string // adapter-owned subject; website treats it as opaque
+	// PublicCode is the human code the adapter published for the link (the
+	// Switch friend code); empty until the adapter publishes one.
+	PublicCode string
+}
+
+// Blocked is one account the viewer has blocked.
+type Blocked struct {
+	AccountID   string
+	DisplayName string
+	BlockedAt   time.Time
 }
 
 // Event is a durable core invalidation event (audit trail for moderators).
@@ -86,7 +123,33 @@ type HTTP interface {
 	Register(ctx context.Context, email, password, displayName string) error
 	RegisterWithProfile(ctx context.Context, email, password, displayName, country, birthday string) error
 	VerifyEmail(ctx context.Context, token string) error
+	// Login signs in. A 2FA account answers *LoginChallenge instead of a
+	// session; Login2FA finishes it.
 	Login(ctx context.Context, email, password string) (coreSessionID string, err error)
+	// Login2FA completes a challenged sign-in with a TOTP code or a recovery
+	// code. A wrong code or a dead challenge is ErrInvalidCode; the core's lock
+	// is ErrTwoFactorLocked.
+	Login2FA(ctx context.Context, challenge, code, recoveryCode string) (coreSessionID string, err error)
+	// Whoami names the account behind a core session (CR-4).
+	Whoami(ctx context.Context, coreSessionID string) (Account, error)
+	// ResendVerification mails a fresh verification link; the answer is the
+	// same whether or not one was sent.
+	ResendVerification(ctx context.Context, coreSessionID string) error
+	// ChangeEmail starts moving the account to a new address; nothing changes
+	// until the link mailed there is confirmed. A wrong password is
+	// ErrInvalidCredentials.
+	ChangeEmail(ctx context.Context, coreSessionID, newEmail, password string) error
+	// ConfirmEmail applies an email change from its mailed token; a bad token
+	// is ErrNotFound.
+	ConfirmEmail(ctx context.Context, token string) error
+	// TwoFactorSetup starts enrolment (password required); ErrConflict when
+	// 2FA is already on.
+	TwoFactorSetup(ctx context.Context, coreSessionID, password string) (TwoFactorSecret, error)
+	// TwoFactorEnable finishes enrolment with a first code and returns the ten
+	// recovery codes, which are never shown again.
+	TwoFactorEnable(ctx context.Context, coreSessionID, code string) (recoveryCodes []string, err error)
+	// TwoFactorDisable takes the password and a current code (a recovery code counts).
+	TwoFactorDisable(ctx context.Context, coreSessionID, password, code string) error
 	Logout(ctx context.Context, coreSessionID string) error
 	ListSessions(ctx context.Context, coreSessionID string) ([]Session, error)
 	RevokeSession(ctx context.Context, coreSessionID, sessionID string) error
@@ -99,15 +162,18 @@ type HTTP interface {
 	Healthy(ctx context.Context) error
 }
 
-// Identity resolves the account behind a just-established core session and
-// projects minimal account facts. VerifyPassword is the interim whoami
-// mechanism (contract request CR-4: GET /v1/whoami).
+// Identity projects account facts and runs the step-up checks. Who a session
+// belongs to is HTTP.Whoami (CR-4).
 type Identity interface {
-	ResolveAccount(ctx context.Context, email, password string) (Account, error)
 	GetAccount(ctx context.Context, accountID string) (Account, error)
 	// VerifyPasswordByID re-checks the password of a signed-in account before
 	// something that cannot be undone. A wrong one is ErrInvalidCredentials.
-	VerifyPasswordByID(ctx context.Context, accountID, password string) error
+	// twoFactor reports that the account has 2FA, and the caller must then
+	// also pass VerifySecondFactor (core docs/two-factor.md).
+	VerifyPasswordByID(ctx context.Context, accountID, password string) (twoFactor bool, err error)
+	// VerifySecondFactor checks a TOTP code or a recovery code: ErrInvalidCode,
+	// ErrTwoFactorLocked.
+	VerifySecondFactor(ctx context.Context, accountID, code, recoveryCode string) error
 	// RequestDeletion starts deleting the account: the core disables it at once
 	// and revokes every one of its sessions.
 	RequestDeletion(ctx context.Context, accountID string) error
@@ -125,6 +191,7 @@ type Social interface {
 	Relationship(ctx context.Context, accountID, otherID string) (Relationship, error)
 	Block(ctx context.Context, blockerID, blockedID string) error
 	Unblock(ctx context.Context, blockerID, blockedID string) error
+	ListBlocks(ctx context.Context, accountID string) ([]Blocked, error)
 	// CanMessage is the core's enforcement answer for actorID messaging targetID
 	// (CheckInteraction, kind MESSAGE). A block in either direction is
 	// ErrBlocked; any other refusal (not friends, an inactive account) is
@@ -138,6 +205,8 @@ type Social interface {
 type Links interface {
 	ActiveLinkByAccount(ctx context.Context, namespace, accountID string) (Link, error)
 	AccountBySubject(ctx context.Context, namespace, subjectID string) (string, error)
+	// AccountByPublicCode resolves a code an adapter published, as typed.
+	AccountByPublicCode(ctx context.Context, namespace, code string) (string, error)
 	// Unlink revokes the account's console link (journey 1: revoke the
 	// console-created link). IdempotencyKey must be unique per attempt.
 	Unlink(ctx context.Context, linkID, idempotencyKey string) error
@@ -238,6 +307,44 @@ type Federation interface {
 	// AnnounceAs relays a node's own announce, authenticated with the node's
 	// key rather than the website's.
 	AnnounceAs(ctx context.Context, nodeKey string, services map[string]string) (nodeID string, approved bool, err error)
+}
+
+// ModeratedAccount is one search hit for moderators.
+type ModeratedAccount struct {
+	ID              string
+	Email           string
+	DisplayName     string
+	Status          string // active, banned, deletion-pending, deleted
+	EmailVerified   bool
+	CreatedAt       time.Time
+	BanReason       string
+	MatchedSubjects []string // "namespace:subject" of links the query matched
+}
+
+// Report is one entry of the moderation queue.
+type Report struct {
+	ID           string
+	ReporterID   string
+	ReporterName string
+	SubjectID    string
+	SubjectName  string
+	Kind         string
+	Detail       string
+	Status       string // open, resolved
+	Resolution   string
+	ResolvedBy   string
+	CreatedAt    time.Time
+	ResolvedAt   time.Time
+}
+
+// Moderation is the core's moderation service (CR-5, CR-6). The core audits
+// every ban and resolution under the actor it is given.
+type Moderation interface {
+	SearchAccounts(ctx context.Context, query string, limit int) ([]ModeratedAccount, error)
+	SetBanned(ctx context.Context, accountID string, banned bool, reason, actor string) error
+	// ListReports takes "open", "resolved" or "" for every status.
+	ListReports(ctx context.Context, status string, limit int) ([]Report, error)
+	ResolveReport(ctx context.Context, reportID, resolution, actor string) error
 }
 
 // ErrIs reports whether err wraps target.

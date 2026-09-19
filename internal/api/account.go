@@ -110,12 +110,15 @@ func (s *Server) handleChangePassword(w http.ResponseWriter, r *http.Request, to
 	writeJSON(w, http.StatusOK, map[string]any{"changed": true})
 }
 
-// handleDeleteAccount: DELETE /api/v1/me {"password"}. The password is asked for again so a
-// bearer lifted off a phone cannot end the account; every bearer of the account, this one
-// included, stops working.
+// handleDeleteAccount: DELETE /api/v1/me {"password", "code"?}. The password is asked for again
+// so a bearer lifted off a phone cannot end the account, and an account with two-factor
+// authentication also needs a current code (or a recovery code, as "code" or "recovery_code").
+// Every bearer of the account, this one included, stops working.
 func (s *Server) handleDeleteAccount(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
 	var req struct {
-		Password string `json:"password"`
+		Password     string `json:"password"`
+		Code         string `json:"code"`
+		RecoveryCode string `json:"recovery_code"`
 	}
 	if !decodeSmall(w, r, &req) {
 		return
@@ -124,12 +127,24 @@ func (s *Server) handleDeleteAccount(w http.ResponseWriter, r *http.Request, tok
 		writeError(w, http.StatusBadRequest, "password is required")
 		return
 	}
-	err := accounts.Delete(r.Context(), s.Identity, s.DB, tok.AccountID, req.Password)
+	second := req.Code
+	if second == "" {
+		second = req.RecoveryCode
+	}
+	err := accounts.Delete(r.Context(), s.Identity, s.DB, tok.AccountID, req.Password, second)
 	switch {
 	case err == nil:
 		writeJSON(w, http.StatusOK, map[string]any{"deleted": true})
 	case errors.Is(err, core.ErrInvalidCredentials):
 		writeError(w, http.StatusForbidden, "wrong password")
+	case errors.Is(err, core.ErrSecondFactorRequired):
+		writeJSON(w, http.StatusForbidden, map[string]any{
+			"error": "this account has two-factor authentication: send a code", "two_factor_required": true})
+	case errors.Is(err, core.ErrInvalidCode):
+		writeError(w, http.StatusForbidden, "wrong code")
+	case errors.Is(err, core.ErrTwoFactorLocked):
+		w.Header().Set("Retry-After", "900")
+		writeError(w, http.StatusTooManyRequests, "too many wrong codes; try again in 15 minutes")
 	default:
 		s.log.Error("api delete account", "err", err)
 		writeError(w, http.StatusInternalServerError, "internal error")

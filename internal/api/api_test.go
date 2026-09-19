@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"image"
 	"image/png"
 	"io"
@@ -39,8 +40,12 @@ type fakeCore struct {
 	players        []core.TitlePlayers
 	networkPlayers map[string]int
 	totalPlayers   int
-	profile        [3]string // country, birthday, display name as last saved
-	down           error     // when set, the core answers nothing at all
+	profile        [3]string         // country, birthday, display name as last saved
+	down           error             // when set, the core answers nothing at all
+	twoFactor      map[string]bool   // email -> 2FA on
+	publicCodes    map[string]string // published friend code -> account id
+	resent         int
+	newEmail       string
 }
 
 func newFakeCore() *fakeCore {
@@ -51,6 +56,8 @@ func newFakeCore() *fakeCore {
 		friends:     map[string][]string{},
 		links:       map[string]string{},
 		subjectToAc: map[string]string{},
+		twoFactor:   map[string]bool{},
+		publicCodes: map[string]string{},
 	}
 }
 
@@ -59,6 +66,9 @@ func (f *fakeCore) VerifyEmail(_ context.Context, _ string) error    { return ni
 func (f *fakeCore) Login(_ context.Context, email, password string) (string, error) {
 	if pw, ok := f.accounts[email]; !ok || pw != password || !f.verified[email] {
 		return "", core.ErrInvalidCredentials
+	}
+	if f.twoFactor[email] {
+		return "", &core.LoginChallenge{Challenge: "ch-" + email}
 	}
 	id := "sess-" + email
 	f.sessions[id] = email
@@ -127,23 +137,108 @@ func (f *fakeCore) ResetPassword(_ context.Context, token, password string) erro
 	return nil
 }
 func (f *fakeCore) Healthy(_ context.Context) error { return nil }
-func (f *fakeCore) ResolveAccount(_ context.Context, email, password string) (core.Account, error) {
-	if pw, ok := f.accounts[email]; !ok || pw != password {
-		return core.Account{}, core.ErrInvalidCredentials
-	}
-	return core.Account{ID: "acct-" + email, Email: email}, nil
-}
 func (f *fakeCore) GetAccount(_ context.Context, id string) (core.Account, error) {
-	return core.Account{ID: id, Country: f.profile[0], Birthday: f.profile[1]}, nil
+	email := strings.TrimPrefix(id, "acct-")
+	return core.Account{ID: id, Country: f.profile[0], Birthday: f.profile[1],
+		EmailVerified: f.verified[email], TwoFactorEnabled: f.twoFactor[email]}, nil
 }
 
 // The accounts are keyed by email and their ids are "acct-" + email, so the
-// password check by id looks the email back up.
-func (f *fakeCore) VerifyPasswordByID(_ context.Context, accountID, password string) error {
-	if pw, ok := f.accounts[strings.TrimPrefix(accountID, "acct-")]; !ok || pw != password {
+// password check by id looks the email back up. As the core does for a caller
+// that sets second_factor_supported, a 2FA account passes with the flag up.
+func (f *fakeCore) VerifyPasswordByID(_ context.Context, accountID, password string) (bool, error) {
+	email := strings.TrimPrefix(accountID, "acct-")
+	if pw, ok := f.accounts[email]; !ok || pw != password {
+		return false, core.ErrInvalidCredentials
+	}
+	return f.twoFactor[email], nil
+}
+
+const (
+	fakeTOTP     = "123456"
+	fakeRecovery = "abcde-fghij"
+)
+
+func (f *fakeCore) VerifySecondFactor(_ context.Context, accountID, code, recovery string) error {
+	if code == fakeTOTP || recovery == fakeRecovery {
+		return nil
+	}
+	return core.ErrInvalidCode
+}
+func (f *fakeCore) Login2FA(_ context.Context, challenge, code, recovery string) (string, error) {
+	email, ok := strings.CutPrefix(challenge, "ch-")
+	if !ok || !f.twoFactor[email] || (code != fakeTOTP && recovery != fakeRecovery) {
+		return "", core.ErrInvalidCode
+	}
+	id := "sess-" + email
+	f.sessions[id] = email
+	return id, nil
+}
+func (f *fakeCore) Whoami(_ context.Context, sid string) (core.Account, error) {
+	email, ok := f.sessions[sid]
+	if !ok {
+		return core.Account{}, core.ErrSessionInvalid
+	}
+	return core.Account{ID: "acct-" + email, Email: email, Status: "active",
+		EmailVerified: f.verified[email], TwoFactorEnabled: f.twoFactor[email]}, nil
+}
+func (f *fakeCore) ResendVerification(_ context.Context, _ string) error {
+	f.resent++
+	return nil
+}
+func (f *fakeCore) ChangeEmail(_ context.Context, sid, newEmail, password string) error {
+	if f.accounts[f.sessions[sid]] != password {
 		return core.ErrInvalidCredentials
 	}
+	f.newEmail = newEmail
 	return nil
+}
+func (f *fakeCore) ConfirmEmail(_ context.Context, token string) error {
+	if token != "email-tok" {
+		return core.ErrNotFound
+	}
+	return nil
+}
+func (f *fakeCore) TwoFactorSetup(_ context.Context, sid, password string) (core.TwoFactorSecret, error) {
+	if f.accounts[f.sessions[sid]] != password {
+		return core.TwoFactorSecret{}, core.ErrInvalidCredentials
+	}
+	return core.TwoFactorSecret{Secret: "JBSWY3DPEHPK3PXP", OTPAuthURI: "otpauth://totp/OpenPak?secret=JBSWY3DPEHPK3PXP"}, nil
+}
+func (f *fakeCore) TwoFactorEnable(_ context.Context, sid, code string) ([]string, error) {
+	if code != fakeTOTP {
+		return nil, core.ErrInvalidCode
+	}
+	f.twoFactor[f.sessions[sid]] = true
+	return []string{"r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10"}, nil
+}
+func (f *fakeCore) TwoFactorDisable(_ context.Context, sid, password, code string) error {
+	email := f.sessions[sid]
+	switch {
+	case f.accounts[email] != password:
+		return core.ErrInvalidCredentials
+	case !f.twoFactor[email]:
+		return fmt.Errorf("%w: two-factor authentication is not enabled", core.ErrConflict)
+	case code != fakeTOTP && code != fakeRecovery:
+		return core.ErrInvalidCode
+	}
+	delete(f.twoFactor, email)
+	return nil
+}
+func (f *fakeCore) ListBlocks(_ context.Context, accountID string) ([]core.Blocked, error) {
+	var out []core.Blocked
+	for _, b := range f.blocks {
+		if b[0] == accountID {
+			out = append(out, core.Blocked{AccountID: b[1], DisplayName: "name-" + b[1], BlockedAt: time.Unix(1700000000, 0)})
+		}
+	}
+	return out, nil
+}
+func (f *fakeCore) AccountByPublicCode(_ context.Context, _, code string) (string, error) {
+	if id, ok := f.publicCodes[code]; ok {
+		return id, nil
+	}
+	return "", core.ErrNotFound
 }
 func (f *fakeCore) RequestDeletion(_ context.Context, accountID string) error {
 	f.deleted = append(f.deleted, accountID)
@@ -241,6 +336,8 @@ func newTestAPI(t *testing.T) (*Server, *fakeCore, *store.Memory) {
 		links:       map[string]string{"acct-b@x.test": "0123456789ab"},
 		wfcLinks:    map[string]string{},
 		subjectToAc: map[string]string{"0123456789ab": "acct-b@x.test"},
+		twoFactor:   map[string]bool{},
+		publicCodes: map[string]string{},
 	}
 	db := store.NewMemory()
 	sess := session.New("opak_session", "test-secret-0123456789abcdef-test!", false, time.Hour)

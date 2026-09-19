@@ -1,0 +1,15 @@
+{{template "header" .}}
+<div class="mx-auto w-full max-w-sm">
+  <h1>{{t .Lang "auth.2fa.title"}}</h1>
+  <p class="muted">{{t .Lang "auth.2fa.sub"}}</p>
+  {{with .Error}}<p class="notice bad mt-4" role="alert">{{.}}</p>{{end}}
+  <form method="post" action="/login/2fa" class="form-stack mt-6">
+    <input type="hidden" name="challenge" value="{{.Challenge}}">
+    <label for="code">{{t .Lang "auth.2fa.code"}}</label>
+    <input id="code" name="code" type="text" required autocomplete="one-time-code" autocapitalize="off" spellcheck="false" autofocus>
+    <p class="hint">{{t .Lang "auth.2fa.recovery"}}</p>
+    <button type="submit" class="btn primary">{{t .Lang "auth.2fa.submit"}}</button>
+  </form>
+  <p class="mt-6 text-sm text-muted"><a href="/login">{{t .Lang "auth.2fa.restart"}}</a></p>
+</div>
+{{template "footer" .}}

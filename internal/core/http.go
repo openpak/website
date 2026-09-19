@@ -118,19 +118,46 @@ func (c *HTTPClient) VerifyEmail(ctx context.Context, token string) error {
 }
 
 // Login proxies POST /v1/login and extracts the core web session id from
-// the response cookie. The website's own cookie wraps this id (WEB-02).
+// the response cookie. The website's own cookie wraps this id (WEB-02). A 2FA
+// account answers 202 with a challenge and no cookie: *LoginChallenge.
 func (c *HTTPClient) Login(ctx context.Context, email, password string) (string, error) {
-	code, _, cookies, err := c.call(ctx, http.MethodPost, "v1/login", map[string]string{
+	code, body, cookies, err := c.call(ctx, http.MethodPost, "v1/login", map[string]string{
 		"email": email, "password": password,
 	}, "")
 	if err != nil {
 		return "", err
 	}
+	if code == http.StatusAccepted && body["two_factor_required"] == true {
+		// Password right, second factor owed: the core set no cookie.
+		return "", &LoginChallenge{Challenge: str(body["challenge"])}
+	}
 	if code != http.StatusOK {
 		return "", ErrInvalidCredentials
 	}
-	// The core returns the session id only as a Set-Cookie header; capture
-	// it explicitly.
+	return sessionFrom(cookies)
+}
+
+// Login2FA proxies POST /v1/login/2fa.
+func (c *HTTPClient) Login2FA(ctx context.Context, challenge, code, recoveryCode string) (string, error) {
+	req := map[string]string{"challenge": challenge}
+	if recoveryCode != "" {
+		req["recovery_code"] = recoveryCode
+	} else {
+		req["code"] = code
+	}
+	status, body, cookies, err := c.call(ctx, http.MethodPost, "v1/login/2fa", req, "")
+	if err != nil {
+		return "", err
+	}
+	if status != http.StatusOK {
+		return "", twoFactorErr(status, body)
+	}
+	return sessionFrom(cookies)
+}
+
+// sessionFrom picks the core session out of a login answer: the core returns
+// it only as a Set-Cookie header.
+func sessionFrom(cookies []*http.Cookie) (string, error) {
 	for _, ck := range cookies {
 		if ck.Name == coreSessionCookie && ck.Value != "" {
 			return ck.Value, nil
@@ -288,4 +315,159 @@ func timeMap(v any) time.Time {
 // verifyPath returns the core's verify path with the token as a real query parameter.
 func verifyPath(token string) string {
 	return "v1/verify?" + url.Values{"token": {token}}.Encode()
+}
+
+// Whoami proxies GET /v1/whoami: the account behind a core session (CR-4).
+func (c *HTTPClient) Whoami(ctx context.Context, coreSessionID string) (Account, error) {
+	code, body, _, err := c.call(ctx, http.MethodGet, "v1/whoami", nil, coreSessionID)
+	if err != nil {
+		return Account{}, err
+	}
+	if code == http.StatusUnauthorized {
+		return Account{}, ErrSessionInvalid
+	}
+	if code != http.StatusOK {
+		return Account{}, fmt.Errorf("core: whoami failed (status %d)", code)
+	}
+	a := Account{
+		ID: str(body["account_id"]), Email: str(body["email"]), DisplayName: str(body["display_name"]),
+		Status: str(body["status"]),
+	}
+	a.EmailVerified, _ = body["email_verified"].(bool)
+	a.TwoFactorEnabled, _ = body["two_factor_enabled"].(bool)
+	if a.ID == "" {
+		return Account{}, fmt.Errorf("core: whoami answered without an account id")
+	}
+	return a, nil
+}
+
+// ResendVerification proxies POST /v1/verify/resend. The core answers the same
+// whether a mail went out, was throttled, or the address is already verified.
+func (c *HTTPClient) ResendVerification(ctx context.Context, coreSessionID string) error {
+	code, _, _, err := c.call(ctx, http.MethodPost, "v1/verify/resend", nil, coreSessionID)
+	if err != nil {
+		return err
+	}
+	if code == http.StatusUnauthorized {
+		return ErrSessionInvalid
+	}
+	if code != http.StatusOK {
+		return fmt.Errorf("core: resend failed (status %d)", code)
+	}
+	return nil
+}
+
+// ChangeEmail proxies POST /v1/email/change. The core never says whether the
+// new address is taken.
+func (c *HTTPClient) ChangeEmail(ctx context.Context, coreSessionID, newEmail, password string) error {
+	code, body, _, err := c.call(ctx, http.MethodPost, "v1/email/change", map[string]string{
+		"new_email": newEmail, "password": password,
+	}, coreSessionID)
+	if err != nil {
+		return err
+	}
+	switch code {
+	case http.StatusOK:
+		return nil
+	case http.StatusForbidden:
+		return ErrInvalidCredentials
+	case http.StatusUnauthorized:
+		return ErrSessionInvalid
+	case http.StatusBadRequest:
+		return fmt.Errorf("%w: %s", ErrConflict, coreMessage(body, "invalid email address"))
+	default:
+		return fmt.Errorf("core: email change failed (status %d)", code)
+	}
+}
+
+// ConfirmEmail proxies POST /v1/email/confirm (JSON).
+func (c *HTTPClient) ConfirmEmail(ctx context.Context, token string) error {
+	code, _, _, err := c.call(ctx, http.MethodPost, "v1/email/confirm", map[string]string{"token": token}, "")
+	if err != nil {
+		return err
+	}
+	switch code {
+	case http.StatusOK:
+		return nil
+	case http.StatusBadRequest:
+		return ErrNotFound
+	default:
+		return fmt.Errorf("core: email confirm failed (status %d)", code)
+	}
+}
+
+// TwoFactorSetup proxies POST /v1/2fa/setup.
+func (c *HTTPClient) TwoFactorSetup(ctx context.Context, coreSessionID, password string) (TwoFactorSecret, error) {
+	code, body, _, err := c.call(ctx, http.MethodPost, "v1/2fa/setup", map[string]string{"password": password}, coreSessionID)
+	if err != nil {
+		return TwoFactorSecret{}, err
+	}
+	if code != http.StatusOK {
+		return TwoFactorSecret{}, twoFactorErr(code, body)
+	}
+	return TwoFactorSecret{Secret: str(body["secret"]), OTPAuthURI: str(body["otpauth_uri"])}, nil
+}
+
+// TwoFactorEnable proxies POST /v1/2fa/enable.
+func (c *HTTPClient) TwoFactorEnable(ctx context.Context, coreSessionID, totp string) ([]string, error) {
+	code, body, _, err := c.call(ctx, http.MethodPost, "v1/2fa/enable", map[string]string{"code": totp}, coreSessionID)
+	if err != nil {
+		return nil, err
+	}
+	if code != http.StatusOK {
+		return nil, twoFactorErr(code, body)
+	}
+	raw, _ := body["recovery_codes"].([]any)
+	out := make([]string, 0, len(raw))
+	for _, v := range raw {
+		if s := str(v); s != "" {
+			out = append(out, s)
+		}
+	}
+	return out, nil
+}
+
+// TwoFactorDisable proxies POST /v1/2fa/disable.
+func (c *HTTPClient) TwoFactorDisable(ctx context.Context, coreSessionID, password, totp string) error {
+	code, body, _, err := c.call(ctx, http.MethodPost, "v1/2fa/disable", map[string]string{
+		"password": password, "code": totp,
+	}, coreSessionID)
+	if err != nil {
+		return err
+	}
+	if code != http.StatusOK {
+		return twoFactorErr(code, body)
+	}
+	return nil
+}
+
+// twoFactorErr maps the answers every 2FA route shares (core
+// docs/two-factor.md): 403 wrong password, 401 wrong code or dead challenge
+// (or, from the session check in front, a dead session), 409 wrong state,
+// 429 locked.
+func twoFactorErr(code int, body map[string]any) error {
+	msg := coreMessage(body, "")
+	switch code {
+	case http.StatusForbidden:
+		return ErrInvalidCredentials
+	case http.StatusUnauthorized:
+		if strings.Contains(msg, "session") && !strings.Contains(msg, "challenge") {
+			return ErrSessionInvalid
+		}
+		return ErrInvalidCode
+	case http.StatusConflict:
+		return fmt.Errorf("%w: %s", ErrConflict, msg)
+	case http.StatusTooManyRequests:
+		return ErrTwoFactorLocked
+	default:
+		return fmt.Errorf("core: two-factor request failed (status %d)", code)
+	}
+}
+
+// coreMessage is the core's {"error": "..."} text, or def.
+func coreMessage(body map[string]any, def string) string {
+	if msg, ok := body["error"].(string); ok && msg != "" {
+		return msg
+	}
+	return def
 }

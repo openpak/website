@@ -24,6 +24,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/openpak/website/internal/accounts"
 	"github.com/openpak/website/internal/adapter"
 	"github.com/openpak/website/internal/chat"
 	"github.com/openpak/website/internal/core"
@@ -151,6 +152,24 @@ func flashText(code string) string {
 		return i18n.T("en", "account.profile.failed")
 	case "delete-unconfirmed":
 		return i18n.T("en", "account.delete.unconfirmed")
+	case "email-sent":
+		return i18n.T("en", "account.email.sent")
+	case "email-wrongpassword":
+		return i18n.T("en", "account.email.wrongpassword")
+	case "email-invalid":
+		return i18n.T("en", "account.email.invalid")
+	case "verify-sent":
+		return i18n.T("en", "account.verify.sent")
+	case "2fa-disabled":
+		return i18n.T("en", "account.2fa.disabled")
+	case "2fa-wrongpassword":
+		return i18n.T("en", "account.2fa.wrongpassword")
+	case "2fa-wrongcode":
+		return i18n.T("en", "account.2fa.wrongcode")
+	case "2fa-locked":
+		return i18n.T("en", "auth.2fa.locked")
+	case "2fa-state":
+		return i18n.T("en", "account.2fa.state")
 	case "chat-blocked":
 		return i18n.T("en", "chat.blocked")
 	case "chat-notfriends":
@@ -273,6 +292,14 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /verify", s.handleVerify)
 	mux.HandleFunc("GET /login", s.handleLoginForm)
 	mux.HandleFunc("POST /login", s.handleLoginSubmit)
+	mux.HandleFunc("POST /login/2fa", s.handleLogin2FASubmit)
+	mux.HandleFunc("GET /email/confirm", s.handleEmailConfirmForm)
+	mux.HandleFunc("POST /email/confirm", s.handleEmailConfirmSubmit)
+	mux.HandleFunc("POST /account/email", s.handleEmailChange)
+	mux.HandleFunc("POST /account/verify/resend", s.handleVerifyResend)
+	mux.HandleFunc("POST /account/2fa/setup", s.handle2FASetup)
+	mux.HandleFunc("POST /account/2fa/enable", s.handle2FAEnable)
+	mux.HandleFunc("POST /account/2fa/disable", s.handle2FADisable)
 	mux.HandleFunc("POST /logout", s.handleLogout)
 	mux.HandleFunc("GET /forgot-password", s.handleForgotForm)
 	mux.HandleFunc("POST /forgot-password", s.handleForgotSubmit)
@@ -537,40 +564,99 @@ func (s *Server) handleLoginSubmit(w http.ResponseWriter, r *http.Request) {
 	email := normalizeEmail(r.PostFormValue("email"))
 	password := r.PostFormValue("password")
 
-	// WEB-01/WEB-02: log in through the core's HTTP route, bind the website
-	// cookie to the core session id, and resolve the account id via the
-	// Identity contract (interim whoami pending CR-4).
+	// WEB-01/WEB-02: log in through the core's HTTP route and bind the website
+	// cookie to the core session id. A 2FA account gets a challenge instead of
+	// a session, and the second step asks for the code.
 	coreSession, err := s.Core.Login(r.Context(), email, password)
-	if err != nil {
-		msg := i18n.T("en", "auth.login.failed")
-		if errors.Is(err, core.ErrBanned) {
-			msg = i18n.T("en", "auth.login.banned")
-		}
-		s.render(w, http.StatusUnauthorized, "message.html", struct {
-			baseData
-			Message string
-		}{s.data(r, nil, "Sign in"), msg})
+	var challenge *core.LoginChallenge
+	if errors.As(err, &challenge) {
+		s.renderLogin2FA(w, r, http.StatusOK, challenge.Challenge, "")
 		return
 	}
-	acct, err := s.Identity.ResolveAccount(r.Context(), email, password)
 	if err != nil {
-		// Login worked core-side but identity resolution failed; keep the
-		// user signed out rather than serving a half session.
+		s.loginFailed(w, r, http.StatusUnauthorized, "auth.login.failed")
+		return
+	}
+	s.finishLogin(w, r, coreSession)
+}
+
+// login2FAView is the second sign-in step. The challenge is the core's own:
+// ten minutes, single use, burned after five wrong codes, and worthless
+// without the code, so a hidden field is as safe a place for it as any.
+type login2FAView struct {
+	baseData
+	Challenge string
+	Error     string
+}
+
+func (s *Server) renderLogin2FA(w http.ResponseWriter, r *http.Request, status int, challenge, errKey string) {
+	v := login2FAView{baseData: s.data(r, nil, i18n.T("en", "auth.2fa.title")), Challenge: challenge}
+	if errKey != "" {
+		v.Error = i18n.T("en", errKey)
+	}
+	s.render(w, status, "login_2fa.html", v)
+}
+
+// handleLogin2FASubmit is the second step: the challenge from the first and a
+// code from the authenticator app, or one recovery code.
+func (s *Server) handleLogin2FASubmit(w http.ResponseWriter, r *http.Request) {
+	if !s.AuthLimit.Allow(clientKey(r)) {
+		http.Error(w, "too many attempts; slow down", http.StatusTooManyRequests)
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid form", http.StatusBadRequest)
+		return
+	}
+	challenge := r.PostFormValue("challenge")
+	code, recovery := accounts.SplitSecondFactor(r.PostFormValue("code"))
+	if challenge == "" || (code == "" && recovery == "") {
+		s.renderLogin2FA(w, r, http.StatusBadRequest, challenge, "auth.2fa.missing")
+		return
+	}
+	coreSession, err := s.Core.Login2FA(r.Context(), challenge, code, recovery)
+	switch {
+	case err == nil:
+		s.finishLogin(w, r, coreSession)
+	case errors.Is(err, core.ErrInvalidCode):
+		// A wrong code and a spent challenge look the same from here; the
+		// core burns the challenge after five tries, and then only a fresh
+		// sign-in helps, which the page offers.
+		s.renderLogin2FA(w, r, http.StatusUnauthorized, challenge, "auth.2fa.wrong")
+	case errors.Is(err, core.ErrTwoFactorLocked):
+		s.loginFailed(w, r, http.StatusTooManyRequests, "auth.2fa.locked")
+	default:
+		s.log.Error("login 2fa", "err", err)
+		s.loginFailed(w, r, http.StatusBadGateway, "msg.error")
+	}
+}
+
+func (s *Server) loginFailed(w http.ResponseWriter, r *http.Request, status int, key string) {
+	s.render(w, status, "message.html", struct {
+		baseData
+		Message string
+	}{s.data(r, nil, i18n.T("en", "auth.login.title")), i18n.T("en", key)})
+}
+
+// finishLogin turns a fresh core session into a website session. Whoami
+// (CR-4) names the account; the password is never checked a second time.
+func (s *Server) finishLogin(w http.ResponseWriter, r *http.Request, coreSession string) {
+	acct, err := s.Core.Whoami(r.Context(), coreSession)
+	if err != nil {
+		// Login worked core-side but the session could not be resolved; keep
+		// the user signed out rather than serving a half session.
 		_ = s.Core.Logout(context.Background(), coreSession)
-		s.log.Error("resolve account", "err", err)
-		s.render(w, http.StatusInternalServerError, "message.html", struct {
-			baseData
-			Message string
-		}{s.data(r, nil, "Sign in"), i18n.T("en", "msg.error")})
+		s.log.Error("whoami", "err", err)
+		s.loginFailed(w, r, http.StatusInternalServerError, "msg.error")
 		return
 	}
-	// The header shows the display name, which the password check does not carry.
-	var name string
-	if a, err := s.Identity.GetAccount(r.Context(), acct.ID); err == nil {
-		name = a.DisplayName
+	if acct.Status == "banned" {
+		_ = s.Core.Logout(context.Background(), coreSession)
+		s.loginFailed(w, r, http.StatusForbidden, "auth.login.banned")
+		return
 	}
 	if err := s.DB.PutWebSession(r.Context(), store.WebSession{
-		CoreSessionID: coreSession, AccountID: acct.ID, Email: email, DisplayName: name,
+		CoreSessionID: coreSession, AccountID: acct.ID, Email: acct.Email, DisplayName: acct.DisplayName,
 	}); err != nil {
 		_ = s.Core.Logout(context.Background(), coreSession)
 		s.log.Error("put web session", "err", err)

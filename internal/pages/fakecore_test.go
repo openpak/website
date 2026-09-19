@@ -3,6 +3,7 @@ package pages
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -32,8 +33,21 @@ type fakeCore struct {
 	links          map[string]string // accountID -> subject (switch)
 	wfcLinks       map[string]string // accountID -> subject (wfc, linked from the website)
 	subjectToAc    map[string]string // subject -> accountID
+	publicCodes    map[string]string // published friend code -> accountID
 	deleted        []string          // accounts whose deletion was requested
+	twoFactor      map[string]bool   // email -> 2FA on (code fakeTOTP, recovery fakeRecovery)
+	pending2FA     map[string]bool   // email -> setup started, not yet enabled
+	banned         map[string]bool   // email -> banned
+	resent         int               // verification resends asked for
+	emailChange    map[string]string // email -> new address awaiting confirmation
 }
+
+const (
+	fakeTOTP     = "123456"
+	fakeRecovery = "abcde-fghij"
+	// fakeEmailToken is the one confirmation token the fake core issues.
+	fakeEmailToken = "email-tok"
+)
 
 type friendRow struct {
 	requester, addressee string
@@ -49,8 +63,145 @@ func newFakeCore() *fakeCore {
 		links:       map[string]string{},
 		wfcLinks:    map[string]string{},
 		subjectToAc: map[string]string{},
+		publicCodes: map[string]string{},
 		names:       map[string]string{},
+		twoFactor:   map[string]bool{},
+		pending2FA:  map[string]bool{},
+		banned:      map[string]bool{},
+		emailChange: map[string]string{},
 	}
+}
+
+func (f *fakeCore) secondFactorOK(code, recovery string) bool {
+	return code == fakeTOTP || strings.EqualFold(recovery, fakeRecovery)
+}
+
+func (f *fakeCore) Login2FA(_ context.Context, challenge, code, recovery string) (string, error) {
+	email, ok := strings.CutPrefix(challenge, "ch-")
+	if !ok || !f.twoFactor[email] || !f.secondFactorOK(code, recovery) {
+		return "", core.ErrInvalidCode
+	}
+	id := "sess-" + email
+	f.sessions[id] = email
+	return id, nil
+}
+
+func (f *fakeCore) Whoami(_ context.Context, sid string) (core.Account, error) {
+	email, ok := f.sessions[sid]
+	if !ok {
+		return core.Account{}, core.ErrSessionInvalid
+	}
+	status := "active"
+	if f.banned[email] {
+		status = "banned"
+	}
+	id := "acct-" + email
+	return core.Account{ID: id, Email: email, DisplayName: f.names[id], Status: status,
+		EmailVerified: f.verified[email], TwoFactorEnabled: f.twoFactor[email]}, nil
+}
+
+func (f *fakeCore) ResendVerification(_ context.Context, _ string) error {
+	f.resent++
+	return nil
+}
+
+func (f *fakeCore) ChangeEmail(_ context.Context, sid, newEmail, password string) error {
+	email := f.sessions[sid]
+	if f.accounts[email] != password {
+		return core.ErrInvalidCredentials
+	}
+	if !strings.Contains(newEmail, "@") {
+		return core.ErrConflict
+	}
+	f.emailChange[email] = newEmail
+	return nil
+}
+
+// ConfirmEmail moves every pending change: the fake issues one token.
+func (f *fakeCore) ConfirmEmail(_ context.Context, token string) error {
+	if token != fakeEmailToken || len(f.emailChange) == 0 {
+		return core.ErrNotFound
+	}
+	for old, next := range f.emailChange {
+		f.accounts[next], f.verified[next] = f.accounts[old], true
+		for sid, e := range f.sessions {
+			if e == old {
+				f.sessions[sid] = next
+			}
+		}
+		delete(f.emailChange, old)
+	}
+	return nil
+}
+
+func (f *fakeCore) TwoFactorSetup(_ context.Context, sid, password string) (core.TwoFactorSecret, error) {
+	email := f.sessions[sid]
+	if f.accounts[email] != password {
+		return core.TwoFactorSecret{}, core.ErrInvalidCredentials
+	}
+	if f.twoFactor[email] {
+		return core.TwoFactorSecret{}, core.ErrConflict
+	}
+	f.pending2FA[email] = true
+	return core.TwoFactorSecret{Secret: "JBSWY3DPEHPK3PXP", OTPAuthURI: "otpauth://totp/OpenPak:" + email + "?secret=JBSWY3DPEHPK3PXP&issuer=OpenPak"}, nil
+}
+
+func (f *fakeCore) TwoFactorEnable(_ context.Context, sid, code string) ([]string, error) {
+	email := f.sessions[sid]
+	if !f.pending2FA[email] {
+		return nil, core.ErrConflict
+	}
+	if code != fakeTOTP {
+		return nil, core.ErrInvalidCode
+	}
+	delete(f.pending2FA, email)
+	f.twoFactor[email] = true
+	codes := make([]string, 10)
+	for i := range codes {
+		codes[i] = fmt.Sprintf("rcode-%02d", i)
+	}
+	return codes, nil
+}
+
+func (f *fakeCore) TwoFactorDisable(_ context.Context, sid, password, code string) error {
+	email := f.sessions[sid]
+	switch {
+	case f.accounts[email] != password:
+		return core.ErrInvalidCredentials
+	case !f.twoFactor[email]:
+		return core.ErrConflict
+	case !f.secondFactorOK(code, code):
+		return core.ErrInvalidCode
+	}
+	delete(f.twoFactor, email)
+	return nil
+}
+
+func (f *fakeCore) VerifySecondFactor(_ context.Context, accountID, code, recovery string) error {
+	if !f.twoFactor[strings.TrimPrefix(accountID, "acct-")] {
+		return core.ErrConflict
+	}
+	if !f.secondFactorOK(code, recovery) {
+		return core.ErrInvalidCode
+	}
+	return nil
+}
+
+func (f *fakeCore) ListBlocks(_ context.Context, accountID string) ([]core.Blocked, error) {
+	var out []core.Blocked
+	for _, b := range f.blocks {
+		if b[0] == accountID {
+			out = append(out, core.Blocked{AccountID: b[1], DisplayName: "name-" + b[1], BlockedAt: time.Unix(1700000000, 0)})
+		}
+	}
+	return out, nil
+}
+
+func (f *fakeCore) AccountByPublicCode(_ context.Context, _, code string) (string, error) {
+	if id, ok := f.publicCodes[code]; ok {
+		return id, nil
+	}
+	return "", core.ErrNotFound
 }
 
 func (f *fakeCore) Register(_ context.Context, email, password, _ string) error {
@@ -69,6 +220,9 @@ func tokenForEmail(email string) string { return "tok-" + email }
 func (f *fakeCore) Login(_ context.Context, email, password string) (string, error) {
 	if pw, ok := f.accounts[email]; !ok || pw != password || !f.verified[email] {
 		return "", core.ErrInvalidCredentials
+	}
+	if f.twoFactor[email] {
+		return "", &core.LoginChallenge{Challenge: "ch-" + email}
 	}
 	id := "sess-" + email
 	f.sessions[id] = email
@@ -128,23 +282,21 @@ func (f *fakeCore) ResetPassword(_ context.Context, _, password string) error {
 }
 func (f *fakeCore) Healthy(_ context.Context) error { return nil }
 
-func (f *fakeCore) ResolveAccount(_ context.Context, email, password string) (core.Account, error) {
-	if pw, ok := f.accounts[email]; !ok || pw != password {
-		return core.Account{}, core.ErrInvalidCredentials
-	}
-	return core.Account{ID: "acct-" + email, Email: email}, nil
-}
 func (f *fakeCore) GetAccount(_ context.Context, accountID string) (core.Account, error) {
-	return core.Account{ID: accountID, DisplayName: f.names[accountID]}, nil
+	email := strings.TrimPrefix(accountID, "acct-")
+	return core.Account{ID: accountID, DisplayName: f.names[accountID],
+		EmailVerified: f.verified[email], TwoFactorEnabled: f.twoFactor[email]}, nil
 }
 
 // The accounts are keyed by email and their ids are "acct-" + email, so the
-// password check by id looks the email back up.
-func (f *fakeCore) VerifyPasswordByID(_ context.Context, accountID, password string) error {
-	if pw, ok := f.accounts[strings.TrimPrefix(accountID, "acct-")]; !ok || pw != password {
-		return core.ErrInvalidCredentials
+// password check by id looks the email back up. Like the core with
+// second_factor_supported set, a 2FA account passes with the flag raised.
+func (f *fakeCore) VerifyPasswordByID(_ context.Context, accountID, password string) (bool, error) {
+	email := strings.TrimPrefix(accountID, "acct-")
+	if pw, ok := f.accounts[email]; !ok || pw != password {
+		return false, core.ErrInvalidCredentials
 	}
-	return nil
+	return f.twoFactor[email], nil
 }
 func (f *fakeCore) RequestDeletion(_ context.Context, accountID string) error {
 	f.deleted = append(f.deleted, accountID)

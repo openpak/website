@@ -32,14 +32,14 @@ func (f *fakeEvents) Poll(_ context.Context, since uint64, limit int32) ([]core.
 
 type fakeIdentity struct{}
 
-func (fakeIdentity) ResolveAccount(_ context.Context, _, _ string) (core.Account, error) {
-	return core.Account{}, nil
-}
 func (fakeIdentity) GetAccount(_ context.Context, id string) (core.Account, error) {
 	return core.Account{ID: id, DisplayName: "Leia"}, nil
 }
-func (fakeIdentity) VerifyPasswordByID(_ context.Context, _, _ string) error { return nil }
-func (fakeIdentity) RequestDeletion(_ context.Context, _ string) error       { return nil }
+func (fakeIdentity) VerifyPasswordByID(_ context.Context, _, _ string) (bool, error) {
+	return false, nil
+}
+func (fakeIdentity) VerifySecondFactor(_ context.Context, _, _, _ string) error { return nil }
+func (fakeIdentity) RequestDeletion(_ context.Context, _ string) error          { return nil }
 
 type fakeInvites struct {
 	pending        []core.PendingInvitation

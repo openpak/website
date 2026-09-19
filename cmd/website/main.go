@@ -191,6 +191,7 @@ func run(log *slog.Logger) error {
 	// /admin/news. Either can be absent; the landing page then has no news
 	// section and the admin page says the service is not configured.
 	pageSrv.News = news.NewFeed(os.Getenv("NEWS_URL"))
+	apiSrv.News = pageSrv.News // GET /api/v1/news, for the app
 	if addr, key := os.Getenv("NEWS_GRPC_ADDR"), os.Getenv("NEWS_OPERATOR_KEY"); addr != "" && key != "" {
 		newsCli, conn, err := news.DialOperator(addr, key)
 		if err != nil {

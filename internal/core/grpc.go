@@ -72,29 +72,6 @@ func mapGRPC(err error) error {
 
 // --- Identity ---
 
-// ResolveAccount verifies email+password through the core Identity contract
-// and returns the account projection. This is the interim whoami for the
-// website (CR-4): the core's HTTP login does not return the account id, and
-// the website must know it for Social/Links calls.
-func (g *GRPC) ResolveAccount(ctx context.Context, email, password string) (Account, error) {
-	c := accountv1.NewIdentityClient(g.conn)
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	resp, err := c.VerifyPassword(ctx, &accountv1.VerifyPasswordRequest{
-		CallerNamespace: "website",
-		Purpose:         "web_session_identity",
-		Email:           email,
-		Password:        password,
-	})
-	if err != nil {
-		return Account{}, mapPasswordErr(err)
-	}
-	if resp.GetStatus() == accountv1.AccountStatus_ACCOUNT_STATUS_BANNED {
-		return Account{}, ErrBanned
-	}
-	return Account{ID: resp.GetAccountId()}, nil
-}
-
 // mapPasswordErr maps a failed password check. The core's interceptor uses
 // Unauthenticated for a rejected internal key too; never mask a wiring failure
 // as "bad password".
@@ -110,27 +87,74 @@ func mapPasswordErr(err error) error {
 
 // VerifyPasswordByID checks the password of an account the website already
 // knows by id. Only an active account passes: a banned or already deleting one
-// has nothing left to confirm.
-func (g *GRPC) VerifyPasswordByID(ctx context.Context, accountID, password string) error {
+// has nothing left to confirm. The website can ask for a second factor, so it
+// says so (second_factor_supported) and learns whether one is owed.
+func (g *GRPC) VerifyPasswordByID(ctx context.Context, accountID, password string) (bool, error) {
 	c := accountv1.NewIdentityClient(g.conn)
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	resp, err := c.VerifyPasswordByID(ctx, &accountv1.VerifyPasswordByIDRequest{
-		CallerNamespace: "website",
-		Purpose:         "confirm_account_action",
-		AccountId:       accountID,
-		Password:        password,
+		CallerNamespace:       "website",
+		Purpose:               "confirm_account_action",
+		AccountId:             accountID,
+		Password:              password,
+		SecondFactorSupported: true,
 	})
 	if err != nil {
-		return mapPasswordErr(err)
+		if status.Code(err) == codes.FailedPrecondition {
+			// Only if the flag were lost on the way: fail closed.
+			return true, ErrSecondFactorRequired
+		}
+		return false, mapPasswordErr(err)
 	}
 	switch resp.GetStatus() {
 	case accountv1.AccountStatus_ACCOUNT_STATUS_ACTIVE:
-		return nil
+		return resp.GetTwoFactorRequired(), nil
 	case accountv1.AccountStatus_ACCOUNT_STATUS_BANNED:
-		return ErrBanned
+		return false, ErrBanned
 	default:
-		return ErrInvalidCredentials
+		return false, ErrInvalidCredentials
+	}
+}
+
+// VerifySecondFactor is the second half of a step-up for a 2FA account.
+func (g *GRPC) VerifySecondFactor(ctx context.Context, accountID, code, recoveryCode string) error {
+	c := accountv1.NewIdentityClient(g.conn)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	_, err := c.VerifySecondFactor(ctx, &accountv1.VerifySecondFactorRequest{
+		AccountId: accountID, Code: code, RecoveryCode: recoveryCode,
+	})
+	switch status.Code(err) {
+	case codes.OK:
+		return nil
+	case codes.ResourceExhausted:
+		return ErrTwoFactorLocked
+	case codes.InvalidArgument:
+		return ErrInvalidCode
+	case codes.Unauthenticated:
+		if strings.Contains(status.Convert(err).Message(), "internal credentials") {
+			return fmt.Errorf("core: internal credentials rejected (check CORE_INTERNAL_KEY)")
+		}
+		return ErrInvalidCode
+	default:
+		return mapGRPC(err)
+	}
+}
+
+// statusName is the account status as the HTTP contract spells it.
+func statusName(s accountv1.AccountStatus) string {
+	switch s {
+	case accountv1.AccountStatus_ACCOUNT_STATUS_ACTIVE:
+		return "active"
+	case accountv1.AccountStatus_ACCOUNT_STATUS_BANNED:
+		return "banned"
+	case accountv1.AccountStatus_ACCOUNT_STATUS_DELETION_PENDING:
+		return "deletion-pending"
+	case accountv1.AccountStatus_ACCOUNT_STATUS_DELETED:
+		return "deleted"
+	default:
+		return "unknown"
 	}
 }
 
@@ -157,7 +181,9 @@ func (g *GRPC) GetAccount(ctx context.Context, accountID string) (Account, error
 		return Account{}, mapGRPC(err)
 	}
 	return Account{ID: resp.GetAccountId(), DisplayName: resp.GetDisplayName(),
-		Country: resp.GetCountry(), Birthday: resp.GetBirthday()}, nil
+		Country: resp.GetCountry(), Birthday: resp.GetBirthday(),
+		Status: statusName(resp.GetStatus()), EmailVerified: resp.GetEmailVerified(),
+		TwoFactorEnabled: resp.GetTwoFactorEnabled()}, nil
 }
 
 // --- Social ---
@@ -253,6 +279,20 @@ func (g *GRPC) Unblock(ctx context.Context, blockerID, blockedID string) error {
 	return mapGRPC(err)
 }
 
+// ListBlocks is who the account has blocked.
+func (g *GRPC) ListBlocks(ctx context.Context, accountID string) ([]Blocked, error) {
+	resp, err := accountv1.NewSocialClient(g.conn).ListBlocks(ctx, &accountv1.ListBlocksRequest{AccountId: accountID})
+	if err != nil {
+		return nil, mapGRPC(err)
+	}
+	out := make([]Blocked, 0, len(resp.GetBlocked()))
+	for _, b := range resp.GetBlocked() {
+		out = append(out, Blocked{AccountID: b.GetAccountId(), DisplayName: b.GetDisplayName(),
+			BlockedAt: time.Unix(b.GetBlockedAtUnix(), 0).UTC()})
+	}
+	return out, nil
+}
+
 func (g *GRPC) CanMessage(ctx context.Context, actorID, targetID string) error {
 	c := accountv1.NewSocialClient(g.conn)
 	resp, err := c.CheckInteraction(ctx, &accountv1.CheckInteractionRequest{
@@ -281,7 +321,18 @@ func (g *GRPC) ActiveLinkByAccount(ctx context.Context, namespace, accountID str
 	if err != nil {
 		return Link{}, mapGRPC(err)
 	}
-	return Link{LinkID: resp.GetLinkId(), Namespace: namespace, SubjectID: resp.GetSubjectId()}, nil
+	return Link{LinkID: resp.GetLinkId(), Namespace: namespace, SubjectID: resp.GetSubjectId(),
+		PublicCode: resp.GetPublicCode()}, nil
+}
+
+// AccountByPublicCode resolves a published code (Links.GetLinkByPublicCode).
+func (g *GRPC) AccountByPublicCode(ctx context.Context, namespace, code string) (string, error) {
+	resp, err := accountv1.NewLinksClient(g.conn).GetLinkByPublicCode(ctx,
+		&accountv1.GetLinkByPublicCodeRequest{Namespace: namespace, PublicCode: code})
+	if err != nil {
+		return "", mapGRPC(err)
+	}
+	return resp.GetAccountId(), nil
 }
 
 func (g *GRPC) AccountBySubject(ctx context.Context, namespace, subjectID string) (string, error) {
