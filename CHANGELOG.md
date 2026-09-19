@@ -3,6 +3,31 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## Unreleased
+
+Wired to the account core v0.9.0 contracts (stubs refreshed from account 7b87201).
+
+- Sign-in: the core names the session's account (`GET /v1/whoami`, CR-4); the password is no
+  longer checked a second time over gRPC. Two-factor accounts get a second step on the web
+  (`POST /login/2fa`, authenticator or recovery code) and in the API (`POST /api/v1/token`
+  answers `202 {two_factor_required, challenge}`; `POST /api/v1/token/2fa` mints the bearer).
+- Account security: two-factor setup (key and otpauth URI as text), enable (ten recovery codes
+  shown once) and disable, with a warning first that consoles signing in with the password
+  (Switch, Wii U, 3DS) cannot complete a second factor yet. Email change with a confirmation page
+  at `/email/confirm`; a resend button while the address is unconfirmed. API:
+  `/api/v1/me/2fa/setup|enable|disable`, `/api/v1/me/email`, `/api/v1/email/confirm`,
+  `/api/v1/me/verify/resend`; `/api/v1/me` gains `email_verified` and `two_factor_enabled`.
+- Deleting a 2FA account asks for a code as well as the password (web and `DELETE /api/v1/me`).
+- Blocked accounts: listed on the account page with unblock; `GET /api/v1/me/blocked`.
+- Friend codes: the code the adapter publishes on the link (`public_code`) is shown and looked
+  up first; the adapter answer stays the fallback until adapters publish.
+- Avatars: both PNG sizes are also published to the core's Media service (CR-2), best effort.
+- Admin: `/admin/users` (search, ban/unban with a reason) and `/admin/reports` (queue, resolve)
+  over the core's Moderation service (CR-5, CR-6), audited in the core under the admin's id and
+  in `admin_audit`.
+- `GET /api/v1/news`: the latest published articles for the app; empty when no news service is
+  configured.
+
 ## v0.45.0 — 2026-09-19
 
 - Registry: the v2 network registry runs as its own service, `cmd/openpak-registry` (same image,

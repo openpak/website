@@ -202,12 +202,27 @@ open `/admin` — empty means nobody, by design (fail closed).
     audited in `admin_audit`.
   - `/admin/events` — the core's durable invalidation event stream plus
     website audit entries (newest 200).
-  - `/admin/users`, `/admin/reports` — moderation (ban/unban/search, reports)
-    is fail-closed pending core contracts CR-5/CR-6 — see "Contract requests".
+  - `/admin/users` — search accounts (id, email, name, link subject) and
+    ban/unban with a reason; `/admin/reports` — the reports queue (open,
+    resolved, all) and resolve. Both go through the core's Moderation service
+    with the admin's account id as the actor, and are also written to
+    `admin_audit`.
 - **Avatars**: uploaded avatars are validated, center-cropped and resized
   server-side to 256 and 512 px PNG under `WEBSITE_MEDIA_DIR` (filesystem
-  first; `internal/media.Storage` is the S3-compatible seam). Serving to
-  consoles moves to the adapter once CR-2 lands.
+  first; `internal/media.Storage` is the S3-compatible seam). Both PNGs are
+  also published to the core's Media service (`PutAvatar`, best effort and
+  logged) so adapters serve them to consoles; the website keeps serving its
+  own copies.
+- **Account security** (`/account#security`): email address and whether it
+  is confirmed (resend button), email change (the mailed link lands on
+  `GET /email/confirm`, a page with a button), and two-factor authentication:
+  setup (key and `otpauth://` URI as text — no QR, as nothing in the standard
+  library or the current dependencies draws one), enable (ten recovery codes,
+  shown once), disable. The page warns before enabling that consoles signing
+  in with the password (Switch, Wii U, 3DS) cannot complete a second factor
+  yet. Sign-in for a 2FA account is a second form (`POST /login/2fa`), and
+  deleting the account asks for a code as well as the password. Blocked
+  accounts are listed with an unblock button.
 - **Logs**: structured to stderr at info; set `WEBSITE_LOG_LEVEL=debug` to also
   log every request.
 
@@ -217,8 +232,10 @@ Contract: [`openapi/openapi.yaml`](openapi/openapi.yaml) (OpenAPI 3.1).
 `POST /api/v1/token` exchanges account credentials for a bearer token
 bound to a live core web session; every API call re-validates that session,
 so bans/logouts/password resets end mobile access with the core's
-revocation window. Rate limits: 10 mints/min per client, 120 calls/min per
-token.
+revocation window. A 2FA account's credentials answer `202
+{two_factor_required, challenge}` instead, and `POST /api/v1/token/2fa`
+(`challenge` plus `code` or `recovery_code`) mints the bearer. Rate limits:
+10 mints/min per client, 120 calls/min per token.
 
 The app can do everything the account pages do: register, request a reset
 mail and complete the reset (`POST /api/v1/password/reset`; public, sharing the
@@ -227,7 +244,12 @@ per-client mint limit), change the password, delete the account
 a console by namespace, upload an avatar (multipart) or pick a preset, accept or
 decline a friend request (`/me/friends/requests/decline`), decline an
 invitation, read the public title catalogue (`GET /api/v1/titles`), chat, and
-manage cloud saves. Where the site and the API do the same thing they share
+manage cloud saves. Account security has the same parity: two-factor
+(`/me/2fa/setup|enable|disable`), email change (`POST /me/email`, and
+`POST /email/confirm` for an app that opens the link itself), verification
+resend (`POST /me/verify/resend`) and the block list (`GET /me/blocked`).
+`GET /api/v1/news` is public: the latest published articles from the news
+service (`NEWS_URL`), an empty list when none is configured. Where the site and the API do the same thing they share
 `internal/accounts`. `contract_test.go` fails the build when a served
 `/api/v1` route is missing from the spec.
 
@@ -275,17 +297,20 @@ thing that talks to podman; the website never holds the podman socket.
 
 The website cookie (`opak_session`, HttpOnly/Secure/SameSite=Lax) wraps the
 core web session id. A website-side index table maps that id to the account
-id resolved at login via the Identity contract. When the core session dies
+id the core names for it at login (`GET /v1/whoami`, CR-4); the password is
+checked once, by the core's `POST /v1/login`. When the core session dies
 (revoked device, ban, password reset), the next request clears the cookie
 and the index row; API bearers bound to it are revoked on sight.
 
-## Friend codes (CR-3 interim)
+## Friend codes (CR-3)
 
-The friend code shown on the website is the subject of the account's active
-`switch` link, read through the core Links contract and rendered as
-`SW-xxxx-xxxx-xxxx` when it is 12 hex digits. Codes resolve back to
-accounts through `Links.GetLinkBySubject`. This is a projection of an
-adapter-owned value — see CR-3.
+The Switch adapter mints friend codes and publishes them on the account's
+active `switch` link (`Links.SetLinkPublicCode`); the website shows that
+`public_code` and resolves a typed code with `Links.GetLinkByPublicCode`.
+Adapters do not publish codes yet, so while `public_code` is empty the
+website asks the adapter itself (`ADAPTER_INTERNAL_URL`), and a pasted link
+subject still resolves through `Links.GetLinkBySubject`. The order lives in
+`internal/accounts` and is the same on the site and the API.
 
 ## Contract requests (raise as `account` issues)
 
@@ -297,23 +322,23 @@ Carried from the PRD, plus what this implementation discovered:
   read-only, no delivery side effects. Until then `/account/invitations`
   renders a pending notice; the website must not call `PollInvitations`
   (adapter-scoped, delivery side effects).
-- **CR-2** Account media: store and serve avatar bytes via the core (or a
-  documented shared media store) so adapters can serve them to consoles
-  without calling the website. The website-side pipeline exists; core sync
-  is the missing half.
-- **CR-3** Friend-code projection: define how third-party surfaces read the
-  adapter-owned `SW-` code (core-published field vs adapter read contract).
-  Interim: Links subject projection (above).
-- **CR-4** `GET /v1/whoami` on the core HTTP surface (account id, email,
-  display name, status for the session cookie). The core's `POST /v1/login`
-  returns no identity, so the website currently re-verifies the password
-  over gRPC at login to learn the account id. A whoami route would remove
-  the extra verification entirely.
-- **CR-5** Admin contract: `SearchAccounts(query)`,
-  `SetAccountBanned(account_id, banned, reason)` emitting the existing
-  invalidation events. Blocks the W3 gate ("ban stops a live session") —
-  the website pages are built and fail closed until this lands.
-- **CR-6** Reports read model (queue + resolve) for the moderation queue.
+CR-2 to CR-6 were delivered by account v0.9.0 and are wired in (stubs from
+account revision 7b87201):
+
+- ~~**CR-2** Account media~~ — **delivered** as the core's `Media` service;
+  the website publishes both avatar PNGs with `PutAvatar` after every store.
+- ~~**CR-3** Friend-code projection~~ — **delivered** as the link's
+  `public_code` (`SetLinkPublicCode`, `GetLinkByPublicCode`,
+  `ListAccountLinks`). The adapter publishes, the website reads; until
+  adapters publish, the adapter-answer fallback above stays.
+- ~~**CR-4** `GET /v1/whoami`~~ — **delivered**; sign-in on the site and
+  `POST /api/v1/token` use it instead of re-checking the password over gRPC.
+- ~~**CR-5** Admin contract~~ — **delivered** as `Moderation.SearchAccounts`
+  and `SetAccountBanned` (reason and actor, audited in the core);
+  `/admin/users`.
+- ~~**CR-6** Reports read model~~ — **delivered** as `Moderation.ListReports`
+  and `ResolveReport` (plus `FileReport`, which nothing on the website calls
+  yet); `/admin/reports`.
 - ~~**CR-7** `SetDisplayName(account_id, name)`~~ — **delivered**: the core
   accepts `display_name` on `POST /v1/profile`, and both the profile form and
   `POST /api/v1/me/profile` send it.
