@@ -8,16 +8,20 @@ Steam live there). Every service reads its listeners from `<SVC>_HTTP_ADDR`, `<S
 `<SVC>_METRICS_ADDR`; the values below are the defaults and the local-run convention. Each
 service owns a block of ten: +0 HTTP, +1 gRPC, +2 metrics/pprof, +3..+9 spare.
 
-## 20010 block
+## Blocks built from this repository
 
 | Block | Service | HTTP | gRPC | metrics |
 | --- | --- | --- | --- | --- |
 | 20010 | `website` (site, portal, mobile `/api/v1`) | 20010 | — | 20012 |
+| 20140 | `openpak-registry` (v2 network registry, `/api/v2/network/*`; same image, own container; docs/registry.md) | 20140 | — | 20142 |
 
 ## Health
 
 | Service | Endpoint |
 | --- | --- |
 | `website` | `/healthz` |
+| `openpak-registry` | `/healthz` (20140 and 20142) |
 
-Other services' rows live in the canonical ports.md.
+Other services' rows live in the canonical ports.md. The 20140 block was
+allocated here on 2026-09-19 (next free platform-neutral block); the canonical
+file is not under version control, so add the row there by hand.
