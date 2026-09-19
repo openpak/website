@@ -1,5 +1,6 @@
 // Package core is the website's only doorway to the account core: versioned
-// HTTP (/v1/*) and gRPC contracts (Identity, Links, Social, Events). The
+// HTTP (/v1/*) and gRPC contracts (Identity, Links, Social, Events,
+// Moderation, Media). The
 // website never reads core storage. Interfaces here exist so handlers and
 // tests stay independent of transport details.
 package core
