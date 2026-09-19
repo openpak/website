@@ -408,9 +408,51 @@ func safeBack(back string) string {
 	}
 }
 
+// download is one client on the downloads page. URL empty means it is not public yet.
+type download struct {
+	Name, Console, Kind, Status, URL string
+}
+
+// downloads are the clients pointed at OpenPak, in the same row shape as the titles list.
+// Only public repositories are linked: a private one would be a 404 for every visitor.
+var downloads = []download{
+	{"Inkay", "Wii U", "downloads.kind.patch", "alpha", "https://github.com/openpak/nn-inkay/releases/latest"},
+	{"nimbus", "3DS", "downloads.kind.patch", "alpha", "https://github.com/openpak/nn-nimbus/releases/latest"},
+	{"Azahar", "3DS", "downloads.kind.emulator", "beta", "https://github.com/openpak/azahar/releases/latest"},
+	{"WFC patcher", "Wii", "downloads.kind.patch", "alpha", "https://github.com/openpak/nn-wfc-patcher-wii/releases/latest"},
+	{"Dolphin", "Wii", "downloads.kind.emulator", "beta", "https://github.com/openpak/dolphin/releases/latest"},
+	{"melonDS", "DS", "downloads.kind.emulator", "beta", "https://github.com/openpak/melonds/releases/latest"},
+	{"Ryujinx · Eden · Citron", "Switch", "downloads.kind.emulator", "", ""},
+	{"OpenPak setup", "Switch", "downloads.kind.setup", "", ""},
+}
+
+// platform is one console family and how far OpenPak is with it; the status words and
+// colours are the titles list's.
+type platform struct{ Name, Console, Status string }
+
+var platforms = []platform{
+	{"Nintendo Switch", "Switch", "live"},
+	{"Wii U", "Wii U", "beta"},
+	{"Nintendo 3DS", "3DS", "beta"},
+	{"Wii", "Wii", "beta"},
+	{"Nintendo DS", "DS", "beta"},
+	{"PlayStation 3", "PS3", "planned"},
+	{"Xbox 360", "Xbox 360", "planned"},
+	{"PlayStation 2", "PS2", "exploring"},
+	{"PlayStation Portable", "PSP", "exploring"},
+	{"PlayStation Vita", "Vita", "exploring"},
+	{"Xbox", "Xbox", "exploring"},
+	{"PlayStation 4", "", "exploring"},
+	{"PS5 · Xbox One · Series", "", "not-feasible"},
+}
+
 func (s *Server) handleDownloads(w http.ResponseWriter, r *http.Request) {
 	v := s.viewerOf(w, r)
-	s.render(w, http.StatusOK, "downloads.html", s.data(r, v, i18n.T("en", "downloads.title")))
+	s.render(w, http.StatusOK, "downloads.html", struct {
+		baseData
+		Downloads []download
+		Platforms []platform
+	}{s.data(r, v, i18n.T("en", "downloads.title")), downloads, platforms})
 }
 
 func (s *Server) handleRegisterForm(w http.ResponseWriter, r *http.Request) {
