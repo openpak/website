@@ -113,6 +113,9 @@ func (s *Server) handleSaves(w http.ResponseWriter, r *http.Request) {
 			view.Consoles = append(view.Consoles, row.Console)
 		}
 	}
+	slices.SortStableFunc(view.Saves, func(a, b saveRow) int {
+		return strings.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
+	})
 	view.Kinds, _ = s.Saves.Kinds(ctx)
 	if st, err := s.Saves.Storage(ctx, v.AccountID); err == nil {
 		view.Storage = st
