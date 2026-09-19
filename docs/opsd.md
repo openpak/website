@@ -57,7 +57,7 @@ Every route except `GET /healthz` needs `Authorization: Bearer <OPSD_KEY>`. The 
 | `OPSD_ADDR` | `127.0.0.1:20013` | Listen address. |
 | `OPSD_PREFIX` | `openpak-` | Only containers whose name starts with this are managed. |
 | `OPSD_PROTECTED` | `openpak-website,openpak-account` | Never-stop list; container names or unit names without `.service`. |
-| `OPSD_NETWORK_MAP` | — | Path to a JSON file mapping a regexp on the container name to a network. |
+| `OPSD_NETWORK_MAP` | — | Path to a JSON file mapping a regexp on the container name to a network, or several comma-separated (`"wiiu,3ds"`). A container whose name lacks the prefix but whose quadlet unit has it (switch-nexd) is managed too. |
 | `OPSD_UPDATE_CHECK` | `15m` | Interval of the background update check (Go duration). |
 | `OPSD_HOST_NAME` | `os.Hostname()` | The `host` shown on the dashboard. |
 
@@ -127,9 +127,8 @@ EnvironmentFile=%h/.config/openpak-opsd.env
 ExecStart=%h/.local/bin/openpak-opsd
 Restart=on-failure
 RestartSec=5
-# Hardening that does not get in the way of podman or systemctl --user.
-NoNewPrivileges=yes
-PrivateTmp=yes
+# No NoNewPrivileges: rootless podman re-execs through the setuid newuidmap
+# helper, and without it every podman call fails ("cannot re-exec process").
 
 [Install]
 WantedBy=default.target
