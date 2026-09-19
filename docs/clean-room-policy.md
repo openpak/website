@@ -33,7 +33,8 @@ server does? If yes, write it. If you are reproducing how they chose to express 
 
 Practically: read to learn the endpoint, close the file, then write OpenPak's version in
 OpenPak's shape — our `account`/`nx-baas` integration, our `ports.md` blocks, our error
-handling, Go 1.25, AGPL-3.0-only.
+handling, current Go (1.27 for new code; each repo's `go.mod` is the
+pin), AGPL-3.0-only.
 
 ## What is allowed as input
 
