@@ -214,6 +214,199 @@ paths:
                   saved: { type: boolean }
         "400": { description: The core rejected a value; the message says which. }
         "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/password:
+    post:
+      summary: Change the account's password
+      description: |
+        The core checks the current password and revokes the account's other
+        sessions, and with them every other bearer. This token stays valid.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [current_password, new_password]
+              properties:
+                current_password: { type: string }
+                new_password: { type: string, minLength: 8 }
+      responses:
+        "200":
+          description: Changed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  changed: { type: boolean }
+        "400": { description: A field is missing, or the core rejected the change; the message says why. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/links/wfc:
+    post:
+      summary: Link a Wii or DS by friend code
+      description: |
+        WFC has no login, so a Wii or DS is linked from a friend code the
+        player reads off a game. The console then appears in `/me`'s
+        `linked_platforms` under namespace `wfc`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [friend_code]
+              properties:
+                friend_code: { type: string, examples: ["1234-5678-9012"] }
+      responses:
+        "201":
+          description: Linked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  namespace: { type: string, examples: ["wfc"] }
+                  linked: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { description: No Wii/DS profile has that friend code. }
+        "409": { description: That console is linked to another account. }
+        "502": { description: The Wii/DS server did not answer. }
+        "503": { description: Wii/DS linking is not configured on this deployment. }
+  /me/links/{namespace}:
+    delete:
+      summary: Unlink the account's console in a namespace
+      description: |
+        Addressed by namespace (`switch`, `wfc`, as listed in `/me`'s
+        `linked_platforms`), so only the caller's own link can be revoked.
+      parameters:
+        - { name: namespace, in: path, required: true, schema: { type: string, examples: ["wfc"] } }
+      responses:
+        "200":
+          description: Unlinked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unlinked: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { description: No console is linked in that namespace. }
+  /register:
+    post:
+      summary: Create an account
+      security: []
+      description: |
+        Public. The answer is the same whether or not the address is taken, so
+        it cannot be used to discover accounts; a verification mail follows,
+        and the account can mint a token once verified.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, display_name]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+                display_name: { type: string, minLength: 3, maxLength: 32 }
+                country: { type: string, minLength: 2, maxLength: 2, examples: ["IE"] }
+                birthday: { type: string, format: date, examples: ["1990-01-01"] }
+      responses:
+        "202":
+          description: Accepted; check the inbox
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Message" }
+        "403": { description: Registrations are closed. }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /password/forgot:
+    post:
+      summary: Send a password reset mail
+      security: []
+      description: |
+        Public, and the same answer whether or not the address has an account.
+        The mail links to the website's reset page.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Message" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /me/chat:
+    get:
+      summary: Conversations, newest message first
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  conversations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        peer: { type: string, description: The other account's id. }
+                        newest: { $ref: "#/components/schemas/ChatMessage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "503": { description: Chat is not available on this deployment. }
+  /me/chat/{peer}:
+    parameters:
+      - { name: peer, in: path, required: true, schema: { type: string }, description: The other account's id. }
+    get:
+      summary: History with one peer, oldest first
+      parameters:
+        - { name: after, in: query, required: false, schema: { type: integer, format: int64 }, description: Only messages with a greater id. }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items: { $ref: "#/components/schemas/ChatMessage" }
+        "400": { description: after is not a message id. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "503": { description: Chat is not available on this deployment. }
+    post:
+      summary: Send a message; the recipient's consoles are told
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { type: string }
+      responses:
+        "201":
+          description: Sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { $ref: "#/components/schemas/ChatMessage" }
+        "400": { description: body is empty. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "503": { description: Chat is not available on this deployment. }
   /regions:
     get:
       summary: The region nodes a room may be served from
@@ -436,10 +629,10 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
   /me/avatar:
     post:
-      summary: Choose a built-in avatar
+      summary: Choose a built-in avatar, or upload a photo
       description: |
-        Uploading a photo stays on the website, where the multipart handling,
-        size limit and rate limit already live.
+        JSON `{"preset"}` picks a built-in; multipart/form-data with an
+        `avatar` file field uploads a PNG or JPEG of up to 4 MiB.
       requestBody:
         required: true
         content:
@@ -449,6 +642,12 @@ paths:
               required: [preset]
               properties:
                 preset: { type: string, examples: ["aurora"] }
+          multipart/form-data:
+            schema:
+              type: object
+              required: [avatar]
+              properties:
+                avatar: { type: string, format: binary }
       responses:
         "200":
           description: Saved
@@ -458,7 +657,7 @@ paths:
                 type: object
                 properties:
                   saved: { type: boolean }
-        "400": { description: preset is required, or is not one of the built-ins }
+        "400": { description: preset is required or unknown, or the upload is not a PNG/JPEG within 4 MiB }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "429": { $ref: "#/components/responses/RateLimited" }
         "503": { description: Avatars are not configured on this deployment. }
@@ -676,6 +875,282 @@ paths:
         "200": { description: "account_id, pid, username, friend_code, nex_password, mii_name, mii_data, device_type" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "503": { description: Not configured }
+  /me/switch:
+    get:
+      summary: The account's Switch identity for an emulator, minted on first sight
+      description: The PID and friend code games see, the openpak token, and the friend graph with presence and requests.
+      responses:
+        "200": { description: The identity as the Switch adapter reports it. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "502": { description: The Switch adapter did not answer. }
+  /me/switch/friend:
+    post:
+      summary: Act on the Switch friend graph from an emulator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action: { type: string, enum: [request, accept, decline] }
+                friend_code: { type: string, description: For request. }
+                pid: { type: integer, format: int64, description: For accept and decline. }
+      responses:
+        "200":
+          description: Done
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "409": { description: The adapter refused; the message says why. }
+  /me/switch/link:
+    post:
+      summary: The id_token an emulated console's device account binds with
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [client_id]
+              properties:
+                client_id: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id_token: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "502": { description: The Switch adapter did not answer. }
+  /me/saves:
+    get:
+      summary: Every saved game with its versions, and storage usage
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  saves:
+                    type: array
+                    items: { $ref: "#/components/schemas/Save" }
+                  usage: { $ref: "#/components/schemas/SaveUsage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "502": { $ref: "#/components/responses/SavesError" }
+        "503": { $ref: "#/components/responses/SavesUnavailable" }
+  /me/saves/versions/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+    get:
+      summary: One version's bytes
+      responses:
+        "200":
+          description: The save
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "502": { $ref: "#/components/responses/SavesError" }
+        "503": { $ref: "#/components/responses/SavesUnavailable" }
+    delete:
+      summary: Delete a version
+      responses:
+        "204": { description: Deleted }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "502": { $ref: "#/components/responses/SavesError" }
+        "503": { $ref: "#/components/responses/SavesUnavailable" }
+  /me/saves/versions/{id}/restore:
+    post:
+      summary: Make a version the current one; the previous one stays
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "204": { description: Restored }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "502": { $ref: "#/components/responses/SavesError" }
+        "503": { $ref: "#/components/responses/SavesUnavailable" }
+  /me/saves/{platform}/{title}:
+    parameters:
+      - { name: platform, in: path, required: true, schema: { type: string, examples: ["switch"] } }
+      - { name: title, in: path, required: true, schema: { type: string } }
+    get:
+      summary: The newest save of a title, for an emulator on launch
+      responses:
+        "200":
+          description: The save
+          headers:
+            X-Save-Version: { schema: { type: integer } }
+            X-Save-Sha256: { schema: { type: string } }
+            X-Save-Conflict: { schema: { type: boolean } }
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        "204": { description: No save for this title yet. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "502": { $ref: "#/components/responses/SavesError" }
+        "503": { $ref: "#/components/responses/SavesUnavailable" }
+    put:
+      summary: Store a new version of a title's save, for an emulator on exit
+      parameters:
+        - { name: X-Save-Base, in: header, required: false, schema: { type: string }, description: The version this save was loaded from; a mismatch marks a conflict. }
+        - { name: X-Save-Device, in: header, required: false, schema: { type: string }, description: A name for the machine. }
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: { type: string, format: binary }
+      responses:
+        "201":
+          description: Stored
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SaveVersion" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "411": { description: Content-Length is required. }
+        "502": { $ref: "#/components/responses/SavesError" }
+        "503": { $ref: "#/components/responses/SavesUnavailable" }
+        "507":
+          description: Over the allowance; connect your own storage.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string, examples: ["quota_exceeded"] }
+                  used: { type: integer, format: int64 }
+                  limit: { type: integer, format: int64 }
+                  hint: { type: string }
+  /me/saves/storage:
+    get:
+      summary: The account's storage settings, test result, move state and usage
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SaveStorage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "502": { $ref: "#/components/responses/SavesError" }
+        "503": { $ref: "#/components/responses/SavesUnavailable" }
+    put:
+      summary: Connect S3 or WebDAV storage; it is tested before it is stored
+      description: An empty secret keeps the stored one when the key or username is unchanged.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                kind: { type: string, enum: [s3, webdav], default: s3 }
+                s3:
+                  type: object
+                  properties:
+                    endpoint: { type: string }
+                    region: { type: string }
+                    bucket: { type: string }
+                    prefix: { type: string }
+                    access_key: { type: string }
+                    secret_key: { type: string }
+                    insecure: { type: boolean }
+                    path_style: { type: boolean }
+                webdav:
+                  type: object
+                  properties:
+                    url: { type: string }
+                    username: { type: string }
+                    password: { type: string }
+      responses:
+        "200":
+          description: Connected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  storage: { $ref: "#/components/schemas/SaveStorage" }
+                  warning: { type: string }
+        "400": { description: Invalid JSON. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422":
+          description: The storage failed its test.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string, examples: ["storage_test_failed"] }
+                  detail: { type: string }
+        "502": { $ref: "#/components/responses/SavesError" }
+        "503": { $ref: "#/components/responses/SavesUnavailable" }
+    delete:
+      summary: Disconnect; versions stored there stay listed but unreachable
+      responses:
+        "204": { description: Disconnected }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "502": { $ref: "#/components/responses/SavesError" }
+        "503": { $ref: "#/components/responses/SavesUnavailable" }
+  /me/saves/storage/move:
+    post:
+      summary: Copy the saves in the allowance into the connected storage, in the background
+      responses:
+        "202":
+          description: Started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  move_state: { type: string, examples: ["moving"] }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "502": { $ref: "#/components/responses/SavesError" }
+        "503": { $ref: "#/components/responses/SavesUnavailable" }
+  /me/saves/storage/kinds:
+    get:
+      summary: Which storage kinds this deployment offers
+      responses:
+        "200":
+          description: Kind name to whether it is offered
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: { type: boolean }
+                examples: [{ s3: true, webdav: true, gdrive: false, onedrive: false }]
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "502": { $ref: "#/components/responses/SavesError" }
+        "503": { $ref: "#/components/responses/SavesUnavailable" }
+  /me/saves/storage/oauth/{provider}/url:
+    get:
+      summary: A consent URL to open in a browser; the website's callback finishes the connection
+      parameters:
+        - { name: provider, in: path, required: true, schema: { type: string, examples: ["gdrive", "onedrive"] } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url: { type: string, format: uri }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "502": { $ref: "#/components/responses/SavesError" }
+        "503": { $ref: "#/components/responses/SavesUnavailable" }
 components:
   securitySchemes:
     bearerAuth:
@@ -683,6 +1158,16 @@ components:
       scheme: bearer
       description: Token from POST /token.
   responses:
+    SavesUnavailable:
+      description: Cloud saves are not available on this deployment.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    SavesError:
+      description: The saves service failed.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
     Unauthorized:
       description: Missing, invalid, or expired bearer token
       content:
@@ -794,6 +1279,66 @@ components:
             properties:
               namespace: { type: string }
               link_id: { type: string }
+    ChatMessage:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        from_account: { type: string }
+        to_account: { type: string }
+        kind: { type: string }
+        body: { type: string }
+        sent_at_unix: { type: integer, format: int64 }
+    SaveVersion:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        number: { type: integer }
+        base: { type: integer }
+        conflict: { type: boolean }
+        pinned: { type: boolean }
+        size: { type: integer, format: int64 }
+        sha256: { type: string }
+        device: { type: string }
+        backend: { type: string }
+        parts: { type: integer }
+        saved_at: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+    Save:
+      type: object
+      properties:
+        platform: { type: string }
+        title_id: { type: string }
+        name: { type: string, description: The game's name, or the title id when unknown. }
+        icon: { type: string, description: A path on this site; absent when there is no icon. }
+        versions:
+          type: array
+          items: { $ref: "#/components/schemas/SaveVersion" }
+    SaveUsage:
+      type: object
+      properties:
+        allowance_used: { type: integer, format: int64 }
+        allowance: { type: integer, format: int64 }
+        total: { type: integer, format: int64 }
+    SaveStorage:
+      type: object
+      properties:
+        connected: { type: boolean }
+        kind: { type: string }
+        endpoint: { type: string }
+        region: { type: string }
+        bucket: { type: string }
+        prefix: { type: string }
+        access_key: { type: string }
+        path_style: { type: boolean }
+        insecure: { type: boolean }
+        url: { type: string, description: WebDAV. }
+        username: { type: string, description: WebDAV. }
+        account: { type: string, description: Google Drive / OneDrive, the address the provider reported. }
+        last_test_at: { type: [string, "null"], format: date-time }
+        last_test_ok: { type: [boolean, "null"] }
+        last_error: { type: string }
+        move_state: { type: string }
+        usage: { $ref: "#/components/schemas/SaveUsage" }
     Session:
       type: object
       properties:
