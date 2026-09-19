@@ -15,12 +15,17 @@ service owns a block of ten: +0 HTTP, +1 gRPC, +2 metrics/pprof, +3..+9 spare.
 | 20010 | `website` (site, portal, mobile `/api/v1`) | 20010 | — | 20012 |
 | 20140 | `openpak-registry` (v2 network registry, `/api/v2/network/*`; same image, own container; docs/registry.md) | 20140 | — | 20142 |
 
+20013 (+3, spare in the block) is `openpak-opsd`, the host agent behind the admin services
+page (docs/opsd.md). It runs on the host, not in the website container, and binds loopback
+unless the operator widens it to the podman gateway.
+
 ## Health
 
 | Service | Endpoint |
 | --- | --- |
 | `website` | `/healthz` |
 | `openpak-registry` | `/healthz` (20140 and 20142) |
+| `openpak-opsd` | `:20013/healthz` |
 
 Other services' rows live in the canonical ports.md. The 20140 block was
 allocated here on 2026-09-19 (next free platform-neutral block); the canonical

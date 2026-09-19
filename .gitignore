@@ -2,6 +2,7 @@
 /website
 /openpak-policy
 /openpak-network
+/openpak-opsd
 /storage/
 *.test
 *.out
