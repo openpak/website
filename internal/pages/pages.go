@@ -146,6 +146,8 @@ func flashText(code string) string {
 		return i18n.T("en", "account.profile.ok")
 	case "profile-failed":
 		return i18n.T("en", "account.profile.failed")
+	case "delete-unconfirmed":
+		return i18n.T("en", "account.delete.unconfirmed")
 	case "storage-saved":
 		return i18n.T("en", "saves.storage.ok")
 	case "storage-warning":
@@ -272,6 +274,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /account", s.handleAccount)
 	mux.HandleFunc("POST /account/password", s.handleChangePassword)
 	mux.HandleFunc("POST /account/profile", s.handleUpdateProfile)
+	mux.HandleFunc("POST /account/delete", s.handleDeleteAccount)
 	mux.HandleFunc("POST /account/sessions/revoke", s.handleRevokeSession)
 	mux.HandleFunc("POST /account/link/revoke", s.handleUnlink)
 	mux.HandleFunc("POST /account/link/wfc", s.handleLinkWFC)

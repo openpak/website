@@ -13,6 +13,7 @@ import (
 
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/session"
+	"github.com/openpak/website/internal/store"
 	"github.com/openpak/website/internal/wfc"
 )
 
@@ -62,4 +63,23 @@ func AccountFromStorageOAuthState(sess *session.Manager, state string) (string, 
 // surface started it.
 func StorageOAuthCallback(scheme, host, provider string) string {
 	return scheme + "://" + host + "/account/saves/storage/oauth/" + provider + "/callback"
+}
+
+// Delete starts deleting an account once its password has been given again: a signed-in
+// session alone, or a bearer lifted off a phone, must not be enough to end an account. A wrong
+// password is core.ErrInvalidCredentials. The core revokes every core session itself; the
+// website's own session rows and bearers are dropped here so none of them outlives the account
+// until its next use.
+func Delete(ctx context.Context, id core.Identity, db store.Store, accountID, password string) error {
+	if err := id.VerifyPasswordByID(ctx, accountID, password); err != nil {
+		return err
+	}
+	if err := id.RequestDeletion(ctx, accountID); err != nil {
+		return err
+	}
+	// Best effort: the core sessions behind these are already gone, so a row that
+	// fails to delete here dies on its next use anyway.
+	_ = db.DeleteWebSessionsForAccount(ctx, accountID)
+	_ = db.RevokeAPITokensForAccount(ctx, accountID)
+	return nil
 }

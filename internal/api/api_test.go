@@ -31,6 +31,7 @@ type fakeCore struct {
 	links          map[string]string
 	wfcLinks       map[string]string // namespace "wfc": the console a typed friend code resolved to
 	subjectToAc    map[string]string
+	deleted        []string // accounts whose deletion was requested
 	invitations    []core.PendingInvitation
 	presence       map[string]core.Presence
 	players        []core.TitlePlayers
@@ -125,6 +126,19 @@ func (f *fakeCore) ResolveAccount(_ context.Context, email, password string) (co
 }
 func (f *fakeCore) GetAccount(_ context.Context, id string) (core.Account, error) {
 	return core.Account{ID: id}, nil
+}
+
+// The accounts are keyed by email and their ids are "acct-" + email, so the
+// password check by id looks the email back up.
+func (f *fakeCore) VerifyPasswordByID(_ context.Context, accountID, password string) error {
+	if pw, ok := f.accounts[strings.TrimPrefix(accountID, "acct-")]; !ok || pw != password {
+		return core.ErrInvalidCredentials
+	}
+	return nil
+}
+func (f *fakeCore) RequestDeletion(_ context.Context, accountID string) error {
+	f.deleted = append(f.deleted, accountID)
+	return nil
 }
 func (f *fakeCore) RequestFriend(_ context.Context, requester, addressee string) error {
 	f.friends[requester] = append(f.friends[requester], addressee)

@@ -87,20 +87,64 @@ func (g *GRPC) ResolveAccount(ctx context.Context, email, password string) (Acco
 		Password:        password,
 	})
 	if err != nil {
-		if st, ok := status.FromError(err); ok && st.Code() == codes.Unauthenticated {
-			// The core's interceptor uses the same code for a rejected
-			// internal key; never mask a wiring failure as "bad password".
-			if strings.Contains(st.Message(), "internal credentials") {
-				return Account{}, fmt.Errorf("core: internal credentials rejected (check CORE_INTERNAL_KEY)")
-			}
-			return Account{}, ErrInvalidCredentials
-		}
-		return Account{}, mapGRPC(err)
+		return Account{}, mapPasswordErr(err)
 	}
 	if resp.GetStatus() == accountv1.AccountStatus_ACCOUNT_STATUS_BANNED {
 		return Account{}, ErrBanned
 	}
 	return Account{ID: resp.GetAccountId()}, nil
+}
+
+// mapPasswordErr maps a failed password check. The core's interceptor uses
+// Unauthenticated for a rejected internal key too; never mask a wiring failure
+// as "bad password".
+func mapPasswordErr(err error) error {
+	if st, ok := status.FromError(err); ok && st.Code() == codes.Unauthenticated {
+		if strings.Contains(st.Message(), "internal credentials") {
+			return fmt.Errorf("core: internal credentials rejected (check CORE_INTERNAL_KEY)")
+		}
+		return ErrInvalidCredentials
+	}
+	return mapGRPC(err)
+}
+
+// VerifyPasswordByID checks the password of an account the website already
+// knows by id. Only an active account passes: a banned or already deleting one
+// has nothing left to confirm.
+func (g *GRPC) VerifyPasswordByID(ctx context.Context, accountID, password string) error {
+	c := accountv1.NewIdentityClient(g.conn)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	resp, err := c.VerifyPasswordByID(ctx, &accountv1.VerifyPasswordByIDRequest{
+		CallerNamespace: "website",
+		Purpose:         "confirm_account_action",
+		AccountId:       accountID,
+		Password:        password,
+	})
+	if err != nil {
+		return mapPasswordErr(err)
+	}
+	switch resp.GetStatus() {
+	case accountv1.AccountStatus_ACCOUNT_STATUS_ACTIVE:
+		return nil
+	case accountv1.AccountStatus_ACCOUNT_STATUS_BANNED:
+		return ErrBanned
+	default:
+		return ErrInvalidCredentials
+	}
+}
+
+// RequestDeletion starts account deletion (Identity.RequestAccountDeletion).
+func (g *GRPC) RequestDeletion(ctx context.Context, accountID string) error {
+	c := accountv1.NewIdentityClient(g.conn)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	_, err := c.RequestAccountDeletion(ctx, &accountv1.RequestAccountDeletionRequest{
+		CallerNamespace: "website",
+		Purpose:         "account_deletion",
+		AccountId:       accountID,
+	})
+	return mapGRPC(err)
 }
 
 // GetAccount resolves a minimal projection by id.

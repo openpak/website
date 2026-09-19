@@ -92,6 +92,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	h("/token", s.handleMintToken)              // POST /api/v1/token
 	d("/token", s.auth(s.handleRevokeToken))    // DELETE /api/v1/token
 	g("/me", s.auth(s.handleMe))                // GET /api/v1/me
+	d("/me", s.auth(s.handleDeleteAccount))     // DELETE /api/v1/me {"password"}
 	g("/me/sessions", s.auth(s.handleSessions)) // GET /api/v1/me/sessions
 	d("/me/sessions/{id}", s.auth(s.handleRevokeSession))
 	g("/me/friends", s.auth(s.handleFriends)) // GET /api/v1/me/friends

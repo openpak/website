@@ -3,6 +3,7 @@ package pages
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -30,6 +31,7 @@ type fakeCore struct {
 	links          map[string]string // accountID -> subject (switch)
 	wfcLinks       map[string]string // accountID -> subject (wfc, linked from the website)
 	subjectToAc    map[string]string // subject -> accountID
+	deleted        []string          // accounts whose deletion was requested
 }
 
 type friendRow struct {
@@ -128,6 +130,19 @@ func (f *fakeCore) ResolveAccount(_ context.Context, email, password string) (co
 }
 func (f *fakeCore) GetAccount(_ context.Context, accountID string) (core.Account, error) {
 	return core.Account{ID: accountID}, nil
+}
+
+// The accounts are keyed by email and their ids are "acct-" + email, so the
+// password check by id looks the email back up.
+func (f *fakeCore) VerifyPasswordByID(_ context.Context, accountID, password string) error {
+	if pw, ok := f.accounts[strings.TrimPrefix(accountID, "acct-")]; !ok || pw != password {
+		return core.ErrInvalidCredentials
+	}
+	return nil
+}
+func (f *fakeCore) RequestDeletion(_ context.Context, accountID string) error {
+	f.deleted = append(f.deleted, accountID)
+	return nil
 }
 
 func (f *fakeCore) findFriend(a, b string) *friendRow {

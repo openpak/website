@@ -173,6 +173,20 @@
   </ul>
 </section>
 
+<section aria-labelledby="delete-h" id="delete">
+  <div class="section-head">
+    <h2 id="delete-h">{{t .Lang "account.delete.title"}}</h2>
+    <p>{{t .Lang "account.delete.hint"}}</p>
+  </div>
+  <form method="post" action="/account/delete" class="stack">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <label for="delete-password">{{t .Lang "account.password.current"}}</label>
+    <input id="delete-password" type="password" name="password" autocomplete="current-password" required>
+    <label><input type="checkbox" name="confirm" value="yes" required> {{t .Lang "account.delete.confirm"}}</label>
+    <button type="submit" class="danger">{{t .Lang "account.delete.submit"}}</button>
+  </form>
+</section>
+
 <div class="modal" id="avatar">
   <a class="modal-backdrop" href="#" tabindex="-1" aria-hidden="true"></a>
   <section class="modal-card" role="dialog" aria-labelledby="avatar-h">

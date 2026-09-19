@@ -7,6 +7,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/openpak/website/internal/media"
@@ -123,5 +124,31 @@ func TestAvatarUpload(t *testing.T) {
 	}
 	if _, err := db.GetMedia(context.Background(), "acct-a@x.test", "avatar"); err != nil {
 		t.Fatalf("media row not stamped: %v", err)
+	}
+}
+
+// Deleting the account needs the password again, and afterwards the bearer that asked is
+// dead along with every other one.
+func TestDeleteAccount(t *testing.T) {
+	s, fc, _ := newTestAPI(t)
+	tok := signIn(t, s)
+	other := signIn(t, s)
+	rec := do(t, s, http.MethodDelete, "/api/v1/me", tok, map[string]string{"password": "wrong"})
+	if rec.Code != http.StatusForbidden || !strings.Contains(rec.Body.String(), `"error"`) {
+		t.Fatalf("wrong password: %d %s", rec.Code, rec.Body.String())
+	}
+	if len(fc.deleted) != 0 {
+		t.Fatal("a wrong password started a deletion")
+	}
+	if rec := do(t, s, http.MethodDelete, "/api/v1/me", tok, map[string]string{"password": "password-A-1"}); rec.Code != http.StatusOK {
+		t.Fatalf("delete: %d %s", rec.Code, rec.Body.String())
+	}
+	if len(fc.deleted) != 1 || fc.deleted[0] != "acct-a@x.test" {
+		t.Fatalf("deletion requested for %v", fc.deleted)
+	}
+	for _, b := range []string{tok, other} {
+		if rec := do(t, s, http.MethodGet, "/api/v1/me", b, nil); rec.Code != http.StatusUnauthorized {
+			t.Fatalf("a bearer outlived the account: %d", rec.Code)
+		}
 	}
 }

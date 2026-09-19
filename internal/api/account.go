@@ -14,7 +14,8 @@ import (
 )
 
 // The account actions the website had and the app did not: creating an account, the
-// forgotten-password mail, changing the password, linking a Wii/DS and unlinking a console.
+// forgotten-password mail, changing the password, deleting the account, linking a Wii/DS and
+// unlinking a console.
 
 // handleRegister: POST /api/v1/register. The same answer whether or not the email is
 // taken; the core resends to a taken-but-unverified address, so nothing is enumerable.
@@ -81,6 +82,32 @@ func (s *Server) handleChangePassword(w http.ResponseWriter, r *http.Request, to
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"changed": true})
+}
+
+// handleDeleteAccount: DELETE /api/v1/me {"password"}. The password is asked for again so a
+// bearer lifted off a phone cannot end the account; every bearer of the account, this one
+// included, stops working.
+func (s *Server) handleDeleteAccount(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	var req struct {
+		Password string `json:"password"`
+	}
+	if !decodeSmall(w, r, &req) {
+		return
+	}
+	if req.Password == "" {
+		writeError(w, http.StatusBadRequest, "password is required")
+		return
+	}
+	err := accounts.Delete(r.Context(), s.Identity, s.DB, tok.AccountID, req.Password)
+	switch {
+	case err == nil:
+		writeJSON(w, http.StatusOK, map[string]any{"deleted": true})
+	case errors.Is(err, core.ErrInvalidCredentials):
+		writeError(w, http.StatusForbidden, "wrong password")
+	default:
+		s.log.Error("api delete account", "err", err)
+		writeError(w, http.StatusInternalServerError, "internal error")
+	}
 }
 
 // handleLinkWFC: POST /api/v1/me/links/wfc {"friend_code"}. A Wii or DS cannot sign in, so

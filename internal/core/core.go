@@ -104,6 +104,12 @@ type HTTP interface {
 type Identity interface {
 	ResolveAccount(ctx context.Context, email, password string) (Account, error)
 	GetAccount(ctx context.Context, accountID string) (Account, error)
+	// VerifyPasswordByID re-checks the password of a signed-in account before
+	// something that cannot be undone. A wrong one is ErrInvalidCredentials.
+	VerifyPasswordByID(ctx context.Context, accountID, password string) error
+	// RequestDeletion starts deleting the account: the core disables it at once
+	// and revokes every one of its sessions.
+	RequestDeletion(ctx context.Context, accountID string) error
 }
 
 // Social is the core's canonical friend graph (WEB-04). Every write goes

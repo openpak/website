@@ -130,6 +130,37 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request) {
 	redirectMsg(w, r, "/account", "profile-saved")
 }
 
+// handleDeleteAccount ends the account. Both the password and the tick box are asked for: the
+// first guards against a session someone else is sitting at, the second against a slipped click.
+func (s *Server) handleDeleteAccount(w http.ResponseWriter, r *http.Request) {
+	v, ok := s.postGuard(w, r)
+	if !ok {
+		return
+	}
+	if r.PostFormValue("confirm") != "yes" {
+		redirectMsg(w, r, "/account", "delete-unconfirmed")
+		return
+	}
+	err := accounts.Delete(r.Context(), s.Identity, s.DB, v.AccountID, r.PostFormValue("password"))
+	if errors.Is(err, core.ErrInvalidCredentials) {
+		s.render(w, http.StatusForbidden, "message.html", struct {
+			baseData
+			Message string
+		}{s.data(r, v, i18n.T("en", "account.delete.title")), i18n.T("en", "account.delete.wrongpassword")})
+		return
+	}
+	if err != nil {
+		s.log.Error("delete account", "err", err)
+		http.Error(w, "could not delete the account", http.StatusInternalServerError)
+		return
+	}
+	s.Sessions.ClearCookie(w)
+	s.render(w, http.StatusOK, "message.html", struct {
+		baseData
+		Message string
+	}{s.data(r, nil, i18n.T("en", "account.delete.title")), i18n.T("en", "account.delete.ok")})
+}
+
 func (s *Server) handleRevokeSession(w http.ResponseWriter, r *http.Request) {
 	v, ok := s.postGuard(w, r)
 	if !ok {

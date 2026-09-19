@@ -35,6 +35,8 @@ func (fakeIdentity) ResolveAccount(_ context.Context, _, _ string) (core.Account
 func (fakeIdentity) GetAccount(_ context.Context, id string) (core.Account, error) {
 	return core.Account{ID: id, DisplayName: "Leia"}, nil
 }
+func (fakeIdentity) VerifyPasswordByID(_ context.Context, _, _ string) error { return nil }
+func (fakeIdentity) RequestDeletion(_ context.Context, _ string) error       { return nil }
 
 type fakeInvites struct {
 	pending        []core.PendingInvitation

@@ -100,6 +100,37 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Account" }
         "401": { $ref: "#/components/responses/Unauthorized" }
+    delete:
+      summary: Delete the account
+      description: |
+        Needs the password again, so a bearer on its own cannot end the
+        account. The core disables the account at once and revokes every
+        session; every bearer of the account, this one included, stops working.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password: { type: string }
+      responses:
+        "200":
+          description: Deletion started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted: { type: boolean }
+        "400": { description: password is required }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: Wrong password; nothing was deleted.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
   /me/sessions:
     get:
       summary: List live core web sessions (devices)
