@@ -1,9 +1,11 @@
 {{template "header" .}}
+{{template "adminnav" .}}
 <div class="page-head">
   <h1>{{t .Lang "admin.title"}}</h1>
   <p>{{t .Lang "admin.sub"}}</p>
 </div>
 <div class="grid">
+  <a class="card" href="/admin/monitor"><h3>{{t .Lang "admin.monitor"}}</h3><p>{{t .Lang "admin.monitor.sub"}}</p></a>
   <a class="card" href="/admin/users"><h3>{{t .Lang "admin.users"}}</h3><p>{{t .Lang "admin.users.sub"}}</p></a>
   <a class="card" href="/admin/reports"><h3>{{t .Lang "admin.reports"}}</h3><p>{{t .Lang "admin.reports.sub"}}</p></a>
   <a class="card" href="/admin/config"><h3>{{t .Lang "admin.config"}}</h3><p>{{t .Lang "admin.config.sub"}}</p></a>

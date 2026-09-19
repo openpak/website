@@ -655,11 +655,8 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		byTitle[t.TitleID] = t.Players
 	}
 	serversOK := true
-	for _, g := range gameServers() {
-		row := serverRow{Name: g.Name, Players: byTitle[g.TitleID], Checkable: g.Health != ""}
-		if row.Checkable {
-			row.Up = healthy(ctx, g.Health)
-		}
+	for _, g := range CheckGameServers(ctx) {
+		row := serverRow{Name: g.Name, Players: byTitle[g.TitleID], Checkable: g.Checkable, Up: g.Up}
 		view.Servers = append(view.Servers, row)
 		if row.Checkable && !row.Up {
 			serversOK = false

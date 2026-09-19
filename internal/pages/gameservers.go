@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -91,3 +92,34 @@ func healthy(ctx context.Context, url string) bool {
 	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4096))
 	return resp.StatusCode == http.StatusOK
 }
+
+// ServerHealth is one game server's answer, for the public status page and the
+// admin monitor alike.
+type ServerHealth struct {
+	Name, TitleID string
+	// Checkable is false for a server this deployment has no health URL for;
+	// Up is then meaningless and the row says "not checked".
+	Checkable, Up bool
+}
+
+// CheckGameServers asks every game server at once. In parallel on purpose:
+// one after another, a handful of dead servers at two seconds each made the
+// status page slowest exactly when someone was looking at it because
+// something was down. Order follows gameServers().
+func CheckGameServers(ctx context.Context) []ServerHealth {
+	servers := gameServers()
+	out := make([]ServerHealth, len(servers))
+	var wg sync.WaitGroup
+	for i, g := range servers {
+		out[i] = ServerHealth{Name: g.Name, TitleID: g.TitleID, Checkable: g.Health != ""}
+		if out[i].Checkable {
+			wg.Go(func() { out[i].Up = healthy(ctx, g.Health) })
+		}
+	}
+	wg.Wait()
+	return out
+}
+
+// TitleName is titleName for the admin pages: the name OpenPak knows a title
+// id by, or the id itself.
+func TitleName(id string) string { return titleName(id) }

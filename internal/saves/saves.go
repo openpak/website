@@ -268,3 +268,27 @@ func (c *Client) Upload(ctx context.Context, account, platform, title, base, dev
 	defer resp.Body.Close()
 	return v, json.NewDecoder(resp.Body).Decode(&v)
 }
+
+// Healthy asks the service's /healthz, for the admin monitor. A short deadline of its own:
+// the client's timeout is sized for uploads, and a health check that waits that long is
+// not answering the question.
+func (c *Client) Healthy(ctx context.Context) error {
+	if c == nil {
+		return ErrUnavailable
+	}
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"/healthz", nil)
+	if err != nil {
+		return err
+	}
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("healthz: %s", resp.Status)
+	}
+	return nil
+}

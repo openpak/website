@@ -157,6 +157,7 @@ func run(log *slog.Logger) error {
 	// Push. Absent credentials is a supported configuration: the site runs, the
 	// app can still register a token, and nothing is delivered until a service
 	// account exists.
+	pushOn := false
 	if fcm, err := push.NewFCM(cfg.FCMCredentialsFile); err != nil {
 		return err
 	} else if fcm == nil {
@@ -164,10 +165,23 @@ func run(log *slog.Logger) error {
 	} else {
 		notifier := push.NewNotifier(coreGRPC, coreGRPC, coreGRPC, db, fcm, log)
 		go notifier.Run(ctx)
+		pushOn = true
 		log.Info("push: notifier started")
 	}
 	adminSrv := admin.New(tmpl, coreGRPC, db, sessions, cfg.AdminAccountIDs, log)
 	adminSrv.Federation = coreGRPC
+	// The monitor's sources. Each is optional and reads as "not configured"
+	// when absent; a typed nil must not reach an interface field, or it would
+	// read as configured and broken.
+	adminSrv.CoreHTTP = coreHTTP
+	if mediaSvc != nil {
+		adminSrv.Media = mediaSvc
+	}
+	adminSrv.Players = coreGRPC
+	adminSrv.Saves = savesCli
+	adminSrv.Chat = chatCli
+	adminSrv.PushOn = pushOn
+	adminSrv.StatusAPI = envOr("STATUS_API_URL", "https://status.openpak.org/api/status")
 
 	mux := http.NewServeMux()
 	pageSrv.RegisterRoutes(mux)
@@ -215,6 +229,18 @@ func run(log *slog.Logger) error {
 		}
 		return err
 	}
+}
+
+// envOr reads an optional URL with a default; the literal "off" turns it off.
+func envOr(key, def string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		v = def
+	}
+	if v == "off" {
+		return ""
+	}
+	return v
 }
 
 func logRequests(log *slog.Logger) func(http.Handler) http.Handler {

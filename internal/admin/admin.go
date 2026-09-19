@@ -8,15 +8,19 @@ package admin
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"html/template"
 	"log/slog"
 	"net/http"
 	"slices"
+	"strings"
 
+	"github.com/openpak/website/internal/chat"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/pages"
+	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/store"
 )
 
@@ -28,6 +32,21 @@ type Server struct {
 	DB         store.Store
 	Sessions   sessionView
 	AdminIDs   []string
+
+	// What the monitor reads. Every one is optional: nil (or an empty URL)
+	// renders as "not configured", never as an error page.
+	CoreHTTP healthChecker
+	Media    healthChecker
+	Players  interface {
+		PlayerCounts(ctx context.Context) ([]core.TitlePlayers, map[string]int, int, error)
+	}
+	Saves *saves.Client
+	Chat  *chat.Client
+	// PushOn says the notifier runs, so its cursor is expected to move.
+	PushOn bool
+	// StatusAPI is the availability page's JSON (STATUS_API_URL).
+	StatusAPI string
+
 	tmpl       *template.Template
 	log        *slog.Logger
 }
@@ -57,6 +76,36 @@ type base struct {
 	CSRF   string
 	Path   string
 	Admin  bool
+	Nav    []navLink
+}
+
+// navLink is one entry of the admin sub-nav every admin page carries.
+type navLink struct {
+	Href, Label string
+	Current     bool
+}
+
+// adminNav is the sub-nav, in reading order. One list, so a new page is one
+// line here rather than an edit to every template.
+var adminNav = []struct{ href, key string }{
+	{"/admin", "admin.nav.overview"},
+	{"/admin/monitor", "admin.monitor"},
+	{"/admin/nodes", "admin.nodes"},
+	{"/admin/config", "admin.nav.config"},
+	{"/admin/events", "admin.nav.events"},
+	{"/admin/users", "admin.nav.users"},
+	{"/admin/reports", "admin.reports"},
+}
+
+func navFor(path string) []navLink {
+	out := make([]navLink, len(adminNav))
+	for i, n := range adminNav {
+		// A section owns its sub-pages (/admin/news/new is News), except the
+		// overview, which would otherwise own everything.
+		cur := path == n.href || (n.href != "/admin" && strings.HasPrefix(path, n.href+"/"))
+		out[i] = navLink{n.href, i18n.T("en", n.key), cur}
+	}
+	return out
 }
 
 // adminUser matches the field shape the shared templates expect.
@@ -87,7 +136,8 @@ func (s *Server) authorize(w http.ResponseWriter, r *http.Request) (store.WebSes
 // forms and the layout's sign-out form both carry a valid token.
 func (s *Server) page(r *http.Request, ws store.WebSession, title string) base {
 	return base{Asset: pages.AssetVersion(), Admin: true, Path: r.URL.Path, Lang: "en", Title: title,
-		User: adminUser{ws.DisplayName, ws.Email}, CSRF: s.Sessions.CSRFToken(ws.CoreSessionID)}
+		User: adminUser{ws.DisplayName, ws.Email}, CSRF: s.Sessions.CSRFToken(ws.CoreSessionID),
+		Nav: navFor(r.URL.Path)}
 }
 
 // authorizePost is authorize plus the CSRF check every state-changing admin
@@ -126,6 +176,7 @@ func (s *Server) render(w http.ResponseWriter, status int, name string, data any
 // RegisterRoutes mounts /admin routes. Authorization runs per request.
 func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin", s.handleDashboard)
+	mux.HandleFunc("GET /admin/monitor", s.handleMonitor)
 	mux.HandleFunc("GET /admin/config", s.handleConfig)
 	mux.HandleFunc("POST /admin/config", s.handleConfigSave)
 	mux.HandleFunc("GET /admin/events", s.handleEvents)

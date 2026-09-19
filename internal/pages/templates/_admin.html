@@ -1,0 +1,8 @@
+{{/* The admin sub-nav. The list lives in internal/admin (adminNav), so a new
+     page is one line of Go; this only draws it. It wraps rather than scrolls:
+     on a phone every section stays one tap away. */}}
+{{define "adminnav"}}
+<nav aria-label="{{t .Lang "admin.nav"}}" class="mb-7 flex flex-wrap gap-1 border-b border-line pb-3">
+  {{range .Nav}}<a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if .Current}}font-semibold text-ink{{end}}" href="{{.Href}}" {{if .Current}}aria-current="page"{{end}}>{{.Label}}</a>{{end}}
+</nav>
+{{end}}

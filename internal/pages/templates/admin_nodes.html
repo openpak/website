@@ -1,10 +1,11 @@
 {{template "header" .}}
+{{template "adminnav" .}}
 <div class="page-head"><h1>{{t .Lang "admin.nodes"}}</h1><p>{{t .Lang "admin.nodes.sub"}}</p></div>
 {{if .Error}}<p class="notice bad" role="alert">{{.Error}}</p>{{end}}
 {{if .Key}}
 <div class="card">
   <p>{{t .Lang "admin.nodes.key"}}</p>
-  <p><code class="wrap">{{.Key}}</code></p>
+  <p><code class="break-anywhere">{{.Key}}</code></p>
 </div>
 {{end}}
 {{if not .Nodes}}<p class="muted">{{t .Lang "admin.nodes.none"}}</p>{{end}}
@@ -19,17 +20,17 @@
     {{if .Approved}}
     <input type="hidden" name="approved" value="false">
     <span class="pill">● {{t $.Lang "admin.nodes.approved"}}</span>
-    <button type="submit">{{t $.Lang "admin.nodes.revoke"}}</button>
+    <button type="submit" class="btn">{{t $.Lang "admin.nodes.revoke"}}</button>
     {{else}}
     <input type="hidden" name="approved" value="true">
     <span class="pill">● {{t $.Lang "admin.nodes.waiting"}}</span>
-    <button type="submit" class="primary">{{t $.Lang "admin.nodes.approve"}}</button>
+    <button type="submit" class="btn primary">{{t $.Lang "admin.nodes.approve"}}</button>
     {{end}}
   </form>
 </div>
 {{end}}
 <h2>{{t .Lang "admin.nodes.new"}}</h2>
-<form method="post" action="/admin/nodes" class="stack">
+<form method="post" action="/admin/nodes" class="form-stack max-w-md">
   <input type="hidden" name="csrf" value="{{.CSRF}}">
   <label for="id">{{t .Lang "admin.nodes.id"}}</label>
   <input id="id" name="id" type="text" required pattern="[a-z0-9][a-z0-9-]{1,31}" maxlength="32">
@@ -37,6 +38,6 @@
   <input id="name" name="name" type="text" required maxlength="64">
   <label for="country">{{t .Lang "admin.nodes.country"}}</label>
   <input id="country" name="country" type="text" required minlength="2" maxlength="2" class="uppercase">
-  <button type="submit" class="primary">{{t .Lang "admin.nodes.create"}}</button>
+  <button type="submit" class="btn primary">{{t .Lang "admin.nodes.create"}}</button>
 </form>
 {{template "footer" .}}
