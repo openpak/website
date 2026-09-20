@@ -3,6 +3,13 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.49.1 — 2026-09-20
+
+- Avatar URLs carry the media row's version: after changing the picture, the overview
+  and `GET /api/v1/me` serve `/media/avatars/<id>/<size>?v=<…>` instead of the bare URL,
+  so the browser and the app show the new picture at once instead of the cached one
+  (`Cache-Control: max-age=300`).
+
 ## v0.49.0 — 2026-09-19
 
 - Catalog entries carry `title_id`: the console's 16-hex title id, upper case, unique when

@@ -414,8 +414,14 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request, tok store.APIT
 	}
 	if s.Media != nil {
 		// Always set: every account has a picture, its own or the preset its
-		// id picks, and the URL serves both.
-		resp["avatar_url"] = "/media/avatars/" + tok.AccountID + "/256"
+		// id picks, and the URL serves both. Versioned from the media row the
+		// avatar writes stamp, so clients do not keep showing the old picture
+		// from cache after a change.
+		url := "/media/avatars/" + tok.AccountID + "/256"
+		if rec, err := s.DB.GetMedia(r.Context(), tok.AccountID, "avatar"); err == nil && !rec.UpdatedAt.IsZero() {
+			url += "?v=" + strconv.FormatInt(rec.UpdatedAt.UnixNano(), 10)
+		}
+		resp["avatar_url"] = url
 	}
 	// Linked consoles, every family the account reaches. A Wii/DS console is
 	// linked from the website by friend code (WFC has no login); its subject

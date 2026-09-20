@@ -56,6 +56,13 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	view := accountView{baseData: s.data(r, v, i18n.T(i18n.FromRequest(r), "account.title")), CurrentSession: v.CoreSessionID}
 	view.AvatarURL = "/media/avatars/" + v.AccountID + "/512"
+	// Version the URL from the media row the upload stamps: the image bytes
+	// are served with `Cache-Control: max-age=300`, so without a version the
+	// overview keeps showing the old picture after a change until the
+	// browser's cache expires.
+	if rec, err := s.DB.GetMedia(ctx, v.AccountID, "avatar"); err == nil && !rec.UpdatedAt.IsZero() {
+		view.AvatarURL += "?v=" + strconv.FormatInt(rec.UpdatedAt.UnixNano(), 10)
+	}
 
 	// Friend code: read-only projection of the adapter-owned link subject
 	// (CR-3 interim). Absence is normal for accounts without a console.
