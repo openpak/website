@@ -7,6 +7,7 @@ import (
 	"slices"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/store"
@@ -26,6 +27,83 @@ func titleName(id string) string {
 		return n
 	}
 	return id
+}
+
+// TitleCatalogue indexes the requests catalogue (the titles page's data, and
+// the same table an admin edits) by title id, upper case, so a title id a
+// friend is playing can be named even when it is not in the small static map
+// above. Built once per page or API call, not once per friend row.
+func TitleCatalogue(ctx context.Context, db store.Store) map[string]string {
+	reqs, err := db.ListRequests(ctx, "title", "")
+	if err != nil {
+		return nil
+	}
+	out := make(map[string]string, len(reqs))
+	for _, r := range reqs {
+		if r.TitleID != "" && r.Name != "" {
+			out[strings.ToUpper(r.TitleID)] = r.Name
+		}
+	}
+	return out
+}
+
+// FriendGame names what a friend's live presence says they are playing: the
+// static map, then the requests catalogue, then — for a Switch title neither
+// knows — a live nlib lookup. "" means none of those know it, so the caller
+// shows the platform and "in a game" rather than a raw title id, as a friend
+// row must never print one. icon reports whether /titles/icon/{id} can draw
+// art for it, which today only a Switch title id can.
+func FriendGame(ctx context.Context, catalogue map[string]string, namespace, titleID string) (name string, icon bool) {
+	if titleID == "" {
+		return "", false
+	}
+	icon = namespace == "switch" && switchID.MatchString(titleID)
+	if n, ok := titleNames[titleID]; ok {
+		return n, icon
+	}
+	if n, ok := catalogue[strings.ToUpper(titleID)]; ok {
+		return n, icon
+	}
+	if icon {
+		if n := switchTitleName(ctx, titleID); n != "" {
+			return n, icon
+		}
+	}
+	return "", icon
+}
+
+// platformLabel names a presence namespace the way a person reads it. Unknown
+// namespaces — a platform this site does not special-case yet — are shown
+// capitalised rather than invented.
+func platformLabel(namespace string) string {
+	switch namespace {
+	case "":
+		return ""
+	case "switch":
+		return "Nintendo Switch"
+	case "wiiu":
+		return "Wii U"
+	case "3ds":
+		return "Nintendo 3DS"
+	default:
+		return strings.ToUpper(namespace[:1]) + namespace[1:]
+	}
+}
+
+// namespaceConsole maps a presence namespace to the Console name consoleSlug
+// knows, so a friend's platform gets the same logo as the titles and saves
+// pages. An unmapped namespace falls through to consoleSlug's generic glyph.
+func namespaceConsole(namespace string) string {
+	switch namespace {
+	case "switch":
+		return "Switch"
+	case "wiiu":
+		return "Wii U"
+	case "3ds":
+		return "3DS"
+	default:
+		return ""
+	}
 }
 
 // popularNames is the handful shown on the landing page. Only titles that are

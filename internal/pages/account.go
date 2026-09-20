@@ -430,11 +430,25 @@ func (s *Server) writeWithValidators(w http.ResponseWriter, r *http.Request, acc
 // friendsData is the friend-graph half of the account page: friends,
 // pending requests in both directions, and invitations (WEB-04, WEB-05).
 type friendsData struct {
-	Friends, Incoming, Outgoing []core.Friend
-	Blocked                     []core.Blocked
-	Invites                     []core.PendingInvitation
-	Online                      map[string]bool   // friend account id -> holds a live session
-	Playing                     map[string]string // friend account id -> title name, when known
+	Friends            []friendCard
+	Incoming, Outgoing []core.Friend
+	Blocked            []core.Blocked
+	Invites            []core.PendingInvitation
+}
+
+// friendCard is one row of the friends list and its expandable detail panel.
+// A row never carries a raw title id to the template: Game is already a name
+// (or empty, when even the catalogue and nlib do not know the id), and
+// TitleID exists only to build the /titles/icon/{id} art URL.
+type friendCard struct {
+	core.Friend
+	Online   bool
+	Platform string // "Nintendo Switch", from the presence namespace; "" when offline
+	Console  string // consoleSlug's key for Platform's logo; "" when offline
+	Game     string // the game's name; "" when offline, or unknown to every source
+	TitleID  string // for the icon URL only — never rendered as text
+	HasIcon  bool   // /titles/icon/{TitleID} draws art (Switch titles only)
+	Since    string // when the session started, formatted; "" when offline
 }
 
 // handleFriends keeps the old URL working; friends are a section of the
@@ -449,23 +463,34 @@ func (s *Server) handleFriends(w http.ResponseWriter, r *http.Request) {
 // loadFriends fills the friend-graph half of the account page.
 func (s *Server) loadFriends(ctx context.Context, accountID string) friendsData {
 	var d friendsData
-	d.Friends, _ = s.Social.ListFriends(ctx, accountID)
+	friends, _ := s.Social.ListFriends(ctx, accountID)
 	// Presence is best-effort, as in the API: a friends list that loads with
 	// everyone shown offline beats one that does not load.
-	ids := make([]string, 0, len(d.Friends))
-	for _, f := range d.Friends {
+	ids := make([]string, 0, len(friends))
+	for _, f := range friends {
 		ids = append(ids, f.AccountID)
 	}
 	presence, err := s.Invites.Presence(ctx, ids)
 	if err != nil {
 		s.log.Error("presence", "err", err)
 	}
-	d.Online, d.Playing = map[string]bool{}, map[string]string{}
-	for id, p := range presence {
-		d.Online[id] = true
-		if p.TitleID != "" {
-			d.Playing[id] = titleName(p.TitleID)
+	// Built once for every friend row, not once per friend: the requests
+	// catalogue names a title even when the small static map does not.
+	catalogue := TitleCatalogue(ctx, s.DB)
+	d.Friends = make([]friendCard, len(friends))
+	for i, f := range friends {
+		row := friendCard{Friend: f}
+		if p, ok := presence[f.AccountID]; ok {
+			row.Online = true
+			row.Platform = platformLabel(p.Namespace)
+			row.Console = namespaceConsole(p.Namespace)
+			row.TitleID = p.TitleID
+			row.Game, row.HasIcon = FriendGame(ctx, catalogue, p.Namespace, p.TitleID)
+			if !p.Since.IsZero() {
+				row.Since = p.Since.UTC().Format("2006-01-02 15:04 UTC")
+			}
 		}
+		d.Friends[i] = row
 	}
 	d.Incoming, _ = s.Social.ListIncoming(ctx, accountID)
 	d.Outgoing, _ = s.Social.ListOutgoing(ctx, accountID)
