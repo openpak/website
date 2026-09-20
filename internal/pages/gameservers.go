@@ -5,7 +5,9 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -35,35 +37,40 @@ func healthURL(key, def string) string {
 	return v
 }
 
-func gameServers() []gameServer {
-	// Alphabetical. TitleID left blank where not yet recorded rather than guessed.
-	//
-	// The Switch-era NEX titles all run inside the one switch-nexd container on the host
-	// network, which answers GET /healthz on each title's base+2 (switch-nex v0.2.16). From
-	// the website's container the host is host.containers.internal. MHGU stays on the nex-go
-	// lineage in its own container and keeps its container name.
-	return []gameServer{
-		{Name: "Animal Crossing: New Horizons", TitleID: "01006F8002326000", Health: nexd("ACNH_HEALTH_URL", 22182)},
-		{Name: "ARMS", TitleID: "01009B500007C000", Health: nexd("ARMS_HEALTH_URL", 22142)},
-		{Name: "Clubhouse Games: 51 Worldwide Classics", TitleID: "010047700D540000", Health: nexd("CLUBHOUSE_HEALTH_URL", 22872)},
-		{Name: "Kirby's Dream Buffet", TitleID: "0100A8E016236000", Health: nexd("KIRBY_HEALTH_URL", 22382)},
-		{Name: "Luigi's Mansion 3", TitleID: "0100DCA0064A6000", Health: nexd("LM3_HEALTH_URL", 22192)},
-		{Name: "Mario Golf: Super Rush", TitleID: "0100C9C00E25C800", Health: nexd("GOLF_HEALTH_URL", 22132)},
-		{Name: "Mario Kart 8 Deluxe", TitleID: "0100152000022000", Health: nexd("MK8D_HEALTH_URL", 22152)},
-		{Name: "Mario Party Superstars", TitleID: "01006FE013472000", Health: nexd("MPS_HEALTH_URL", 22112)},
-		{Name: "Mario Strikers: Battle League", TitleID: "010019401051C000", Health: nexd("STRIKERS_HEALTH_URL", 22302)},
-		{Name: "Mario Tennis Aces", TitleID: "0100BDE00862A000", Health: nexd("MTA_HEALTH_URL", 22172)},
-		{Name: "Minecraft", TitleID: "0100D71004694000", Health: nexd("MINECRAFT_HEALTH_URL", 22312)},
-		{Name: "Monster Hunter Generations Ultimate", TitleID: "0100770008DD8000", Health: healthURL("MHGU_HEALTH_URL", "http://openpak-monster-hunter-generations-ultimate:22122/healthz")},
-		{Name: "Outbound", TitleID: "0100ED9024EB8000", Health: healthURL("PHOTON_HEALTH_URL", "http://openpak-photon:8080/health")},
-		{Name: "Splatoon 2", TitleID: "0100F8F0000A2000", Health: nexd("SPLATOON2_HEALTH_URL", 22322)},
-		{Name: "Splatoon 3", TitleID: "0100C2500FC20000", Health: healthURL("SPLATOON3_HEALTH_URL", "http://openpak-splatoon-3:21013/health")},
-		{Name: "Stardew Valley", TitleID: "0100E65002BB8000", Health: healthURL("STARDEW_HEALTH_URL", "http://openpak-stardew:21011/health")},
-		{Name: "Super Mario 3D World + Bowser's Fury", TitleID: "010028600EBDA000", Health: nexd("SM3DW_HEALTH_URL", 22372)},
-		{Name: "Super Mario Bros. 35", TitleID: "0100277011F1A000", Health: nexd("SMB35_HEALTH_URL", 22162)},
-		{Name: "Super Mario Maker 2", TitleID: "01009B90006DC000", Health: nexd("SMM2_HEALTH_URL", 22332)},
-		{Name: "Super Mario Odyssey", TitleID: "0100000000010000", Health: nexd("SMO_HEALTH_URL", 22342)},
-		{Name: "Super Smash Bros. Ultimate", TitleID: "01006A800016E000", Health: nexd("SSBU_HEALTH_URL", 22352)},
+// gameServerHealth is where each served title answers a health check, keyed by
+// title id. Deployment detail, and the only part of a game server this file
+// still owns: the title's name and whether OpenPak serves it belong to the
+// catalogue, which is where they are edited (2026-09-20 -- names and ids typed
+// here as well had already drifted, and nine rows carried no id at all, so
+// their players were never counted).
+//
+// The Switch-era NEX titles all run inside the one switch-nexd container on the
+// host network, which answers GET /healthz on each title's base+2 (switch-nex
+// v0.2.16). From the website's container the host is host.containers.internal.
+// MHGU stays on the nex-go lineage in its own container and keeps its name.
+func gameServerHealth() map[string]string {
+	return map[string]string{
+		"01006F8002326000": nexd("ACNH_HEALTH_URL", 22182),
+		"01009B500007C000": nexd("ARMS_HEALTH_URL", 22142),
+		"010047700D540000": nexd("CLUBHOUSE_HEALTH_URL", 22872),
+		"0100A8E016236000": nexd("KIRBY_HEALTH_URL", 22382),
+		"0100DCA0064A6000": nexd("LM3_HEALTH_URL", 22192),
+		"0100C9C00E25C800": nexd("GOLF_HEALTH_URL", 22132),
+		"0100152000022000": nexd("MK8D_HEALTH_URL", 22152),
+		"01006FE013472000": nexd("MPS_HEALTH_URL", 22112),
+		"010019401051C000": nexd("STRIKERS_HEALTH_URL", 22302),
+		"0100BDE00862A000": nexd("MTA_HEALTH_URL", 22172),
+		"0100D71004694000": nexd("MINECRAFT_HEALTH_URL", 22312),
+		"0100770008DD8000": healthURL("MHGU_HEALTH_URL", "http://openpak-monster-hunter-generations-ultimate:22122/healthz"),
+		"0100ED9024EB8000": healthURL("PHOTON_HEALTH_URL", "http://openpak-photon:8080/health"),
+		"0100F8F0000A2000": nexd("SPLATOON2_HEALTH_URL", 22322),
+		"0100C2500FC20000": healthURL("SPLATOON3_HEALTH_URL", "http://openpak-splatoon-3:21013/health"),
+		"0100E65002BB8000": healthURL("STARDEW_HEALTH_URL", "http://openpak-stardew:21011/health"),
+		"010028600EBDA000": nexd("SM3DW_HEALTH_URL", 22372),
+		"0100277011F1A000": nexd("SMB35_HEALTH_URL", 22162),
+		"01009B90006DC000": nexd("SMM2_HEALTH_URL", 22332),
+		"0100000000010000": nexd("SMO_HEALTH_URL", 22342),
+		"01006A800016E000": nexd("SSBU_HEALTH_URL", 22352),
 	}
 }
 
@@ -114,8 +121,25 @@ type ServerHealth struct {
 // one after another, a handful of dead servers at two seconds each made the
 // status page slowest exactly when someone was looking at it because
 // something was down. Order follows gameServers().
-func CheckGameServers(ctx context.Context) []ServerHealth {
-	servers := gameServers()
+// catalogue, when given, names each server: the catalogue is where a title's
+// name is edited, and a name typed here as well is one that drifts. A title
+// the catalogue does not carry falls back to its id, which is honest and says
+// plainly that the catalogue is missing it.
+func CheckGameServers(ctx context.Context, catalogue ...map[string]string) []ServerHealth {
+	named := map[string]string{}
+	if len(catalogue) > 0 && catalogue[0] != nil {
+		named = catalogue[0]
+	}
+	servers := make([]gameServer, 0, len(gameServerHealth()))
+	for titleID, health := range gameServerHealth() {
+		name := named[strings.ToUpper(titleID)]
+		if name == "" {
+			name = titleName(titleID)
+		}
+		servers = append(servers, gameServer{Name: name, TitleID: titleID, Health: health})
+	}
+	sort.Slice(servers, func(i, j int) bool { return servers[i].Name < servers[j].Name })
+
 	out := make([]ServerHealth, len(servers))
 	var wg sync.WaitGroup
 	for i, g := range servers {

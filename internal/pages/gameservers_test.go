@@ -16,3 +16,29 @@ func TestEveryGameServerCarriesItsTitleId(t *testing.T) {
 		}
 	}
 }
+
+// A served title's name belongs to the catalogue: typed in two places it
+// drifts, and the id is what both sides agree on.
+func TestGameServerNamesComeFromTheCatalogue(t *testing.T) {
+	got := CheckGameServers(context.Background(), map[string]string{
+		"0100152000022000": "Mario Kart 8 Deluxe (catalogue)",
+	})
+	var seen bool
+	for _, g := range got {
+		if g.TitleID == "0100152000022000" {
+			seen = true
+			if g.Name != "Mario Kart 8 Deluxe (catalogue)" {
+				t.Fatalf("name = %q, want the catalogue's", g.Name)
+			}
+		}
+	}
+	if !seen {
+		t.Fatal("Mario Kart 8 Deluxe is not in the server list")
+	}
+	// Without a catalogue the rows still name themselves.
+	for _, g := range CheckGameServers(context.Background()) {
+		if g.Name == "" {
+			t.Fatalf("%s has no name without a catalogue", g.TitleID)
+		}
+	}
+}

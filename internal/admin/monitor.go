@@ -91,7 +91,7 @@ func (s *Server) handleMonitor(w http.ResponseWriter, r *http.Request) {
 		}
 		v.Services[4] = probe(ctx, i18n.T("en", "admin.monitor.chat"), h)
 	})
-	wg.Go(func() { v.Servers = pages.CheckGameServers(ctx) })
+	wg.Go(func() { v.Servers = pages.CheckGameServers(ctx, pages.TitleCatalogue(ctx, s.DB)) })
 	wg.Go(func() { v.CountsOK, v.Total, v.Titles = s.playerCounts(ctx) })
 	wg.Go(func() { v.Push = s.pushLag(ctx) })
 	wg.Go(func() { v.External = s.externalStatus(ctx) })

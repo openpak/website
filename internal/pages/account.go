@@ -716,7 +716,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		byTitle[strings.ToUpper(t.TitleID)] = t.Players
 	}
 	serversOK := true
-	for _, g := range CheckGameServers(ctx) {
+	for _, g := range CheckGameServers(ctx, TitleCatalogue(ctx, s.DB)) {
 		row := serverRow{Name: g.Name, Players: byTitle[strings.ToUpper(g.TitleID)], Checkable: g.Checkable, Up: g.Up}
 		view.Servers = append(view.Servers, row)
 		if row.Checkable && !row.Up {
