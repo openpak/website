@@ -22,8 +22,11 @@ var titleNames = map[string]string{
 	"0100E65002BB8000": "Stardew Valley",
 }
 
+// titleName is case-insensitive: the core reports a title id in lower case
+// and every table here is written in upper, which is how a game with a player
+// on it read as nobody playing (2026-09-20, ARMS).
 func titleName(id string) string {
-	if n, ok := titleNames[id]; ok {
+	if n, ok := titleNames[strings.ToUpper(id)]; ok {
 		return n
 	}
 	return id
@@ -58,7 +61,7 @@ func FriendGame(ctx context.Context, catalogue map[string]string, namespace, tit
 		return "", false
 	}
 	icon = namespace == "switch" && switchID.MatchString(titleID)
-	if n, ok := titleNames[titleID]; ok {
+	if n, ok := titleNames[strings.ToUpper(titleID)]; ok {
 		return n, icon
 	}
 	if n, ok := catalogue[strings.ToUpper(titleID)]; ok {

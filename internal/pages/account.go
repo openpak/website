@@ -708,13 +708,16 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	// The game servers themselves, so a title that nobody happens to be playing
 	// still shows up: "no players" and "not running" are different answers and
 	// a status page has to tell them apart.
+	// Keyed in upper case: the core answers in lower and the server table is
+	// written in upper, so a case-sensitive lookup showed every game as
+	// nobody playing while the count beside it said otherwise.
 	byTitle := map[string]int{}
 	for _, t := range titlesRaw {
-		byTitle[t.TitleID] = t.Players
+		byTitle[strings.ToUpper(t.TitleID)] = t.Players
 	}
 	serversOK := true
 	for _, g := range CheckGameServers(ctx) {
-		row := serverRow{Name: g.Name, Players: byTitle[g.TitleID], Checkable: g.Checkable, Up: g.Up}
+		row := serverRow{Name: g.Name, Players: byTitle[strings.ToUpper(g.TitleID)], Checkable: g.Checkable, Up: g.Up}
 		view.Servers = append(view.Servers, row)
 		if row.Checkable && !row.Up {
 			serversOK = false
