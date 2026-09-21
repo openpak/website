@@ -449,6 +449,7 @@ type friendCard struct {
 	TitleID  string // for the icon URL only — never rendered as text
 	HasIcon  bool   // /titles/icon/{TitleID} draws art (Switch titles only)
 	Since    string // when the session started, formatted; "" when offline
+	AvatarURL string
 }
 
 // handleFriends keeps the old URL working; friends are a section of the
@@ -489,6 +490,10 @@ func (s *Server) loadFriends(ctx context.Context, accountID string) friendsData 
 			if !p.Since.IsZero() {
 				row.Since = p.Since.UTC().Format("2006-01-02 15:04 UTC")
 			}
+		}
+		row.AvatarURL = "/media/avatars/" + f.AccountID + "/512"
+		if rec, err := s.DB.GetMedia(ctx, f.AccountID, "avatar"); err == nil && !rec.UpdatedAt.IsZero() {
+			row.AvatarURL += "?v=" + strconv.FormatInt(rec.UpdatedAt.UnixNano(), 10)
 		}
 		d.Friends[i] = row
 	}
