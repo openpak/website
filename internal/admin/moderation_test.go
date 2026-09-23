@@ -125,9 +125,29 @@ func TestAdminUsersSearchAndBan(t *testing.T) {
 		t.Fatalf("audit: %+v", audit)
 	}
 
+	// The website keeps who banned and why; the users page lists it with no search.
+	if b, err := db.GetBan(context.Background(), "acct-1"); err != nil || !b.Banned || b.Reason != "cheating" || b.Actor != "acct-admin" {
+		t.Fatalf("ban record: %+v %v", b, err)
+	}
+	rec = httptest.NewRecorder()
+	mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/admin/users", nil))
+	if body := rec.Body.String(); !strings.Contains(body, "Banned accounts") || !strings.Contains(body, "acct-1") || !strings.Contains(body, "cheating") {
+		t.Fatalf("banned list: %s", body)
+	}
+	// A banned search hit shows the actor beside the core's reason.
+	fm.accounts[1].ID = "acct-1"
+	rec = httptest.NewRecorder()
+	mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/admin/users?q=han", nil))
+	if body := rec.Body.String(); !strings.Contains(body, "<code>acct-admin</code>") || !strings.Contains(body, "every network") {
+		t.Fatalf("ban actor on the hit: %s", body)
+	}
+
 	postForm(mux, "/admin/users/acct-2/ban", url.Values{"banned": {"0"}, "reason": {"appeal"}, "csrf": {"tok-sess-admin"}})
 	if len(fm.bans) != 2 || fm.bans[1].banned {
 		t.Fatalf("unban: %+v", fm.bans)
+	}
+	if b, _ := db.GetBan(context.Background(), "acct-2"); b.Banned || b.Reason != "appeal" {
+		t.Fatalf("unban record: %+v", b)
 	}
 }
 

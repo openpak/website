@@ -46,6 +46,7 @@ type fakeCore struct {
 	publicCodes    map[string]string // published friend code -> account id
 	resent         int
 	newEmail       string
+	status         map[string]string // account id -> core status; absent = active
 }
 
 func newFakeCore() *fakeCore {
@@ -139,7 +140,14 @@ func (f *fakeCore) ResetPassword(_ context.Context, token, password string) erro
 func (f *fakeCore) Healthy(_ context.Context) error { return nil }
 func (f *fakeCore) GetAccount(_ context.Context, id string) (core.Account, error) {
 	email := strings.TrimPrefix(id, "acct-")
-	return core.Account{ID: id, Country: f.profile[0], Birthday: f.profile[1],
+	st := f.status[id]
+	if st == "" {
+		st = "active"
+	}
+	if st == "missing" {
+		return core.Account{}, core.ErrNotFound
+	}
+	return core.Account{ID: id, Country: f.profile[0], Birthday: f.profile[1], Status: st,
 		EmailVerified: f.verified[email], TwoFactorEnabled: f.twoFactor[email]}, nil
 }
 

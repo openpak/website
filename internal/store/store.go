@@ -97,6 +97,12 @@ type Store interface {
 	// event stream, so a restart resumes instead of replaying or skipping.
 	PushCursor(ctx context.Context) (uint64, error)
 	SetPushCursor(ctx context.Context, version uint64) error
+
+	// Bans: the website's record of who banned an account and why (the ban
+	// itself is the core's account status).
+	RecordBan(ctx context.Context, b Ban) error
+	GetBan(ctx context.Context, accountID string) (Ban, error)
+	ListBans(ctx context.Context, limit int) ([]Ban, error)
 }
 
 // PushToken is one app install that can be notified.

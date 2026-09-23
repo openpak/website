@@ -9,6 +9,7 @@ import (
 
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
+	"github.com/openpak/website/internal/store"
 )
 
 // Users and reports (WEB-06) over the core's Moderation service (CR-5, CR-6).
@@ -30,8 +31,11 @@ func (s *Server) handleUsers(w http.ResponseWriter, r *http.Request) {
 	type usersView struct {
 		base
 		Query    string
-		Accounts []core.ModeratedAccount
+		Accounts []userRow
 		Searched bool
+		// Banned is every account banned through this site, newest first,
+		// shown when nothing is searched: who did it and why at a glance.
+		Banned []store.Ban
 	}
 	v := usersView{base: b, Query: strings.TrimSpace(r.URL.Query().Get("q"))}
 	v.Flash = moderationFlash(r.URL.Query().Get("m"))
@@ -41,9 +45,30 @@ func (s *Server) handleUsers(w http.ResponseWriter, r *http.Request) {
 			s.log.Error("admin: search accounts", "err", err)
 			v.Flash = i18n.T("en", "admin.users.failed")
 		}
-		v.Accounts, v.Searched = accts, true
+		for _, a := range accts {
+			row := userRow{ModeratedAccount: a}
+			if a.Status == "banned" {
+				if ban, err := s.DB.GetBan(r.Context(), a.ID); err == nil && ban.Banned {
+					row.Ban = &ban
+				}
+			}
+			v.Accounts = append(v.Accounts, row)
+		}
+		v.Searched = true
+	} else {
+		bans, err := s.DB.ListBans(r.Context(), 200)
+		if err != nil {
+			s.log.Error("admin: list bans", "err", err)
+		}
+		v.Banned = bans
 	}
 	s.render(w, http.StatusOK, "admin_users.html", v)
+}
+
+// userRow is a search hit plus the website's record of its ban, if any.
+type userRow struct {
+	core.ModeratedAccount
+	Ban *store.Ban
 }
 
 // handleBan bans or unbans one account. A reason is required either way: the
@@ -74,6 +99,11 @@ func (s *Server) handleBan(w http.ResponseWriter, r *http.Request) {
 		s.log.Error("admin: set banned", "account", id, "err", err)
 		http.Error(w, "the account service refused the change", http.StatusBadGateway)
 		return
+	}
+	// The core holds the ban; this row is who did it and why, for the admin
+	// and the internal ban lookup (docs/ban-lookup.md).
+	if err := s.DB.RecordBan(r.Context(), store.Ban{AccountID: id, Banned: banned, Reason: reason, Actor: ws.AccountID}); err != nil {
+		s.log.Error("admin: record ban", "account", id, "err", err)
 	}
 	action, flash := "account.ban", "banned"
 	if !banned {

@@ -156,6 +156,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	h("/federation/announce", s.handleAnnounce)
 
 	s.registerInternal(mux)
+	s.registerBans(mux)
 	h("/me/avatar", s.auth(s.handleChooseAvatar))
 	s.registerSecurity(mux)
 }

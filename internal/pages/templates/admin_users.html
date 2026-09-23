@@ -21,7 +21,8 @@
       <span class="badge {{badgeClass .Status}} ml-1">{{.Status}}</span>
       <span class="block text-sm text-muted break-anywhere">{{.Email}}{{if not .EmailVerified}} · {{t $.Lang "admin.users.unverified"}}{{end}}{{if not .CreatedAt.IsZero}} · {{t $.Lang "admin.users.since"}} {{.CreatedAt.Format "2 Jan 2006"}}{{end}}</span>
       <span class="block text-sm text-muted break-anywhere"><code>{{.ID}}</code>{{range .MatchedSubjects}} · <code>{{.}}</code>{{end}}</span>
-      {{with .BanReason}}<span class="block text-sm text-muted break-anywhere">{{t $.Lang "admin.users.banreason"}}: {{.}}</span>{{end}}
+      {{if eq .Status "banned"}}<span class="block text-sm break-anywhere">{{t $.Lang "admin.users.banreason"}}: {{if .BanReason}}{{.BanReason}}{{else if .Ban}}{{.Ban.Reason}}{{else}}{{t $.Lang "admin.users.noreason"}}{{end}}{{with .Ban}} · {{t $.Lang "admin.users.banby"}} <code>{{.Actor}}</code> · {{.UpdatedAt.Format "2 Jan 2006 15:04"}}{{end}}</span>
+      <span class="block text-sm text-muted">{{t $.Lang "admin.users.everywhere"}}</span>{{end}}
     </span>
     {{if or (eq .Status "active") (eq .Status "banned")}}
     <form method="post" action="/admin/users/{{.ID}}/ban" class="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
@@ -38,5 +39,21 @@
   {{end}}
 </ul>
 {{else}}<p class="card p-4 text-muted">{{t .Lang "admin.users.none"}}</p>{{end}}
+{{else}}
+<section aria-labelledby="bans-h">
+  <div class="section-head"><h2 id="bans-h">{{t .Lang "admin.users.banned"}}</h2><p>{{t .Lang "admin.users.banned.sub"}}</p></div>
+  {{if .Banned}}
+  <ul class="card list-none divide-y divide-line p-0">
+    {{range .Banned}}
+    <li class="p-4">
+      <a class="font-semibold break-anywhere" href="/admin/users?q={{.AccountID}}"><code>{{.AccountID}}</code></a>
+      <span class="badge {{badgeClass "banned"}} ml-1">banned</span>
+      <span class="block text-sm break-anywhere">{{t $.Lang "admin.users.banreason"}}: {{.Reason}}</span>
+      <span class="block text-sm text-muted break-anywhere">{{t $.Lang "admin.users.banby"}} <code>{{.Actor}}</code> · {{.UpdatedAt.Format "2 Jan 2006 15:04"}}</span>
+    </li>
+    {{end}}
+  </ul>
+  {{else}}<p class="card p-4 text-muted">{{t .Lang "admin.users.banned.none"}}</p>{{end}}
+</section>
 {{end}}
 {{template "footer" .}}
