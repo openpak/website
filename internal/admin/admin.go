@@ -61,6 +61,11 @@ type Server struct {
 	Ops *OpsAPI
 	// Support is the help-ticket service behind /admin/tickets; nil says "not configured".
 	Support *support.Service
+	// ConsoleNews is the news service's admin API behind /admin/console-news
+	// (the Switch News tab); nil hides the section.
+	ConsoleNews *ConsoleNewsAPI
+	// Store is nx-baas's store admin API behind /admin/store; nil hides the section.
+	Store *StoreAPI
 	// CrashFiles holds crash-report attachments; nil means reports carry none.
 	CrashFiles *attachments.Store
 
@@ -82,6 +87,9 @@ func New(tpl *template.Template, coreEvents core.Events, db store.Store, session
 }
 
 type base struct {
+	// The optional sections this deployment configures, so the overview can
+	// leave the others' cards out too.
+	ShowConsoleNews, ShowStore bool
 	// Same fingerprint the public pages use: _layout.html is shared, and without this field
 	// every admin page fails to render.
 	Asset  string
@@ -111,6 +119,8 @@ var adminNav = []struct{ href, key string }{
 	{"/admin/monitor", "admin.monitor"},
 	{"/admin/services", "admin.services"},
 	{"/admin/news", "admin.news"},
+	{"/admin/console-news", "admin.cnews"},
+	{"/admin/store", "admin.store"},
 	{"/admin/titles", "admin.titles"},
 	{"/admin/mods", "admin.mods"},
 	{"/admin/nodes", "admin.nodes"},
@@ -123,13 +133,30 @@ var adminNav = []struct{ href, key string }{
 	{"/admin/crashes", "admin.crashes"},
 }
 
-func navFor(path string) []navLink {
-	out := make([]navLink, len(adminNav))
-	for i, n := range adminNav {
+// navFor draws the sub-nav; hidden names the sections this deployment does
+// not configure (console news and the store disappear rather than say so).
+func navFor(path string, hidden ...string) []navLink {
+	out := make([]navLink, 0, len(adminNav))
+	for _, n := range adminNav {
+		if slices.Contains(hidden, n.href) {
+			continue
+		}
 		// A section owns its sub-pages (/admin/news/new is News), except the
 		// overview, which would otherwise own everything.
 		cur := path == n.href || (n.href != "/admin" && strings.HasPrefix(path, n.href+"/"))
-		out[i] = navLink{n.href, i18n.T("en", n.key), cur}
+		out = append(out, navLink{n.href, i18n.T("en", n.key), cur})
+	}
+	return out
+}
+
+// hiddenSections are the optional sections without a backend.
+func (s *Server) hiddenSections() []string {
+	var out []string
+	if s.ConsoleNews == nil {
+		out = append(out, "/admin/console-news")
+	}
+	if s.Store == nil {
+		out = append(out, "/admin/store")
 	}
 	return out
 }
@@ -163,7 +190,7 @@ func (s *Server) authorize(w http.ResponseWriter, r *http.Request) (store.WebSes
 func (s *Server) page(r *http.Request, ws store.WebSession, title string) base {
 	return base{Asset: pages.AssetVersion(), Admin: true, Path: r.URL.Path, Lang: "en", Title: title,
 		User: adminUser{ws.DisplayName, ws.Email}, CSRF: s.Sessions.CSRFToken(ws.CoreSessionID),
-		Nav: navFor(r.URL.Path), Updates: s.pendingUpdates(r.Context())}
+		Nav: navFor(r.URL.Path, s.hiddenSections()...), ShowConsoleNews: s.ConsoleNews != nil, ShowStore: s.Store != nil, Updates: s.pendingUpdates(r.Context())}
 }
 
 func (s *Server) pendingUpdates(ctx context.Context) int {
@@ -251,6 +278,30 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/crashes/{id}/resolve", s.handleCrashResolve)
 	mux.HandleFunc("POST /admin/crashes/group/{sig}/resolve", s.handleCrashResolve)
 	mux.HandleFunc("POST /admin/crashes/{id}/ticket", s.handleCrashTicket)
+	mux.HandleFunc("GET /admin/store", s.handleStore)
+	mux.HandleFunc("GET /admin/store/new", s.handleStoreNew)
+	mux.HandleFunc("POST /admin/store", s.handleStoreSave)
+	mux.HandleFunc("GET /admin/store/{id}", s.handleStoreTitle)
+	mux.HandleFunc("POST /admin/store/{id}", s.handleStoreSave)
+	mux.HandleFunc("POST /admin/store/{id}/icon", s.handleStoreIcon)
+	mux.HandleFunc("POST /admin/store/{id}/versions", s.handleStoreUpload)
+	mux.HandleFunc("POST /admin/store/{id}/{action}", s.handleStoreAction)
+	mux.HandleFunc("GET /admin/console-news", s.handleConsoleNews)
+	mux.HandleFunc("POST /admin/console-news/{op}", s.handleConsoleNewsBuild)
+	mux.HandleFunc("GET /admin/console-news/channels/new", s.handleCNChannelNew)
+	mux.HandleFunc("POST /admin/console-news/channels", s.handleCNChannelSave)
+	mux.HandleFunc("GET /admin/console-news/channels/{topic}", s.handleCNChannel)
+	mux.HandleFunc("POST /admin/console-news/channels/{topic}", s.handleCNChannelSave)
+	mux.HandleFunc("POST /admin/console-news/channels/{topic}/retire", s.handleCNChannelRetire)
+	mux.HandleFunc("POST /admin/console-news/channels/{topic}/icon", s.handleCNImage)
+	mux.HandleFunc("GET /admin/console-news/channels/{topic}/icon", s.handleCNImageShow)
+	mux.HandleFunc("GET /admin/console-news/channels/{topic}/articles/new", s.handleCNArticleNew)
+	mux.HandleFunc("POST /admin/console-news/channels/{topic}/articles", s.handleCNArticleSave)
+	mux.HandleFunc("GET /admin/console-news/channels/{topic}/articles/{id}", s.handleCNArticle)
+	mux.HandleFunc("POST /admin/console-news/channels/{topic}/articles/{id}", s.handleCNArticleSave)
+	mux.HandleFunc("POST /admin/console-news/channels/{topic}/articles/{id}/image", s.handleCNImage)
+	mux.HandleFunc("GET /admin/console-news/channels/{topic}/articles/{id}/image", s.handleCNImageShow)
+	mux.HandleFunc("POST /admin/console-news/channels/{topic}/articles/{id}/{op}", s.handleCNArticleState)
 	mux.HandleFunc("GET /admin/nodes", s.handleNodes)
 	mux.HandleFunc("POST /admin/nodes", s.handleNodeCreate)
 	mux.HandleFunc("POST /admin/nodes/{id}/approve", s.handleNodeApprove)

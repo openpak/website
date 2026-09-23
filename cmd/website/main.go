@@ -193,6 +193,14 @@ func run(log *slog.Logger) error {
 	adminSrv.Ops = admin.NewOpsAPI(os.Getenv("WEBSITE_OPSD_HOSTS"), os.Getenv("WEBSITE_OPSD_KEY"))
 	adminSrv.Support = supportSvc
 	adminSrv.CrashFiles = files
+	// Console news (the Switch News tab) and the homebrew store: each section
+	// exists only when its service is configured.
+	adminSrv.ConsoleNews = admin.NewConsoleNewsAPI(os.Getenv("NEWS_ADMIN_URL"), os.Getenv("NEWS_ADMIN_KEY"))
+	storeKey := os.Getenv("STORE_ADMIN_KEY")
+	if storeKey == "" {
+		storeKey = os.Getenv("NX_INTERNAL_KEY") // the same key nx-baas checks
+	}
+	adminSrv.Store = admin.NewStoreAPI(os.Getenv("STORE_ADMIN_URL"), storeKey)
 
 	// News: the public feed for the landing page, and the operator gRPC for
 	// /admin/news. Either can be absent; the landing page then has no news

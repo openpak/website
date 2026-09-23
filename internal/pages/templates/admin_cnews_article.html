@@ -1,0 +1,85 @@
+{{template "header" .}}
+{{template "adminnav" .}}
+{{$a := .Article}}
+<div class="page-head">
+  <h1 class="break-anywhere">{{.Title}}{{if .Exists}} {{if $a.Retired}}<span class="badge bad align-middle">retired</span>{{else if $a.EverPublished}}<span class="badge ok align-middle">shipped</span>{{else}}<span class="badge align-middle">draft</span>{{end}}{{end}}</h1>
+  <p><a href="/admin/console-news/channels/{{.Topic}}"><code>{{.Topic}}</code></a>{{if .Exists}} · {{$a.NewsID}}{{with $a.ExpireAt}} · {{t $.Lang "admin.cnews.expires"}} {{.}}{{end}}{{end}} · {{t .Lang "admin.cnews.editsource"}}</p>
+</div>
+{{if .Error}}<p class="notice bad mb-6" role="alert">{{.Error}}</p>{{end}}
+{{if $a.Retired}}<p class="notice mb-6">{{t .Lang "admin.cnews.retired.readonly"}}{{with $a.RetireReason}} ({{.}}){{end}}</p>{{end}}
+<form method="post" action="/admin/console-news/channels/{{.Topic}}/articles{{if .Exists}}/{{$a.NewsID}}{{end}}" class="form-stack max-w-2xl">
+  <input type="hidden" name="csrf" value="{{.CSRF}}">
+  {{if not .Exists}}<label for="news_id">{{t .Lang "admin.cnews.newsid"}}</label>
+  <input id="news_id" name="news_id" value="{{.NewsID}}" inputmode="numeric">
+  <p class="hint">{{t .Lang "admin.cnews.newsid.hint"}}</p>{{end}}
+  <label for="title">{{t .Lang "admin.cnews.a.title"}}</label>
+  <input id="title" name="title" value="{{$a.Title}}" required maxlength="100">
+  <label for="body">{{t .Lang "admin.cnews.a.body"}}</label>
+  <textarea id="body" name="body" rows="8" required maxlength="1200">{{$a.Body}}</textarea>
+  <p class="hint">{{t .Lang "admin.cnews.a.body.hint"}}</p>
+  <label for="footer">{{t .Lang "admin.cnews.a.footer"}}</label>
+  <input id="footer" name="footer" value="{{$a.Footer}}" maxlength="80" placeholder="Published by OpenPak.">
+  <label for="language">{{t .Lang "admin.cnews.a.language"}}</label>
+  <input id="language" name="language" value="{{$a.Language}}" required pattern="[a-z]{2}-[A-Z]{2}">
+  <label for="supported_languages">{{t .Lang "admin.cnews.a.languages"}}</label>
+  <input id="supported_languages" name="supported_languages" value="{{.Langs}}" required>
+  <label for="lifetime_days">{{t .Lang "admin.cnews.a.lifetime"}}</label>
+  <input id="lifetime_days" name="lifetime_days" type="number" min="1" max="30" value="{{$a.LifetimeDays}}" required>
+  <label for="published_at">{{t .Lang "admin.cnews.a.published"}}</label>
+  <input id="published_at" name="published_at" type="datetime-local" value="{{.PublishedAt}}">
+  <p class="hint">{{t .Lang "admin.cnews.a.published.hint"}}</p>
+  <label for="pickup_days">{{t .Lang "admin.cnews.a.pickup"}}</label>
+  <input id="pickup_days" name="pickup_days" type="number" min="0" max="30" value="{{.PickupDays}}">
+  <p class="hint">{{t .Lang "admin.cnews.a.pickup.hint"}}</p>
+  <label for="priority">{{t .Lang "admin.cnews.a.priority"}}</label>
+  <input id="priority" name="priority" type="number" min="51" max="1998" value="{{$a.Priority}}">
+  <p class="hint">{{t .Lang "admin.cnews.a.priority.hint"}}</p>
+  <label for="essential_days">{{t .Lang "admin.cnews.a.essential"}}</label>
+  <input id="essential_days" name="essential_days" type="number" min="1" max="30" value="{{.EssentialDays}}">
+  <label for="essential_after">{{t .Lang "admin.cnews.a.essential.after"}}</label>
+  <input id="essential_after" name="essential_after" type="number" min="51" max="1998" value="{{.EssentialAfter}}">
+  <p class="hint">{{t .Lang "admin.cnews.a.essential.hint"}}</p>
+  <label for="art_motif">{{t .Lang "admin.cnews.a.art"}}</label>
+  <select id="art_motif" name="art_motif">{{$m := $a.Art.Motif}}{{range .Motifs.Scene}}<option value="{{.}}"{{if eq . $m}} selected{{end}}>{{.}}</option>{{else}}<option value="{{$m}}">{{$m}}</option>{{end}}</select>
+  <input type="hidden" name="art_hue" value="{{$a.Art.Hue}}">
+  <label for="more_type">{{t .Lang "admin.cnews.a.more"}}</label>
+  <select id="more_type" name="more_type">{{$mt := .MoreType}}
+    <option value=""{{if eq $mt ""}} selected{{end}}>{{t .Lang "admin.cnews.a.more.none"}}</option>
+    <option value="game"{{if eq $mt "game"}} selected{{end}}>game</option>
+    <option value="shop"{{if eq $mt "shop"}} selected{{end}}>shop</option>
+    <option value="browser"{{if eq $mt "browser"}} selected{{end}}>browser</option>
+  </select>
+  <label for="more_ids">{{t .Lang "admin.cnews.a.more.ids"}}</label>
+  <input id="more_ids" name="more_ids" value="{{.MoreIDs}}">
+  <label for="more_query">{{t .Lang "admin.cnews.a.more.query"}}</label>
+  <input id="more_query" name="more_query" value="{{.MoreQuery}}">
+  <label for="more_url">{{t .Lang "admin.cnews.a.more.url"}}</label>
+  <input id="more_url" name="more_url" type="url" value="{{.MoreURL}}" maxlength="256">
+  <p class="hint">{{t .Lang "admin.cnews.a.more.hint"}}</p>
+  <button type="submit" class="btn primary"{{if $a.Retired}} disabled{{end}}>{{t .Lang "admin.save"}}</button>
+</form>
+{{if .Exists}}
+<section aria-labelledby="img-h" class="mt-9 max-w-2xl">
+  <div class="section-head"><h2 id="img-h">{{t .Lang "admin.cnews.a.image"}}</h2><p>{{t .Lang "admin.cnews.a.image.hint"}}</p></div>
+  {{if $a.HasImage}}<img src="/admin/console-news/channels/{{.Topic}}/articles/{{$a.NewsID}}/image" alt="" class="mb-3 max-w-md rounded-lg">{{end}}
+  <form method="post" action="/admin/console-news/channels/{{.Topic}}/articles/{{$a.NewsID}}/image" enctype="multipart/form-data" class="flex flex-wrap items-center gap-2">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <input type="file" name="image" accept="image/png,image/jpeg" required>
+    <button type="submit" class="btn text-sm">{{t .Lang "admin.cnews.upload"}}</button>
+  </form>
+  {{if $a.HasImage}}<form method="post" action="/admin/console-news/channels/{{.Topic}}/articles/{{$a.NewsID}}/image" class="mt-2"><input type="hidden" name="csrf" value="{{.CSRF}}"><input type="hidden" name="remove" value="1"><button type="submit" class="btn text-sm">{{t .Lang "admin.cnews.a.image.remove"}}</button></form>{{end}}
+</section>
+<div class="mt-9 flex max-w-2xl flex-wrap items-end gap-3 border-t border-line pt-6">
+  <form method="post" action="/admin/console-news/channels/{{.Topic}}/articles/{{$a.NewsID}}/retire" class="row-form">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    {{if $a.Retired}}<input type="hidden" name="retired" value="0"><button type="submit" class="btn text-sm">{{t .Lang "admin.cnews.restore"}}</button>
+    {{else}}<input type="hidden" name="retired" value="1"><label class="sr-only" for="areason">{{t .Lang "admin.cnews.retire.reason"}}</label><input id="areason" name="reason" required maxlength="200" placeholder="{{t .Lang "admin.cnews.retire.reason"}}"><button type="submit" class="btn text-sm danger">{{t .Lang "admin.cnews.retire"}}</button>{{end}}
+  </form>
+  <form method="post" action="/admin/console-news/channels/{{.Topic}}/articles/{{$a.NewsID}}/delete">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <button type="submit" class="btn text-sm danger">{{t .Lang "admin.cnews.a.delete"}}</button>
+  </form>
+</div>
+<p class="hint mt-2 max-w-2xl">{{t .Lang "admin.cnews.a.delete.hint"}}</p>
+{{end}}
+{{template "footer" .}}

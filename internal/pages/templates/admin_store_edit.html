@@ -1,0 +1,99 @@
+{{template "header" .}}
+{{template "adminnav" .}}
+{{$t := .Item}}
+<div class="page-head">
+  <h1 class="break-anywhere">{{if .Exists}}{{$t.Name}} {{if $t.Published}}<span class="badge ok align-middle">published</span>{{else}}<span class="badge align-middle">unpublished</span>{{end}}{{else}}{{t .Lang "admin.store.new"}}{{end}}</h1>
+  <p><a href="/admin/store">{{t .Lang "admin.store"}}</a>{{if .Exists}} · <code>{{$t.TitleID}}</code>{{with $t.VersionLabel}} · v{{.}}{{end}}{{end}}</p>
+</div>
+{{if .Error}}<p class="notice bad mb-6" role="alert">{{.Error}}</p>{{end}}
+
+{{if .Exists}}
+<div class="mb-6 flex flex-wrap items-center gap-3">
+  <form method="post" action="/admin/store/{{$t.TitleID}}/{{if $t.Published}}unpublish{{else}}publish{{end}}">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <button type="submit" class="btn text-sm {{if not $t.Published}}primary{{end}}">{{if $t.Published}}{{t .Lang "admin.store.unpublish"}}{{else}}{{t .Lang "admin.store.publish"}}{{end}}</button>
+  </form>
+  {{with .Stats}}<span class="text-sm text-muted">{{.Downloads}} {{t $.Lang "admin.store.downloads"}} · {{.ContentRequests}} {{t $.Lang "admin.store.requests"}} · {{.BytesServed}} B · {{.Entitlements}} {{t $.Lang "admin.store.owners"}}{{if not .LastDownload.IsZero}} · {{t $.Lang "admin.store.last"}} {{.LastDownload.Format "2 Jan 2006 15:04"}}{{end}}{{range $k, $v := .Tasks}} · {{$k}} {{$v}}{{end}}</span>{{end}}
+</div>
+{{end}}
+
+<form method="post" action="/admin/store{{if .Exists}}/{{$t.TitleID}}{{end}}" class="form-stack max-w-2xl">
+  <input type="hidden" name="csrf" value="{{.CSRF}}">
+  {{if not .Exists}}<label for="title_id">{{t .Lang "admin.store.appid"}}</label>
+  <input id="title_id" name="title_id" value="{{.TitleID}}" required pattern="[0-9a-fA-F]{13}000" maxlength="16">
+  <p class="hint">{{t .Lang "admin.store.appid.hint"}}</p>{{end}}
+  <label for="lang">{{t .Lang "admin.store.lang"}}</label>
+  <input id="lang" name="lang" value="{{.Lang}}" required>
+  {{if .Exists}}<p class="hint">{{t .Lang "admin.store.lang.hint"}} {{range $k, $v := $t.Localized}}<a href="/admin/store/{{$t.TitleID}}?lang={{$k}}">{{$k}}</a> {{end}}</p>{{end}}
+  <label for="name">{{t .Lang "admin.store.name"}}</label>
+  <input id="name" name="name" value="{{.Name}}" required maxlength="200">
+  <label for="description">{{t .Lang "admin.store.description"}}</label>
+  <textarea id="description" name="description" rows="6">{{.Description}}</textarea>
+  <label for="publisher">{{t .Lang "admin.store.publisher"}}</label>
+  <input id="publisher" name="publisher" value="{{.Publisher}}" required>
+  <label for="category">{{t .Lang "admin.store.category"}}</label>
+  <input id="category" name="category" value="{{.Category}}" placeholder="tool, game, emulator…">
+  <label for="languages">{{t .Lang "admin.store.languages"}}</label>
+  <input id="languages" name="languages" value="{{.Languages}}" placeholder="en-US, de-DE">
+  <label for="compatibility">{{t .Lang "admin.store.compat"}}</label>
+  <input id="compatibility" name="compatibility" value="{{.Compatibility}}" placeholder="handheld, docked">
+  <label for="screenshots">{{t .Lang "admin.store.screens"}}</label>
+  <textarea id="screenshots" name="screenshots" rows="3">{{.Screenshots}}</textarea>
+  <p class="hint">{{t .Lang "admin.store.screens.hint"}}</p>
+  <label for="source">{{t .Lang "admin.store.source"}}</label>
+  <input id="source" name="source" value="{{.Source}}" required>
+  <label for="permission">{{t .Lang "admin.store.permission"}}</label>
+  <input id="permission" name="permission" value="{{.Permission}}" required placeholder="GPL-3.0, author's release">
+  <p class="hint">{{t .Lang "admin.store.permission.hint"}}</p>
+  <button type="submit" class="btn primary">{{t .Lang "admin.save"}}</button>
+</form>
+
+{{if .Exists}}
+<section aria-labelledby="icon-h" class="mt-9 max-w-2xl">
+  <div class="section-head"><h2 id="icon-h">{{t .Lang "admin.store.icon"}}</h2><p>{{t .Lang "admin.store.icon.hint"}}{{with $t.IconPath}} <code>{{.}}</code>{{end}}</p></div>
+  <form method="post" action="/admin/store/{{$t.TitleID}}/icon" enctype="multipart/form-data" class="flex flex-wrap items-center gap-2">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <input type="file" name="icon" accept="image/png,image/jpeg" required>
+    <button type="submit" class="btn text-sm">{{t .Lang "admin.store.upload"}}</button>
+  </form>
+</section>
+
+<section aria-labelledby="ver-h" class="mt-9">
+  <div class="section-head"><h2 id="ver-h">{{t .Lang "admin.store.versions"}}</h2></div>
+  <ul class="card list-none divide-y divide-line p-0 mb-6">
+    <li class="p-4"><span class="font-semibold">{{t .Lang "admin.store.base"}}</span>
+      {{with $t.Application}}<span class="block text-sm text-muted">v{{.VersionLabel}} ({{.Version}}) · {{len .Content}} NCAs</span>
+      {{range .Content}}<span class="block text-sm break-anywhere"><code>{{.ContentID}}</code> {{.ContentType}} · {{.Size}} B</span>{{end}}
+      {{else}}<span class="block text-sm text-muted">{{t $.Lang "admin.store.nobase"}}</span>{{end}}</li>
+    <li class="p-4"><span class="font-semibold">{{t .Lang "admin.store.update"}}</span>
+      {{with $t.Update}}<span class="block text-sm text-muted"><code>{{.TitleID}}</code> · v{{.VersionLabel}} ({{.Version}}) · {{len .Content}} NCAs</span>
+      {{range .Content}}<span class="block text-sm break-anywhere"><code>{{.ContentID}}</code> {{.ContentType}} · {{.Size}} B</span>{{end}}
+      <form method="post" action="/admin/store/{{$t.TitleID}}/withdraw-update" class="mt-2"><input type="hidden" name="csrf" value="{{$.CSRF}}"><button type="submit" class="btn text-sm">{{t $.Lang "admin.store.withdraw"}}</button></form>
+      {{else}}<span class="block text-sm text-muted">{{t $.Lang "admin.store.noupdate"}}</span>{{end}}</li>
+  </ul>
+  {{/* Field order matters: the upload is streamed part by part, and the file must come last. */}}
+  <form method="post" action="/admin/store/{{$t.TitleID}}/versions" enctype="multipart/form-data" class="form-stack max-w-2xl">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <label for="kind">{{t .Lang "admin.store.kind"}}</label>
+    <select id="kind" name="kind"><option value="base">{{t .Lang "admin.store.base"}}</option><option value="update">{{t .Lang "admin.store.update"}}</option></select>
+    <label for="version">{{t .Lang "admin.store.version"}}</label>
+    <input id="version" name="version" type="number" min="0" max="4294967295" value="0" required>
+    <p class="hint">{{t .Lang "admin.store.version.hint"}}</p>
+    <label for="version_label">{{t .Lang "admin.store.label"}}</label>
+    <input id="version_label" name="version_label" required placeholder="1.0.0">
+    <label for="contents">{{t .Lang "admin.store.contents"}}</label>
+    <textarea id="contents" name="contents" rows="5" required placeholder="0123…cdef meta 3584&#10;4567…89ab program 4096000&#10;89ab…4567 control 180224"></textarea>
+    <p class="hint">{{t .Lang "admin.store.contents.hint"}}</p>
+    <label for="nsp">{{t .Lang "admin.store.nsp"}}</label>
+    <input id="nsp" name="nsp" type="file" accept=".nsp" required>
+    <button type="submit" class="btn primary">{{t .Lang "admin.store.uploadversion"}}</button>
+  </form>
+</section>
+
+<form method="post" action="/admin/store/{{$t.TitleID}}/delete" class="mt-9 max-w-2xl border-t border-line pt-6 form-stack">
+  <input type="hidden" name="csrf" value="{{.CSRF}}">
+  <label class="flex items-center gap-2"><input type="checkbox" name="confirm" value="1" class="w-auto" required> {{t .Lang "admin.store.delete.confirm"}}</label>
+  <button type="submit" class="btn danger">{{t .Lang "admin.store.delete"}}</button>
+</form>
+{{end}}
+{{template "footer" .}}
