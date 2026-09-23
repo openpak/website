@@ -27,6 +27,7 @@ type Memory struct {
 	pushOwner   map[string]string    // token -> account
 	pushCursor  uint64
 	bans        map[string]Ban
+	support     supportMem
 }
 
 // NewMemory returns an empty in-memory store with registrations open.

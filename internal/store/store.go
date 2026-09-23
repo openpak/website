@@ -103,6 +103,9 @@ type Store interface {
 	RecordBan(ctx context.Context, b Ban) error
 	GetBan(ctx context.Context, accountID string) (Ban, error)
 	ListBans(ctx context.Context, limit int) ([]Ban, error)
+
+	TicketStore
+	CrashStore
 }
 
 // PushToken is one app install that can be notified.
