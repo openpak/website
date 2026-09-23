@@ -31,7 +31,7 @@
   <button type="submit" class="btn primary">{{t .Lang "admin.save"}}</button>
 </form>
 {{if .Exists}}
-<section aria-labelledby="icon-h" class="mt-9 max-w-2xl">
+<section aria-labelledby="icon-h" class="mt-8 max-w-2xl">
   <div class="section-head"><h2 id="icon-h">{{t .Lang "admin.cnews.icon"}}</h2><p>{{t .Lang "admin.cnews.icon.hint"}}</p></div>
   {{if $c.HasIconImage}}<img src="/admin/console-news/channels/{{$c.TopicID}}/icon" alt="" width="70" height="70" class="mb-3 rounded-lg">{{end}}
   <form method="post" action="/admin/console-news/channels/{{$c.TopicID}}/icon" enctype="multipart/form-data" class="flex flex-wrap items-center gap-2">
@@ -42,7 +42,7 @@
   {{if $c.HasIconImage}}<form method="post" action="/admin/console-news/channels/{{$c.TopicID}}/icon" class="mt-2"><input type="hidden" name="csrf" value="{{.CSRF}}"><input type="hidden" name="remove" value="1"><button type="submit" class="btn text-sm">{{t .Lang "admin.cnews.icon.remove"}}</button></form>{{end}}
 </section>
 
-<section aria-labelledby="art-h" class="mt-9">
+<section aria-labelledby="art-h" class="mt-8">
   <div class="section-head"><h2 id="art-h">{{t .Lang "admin.cnews.articles"}}</h2></div>
   {{if not $c.Retired}}<div class="mb-4"><a class="btn text-sm primary" href="/admin/console-news/channels/{{$c.TopicID}}/articles/new">{{t .Lang "admin.cnews.article.new"}}</a></div>{{end}}
   {{if .Articles}}
@@ -58,7 +58,7 @@
   {{else}}<p class="card p-4 text-muted">{{t .Lang "admin.cnews.noarticles"}}</p>{{end}}
 </section>
 
-<form method="post" action="/admin/console-news/channels/{{$c.TopicID}}/retire" class="mt-9 max-w-2xl border-t border-line pt-6 form-stack">
+<form method="post" action="/admin/console-news/channels/{{$c.TopicID}}/retire" class="mt-8 max-w-2xl border-t border-line pt-6 form-stack">
   <input type="hidden" name="csrf" value="{{.CSRF}}">
   {{if $c.Retired}}<input type="hidden" name="retired" value="0">
   <p class="hint">{{t .Lang "admin.cnews.restore.hint"}}</p>

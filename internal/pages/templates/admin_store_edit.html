@@ -49,7 +49,7 @@
 </form>
 
 {{if .Exists}}
-<section aria-labelledby="icon-h" class="mt-9 max-w-2xl">
+<section aria-labelledby="icon-h" class="mt-8 max-w-2xl">
   <div class="section-head"><h2 id="icon-h">{{t .Lang "admin.store.icon"}}</h2><p>{{t .Lang "admin.store.icon.hint"}}{{with $t.IconPath}} <code>{{.}}</code>{{end}}</p></div>
   <form method="post" action="/admin/store/{{$t.TitleID}}/icon" enctype="multipart/form-data" class="flex flex-wrap items-center gap-2">
     <input type="hidden" name="csrf" value="{{.CSRF}}">
@@ -58,7 +58,7 @@
   </form>
 </section>
 
-<section aria-labelledby="ver-h" class="mt-9">
+<section aria-labelledby="ver-h" class="mt-8">
   <div class="section-head"><h2 id="ver-h">{{t .Lang "admin.store.versions"}}</h2></div>
   <ul class="card list-none divide-y divide-line p-0 mb-6">
     <li class="p-4"><span class="font-semibold">{{t .Lang "admin.store.base"}}</span>
@@ -90,7 +90,7 @@
   </form>
 </section>
 
-<form method="post" action="/admin/store/{{$t.TitleID}}/delete" class="mt-9 max-w-2xl border-t border-line pt-6 form-stack">
+<form method="post" action="/admin/store/{{$t.TitleID}}/delete" class="mt-8 max-w-2xl border-t border-line pt-6 form-stack">
   <input type="hidden" name="csrf" value="{{.CSRF}}">
   <label class="flex items-center gap-2"><input type="checkbox" name="confirm" value="1" class="w-auto" required> {{t .Lang "admin.store.delete.confirm"}}</label>
   <button type="submit" class="btn danger">{{t .Lang "admin.store.delete"}}</button>

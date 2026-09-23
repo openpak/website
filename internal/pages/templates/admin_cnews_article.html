@@ -59,7 +59,7 @@
   <button type="submit" class="btn primary"{{if $a.Retired}} disabled{{end}}>{{t .Lang "admin.save"}}</button>
 </form>
 {{if .Exists}}
-<section aria-labelledby="img-h" class="mt-9 max-w-2xl">
+<section aria-labelledby="img-h" class="mt-8 max-w-2xl">
   <div class="section-head"><h2 id="img-h">{{t .Lang "admin.cnews.a.image"}}</h2><p>{{t .Lang "admin.cnews.a.image.hint"}}</p></div>
   {{if $a.HasImage}}<img src="/admin/console-news/channels/{{.Topic}}/articles/{{$a.NewsID}}/image" alt="" class="mb-3 max-w-md rounded-lg">{{end}}
   <form method="post" action="/admin/console-news/channels/{{.Topic}}/articles/{{$a.NewsID}}/image" enctype="multipart/form-data" class="flex flex-wrap items-center gap-2">
@@ -69,7 +69,7 @@
   </form>
   {{if $a.HasImage}}<form method="post" action="/admin/console-news/channels/{{.Topic}}/articles/{{$a.NewsID}}/image" class="mt-2"><input type="hidden" name="csrf" value="{{.CSRF}}"><input type="hidden" name="remove" value="1"><button type="submit" class="btn text-sm">{{t .Lang "admin.cnews.a.image.remove"}}</button></form>{{end}}
 </section>
-<div class="mt-9 flex max-w-2xl flex-wrap items-end gap-3 border-t border-line pt-6">
+<div class="mt-8 flex max-w-2xl flex-wrap items-end gap-3 border-t border-line pt-6">
   <form method="post" action="/admin/console-news/channels/{{.Topic}}/articles/{{$a.NewsID}}/retire" class="row-form">
     <input type="hidden" name="csrf" value="{{.CSRF}}">
     {{if $a.Retired}}<input type="hidden" name="retired" value="0"><button type="submit" class="btn text-sm">{{t .Lang "admin.cnews.restore"}}</button>
