@@ -142,7 +142,16 @@ type conn struct {
 	out  chan []byte
 	done chan struct{}
 	once sync.Once
+
+	// window and frames cap what one phone may send per second (maxPerSecond),
+	// so nobody can fill another phone's queue and get it dropped.
+	window time.Time
+	frames int
 }
+
+// maxPerSecond is far above a real negotiation (an offer, an answer and a
+// few dozen ICE candidates) and far below what fills a 64-frame queue.
+const maxPerSecond = 40
 
 func (c *conn) close() { c.once.Do(func() { close(c.done) }) }
 
@@ -385,6 +394,12 @@ func (h *Hub) handle(r *room, c *conn, b []byte) {
 	defer h.mu.Unlock()
 	if r.peers[c.peer.ID] != c {
 		return // replaced
+	}
+	if now := time.Now(); now.Sub(c.window) >= time.Second {
+		c.window, c.frames = now, 0
+	}
+	if c.frames++; c.frames > maxPerSecond {
+		return
 	}
 	switch m.Type {
 	case "signal":

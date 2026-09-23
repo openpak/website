@@ -3,6 +3,11 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.53.1 — voice chat hardening
+
+- A phone may send at most 40 signaling frames a second; the rest are ignored. Before, one
+  phone flooding a room could fill another phone's queue and get that phone dropped.
+
 ## v0.53.0 — voice chat
 
 - **Voice chat for the phone app** (`internal/voice`). As on Nintendo's service the audio

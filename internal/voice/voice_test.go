@@ -245,3 +245,40 @@ func TestGatheringsAsksEachTitleServer(t *testing.T) {
 		t.Fatal("no URLs should mean no lookup")
 	}
 }
+
+// One phone flooding the room is capped, so it cannot fill another phone's
+// queue and get that phone dropped.
+func TestAFloodIsCappedNotRelayed(t *testing.T) {
+	h := New(Config{})
+	room := h.CreateRoom()
+	srv := serve(t, h)
+	a := dial(t, srv, room.Code, "a")
+	expect(t, a.next(), "welcome")
+	b := dial(t, srv, room.Code, "b")
+	expect(t, b.next(), "welcome")
+	expect(t, a.next(), "join")
+
+	for i := range 200 {
+		a.send(map[string]any{"type": "state", "muted": i%2 == 0})
+	}
+	time.Sleep(300 * time.Millisecond)
+	if _, peers, _ := h.Lookup(room.Code); len(peers) != 2 {
+		t.Fatalf("the flood cost a phone its seat: %d left", len(peers))
+	}
+	// (A read that runs out its context closes the socket, so the seat is checked first.)
+	got := 0
+	ctx, cancel := context.WithTimeout(context.Background(), 1500*time.Millisecond)
+	defer cancel()
+	for {
+		_, msg, err := b.ws.Read(ctx)
+		if err != nil {
+			break
+		}
+		if strings.Contains(string(msg), `"type":"state"`) {
+			got++
+		}
+	}
+	if got == 0 || got > 2*maxPerSecond {
+		t.Fatalf("b was sent %d state frames out of 200; the cap is %d a second", got, maxPerSecond)
+	}
+}
