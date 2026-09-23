@@ -205,8 +205,9 @@ func TestRollbackRemainsVerifiableThroughInjectedFailures(t *testing.T) {
 	first := mustPublishPromoted(t, f, "switch")
 
 	// A rollback whose metadata storage fails leaves the pointer alone.
-	// Rollback's put order is the four metadata roles; fail the second.
-	fb.arm(2)
+	// Rollback stores the reissued bundle and manifest first, then the four
+	// metadata roles; fail the second metadata role.
+	fb.arm(4)
 	f.clock.Advance(time.Hour)
 	if _, err := f.svc.Rollback(ctx, "switch", "stable"); err == nil {
 		t.Fatal("the injected failure did not fail the rollback")
@@ -216,8 +217,8 @@ func TestRollbackRemainsVerifiableThroughInjectedFailures(t *testing.T) {
 		t.Fatalf("a failed rollback moved the channel: %+v err=%v", cur, err)
 	}
 
-	// The recovered rollback publishes a higher sequence referencing the
-	// last good content, and the whole chain verifies against its bytes.
+	// The recovered rollback publishes the last good semantic content under
+	// a higher identity, and the whole chain verifies against its bytes.
 	fb.arm()
 	f.clock.Advance(time.Hour)
 	rb, err := f.svc.Rollback(ctx, "switch", "stable")
@@ -227,8 +228,8 @@ func TestRollbackRemainsVerifiableThroughInjectedFailures(t *testing.T) {
 	if want := first.Sequence + 2; rb.Sequence != want {
 		t.Fatalf("rollback sequence %d, want %d", rb.Sequence, want)
 	}
-	if rb.Revision.BundleSHA256 != first.Revision.BundleSHA256 {
-		t.Fatal("rollback changed the content it references")
+	if rb.Revision.BundleSHA256 == first.Revision.BundleSHA256 || rb.Revision.CanonicalPolicySHA256 != first.Revision.CanonicalPolicySHA256 {
+		t.Fatal("rollback did not reissue the same canonical content under a new publication identity")
 	}
 	fetched := make(map[string][]byte, 4)
 	for _, name := range MetadataNames {

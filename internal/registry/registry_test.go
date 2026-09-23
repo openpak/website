@@ -242,8 +242,9 @@ func TestSequencesAreMonotonicAndCanonicalIdentityPersists(t *testing.T) {
 	}
 }
 
-// A rollback publishes a higher sequence referencing the last good content
-// and the pointer keeps resolving (POL-007).
+// A rollback reissues the last good semantic content at a higher sequence.
+// Bundle, manifest and signed metadata must all carry that new publication
+// identity, while the canonical policy identity stays unchanged (POL-007).
 func TestRollbackPublishesHigherSequenceOfTheSameContent(t *testing.T) {
 	f := newFixture(t)
 	ctx := context.Background()
@@ -262,11 +263,32 @@ func TestRollbackPublishesHigherSequenceOfTheSameContent(t *testing.T) {
 	if rb.Sequence != first.Sequence+1 {
 		t.Fatalf("rollback sequence %d, want %d", rb.Sequence, first.Sequence+1)
 	}
-	if rb.Revision.BundleSHA256 != first.Revision.BundleSHA256 {
-		t.Fatal("rollback changed the content it references")
+	if rb.Revision.BundleSHA256 == first.Revision.BundleSHA256 {
+		t.Fatal("rollback reused a bundle carrying the old publication identity")
+	}
+	if rb.Revision.CanonicalPolicySHA256 != first.Revision.CanonicalPolicySHA256 {
+		t.Fatal("rollback changed the canonical policy identity")
+	}
+	bundleBytes, err := f.blobs.Get(ctx, rb.Revision.BundleSHA256)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundle, err := policy.DecodeBundle(bundleBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	manifest, err := policy.DecodeManifest(rb.Manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bundle.Sequence != rb.Sequence || manifest.Sequence != rb.Sequence {
+		t.Fatalf("rollback identity: bundle=%d manifest=%d revision=%d", bundle.Sequence, manifest.Sequence, rb.Sequence)
+	}
+	if err := policy.ValidateBundleCoherence(bundle, manifest); err != nil {
+		t.Fatalf("rollback bundle and manifest disagree: %v", err)
 	}
 	cur, err := f.store.Channel(ctx, "switch", "stable")
-	if err != nil || cur.BundleSHA256 != first.Revision.BundleSHA256 || cur.Sequence != rb.Sequence {
+	if err != nil || cur.BundleSHA256 != rb.Revision.BundleSHA256 || cur.Sequence != rb.Sequence {
 		t.Fatalf("channel after rollback: %+v err=%v", cur, err)
 	}
 }

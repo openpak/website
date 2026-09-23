@@ -236,10 +236,12 @@ func (s *Service) signAndStore(ctx context.Context, in signInput) (map[string]st
 	return digests, nil
 }
 
-// Rollback answers a bad publication the only safe way (POL-007): a higher
-// sequence that references the last good content. Nothing is rewritten; the
-// audit trail keeps every revision, and the channel pointer moves only when
-// the rollback revision is complete.
+// Rollback answers a bad publication the only safe way (POL-007): reissue
+// the last good semantic content at a higher sequence. The bundle and
+// manifest both carry publication identity, so they must be rebuilt rather
+// than paired with fresh metadata under their old sequence. Nothing is
+// rewritten; the audit trail keeps every revision, and the channel pointer
+// moves only when the reissue is complete.
 func (s *Service) Rollback(ctx context.Context, platform, channel string) (PublicationResult, error) {
 	cur, err := s.Store.Channel(ctx, platform, channel)
 	if err != nil {
@@ -264,9 +266,57 @@ func (s *Service) Rollback(ctx context.Context, platform, channel string) (Publi
 	if err != nil {
 		return PublicationResult{}, fmt.Errorf("%w: %v", ErrUnverified, err)
 	}
+	oldManifest, err := policy.DecodeManifest(manifestBytes)
+	if err != nil {
+		return PublicationResult{}, fmt.Errorf("%w: %v", ErrUnverified, err)
+	}
+	if err := policy.ValidateBundleCoherence(b, oldManifest); err != nil {
+		return PublicationResult{}, fmt.Errorf("%w: %v", ErrUnverified, err)
+	}
 	sequence, err := s.Store.NextSequence(ctx, platform, channel)
 	if err != nil {
 		return PublicationResult{}, err
+	}
+	b.Sequence = sequence
+	b.IssuedAt = s.now().UTC()
+	if err := b.Validate(envFor(channel)); err != nil {
+		return PublicationResult{}, fmt.Errorf("%w: %v", ErrUnverified, err)
+	}
+	bundleBytes, err = policy.MarshalBundle(b)
+	if err != nil {
+		return PublicationResult{}, fmt.Errorf("%w: %v", ErrUnverified, err)
+	}
+	payloads := []policy.PayloadInput{{
+		Path: policy.PolicyPayloadPath, MediaType: policy.MediaTypeJSON, Bytes: bundleBytes,
+	}}
+	for _, old := range oldManifest.Payloads {
+		if old.Path == policy.PolicyPayloadPath {
+			continue
+		}
+		data, err := s.Blobs.Get(ctx, old.SHA256)
+		if err != nil {
+			return PublicationResult{}, fmt.Errorf("registry: last good payload %s unavailable: %w", old.Path, err)
+		}
+		payloads = append(payloads, policy.PayloadInput{Path: old.Path, MediaType: old.MediaType, Bytes: data})
+	}
+	manifest, err := policy.BuildManifest(b.PolicyID, b.Platform, b.Channel, sequence, b.RequiredCapabilities, payloads)
+	if err != nil {
+		return PublicationResult{}, fmt.Errorf("%w: %v", ErrUnverified, err)
+	}
+	if err := policy.ValidateBundleCoherence(b, manifest); err != nil {
+		return PublicationResult{}, fmt.Errorf("%w: %v", ErrUnverified, err)
+	}
+	manifestBytes, err = json.Marshal(manifest)
+	if err != nil {
+		return PublicationResult{}, err
+	}
+	bundleSHA256, err := s.Blobs.Put(ctx, bundleBytes)
+	if err != nil {
+		return PublicationResult{}, fmt.Errorf("registry: store rollback policy: %w", err)
+	}
+	manifestSHA256, err := s.Blobs.Put(ctx, manifestBytes)
+	if err != nil {
+		return PublicationResult{}, fmt.Errorf("registry: store rollback manifest: %w", err)
 	}
 	metadataDigests, err := s.signAndStore(ctx, signInput{
 		sequence:      sequence,
@@ -282,16 +332,16 @@ func (s *Service) Rollback(ctx context.Context, platform, channel string) (Publi
 		Platform:              platform,
 		Channel:               channel,
 		Sequence:              sequence,
-		BundleSHA256:          lastGood.BundleSHA256,
-		ManifestSHA256:        lastGood.ManifestSHA256,
+		BundleSHA256:          bundleSHA256,
+		ManifestSHA256:        manifestSHA256,
 		CanonicalPolicySHA256: lastGood.CanonicalPolicySHA256,
 		Metadata:              metadataDigests,
-		IssuedAt:              s.now(),
+		IssuedAt:              b.IssuedAt,
 	}
 	if _, err := s.Store.InsertRevision(ctx, rev); err != nil {
 		return PublicationResult{}, err
 	}
-	if err := s.Store.Promote(ctx, platform, channel, cur.BundleSHA256); err != nil {
+	if err := s.Store.Promote(ctx, platform, channel, bundleSHA256); err != nil {
 		return PublicationResult{}, err
 	}
 	return PublicationResult{
