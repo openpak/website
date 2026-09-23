@@ -455,20 +455,28 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request, tok store.APIT
 	// no single code to project here — the console being listed is the point.
 	platforms := []map[string]string{}
 	if link, err := s.Links.ActiveLinkByAccount(r.Context(), "switch", tok.AccountID); err == nil {
-		// The link subject is the console's user id, not a friend code. The
-		// code the adapter published on the link, else the adapter's own
-		// answer; none rather than dressing up a hex id as one.
-		if code := accounts.FriendCode(r.Context(), link, s.Adapter, tok.AccountID); code != "" {
-			resp["friend_code"] = code
-		}
 		platforms = append(platforms, map[string]string{"namespace": "switch", "link_id": link.LinkID})
 	}
 	if link, err := s.Links.ActiveLinkByAccount(r.Context(), "wfc", tok.AccountID); err == nil {
 		platforms = append(platforms, map[string]string{"namespace": "wfc", "link_id": link.LinkID})
 	}
-	// The account's own code, for adding friends whatever console they are on.
-	if code, err := s.DB.OpenPakCode(r.Context(), tok.AccountID); err == nil {
-		resp["openpak_code"] = code
+	// Every code the account can be added by, as the website's profile lists
+	// them; openpak_code is the first of them, kept as its own field for
+	// clients that only want that one.
+	codes := accounts.FriendCodes(r.Context(), s.DB, s.Links, s.Adapter, tok.AccountID)
+	if codes == nil {
+		codes = []accounts.Code{}
+	}
+	resp["friend_codes"] = codes
+	for _, c := range codes {
+		switch c.Kind {
+		case accounts.CodeOpenPak:
+			resp["openpak_code"] = c.Code
+		case accounts.CodeSwitch:
+			// The code the adapter published on the Switch link, else the
+			// adapter's own answer; never the link's hex subject.
+			resp["friend_code"] = c.Code
+		}
 	}
 	resp["linked_platforms"] = platforms
 	writeJSON(w, http.StatusOK, resp)

@@ -2300,6 +2300,20 @@ components:
           description: |
             Present only when a Switch link exists: the code the adapter
             published on the link, else the adapter's own answer.
+        friend_codes:
+          type: array
+          description: |
+            Every code the account can be added by, in display order: OpenPak
+            first, then Switch, Wii U (the NNID, once nn-account publishes it)
+            and 3DS. Wii and DS have none (their codes are per game).
+          items:
+            type: object
+            required: [kind, console, label, code]
+            properties:
+              kind: { type: string, enum: [openpak, switch, wiiu, 3ds] }
+              console: { type: string, examples: ["3DS"] }
+              label: { type: string, examples: ["Wii U · NNID"] }
+              code: { type: string, examples: ["0123-4567-8901"] }
         openpak_code:
           type: string
           description: |

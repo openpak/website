@@ -174,6 +174,49 @@ func PIDFrom3DSCode(typed string) (int64, bool) {
 	return 0, false
 }
 
+// Code is one way to be added as a friend: its kind ("openpak", "switch",
+// "wiiu", "3ds"), the console it works on, a label and the code itself.
+type Code struct {
+	Kind    string `json:"kind"`
+	Console string `json:"console"`
+	Label   string `json:"label"`
+	Code    string `json:"code"`
+}
+
+// FriendCodes is every code the account can be added by, in the order the
+// profile shows them. The website's banner and the API's /me both read this,
+// so the app and the site never list different codes.
+func FriendCodes(ctx context.Context, codes store.OpenPakCodeStore, links core.Links, ad *adapter.Client, accountID string) []Code {
+	var out []Code
+	// The OpenPak code first: it is the one that works for everybody.
+	if c, err := codes.OpenPakCode(ctx, accountID); err == nil {
+		out = append(out, Code{CodeOpenPak, "OpenPak", "OpenPak", c})
+	}
+	if link, err := links.ActiveLinkByAccount(ctx, "switch", accountID); err == nil {
+		if c := FriendCode(ctx, link, ad, accountID); c != "" {
+			out = append(out, Code{CodeSwitch, "Switch", "Switch", c})
+		}
+	}
+	// Wii U friends add each other by Nintendo Network ID, which nn-account
+	// owns; it appears once nn-account publishes it on the link.
+	if link, err := links.ActiveLinkByAccount(ctx, "wiiu", accountID); err == nil && link.PublicCode != "" {
+		out = append(out, Code{"wiiu", "Wii U", "Wii U · NNID", link.PublicCode})
+	}
+	// A 3DS code is derived from the console's principal id, the link's
+	// subject, so it needs no call to nn-account.
+	if link, err := links.ActiveLinkByAccount(ctx, "3ds", accountID); err == nil {
+		c := link.PublicCode
+		if pid, err := strconv.ParseInt(link.SubjectID, 10, 64); c == "" && err == nil {
+			c = FriendCode3DS(pid)
+		}
+		if c != "" {
+			out = append(out, Code{Code3DS, "3DS", "3DS", c})
+		}
+	}
+	// Wii and DS have none: a Wii friend code belongs to a game, not the console.
+	return out
+}
+
 // FriendCode is the account's Switch friend code for display: the one the
 // adapter published on the link, else the adapter's answer. "" is none.
 func FriendCode(ctx context.Context, link core.Link, ad *adapter.Client, accountID string) string {

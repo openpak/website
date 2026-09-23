@@ -3,6 +3,13 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.55.1 — every friend code in /me
+
+- `GET /api/v1/me` returns `friend_codes`: the list the profile banner shows (kind, console,
+  label, code), so the app can show the 3DS code and, once published, the Wii U NNID.
+  `openpak_code` and `friend_code` stay, read from the same list. The banner and `/me` share
+  `accounts.FriendCodes`, so they cannot list different codes.
+
 ## v0.55.0 — friend codes and an OpenPak code
 
 - **OpenPak codes.** Every account has one (`OP-XXXX-XXXX`, minted on first use, table

@@ -24,7 +24,7 @@ type accountView struct {
 	HasFriendCode bool
 	// Codes is every code people can add this account by, one per console
 	// family, shown together in the profile banner.
-	Codes          []codeRow
+	Codes          []accounts.Code
 	Links          []linkRow
 	CanLinkWFC     bool // a Wii/DS server is configured, so the friend-code form is shown
 	Sessions       []core.Session
@@ -43,12 +43,6 @@ type accountView struct {
 	EmailVerified    bool
 	TwoFactorEnabled bool
 	friendsData
-}
-
-// codeRow is one way to be added as a friend: the console it works on, what
-// that console calls it, and the code itself.
-type codeRow struct {
-	Console, Label, Code string
 }
 
 type linkRow struct {
@@ -76,46 +70,22 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 		view.AvatarURL += "?v=" + strconv.FormatInt(rec.UpdatedAt.UnixNano(), 10)
 	}
 
-	// Friend code: read-only projection of the adapter-owned link subject
-	// (CR-3 interim). Absence is normal for accounts without a console.
-	if link, err := s.Links.ActiveLinkByAccount(ctx, "switch", v.AccountID); err == nil {
-		// The subject is the console's own user id. The friend code is a
-		// separate thing the adapter mints -- twelve digits, unique, the one
-		// people read out to each other. The core carries it once the adapter
-		// publishes it on the link; until then, ask the adapter.
-		view.FriendCode = accounts.FriendCode(ctx, link, s.Adapter, v.AccountID)
-		view.HasFriendCode = view.FriendCode != ""
-		view.Links = append(view.Links, linkRow{Namespace: "Switch", Subject: link.SubjectID, LinkID: link.LinkID, Revocable: true})
-	}
-
-	// The OpenPak code comes first: it is the one that works for everybody.
-	if code, err := s.DB.OpenPakCode(ctx, v.AccountID); err == nil {
-		view.Codes = append(view.Codes, codeRow{"OpenPak", "OpenPak", code})
-	} else {
-		s.log.Error("openpak code", "err", err)
-	}
-	if view.HasFriendCode {
-		view.Codes = append(view.Codes, codeRow{"Switch", "Switch", view.FriendCode})
-	}
-	// Wii U friends add each other by Nintendo Network ID, which nn-account
-	// owns; it shows here once nn-account publishes it on the link.
-	if link, err := s.Links.ActiveLinkByAccount(ctx, "wiiu", v.AccountID); err == nil {
-		if link.PublicCode != "" {
-			view.Codes = append(view.Codes, codeRow{"Wii U", "Wii U · NNID", link.PublicCode})
+	// Every code people can add this account by, shared with the API's /me.
+	view.Codes = accounts.FriendCodes(ctx, s.DB, s.Links, s.Adapter, v.AccountID)
+	for _, c := range view.Codes {
+		if c.Kind == accounts.CodeSwitch {
+			view.FriendCode, view.HasFriendCode = c.Code, true
 		}
-		view.Links = append(view.Links, linkRow{Namespace: "Wii U", Subject: link.SubjectID, LinkID: link.LinkID})
 	}
-	// A 3DS friend code is derived from the console's principal id, which is
-	// the link's subject, so it needs no call to nn-account.
-	if link, err := s.Links.ActiveLinkByAccount(ctx, "3ds", v.AccountID); err == nil {
-		code := link.PublicCode
-		if pid, err := strconv.ParseInt(link.SubjectID, 10, 64); code == "" && err == nil {
-			code = accounts.FriendCode3DS(pid)
+	// The consoles behind them. Wii U and 3DS are listed but not revocable
+	// here: those links are nn-account's console accounts.
+	for _, l := range []struct {
+		ns, name  string
+		revocable bool
+	}{{"switch", "Switch", true}, {"wiiu", "Wii U", false}, {"3ds", "3DS", false}} {
+		if link, err := s.Links.ActiveLinkByAccount(ctx, l.ns, v.AccountID); err == nil {
+			view.Links = append(view.Links, linkRow{Namespace: l.name, Subject: link.SubjectID, LinkID: link.LinkID, Revocable: l.revocable})
 		}
-		if code != "" {
-			view.Codes = append(view.Codes, codeRow{"3DS", "3DS", code})
-		}
-		view.Links = append(view.Links, linkRow{Namespace: "3DS", Subject: link.SubjectID, LinkID: link.LinkID})
 	}
 
 	// Wii and DS cannot link themselves; the website did it from a friend code (handleLinkWFC).
