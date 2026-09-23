@@ -172,6 +172,7 @@ func run(log *slog.Logger) error {
 	supportSvc := &support.Service{DB: db, Files: files, Push: pushSender, Log: log}
 	pageSrv.Support = supportSvc
 	apiSrv.Support = supportSvc
+	apiSrv.Crashes = files
 	adminSrv := admin.New(tmpl, coreGRPC, db, sessions, cfg.AdminAccountIDs, log)
 	adminSrv.Federation = coreGRPC
 	adminSrv.Moderation = coreGRPC
@@ -191,6 +192,7 @@ func run(log *slog.Logger) error {
 	adminSrv.Registry = admin.NewRegistryAPI(os.Getenv("REGISTRY_INTERNAL_URL"), os.Getenv("REGISTRY_ADMIN_KEY"))
 	adminSrv.Ops = admin.NewOpsAPI(os.Getenv("WEBSITE_OPSD_HOSTS"), os.Getenv("WEBSITE_OPSD_KEY"))
 	adminSrv.Support = supportSvc
+	adminSrv.CrashFiles = files
 
 	// News: the public feed for the landing page, and the operator gRPC for
 	// /admin/news. Either can be absent; the landing page then has no news

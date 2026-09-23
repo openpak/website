@@ -1,0 +1,61 @@
+{{template "header" .}}
+{{template "adminnav" .}}
+<div class="page-head">
+  <h1>{{t .Lang "admin.crashes"}}</h1>
+  <p>{{t .Lang "admin.crashes.help"}}</p>
+</div>
+<form method="get" action="/admin/crashes" class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3" aria-label="{{t .Lang "admin.crashes.filter"}}">
+  <label class="flex flex-col gap-1 text-sm text-ink-2"><span>{{t .Lang "admin.crashes.source"}}</span>
+    <select name="source" class="field">{{$src := .Q.Get "source"}}<option value="">{{t .Lang "admin.crashes.any"}}</option>{{range .Sources}}<option value="{{.}}"{{if eq . $src}} selected{{end}}>{{.}}</option>{{end}}</select></label>
+  <label class="flex flex-col gap-1 text-sm text-ink-2"><span>{{t .Lang "admin.crashes.version"}}</span><input name="version" class="field" value="{{.Q.Get "version"}}"></label>
+  <label class="flex flex-col gap-1 text-sm text-ink-2"><span>{{t .Lang "admin.crashes.title"}}</span><input name="title" class="field" value="{{.Q.Get "title"}}" placeholder="0100…"></label>
+  <label class="flex flex-col gap-1 text-sm text-ink-2"><span>{{t .Lang "admin.crashes.code"}}</span><input name="error_code" class="field" value="{{.Q.Get "error_code"}}"></label>
+  <label class="flex flex-col gap-1 text-sm text-ink-2"><span>{{t .Lang "admin.crashes.from"}}</span><input name="from" type="date" class="field" value="{{.Q.Get "from"}}"></label>
+  <label class="flex flex-col gap-1 text-sm text-ink-2"><span>{{t .Lang "admin.crashes.to"}}</span><input name="to" type="date" class="field" value="{{.Q.Get "to"}}"></label>
+  <label class="flex flex-col gap-1 text-sm text-ink-2"><span>{{t .Lang "admin.crashes.state"}}</span>
+    <select name="status" class="field">{{range $s := .States}}<option value="{{$s}}"{{if eq $s $.Status}} selected{{end}}>{{$s}}</option>{{end}}</select></label>
+  <label class="flex flex-col gap-1 text-sm text-ink-2"><span>{{t .Lang "admin.crashes.view"}}</span>
+    <select name="view" class="field"><option value="">{{t .Lang "admin.crashes.groups"}}</option><option value="list"{{if .List}} selected{{end}}>{{t .Lang "admin.crashes.reports"}}</option></select></label>
+  {{with .Q.Get "signature"}}<input type="hidden" name="signature" value="{{.}}">{{end}}
+  <div class="flex items-end gap-2"><button type="submit" class="btn text-sm primary">{{t .Lang "admin.crashes.apply"}}</button><a class="btn text-sm" href="/admin/crashes">{{t .Lang "admin.crashes.clear"}}</a></div>
+</form>
+{{with .Q.Get "signature"}}<p class="notice mb-6">{{t $.Lang "admin.crashes.onegroup"}} <code>{{.}}</code></p>{{end}}
+{{if .Error}}<p class="notice bad mb-6" role="alert">{{.Error}}</p>{{end}}
+
+{{if .List}}
+{{if .Reports}}
+<ul class="card list-none divide-y divide-line p-0">
+  {{range .Reports}}
+  <li class="p-4">
+    <a class="font-semibold" href="/admin/crashes/{{.ID}}">#{{.ID}}</a>
+    <span class="badge">{{.Source}}</span>{{with .ErrorCode}} <code>{{.}}</code>{{end}}
+    {{if .Resolved}}<span class="badge ok">resolved</span>{{end}}{{if .Attachment.Key}} <span class="badge">file</span>{{end}}
+    <span class="block text-sm text-muted break-anywhere">{{with .Version}}{{.}} · {{end}}{{with .OS}}{{.}} · {{end}}{{with .TitleID}}{{with index $.Names .}}{{.}} {{end}}<code>{{.}}</code> · {{end}}{{.CreatedAt.Format "2 Jan 2006 15:04"}}{{if .AccountID}} · <code>{{.AccountID}}</code>{{end}}</span>
+    {{with .Message}}<span class="block text-sm break-anywhere">{{.}}</span>{{end}}
+  </li>
+  {{end}}
+</ul>
+{{else if not .Error}}<p class="card p-4 text-muted">{{t .Lang "admin.crashes.none"}}</p>{{end}}
+{{else}}
+{{if .Groups}}
+<ul class="card list-none divide-y divide-line p-0">
+  {{range .Groups}}
+  <li class="flex flex-wrap items-center gap-3 p-4">
+    <span class="min-w-0">
+      <a class="font-semibold" href="/admin/crashes?view=list&amp;status=all&amp;signature={{.Signature}}">{{.Count}} × {{.Source}}{{with .ErrorCode}} {{.}}{{end}}</a>
+      {{if .Open}}<span class="badge warn">{{.Open}} open</span>{{else}}<span class="badge ok">resolved</span>{{end}}
+      <span class="block text-sm text-muted break-anywhere">{{with .TitleID}}{{with index $.Names .}}{{.}} {{end}}<code>{{.}}</code> · {{end}}{{range $i, $v := .Versions}}{{if $i}}, {{end}}{{$v}}{{end}}{{if .Versions}} · {{end}}{{.FirstSeen.Format "2 Jan"}} – {{.LastSeen.Format "2 Jan 2006 15:04"}} · <code>{{.Signature}}</code> · <a href="/admin/crashes/{{.LatestID}}">{{t $.Lang "admin.crashes.latest"}}</a></span>
+      {{with .Message}}<span class="block text-sm break-anywhere">{{.}}</span>{{end}}
+    </span>
+    <form method="post" action="/admin/crashes/group/{{.Signature}}/resolve" class="ml-auto shrink-0">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <input type="hidden" name="back" value="/admin/crashes?{{$.Query}}">
+      <input type="hidden" name="resolved" value="{{if .Open}}1{{else}}0{{end}}">
+      <button type="submit" class="btn text-sm">{{if .Open}}{{t $.Lang "admin.crashes.resolve"}}{{else}}{{t $.Lang "admin.crashes.reopen"}}{{end}}</button>
+    </form>
+  </li>
+  {{end}}
+</ul>
+{{else if not .Error}}<p class="card p-4 text-muted">{{t .Lang "admin.crashes.none"}}</p>{{end}}
+{{end}}
+{{template "footer" .}}

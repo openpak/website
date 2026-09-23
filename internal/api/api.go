@@ -22,6 +22,7 @@ import (
 
 	"github.com/openpak/website/internal/accounts"
 	"github.com/openpak/website/internal/adapter"
+	"github.com/openpak/website/internal/attachments"
 	"github.com/openpak/website/internal/chat"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/media"
@@ -64,6 +65,9 @@ type Server struct {
 	SaveTitle func(ctx context.Context, platform, id string) (name string, icon bool)
 	Chat      *chat.Client
 	WFC       *wfc.Client // resolves Wii/DS friend codes; nil answers 503 on /me/links/wfc
+	// Crashes stores crash-report files; nil keeps reports without them.
+	Crashes    *attachments.Store
+	CrashLimit *ratelimit.Limiter // per client, public crash reports
 	// Support is the help-ticket service; nil answers 503 on /me/tickets.
 	Support *support.Service
 	// News is the public news feed; nil answers an empty list on /news.
@@ -88,6 +92,7 @@ func New(c core.HTTP, id core.Identity, soc core.Social, lnk core.Links, inv cor
 		Auth:       ratelimit.New(10, time.Minute),
 		PerToken:   ratelimit.New(120, time.Minute),
 		MediaLimit: ratelimit.New(5, time.Hour),
+		CrashLimit: ratelimit.New(20, 10*time.Minute),
 		log:        log,
 	}
 }
@@ -161,6 +166,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	s.registerInternal(mux)
 	s.registerBans(mux)
 	s.registerTickets(mux)
+	s.registerCrashes(mux)
 	h("/me/avatar", s.auth(s.handleChooseAvatar))
 	s.registerSecurity(mux)
 }
@@ -221,6 +227,7 @@ var errorCodes = map[string]string{
 	"no such version":                                           "not_found",
 	"help tickets are not available on this deployment":         "tickets_unavailable",
 	"the attachment is larger than 10 MB":                       "attachment_too_large",
+	"the attachment is larger than 20 MB":                       "attachment_too_large",
 	"attachments are not available on this deployment":          "attachments_unavailable",
 	"session not found":                                         "not_found",
 }

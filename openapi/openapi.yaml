@@ -1816,6 +1816,93 @@ paths:
               schema: { type: string, format: binary }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { description: No such file, or not yours. }
+  /crash-reports:
+    post:
+      summary: Send a crash report (emulators, the homebrew, the app)
+      description: |
+        Public. A bearer is optional: when it is valid the report is linked to
+        the account, and when it is missing, expired or revoked the report is
+        kept anonymously (never refused for it). Rate limit: 20 reports per 10
+        minutes per client. Reports that share source, error code, title and
+        top frame (the `top_frame` field, else the first line of a `stack` /
+        `backtrace` field, else of `message`, with numbers and addresses
+        blanked) share a `signature` and are counted as one problem.
+
+        Send `multipart/form-data` with a `meta` part (JSON) and an optional
+        `attachment` part (at most 20 MB, streamed to disk; parts in any order),
+        or `application/json` whose body is the meta alone.
+      security:
+        - {}
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [meta]
+              properties:
+                meta: { $ref: "#/components/schemas/CrashMeta" }
+                attachment: { type: string, format: binary, description: A dump or log, at most 20 MB. }
+            encoding:
+              meta: { contentType: application/json }
+          application/json:
+            schema: { $ref: "#/components/schemas/CrashMeta" }
+      responses:
+        "201":
+          description: Stored
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CrashReceipt" }
+        "400":
+          description: No meta, meta not JSON, an unknown source, a field too long, or fields not an object.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "413": { description: "The attachment is larger than 20 MB (code attachment_too_large)." }
+        "429": { description: Rate limited. }
+  /internal/crash-reports:
+    post:
+      summary: A console's error report, relayed by nx-baas (service to service)
+      description: |
+        Not for clients: authenticated with `X-Internal-Key` (or
+        `Authorization: Bearer`) equal to the website's `WEBSITE_INTERNAL_KEY`.
+        An unset key disables the route (503). Stored like any report, with
+        source `console`; `received_at` is when nx-baas received it.
+      security:
+        - internalKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [source, fields]
+              properties:
+                source: { type: string, enum: [console] }
+                received_at:
+                  oneOf:
+                    - { type: string, format: date-time }
+                    - { type: integer, description: Unix seconds. }
+                  description: Absent means now.
+                device_id: { type: string, maxLength: 200 }
+                account_id: { type: string, description: The core account id, when nx-baas knows it. }
+                title_id: { type: string, maxLength: 200 }
+                error_code: { type: string, maxLength: 200, description: "e.g. 2110-3127" }
+                firmware: { type: string, maxLength: 200 }
+                message: { type: string, maxLength: 16000 }
+                fields: { type: object, additionalProperties: true, description: The report's fields as nx-baas decoded them (64 KiB at most). }
+                attachment_b64: { type: string, contentEncoding: base64, description: The raw report, at most 20 MB decoded. }
+      responses:
+        "201":
+          description: Stored
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CrashReceipt" }
+        "400": { description: "Invalid JSON, source not console, received_at unreadable, or attachment_b64 not base64." }
+        "401": { description: Wrong or missing key. }
+        "413": { description: The attachment is larger than 20 MB. }
+        "503": { description: WEBSITE_INTERNAL_KEY is not set on the website. }
 components:
   securitySchemes:
     bearerAuth:
@@ -1831,6 +1918,11 @@ components:
       in: cookie
       name: opak_session
       description: A signed-in admin (WEBSITE_ADMIN_ACCOUNT_IDS), with the page's CSRF token as X-CSRF-Token.
+    internalKey:
+      type: apiKey
+      in: header
+      name: X-Internal-Key
+      description: WEBSITE_INTERNAL_KEY, shared with nx-baas; service to service only.
   responses:
     SavesUnavailable:
       description: Cloud saves are not available on this deployment.
@@ -2043,6 +2135,27 @@ components:
             Stable identifier for clients to translate. Unknown codes may be added; treat one
             like its HTTP status.
           enum: [account_suspended, attachment_too_large, attachments_unavailable, avatar_invalid, avatars_unavailable, bad_request, challenge_expired, chat_blocked, chat_not_friends, chat_unavailable, conflict, console_taken, forbidden, friend_code_unknown, friend_conflict, friend_self, internal, invalid_credentials, link_expired, no_pending_request, not_found, not_votable, quota_exceeded, rate_limited, registrations_closed, saves_unavailable, service_unavailable, session_expired, tickets_unavailable, too_large, two_factor_locked, two_factor_required, unauthorized, wfc_not_found, wfc_unavailable, wrong_code, wrong_password]
+    CrashMeta:
+      type: object
+      required: [source]
+      properties:
+        source: { type: string, enum: [ryujinx, citron, eden, nro, app] }
+        version: { type: string, maxLength: 200, description: The reporting program's version. }
+        os: { type: string, maxLength: 200 }
+        title_id: { type: string, maxLength: 200, description: The running game's title id, when there is one. }
+        error_code: { type: string, maxLength: 200 }
+        message: { type: string, maxLength: 16000 }
+        fields:
+          type: object
+          additionalProperties: true
+          description: Anything else worth keeping (64 KiB at most). `top_frame`, or `stack` / `backtrace`, decide the grouping.
+    CrashReceipt:
+      type: object
+      required: [id, signature, attachment]
+      properties:
+        id: { type: integer, format: int64, description: Quote it in a help ticket. }
+        signature: { type: string, description: 16 hex digits naming the group this report joined. }
+        attachment: { type: boolean, description: Whether a file was kept with it. }
     TicketInput:
       type: object
       required: [subject, category, message]

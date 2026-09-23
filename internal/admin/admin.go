@@ -15,6 +15,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/openpak/website/internal/attachments"
 	"github.com/openpak/website/internal/chat"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
@@ -60,6 +61,8 @@ type Server struct {
 	Ops *OpsAPI
 	// Support is the help-ticket service behind /admin/tickets; nil says "not configured".
 	Support *support.Service
+	// CrashFiles holds crash-report attachments; nil means reports carry none.
+	CrashFiles *attachments.Store
 
 	tmpl *template.Template
 	log  *slog.Logger
@@ -117,6 +120,7 @@ var adminNav = []struct{ href, key string }{
 	{"/admin/users", "admin.nav.users"},
 	{"/admin/reports", "admin.reports"},
 	{"/admin/tickets", "admin.tickets"},
+	{"/admin/crashes", "admin.crashes"},
 }
 
 func navFor(path string) []navLink {
@@ -241,6 +245,12 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/tickets/{id}", s.handleTicketReply)
 	mux.HandleFunc("POST /admin/tickets/{id}/{action}", s.handleTicketUpdate)
 	mux.HandleFunc("GET /admin/tickets/attachments/{msg}", s.handleTicketAttachment)
+	mux.HandleFunc("GET /admin/crashes", s.handleCrashes)
+	mux.HandleFunc("GET /admin/crashes/{id}", s.handleCrash)
+	mux.HandleFunc("GET /admin/crashes/{id}/attachment", s.handleCrashAttachment)
+	mux.HandleFunc("POST /admin/crashes/{id}/resolve", s.handleCrashResolve)
+	mux.HandleFunc("POST /admin/crashes/group/{sig}/resolve", s.handleCrashResolve)
+	mux.HandleFunc("POST /admin/crashes/{id}/ticket", s.handleCrashTicket)
 	mux.HandleFunc("GET /admin/nodes", s.handleNodes)
 	mux.HandleFunc("POST /admin/nodes", s.handleNodeCreate)
 	mux.HandleFunc("POST /admin/nodes/{id}/approve", s.handleNodeApprove)

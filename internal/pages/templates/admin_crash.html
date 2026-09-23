@@ -1,0 +1,42 @@
+{{template "header" .}}
+{{template "adminnav" .}}
+{{$c := .Crash}}
+<div class="page-head">
+  <h1>{{.Title}} <span class="badge align-middle">{{$c.Source}}</span> {{if $c.Resolved}}<span class="badge ok align-middle">resolved</span>{{else}}<span class="badge warn align-middle">open</span>{{end}}</h1>
+  <p>{{if .Group}}<a href="/admin/crashes?view=list&amp;status=all&amp;signature={{$c.Signature}}">{{.Group.Count}} {{t .Lang "admin.crashes.samegroup"}}</a> · {{end}}<code>{{$c.Signature}}</code></p>
+</div>
+<div class="card mb-6 p-4">
+  <table>
+    <tbody>
+      <tr><th>{{t .Lang "admin.crashes.code"}}</th><td><code>{{$c.ErrorCode}}</code></td></tr>
+      <tr><th>{{t .Lang "admin.crashes.title"}}</th><td>{{with .TitleName}}{{.}} {{end}}<code>{{$c.TitleID}}</code></td></tr>
+      <tr><th>{{t .Lang "admin.crashes.version"}}</th><td>{{$c.Version}}</td></tr>
+      <tr><th>OS</th><td>{{$c.OS}}</td></tr>
+      {{if $c.Firmware}}<tr><th>{{t .Lang "admin.crashes.firmware"}}</th><td>{{$c.Firmware}}</td></tr>{{end}}
+      {{if $c.DeviceID}}<tr><th>{{t .Lang "admin.crashes.device"}}</th><td><code>{{$c.DeviceID}}</code></td></tr>{{end}}
+      <tr><th>{{t .Lang "admin.crashes.account"}}</th><td>{{if $c.AccountID}}<a href="/admin/users?q={{$c.AccountID}}"><code>{{$c.AccountID}}</code></a>{{else}}{{t .Lang "admin.crashes.anonymous"}}{{end}}</td></tr>
+      <tr><th>{{t .Lang "admin.crashes.received"}}</th><td>{{$c.ReceivedAt.UTC.Format "2006-01-02 15:04:05"}} UTC{{if ne $c.ReceivedAt.Unix $c.CreatedAt.Unix}} ({{t .Lang "admin.crashes.stored"}} {{$c.CreatedAt.UTC.Format "2006-01-02 15:04:05"}}){{end}}</td></tr>
+      <tr><th>{{t .Lang "admin.crashes.file"}}</th><td>{{if $c.Attachment.Key}}<a href="/admin/crashes/{{$c.ID}}/attachment">{{$c.Attachment.Name}}</a> ({{$c.Attachment.Size}} B, {{$c.Attachment.ContentType}}){{else}}—{{end}}</td></tr>
+      {{if $c.Resolved}}<tr><th>{{t .Lang "admin.crashes.resolvedby"}}</th><td><code>{{$c.ResolvedBy}}</code>{{with $c.ResolvedAt}} · {{.Format "2 Jan 2006 15:04"}}{{end}}</td></tr>{{end}}
+      <tr><th>{{t .Lang "admin.crashes.ticket"}}</th><td>{{if $c.TicketID}}<a href="/admin/tickets/{{$c.TicketID}}">#{{$c.TicketID}}</a>{{else}}—{{end}}</td></tr>
+    </tbody>
+  </table>
+</div>
+{{with $c.Message}}<h2>{{t $.Lang "admin.crashes.message"}}</h2><pre class="card mb-6 p-4 text-sm whitespace-pre-wrap break-anywhere">{{.}}</pre>{{end}}
+<h2>{{t .Lang "admin.crashes.fields"}}</h2>
+<pre class="card mb-6 p-4 text-sm whitespace-pre-wrap break-anywhere">{{.Fields}}</pre>
+<div class="flex flex-wrap items-center gap-3">
+  <form method="post" action="/admin/crashes/{{$c.ID}}/resolve">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <input type="hidden" name="back" value="/admin/crashes/{{$c.ID}}">
+    <input type="hidden" name="resolved" value="{{if $c.Resolved}}0{{else}}1{{end}}">
+    <button type="submit" class="btn text-sm">{{if $c.Resolved}}{{t .Lang "admin.crashes.reopen"}}{{else}}{{t .Lang "admin.crashes.resolve"}}{{end}}</button>
+  </form>
+  <form method="post" action="/admin/crashes/{{$c.ID}}/ticket" class="row-form">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <label class="sr-only" for="ticket">{{t .Lang "admin.crashes.ticket"}}</label>
+    <input id="ticket" name="ticket" inputmode="numeric" placeholder="{{t .Lang "admin.crashes.ticketid"}}" value="{{if $c.TicketID}}{{$c.TicketID}}{{end}}">
+    <button type="submit" class="btn text-sm">{{t .Lang "admin.crashes.link"}}</button>
+  </form>
+</div>
+{{template "footer" .}}
