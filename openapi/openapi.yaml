@@ -2037,6 +2037,26 @@ components:
           type: string
           format: date-time
           description: When the session was registered.
+        platform:
+          type: string
+          description: The console family, the same value as `namespace` (`switch`, `wiiu`, `3ds`).
+        client:
+          type: string
+          description: |
+            What the session runs on inside the platform: `switch`, `ryujinx`, `eden`, `citron`,
+            `wiiu`, `3ds`, `cemu`, `azahar`. Empty when the adapter could not tell.
+        label:
+          type: string
+          description: |
+            Display name of the client, or of the platform when the client is unknown:
+            `Switch`, `Ryujinx`, `Eden`, `Citron`, `Wii U`, `3DS`, `Cemu`, `Azahar`. Show
+            "<title_name> on <label>", or "Online on <label>" when there is no title.
+        title_name:
+          type: string
+          description: The title's name from the catalogue; empty when there is no title or nobody knows its name.
+        presence:
+          type: object
+          description: The same presence fields again in one object (title_id, namespace, since, platform, client, label, title_name).
       examples:
         - account_id: "3f1c…"
           display_name: "Leia"
@@ -2044,6 +2064,18 @@ components:
           title_id: "0100E65002BB8000"
           namespace: "switch"
           since: "2026-09-08T09:15:00Z"
+          platform: "switch"
+          client: "ryujinx"
+          label: "Ryujinx"
+          title_name: "Stardew Valley"
+          presence:
+            title_id: "0100E65002BB8000"
+            namespace: "switch"
+            since: "2026-09-08T09:15:00Z"
+            platform: "switch"
+            client: "ryujinx"
+            label: "Ryujinx"
+            title_name: "Stardew Valley"
     Invitation:
       type: object
       required: [invitation_id, from, title_id, namespace, expires_at]

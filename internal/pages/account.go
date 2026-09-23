@@ -444,6 +444,7 @@ type friendCard struct {
 	core.Friend
 	Online   bool
 	Platform string // "Nintendo Switch", from the presence namespace; "" when offline
+	Via      string // the client when it is not the console itself ("Ryujinx", "Cemu"); "" otherwise
 	Console  string // consoleSlug's key for Platform's logo; "" when offline
 	Game     string // the game's name; "" when offline, or unknown to every source
 	TitleID  string // for the icon URL only — never rendered as text
@@ -485,6 +486,9 @@ func (s *Server) loadFriends(ctx context.Context, accountID string) friendsData 
 			row.Online = true
 			row.Platform = platformLabel(p.Namespace)
 			row.Console = namespaceConsole(p.Namespace)
+			if label := p.Label(); label != core.ClientLabel(p.Namespace, "") {
+				row.Via = label
+			}
 			row.TitleID = p.TitleID
 			row.Game, row.HasIcon = FriendGame(ctx, catalogue, p.Namespace, p.TitleID)
 			if !p.Since.IsZero() {

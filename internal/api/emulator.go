@@ -1,8 +1,11 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
+	"github.com/openpak/website/internal/core"
+	"github.com/openpak/website/internal/pages"
 	"github.com/openpak/website/internal/store"
 )
 
@@ -31,7 +34,39 @@ func (s *Server) handleSwitch(w http.ResponseWriter, r *http.Request, tok store.
 		writeError(w, http.StatusBadGateway, "switch identity unavailable")
 		return
 	}
+	s.labelSwitchFriends(r.Context(), out)
 	writeJSON(w, http.StatusOK, out)
+}
+
+// labelSwitchFriends gives each friend's presence in the adapter's answer the
+// same platform/client/label/title_name the rest of the API carries. The
+// adapter knows the client; only the website knows every title's name.
+func (s *Server) labelSwitchFriends(ctx context.Context, out map[string]any) {
+	friends, _ := out["friends"].([]any)
+	var catalogue map[string]string
+	for _, f := range friends {
+		fm, _ := f.(map[string]any)
+		p, _ := fm["presence"].(map[string]any)
+		if p == nil {
+			continue
+		}
+		ns, _ := p["namespace"].(string)
+		client, _ := p["client"].(string)
+		titleID, _ := p["app_id"].(string)
+		if _, ok := p["platform"]; !ok {
+			p["platform"] = ns
+		}
+		p["client"] = client
+		p["label"] = core.ClientLabel(ns, client)
+		name := ""
+		if titleID != "" {
+			if catalogue == nil {
+				catalogue = pages.TitleCatalogue(ctx, s.DB)
+			}
+			name, _ = pages.FriendGame(ctx, catalogue, ns, titleID)
+		}
+		p["title_name"] = name
+	}
 }
 
 // handleConsole is the Wii U or 3DS identity of the account (PNID, NEX credentials, Mii, and

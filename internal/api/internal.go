@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/openpak/website/internal/media"
+	"github.com/openpak/website/internal/pages"
 	"github.com/openpak/website/internal/store"
 )
 
@@ -25,6 +26,29 @@ import (
 // route.
 func (s *Server) registerInternal(mux *http.ServeMux) {
 	mux.HandleFunc("POST /internal/avatar", s.handleInternalAvatar)
+	mux.HandleFunc("GET /internal/titles/name", s.handleInternalTitleName)
+}
+
+// handleInternalTitleName names a title for an adapter drawing a friend who is
+// playing on another platform ("Playing Mario Kart 8 on Wii U"), from the same
+// sources the friends pages use. {"name": ""} is an answer: nobody knows it.
+func (s *Server) handleInternalTitleName(w http.ResponseWriter, r *http.Request) {
+	key := internalKey()
+	if key == "" {
+		writeError(w, http.StatusServiceUnavailable, "internal surface is not configured")
+		return
+	}
+	if subtle.ConstantTimeCompare([]byte(r.Header.Get("Authorization")), []byte("Bearer "+key)) != 1 {
+		writeError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	ns, id := r.URL.Query().Get("namespace"), r.URL.Query().Get("title_id")
+	if id == "" {
+		writeError(w, http.StatusBadRequest, "title_id is required")
+		return
+	}
+	name, _ := pages.FriendGame(r.Context(), pages.TitleCatalogue(r.Context(), s.DB), ns, id)
+	writeJSON(w, http.StatusOK, map[string]string{"name": name})
 }
 
 // internalKey is the shared secret. Empty disables the surface completely:

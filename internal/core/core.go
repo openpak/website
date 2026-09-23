@@ -8,6 +8,7 @@ package core
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 )
 
@@ -282,6 +283,52 @@ type Presence struct {
 	TitleID   string
 	Since     time.Time
 	NodeID    string // federation node the session came through; "home" for the core's own
+	// Client is what the session runs on inside the namespace: "switch",
+	// "ryujinx", "eden", "citron", "wiiu", "3ds", "cemu", "azahar"; "" when
+	// the adapter could not tell.
+	Client string
+}
+
+// Label names what somebody is on, for "Playing Kirby on Ryujinx": the
+// client when one is known, the platform's short name otherwise. The same
+// table lives in nx-baas and nn-friends.
+func (p Presence) Label() string { return ClientLabel(p.Namespace, p.Client) }
+
+// ClientLabel is Presence.Label for a namespace and client pair.
+func ClientLabel(namespace, client string) string {
+	switch strings.ToLower(client) {
+	case "":
+		switch strings.ToLower(namespace) {
+		case "":
+			return ""
+		case "switch":
+			return "Switch"
+		case "wiiu":
+			return "Wii U"
+		case "3ds":
+			return "3DS"
+		default:
+			return strings.ToUpper(namespace[:1]) + namespace[1:]
+		}
+	case "switch":
+		return "Switch"
+	case "ryujinx":
+		return "Ryujinx"
+	case "eden":
+		return "Eden"
+	case "citron":
+		return "Citron"
+	case "wiiu":
+		return "Wii U"
+	case "3ds":
+		return "3DS"
+	case "cemu":
+		return "Cemu"
+	case "azahar":
+		return "Azahar"
+	default:
+		return strings.ToUpper(client[:1]) + client[1:]
+	}
 }
 
 // Node is a federation region: a relay tier somewhere that announces its

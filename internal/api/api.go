@@ -27,6 +27,7 @@ import (
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/netprofile"
 	"github.com/openpak/website/internal/news"
+	"github.com/openpak/website/internal/pages"
 	"github.com/openpak/website/internal/ratelimit"
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/session"
@@ -495,14 +496,23 @@ func (s *Server) handleFriends(w http.ResponseWriter, r *http.Request, tok store
 	if err != nil {
 		s.log.Error("presence", "err", err)
 	}
+	// Built once per list, not once per friend.
+	var catalogue map[string]string
+	if len(presence) > 0 {
+		catalogue = pages.TitleCatalogue(r.Context(), s.DB)
+	}
 	out := make([]map[string]any, 0, len(friends))
 	for _, f := range friends {
 		row := map[string]any{"account_id": f.AccountID, "display_name": f.DisplayName, "online": false}
 		if p, ok := presence[f.AccountID]; ok {
 			row["online"] = true
-			row["title_id"] = p.TitleID
-			row["namespace"] = p.Namespace
-			row["since"] = p.Since.UTC().Format(time.RFC3339)
+			pj := s.presenceJSON(r.Context(), catalogue, p)
+			// Flat on the row, as the fields always were, and as one object
+			// for clients that want presence in one place.
+			for k, v := range pj {
+				row[k] = v
+			}
+			row["presence"] = pj
 		}
 		out = append(out, row)
 	}
@@ -1054,4 +1064,21 @@ func nnAdapter() *adapter.Client {
 		return adapter.New(u, os.Getenv("NN_ACCOUNT_INTERNAL_KEY"))
 	}
 	return nil
+}
+
+// presenceJSON is one friend's live presence as the API answers it anywhere:
+// where (namespace/platform), on what (client, and label to show it), and
+// what (title_id, and title_name when any catalogue knows it). A phone reads
+// "<title_name> on <label>", or "Online on <label>" when there is no title.
+func (s *Server) presenceJSON(ctx context.Context, catalogue map[string]string, p core.Presence) map[string]any {
+	name, _ := pages.FriendGame(ctx, catalogue, p.Namespace, p.TitleID)
+	return map[string]any{
+		"title_id":   p.TitleID,
+		"namespace":  p.Namespace,
+		"since":      p.Since.UTC().Format(time.RFC3339),
+		"platform":   p.Namespace,
+		"client":     p.Client,
+		"label":      p.Label(),
+		"title_name": name,
+	}
 }

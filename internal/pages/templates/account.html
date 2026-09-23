@@ -60,7 +60,7 @@
             <span class="name break-anywhere">{{.DisplayName}}</span>
             {{if .Online}}<span class="mt-0.5 flex flex-wrap items-center gap-2">
               <span class="badge ok">{{t $.Lang "friends.online"}}</span>
-              <span class="sub break-anywhere">{{if .Game}}{{.Game}}{{else}}{{t $.Lang "friends.ingame"}}{{end}}</span>
+              <span class="sub break-anywhere">{{if .Game}}{{.Game}}{{else}}{{t $.Lang "friends.ingame"}}{{end}}{{if .Via}} · {{.Via}}{{end}}</span>
             </span>{{end}}
           </span>
           <svg class="size-4 shrink-0 text-muted transition-transform group-open:rotate-90" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
@@ -72,7 +72,7 @@
           <span class="flex min-w-0 flex-col gap-0.5 text-sm">
             {{if .Online}}
             <span class="font-semibold break-anywhere">{{if .Game}}{{.Game}}{{else}}{{t $.Lang "friends.ingame"}}{{end}}</span>
-            {{if .Platform}}<span class="text-muted">{{.Platform}}</span>{{end}}
+            {{if .Platform}}<span class="text-muted">{{.Platform}}{{if .Via}} ({{.Via}}){{end}}</span>{{end}}
             {{if .Since}}<span class="text-muted">{{t $.Lang "friends.session.since"}} {{.Since}}</span>{{end}}
             {{else}}<span class="text-muted">{{t $.Lang "friends.offline"}}</span>{{end}}
           </span>

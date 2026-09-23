@@ -463,6 +463,7 @@ func (g *GRPC) Presence(ctx context.Context, accountIDs []string) (map[string]Pr
 			Namespace: p.GetNamespace(),
 			TitleID:   p.GetTitleId(),
 			Since:     time.Unix(p.GetSinceUnix(), 0).UTC(),
+			Client:    p.GetClient(),
 		}
 	}
 	return out, nil

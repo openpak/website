@@ -3,6 +3,20 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.50.0 — 2026-09-23
+
+- Cross-network presence with client labels. Every online friend in `/api/v1/me/friends`
+  gains `platform` (switch, wiiu, 3ds), `client` (switch, ryujinx, eden, citron, wiiu, 3ds,
+  cemu, azahar, or empty), `label` (Switch, Ryujinx, Eden, Citron, Wii U, 3DS, Cemu,
+  Azahar; the platform's name when the client is unknown) and `title_name` (from the
+  catalogue, nlib for Switch titles; empty when unknown), flat on the row as before and
+  again under `presence`. `/api/v1/me/switch` friends' `presence` objects gain the same
+  four. The phone shows "<title_name> on <label>" / "Online on <label>".
+- The account page's friends list says which emulator a friend is on ("Kirby · Ryujinx",
+  "Nintendo Switch (Ryujinx)").
+- `GET /internal/titles/name?namespace=&title_id=` (internal key): the title name the
+  adapters put into a friend's presence line on another platform.
+
 ## v0.49.6 — 2026-09-23
 
 - The Switch claims every family it reaches, Nintendo's and the third parties both:
