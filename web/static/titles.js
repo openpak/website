@@ -19,7 +19,10 @@
   var want = new URLSearchParams(location.search).get("console");
   if (want) {
     form.querySelectorAll('input[name="console"]').forEach(function (el) {
-      if (el.value === want) el.checked = true;
+      if (el.value !== want) return;
+      el.checked = true;
+      // On a phone the chip row scrolls; bring the chosen one into view.
+      el.parentNode.scrollIntoView({ block: "nearest", inline: "center" });
     });
   }
 

@@ -3,6 +3,14 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.54.1 — account page fixes
+
+- The account section nav becomes the sidebar from 48rem instead of 60rem, so a laptop-sized
+  window no longer cuts the row off; on a phone the row fades at its right edge to show it scrolls.
+- The profile card: only the avatar reaches into the cover, the name and friend code sit below
+  it, and the code has room before its copy button.
+- `/titles?console=…` scrolls the chosen console chip into view on a phone.
+
 ## v0.54.0 — redesign
 
 - **New look across the site.** Same indigo from the logo, a warmer dark palette, pill buttons,

@@ -638,19 +638,21 @@
 
   /* Account: section nav beside the content from 60rem, a swipeable row above it on a phone. */
   .acct { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
-  @media (min-width: 60rem) { .acct { grid-template-columns: 210px minmax(0, 1fr); gap: 40px; } }
+  @media (min-width: 48rem) { .acct { grid-template-columns: 200px minmax(0, 1fr); gap: 32px; } }
   .side { position: sticky; top: 64px; z-index: 10; margin: -8px -20px 0; padding: 10px 20px; background: var(--glass); border-bottom: 1px solid var(--line);
           backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
-  .side nav { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+  /* On a phone the row scrolls; the fade at the right edge says there is more. */
+  .side nav { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-right: 32px;
+              mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
   .side nav::-webkit-scrollbar { display: none; }
   .side a { display: flex; align-items: center; gap: 10px; flex: none; padding: 8px 12px; border-radius: 10px; font-size: .9rem; font-weight: 580; color: var(--ink-2); text-decoration: none; }
   .side a:hover { background: var(--paper-2); color: var(--ink); }
   .side a[aria-current] { background: var(--raised); color: var(--ink); box-shadow: var(--shadow-sm), 0 0 0 1px var(--line); }
   .side .ct { margin-left: auto; font-size: .72rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: var(--accent); color: #fff; }
   .side .sep { display: none; }
-  @media (min-width: 60rem) {
+  @media (min-width: 48rem) {
     .side { top: 88px; align-self: start; margin: 0; padding: 0; background: none; border: 0; backdrop-filter: none; -webkit-backdrop-filter: none; }
-    .side nav { flex-direction: column; overflow: visible; }
+    .side nav { flex-direction: column; overflow: visible; padding-right: 0; mask-image: none; }
     .side .sep { display: block; height: 1px; background: var(--line); margin: 8px 12px; }
   }
   .acct-main > section, .acct-main > .minis { margin-top: 28px; }
@@ -664,15 +666,17 @@
   @media (min-width: 48rem) { .acct-main .card.pad { padding: 24px; } }
   .profile { overflow: hidden; border-radius: 20px; }
   .profile .cover { height: 88px; background: radial-gradient(circle at 20% 0%, #818cf8, transparent 60%), radial-gradient(circle at 90% 100%, #ec4899, transparent 55%), linear-gradient(135deg, #4338ca, #1e1b4b); }
-  .profile .inner { padding: 0 20px 20px; display: grid; gap: 18px; }
-  @media (min-width: 48rem) { .profile .inner { padding: 0 28px 24px; grid-template-columns: minmax(0, 1fr) auto; align-items: end; } }
-  .profile .who { display: flex; align-items: flex-start; gap: 16px; margin-top: -32px; min-width: 0; }
-  .profile .who > div { padding-top: 38px; min-width: 0; }
-  .profile .who h1 { margin: 0; font-size: 1.6rem; overflow-wrap: anywhere; }
+  .profile .inner { padding: 14px 20px 20px; display: grid; gap: 18px; }
+  @media (min-width: 64rem) { .profile .inner { padding: 14px 24px 24px; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 24px; } }
+  /* Only the avatar reaches up into the cover; the name and the code sit below it. */
+  .profile .who { display: flex; align-items: flex-start; gap: 16px; min-width: 0; }
+  .profile .who .avatar-edit { margin-top: -54px; }
+  .profile .who > div { padding-top: 2px; min-width: 0; }
+  .profile .who h1 { margin: 0; font-size: clamp(1.25rem, 3.2vw, 1.6rem); overflow-wrap: anywhere; }
   .profile .who p { margin: 2px 0 0; color: var(--muted); font-size: .88rem; overflow-wrap: anywhere; }
   .profile .avatar { width: 80px; height: 80px; border: 4px solid var(--raised); box-shadow: var(--shadow); font-size: 1.8rem; }
   .profile .avatar.blank { background: linear-gradient(135deg, #f472b6, #8b5cf6); color: #fff; }
-  .fc { display: flex; align-items: center; gap: 4px; padding: 6px 6px 6px 16px; min-height: 56px; border-radius: 14px; background: var(--paper-2); border: 1px solid var(--line); }
+  .fc { display: flex; align-items: center; gap: 16px; padding: 8px 8px 8px 16px; min-height: 60px; border-radius: 14px; background: var(--paper-2); border: 1px solid var(--line); }
   .fc > div { flex: 1 1 auto; min-width: 0; }
   .fc .eyebrow { margin: 0; font-size: .64rem; }
   .fc code { display: block; font: 650 1.1rem ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em; }
