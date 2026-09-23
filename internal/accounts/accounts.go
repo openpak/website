@@ -6,6 +6,7 @@ package accounts
 
 import (
 	"context"
+	"crypto/sha1"
 	"errors"
 	"fmt"
 	"strconv"
@@ -115,6 +116,62 @@ func AccountByFriendCode(ctx context.Context, links core.Links, ad *adapter.Clie
 		return id
 	}
 	return ""
+}
+
+// Friend-code kinds a request can name. An empty kind is the old form and
+// the old API: an OpenPak code if it has that shape, else a Switch code.
+const (
+	CodeOpenPak = "openpak"
+	CodeSwitch  = "switch"
+	Code3DS     = "3ds"
+)
+
+// ResolveFriendCode finds the account behind a code of the given kind; ""
+// when nobody has it.
+func ResolveFriendCode(ctx context.Context, codes store.OpenPakCodeStore, links core.Links, ad *adapter.Client, kind, typed, switchSubject string) string {
+	if kind == CodeOpenPak || (kind == "" && store.NormalizeOpenPakCode(typed) != "") {
+		id, _ := codes.AccountByOpenPakCode(ctx, typed)
+		return id
+	}
+	if kind == Code3DS {
+		if pid, ok := PIDFrom3DSCode(typed); ok {
+			if id, err := links.AccountBySubject(ctx, "3ds", strconv.FormatInt(pid, 10)); err == nil {
+				return id
+			}
+		}
+		return ""
+	}
+	return AccountByFriendCode(ctx, links, ad, typed, switchSubject)
+}
+
+// FriendCode3DS is the 3DS friend code for a principal id. It is
+// nn-account's FriendCodeForPID (a port of the upstream derivation) kept
+// byte-for-byte, so the code the site shows is the one the console shows: the
+// checksum's hex digits, then the id's, read back as one number.
+func FriendCode3DS(pid int64) string {
+	sum := sha1.Sum([]byte{byte(pid), byte(pid >> 8), byte(pid >> 16), byte(pid >> 24)})
+	v, _ := strconv.ParseInt(strconv.FormatInt(int64(sum[0]>>1), 16)+strconv.FormatInt(pid, 16), 16, 64)
+	d := fmt.Sprintf("%012d", v)
+	return d[0:4] + "-" + d[4:8] + "-" + d[8:12]
+}
+
+// PIDFrom3DSCode undoes FriendCode3DS. The id's hex width is not fixed, so
+// each width is tried and kept only if its checksum matches: a mistyped code
+// finds nobody instead of a stranger.
+func PIDFrom3DSCode(typed string) (int64, bool) {
+	digits := strings.NewReplacer("-", "", " ", "").Replace(typed)
+	v, err := strconv.ParseInt(digits, 10, 64)
+	if err != nil || len(digits) != 12 {
+		return 0, false
+	}
+	want := digits[0:4] + "-" + digits[4:8] + "-" + digits[8:12]
+	for w := 8; w >= 1; w-- {
+		pid := v & (1<<(4*w) - 1)
+		if pid > 0 && FriendCode3DS(pid) == want {
+			return pid, true
+		}
+	}
+	return 0, false
 }
 
 // FriendCode is the account's Switch friend code for display: the one the

@@ -3,6 +3,22 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.55.0 — friend codes and an OpenPak code
+
+- **OpenPak codes.** Every account has one (`OP-XXXX-XXXX`, minted on first use, table
+  `openpak_codes`, migration `0012`), for adding friends whatever console either of you has.
+  Website-owned: only the site and the app take one. `GET /api/v1/me` returns `openpak_code`.
+- **The profile banner lists every code** people can add you by: OpenPak, Switch, the 3DS
+  friend code (derived from the 3DS link's principal id exactly as nn-account derives it), and
+  Wii U's NNID once nn-account publishes it on the link. Each has a copy button. The email and
+  its verified state sit under the name.
+- **Add friend** is a button on the Friends card that opens a dialog: pick the kind of code
+  (OpenPak, Switch, 3DS), type it into a field masked to that shape, send. Works without
+  script (one pattern accepts all three). `POST /api/v1/me/friends/requests` takes an optional
+  `kind`; omitted, an OpenPak-shaped code is taken as one and anything else as Switch.
+- Wii U and 3DS links now show under Linked platforms, without a revoke button: they are
+  nn-account's console accounts.
+
 ## v0.54.1 — account page fixes
 
 - The account section nav becomes the sidebar from 48rem instead of 60rem, so a laptop-sized

@@ -681,6 +681,14 @@
   .fc .eyebrow { margin: 0; font-size: .64rem; }
   .fc code { display: block; font: 650 1.1rem ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em; }
   main .fc button { min-height: 38px; width: 38px; padding: 0; }
+  /* The profile card's codes: one tile per way to be added, as many as fit a row. */
+  .codes { padding: 0 20px 20px; }
+  @media (min-width: 48rem) { .codes { padding: 0 24px 24px; } }
+  .codes h2.eyebrow { margin: 0 0 10px; font-size: .75rem; letter-spacing: .09em; }
+  .codes ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
+  main .codes li { margin: 0; }
+  .codes .fc code { font-size: 1rem; }
+  .codes .hint { margin-top: 10px; }
   .minis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
   .mini { padding: 14px 16px; text-decoration: none; }
   main a.mini { color: var(--ink); text-decoration: none; }

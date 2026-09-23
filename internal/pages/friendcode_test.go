@@ -30,7 +30,7 @@ func checkFriendCode(t *testing.T, subject string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	pattern := regexp.MustCompile(`pattern="([^"]+)"`).FindStringSubmatch(string(src))
+	pattern := regexp.MustCompile(`id="add-code"[^>]*?pattern="([^"]+)"`).FindStringSubmatch(string(src))
 	if pattern == nil {
 		t.Fatal("no pattern attribute on the friend-code field")
 	}

@@ -20,8 +20,11 @@ import (
 // accountView is the profile page model (WEB-02, WEB-03).
 type accountView struct {
 	baseData
-	FriendCode     string
-	HasFriendCode  bool
+	FriendCode    string
+	HasFriendCode bool
+	// Codes is every code people can add this account by, one per console
+	// family, shown together in the profile banner.
+	Codes          []codeRow
 	Links          []linkRow
 	CanLinkWFC     bool // a Wii/DS server is configured, so the friend-code form is shown
 	Sessions       []core.Session
@@ -42,10 +45,19 @@ type accountView struct {
 	friendsData
 }
 
+// codeRow is one way to be added as a friend: the console it works on, what
+// that console calls it, and the code itself.
+type codeRow struct {
+	Console, Label, Code string
+}
+
 type linkRow struct {
 	Namespace string
 	Subject   string
 	LinkID    string
+	// Revocable is false for Wii U and 3DS: those links are nn-account's
+	// console accounts, and cutting one here would orphan it.
+	Revocable bool
 }
 
 func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
@@ -73,12 +85,43 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 		// publishes it on the link; until then, ask the adapter.
 		view.FriendCode = accounts.FriendCode(ctx, link, s.Adapter, v.AccountID)
 		view.HasFriendCode = view.FriendCode != ""
-		view.Links = append(view.Links, linkRow{Namespace: "Switch", Subject: link.SubjectID, LinkID: link.LinkID})
+		view.Links = append(view.Links, linkRow{Namespace: "Switch", Subject: link.SubjectID, LinkID: link.LinkID, Revocable: true})
+	}
+
+	// The OpenPak code comes first: it is the one that works for everybody.
+	if code, err := s.DB.OpenPakCode(ctx, v.AccountID); err == nil {
+		view.Codes = append(view.Codes, codeRow{"OpenPak", "OpenPak", code})
+	} else {
+		s.log.Error("openpak code", "err", err)
+	}
+	if view.HasFriendCode {
+		view.Codes = append(view.Codes, codeRow{"Switch", "Switch", view.FriendCode})
+	}
+	// Wii U friends add each other by Nintendo Network ID, which nn-account
+	// owns; it shows here once nn-account publishes it on the link.
+	if link, err := s.Links.ActiveLinkByAccount(ctx, "wiiu", v.AccountID); err == nil {
+		if link.PublicCode != "" {
+			view.Codes = append(view.Codes, codeRow{"Wii U", "Wii U · NNID", link.PublicCode})
+		}
+		view.Links = append(view.Links, linkRow{Namespace: "Wii U", Subject: link.SubjectID, LinkID: link.LinkID})
+	}
+	// A 3DS friend code is derived from the console's principal id, which is
+	// the link's subject, so it needs no call to nn-account.
+	if link, err := s.Links.ActiveLinkByAccount(ctx, "3ds", v.AccountID); err == nil {
+		code := link.PublicCode
+		if pid, err := strconv.ParseInt(link.SubjectID, 10, 64); code == "" && err == nil {
+			code = accounts.FriendCode3DS(pid)
+		}
+		if code != "" {
+			view.Codes = append(view.Codes, codeRow{"3DS", "3DS", code})
+		}
+		view.Links = append(view.Links, linkRow{Namespace: "3DS", Subject: link.SubjectID, LinkID: link.LinkID})
 	}
 
 	// Wii and DS cannot link themselves; the website did it from a friend code (handleLinkWFC).
+	// There is no one code to show for them: a Wii friend code belongs to a game, not the console.
 	if link, err := s.Links.ActiveLinkByAccount(ctx, "wfc", v.AccountID); err == nil {
-		view.Links = append(view.Links, linkRow{Namespace: "Wii / DS", Subject: link.SubjectID, LinkID: link.LinkID})
+		view.Links = append(view.Links, linkRow{Namespace: "Wii / DS", Subject: link.SubjectID, LinkID: link.LinkID, Revocable: true})
 	}
 	view.CanLinkWFC = s.WFC != nil
 
@@ -442,14 +485,14 @@ type friendsData struct {
 // TitleID exists only to build the /titles/icon/{id} art URL.
 type friendCard struct {
 	core.Friend
-	Online   bool
-	Platform string // "Nintendo Switch", from the presence namespace; "" when offline
-	Via      string // the client when it is not the console itself ("Ryujinx", "Cemu"); "" otherwise
-	Console  string // consoleSlug's key for Platform's logo; "" when offline
-	Game     string // the game's name; "" when offline, or unknown to every source
-	TitleID  string // for the icon URL only — never rendered as text
-	HasIcon  bool   // /titles/icon/{TitleID} draws art (Switch titles only)
-	Since    string // when the session started, formatted; "" when offline
+	Online    bool
+	Platform  string // "Nintendo Switch", from the presence namespace; "" when offline
+	Via       string // the client when it is not the console itself ("Ryujinx", "Cemu"); "" otherwise
+	Console   string // consoleSlug's key for Platform's logo; "" when offline
+	Game      string // the game's name; "" when offline, or unknown to every source
+	TitleID   string // for the icon URL only — never rendered as text
+	HasIcon   bool   // /titles/icon/{TitleID} draws art (Switch titles only)
+	Since     string // when the session started, formatted; "" when offline
 	AvatarURL string
 }
 
@@ -527,9 +570,9 @@ func (s *Server) handleFriendRequest(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "friend code required", http.StatusBadRequest)
 		return
 	}
-	// The published code first, then the adapter, then the link subject
-	// (the same order as the API).
-	target := accounts.AccountByFriendCode(r.Context(), s.Links, s.Adapter, typed, code)
+	// kind is the add-friend dialog's choice; the resolution order within a
+	// kind is the API's, so a code finds the same person on both.
+	target := accounts.ResolveFriendCode(r.Context(), s.DB, s.Links, s.Adapter, r.PostFormValue("kind"), typed, code)
 	if target == "" {
 		redirectMsg(w, r, "/account", "funknown")
 		return

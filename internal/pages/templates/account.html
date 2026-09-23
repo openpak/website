@@ -20,7 +20,7 @@
 </aside>
 
 <div class="acct-main" id="top">
-<section class="card profile" aria-labelledby="fc-h">
+<section class="card profile" aria-labelledby="codes-h">
   <div class="cover"></div>
   <div class="inner">
     <div class="who">
@@ -31,17 +31,26 @@
       </a>
       <div>
         <h1>{{$name}}</h1>
-        {{if ne $name .User.Email}}<p>{{.User.Email}}</p>{{end}}
+        <p class="flex flex-wrap items-center gap-2">{{if ne $name .Email}}{{.Email}}{{end}}
+          {{if .EmailVerified}}<span class="badge ok">{{t .Lang "account.email.verified"}}</span>
+          {{else}}<a class="badge warn no-underline" href="#security">{{t .Lang "account.email.unverified"}}</a>{{end}}</p>
       </div>
     </div>
-    <div class="fc" title="{{t .Lang "account.friendcode.share"}}">
-      <div>
-        <h2 id="fc-h" class="eyebrow">{{t .Lang "account.friendcode"}}</h2>
-        {{if .HasFriendCode}}<code>{{.FriendCode}}</code>
-        {{else}}<span class="text-sm text-muted">{{t .Lang "account.friendcode.none"}}</span>{{end}}
-      </div>
-      {{if .HasFriendCode}}<button type="button" hidden data-copy="{{.FriendCode}}" aria-label="{{t .Lang "account.copy"}}" data-copied="{{t .Lang "account.copied"}}"><svg class="ico sm" aria-hidden="true"><use href="#i-copy"/></svg></button>{{end}}
-    </div>
+  </div>
+  {{/* Every code people can add this account by, one per console family.
+       The OpenPak code works everywhere; the others are what each console
+       itself asks for. */}}
+  <div class="codes">
+    <h2 id="codes-h" class="eyebrow">{{t .Lang "account.codes"}}</h2>
+    <ul>
+      {{range .Codes}}
+      <li class="fc">
+        <span class="console">{{if eq .Console "OpenPak"}}<img src="/static/icon.svg?v={{$.Asset}}" alt="" width="24" height="24">{{else}}<picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="24" height="24"></picture>{{end}}</span>
+        <div><span class="eyebrow">{{.Label}}</span><code>{{.Code}}</code></div>
+        <button type="button" hidden data-copy="{{.Code}}" aria-label="{{t $.Lang "account.copy"}} {{.Label}}" data-copied="{{t $.Lang "account.copied"}}"><svg class="ico sm" aria-hidden="true"><use href="#i-copy"/></svg></button>
+      </li>
+      {{end}}
+    </ul>
   </div>
 </section>
 
@@ -52,23 +61,13 @@
 </div>
 
 <section class="card pad" aria-labelledby="fr-h" id="friends">
-  <div class="section-head">
-    <h2 id="fr-h">{{t .Lang "friends.title"}}</h2>
-    <p>{{t .Lang "friends.sub"}}</p>
+  <div class="section-head flex flex-wrap items-start justify-between gap-3">
+    <div class="min-w-[14rem] flex-1">
+      <h2 id="fr-h">{{t .Lang "friends.title"}}</h2>
+      <p>{{t .Lang "friends.sub"}}</p>
+    </div>
+    <a class="btn primary shrink-0" href="#add-friend"><svg class="ico sm" aria-hidden="true"><use href="#i-users"/></svg>{{t .Lang "friends.add.button"}}</a>
   </div>
-  <form method="post" action="/account/friends/request" class="row-form">
-    <input type="hidden" name="csrf" value="{{.CSRF}}">
-    <label class="sr-only" for="friend_code">{{t .Lang "friends.code"}}</label>
-    {{/* Adapter subjects are 12 or 16 hex digits; the SW- prefix and the
-         dashes are display formatting and optional on input. */}}
-    <input id="friend_code" name="friend_code" type="text" required
-           pattern="(?:[Ss][Ww]-?)?[0-9a-fA-F]{4}(?:-?[0-9a-fA-F]{4}){2,3}"
-           placeholder="SW-1234-5678-9012"
-           autocapitalize="off" autocorrect="off" spellcheck="false"
-           title="{{t .Lang "friends.code.title"}}">
-    <button type="submit" class="primary">{{t .Lang "friends.send"}}</button>
-  </form>
-  <p class="hint">{{t .Lang "friends.add.hint"}}</p>
 
   {{if .Friends}}
   <ul class="mt-4 list-none divide-y divide-line p-0">{{range .Friends}}
@@ -200,11 +199,11 @@
     {{range .Links}}<li>
       <span class="name">{{.Namespace}}</span>
       <code>{{.Subject}}</code>
-      <form method="post" action="/account/link/revoke" class="inline">
+      {{if .Revocable}}<form method="post" action="/account/link/revoke" class="inline">
         <input type="hidden" name="csrf" value="{{$.CSRF}}">
         <input type="hidden" name="link_id" value="{{.LinkID}}">
         <button type="submit" class="small danger">{{t $.Lang "account.links.revoke"}}</button>
-      </form></li>{{end}}
+      </form>{{end}}</li>{{end}}
   </ul>
   {{else}}<p class="empty">{{t .Lang "account.links.none"}}</p>{{end}}
   {{if .CanLinkWFC}}
@@ -350,6 +349,35 @@
   <button type="submit" class="w-full"><svg class="ico sm" aria-hidden="true"><use href="#i-logout"/></svg>{{t .Lang "nav.signout"}}</button>
 </form>
 </div>
+</div>
+
+{{/* Add a friend: the same no-script modal as the avatar picker. The kind
+     picks which lookup runs; site.js masks the field to match the kind, and
+     without it the one pattern below accepts any of the three shapes. */}}
+<div class="modal" id="add-friend">
+  <a class="modal-backdrop" href="#friends" tabindex="-1" aria-hidden="true"></a>
+  <section class="modal-card" role="dialog" aria-labelledby="add-h">
+    <div class="modal-head">
+      <h2 id="add-h">{{t .Lang "friends.add.title"}}</h2>
+      <a class="modal-close" href="#friends">{{t .Lang "modal.close"}}</a>
+    </div>
+    <p class="muted">{{t .Lang "friends.add.help"}}</p>
+    <form method="post" action="/account/friends/request" class="form-stack" data-friend-form>
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <label for="add-kind">{{t .Lang "friends.add.kind"}}</label>
+      <select id="add-kind" name="kind">
+        <option value="openpak" data-placeholder="OP-XXXX-XXXX">{{t .Lang "friends.kind.openpak"}}</option>
+        <option value="switch" data-placeholder="SW-1234-5678-9012">{{t .Lang "friends.kind.switch"}}</option>
+        <option value="3ds" data-placeholder="1234-5678-9012">{{t .Lang "friends.kind.3ds"}}</option>
+      </select>
+      <label for="add-code">{{t .Lang "friends.code"}}</label>
+      <input id="add-code" name="friend_code" type="text" required class="font-mono tracking-wider"
+             pattern="(?:[Oo][Pp]-?)?[2-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{4}-?[2-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{4}|(?:[Ss][Ww]-?)?[0-9a-fA-F]{4}(?:-?[0-9a-fA-F]{4}){2,3}"
+             placeholder="OP-XXXX-XXXX" autocapitalize="characters" autocorrect="off" spellcheck="false" autocomplete="off"
+             title="{{t .Lang "friends.code.title"}}">
+      <button type="submit" class="primary">{{t .Lang "friends.send"}}</button>
+    </form>
+  </section>
 </div>
 
 <div class="modal" id="avatar">

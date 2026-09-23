@@ -466,6 +466,10 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request, tok store.APIT
 	if link, err := s.Links.ActiveLinkByAccount(r.Context(), "wfc", tok.AccountID); err == nil {
 		platforms = append(platforms, map[string]string{"namespace": "wfc", "link_id": link.LinkID})
 	}
+	// The account's own code, for adding friends whatever console they are on.
+	if code, err := s.DB.OpenPakCode(r.Context(), tok.AccountID); err == nil {
+		resp["openpak_code"] = code
+	}
 	resp["linked_platforms"] = platforms
 	writeJSON(w, http.StatusOK, resp)
 }
@@ -564,6 +568,9 @@ func (s *Server) handleRequests(w http.ResponseWriter, r *http.Request, tok stor
 func (s *Server) handleSendRequest(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
 	var req struct {
 		FriendCode string `json:"friend_code"`
+		// Kind is "openpak", "switch" or "3ds"; omitted, an OpenPak-shaped
+		// code is taken as one and anything else as a Switch code.
+		Kind string `json:"kind"`
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, 4<<10)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -574,7 +581,7 @@ func (s *Server) handleSendRequest(w http.ResponseWriter, r *http.Request, tok s
 	// code: the adapter mints codes and publishes them on the link. So the
 	// published code first, the adapter while codes are not published yet, and
 	// the subject last, for someone who pastes that verbatim.
-	target := accounts.AccountByFriendCode(r.Context(), s.Links, s.Adapter, req.FriendCode, normalizeCode(req.FriendCode))
+	target := accounts.ResolveFriendCode(r.Context(), s.DB, s.Links, s.Adapter, req.Kind, req.FriendCode, normalizeCode(req.FriendCode))
 	if target == "" {
 		writeError(w, http.StatusNotFound, "no account for that friend code")
 		return

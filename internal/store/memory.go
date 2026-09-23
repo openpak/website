@@ -27,6 +27,7 @@ type Memory struct {
 	pushOwner   map[string]string    // token -> account
 	pushCursor  uint64
 	bans        map[string]Ban
+	codes       map[string]string // account -> OpenPak code
 	support     supportMem
 }
 
