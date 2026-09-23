@@ -1,0 +1,26 @@
+{{/* The filter bar over a list of titles or features. The controls are radio
+     groups, so they read and work as choices; titles.js applies them. With
+     scripting off the whole list simply shows. */}}
+{{define "list-filters"}}
+<form class="filters" role="search" aria-label="{{.Title}}">
+  <div class="filters-row">
+    <label class="search"><span class="sr-only">{{t .Lang "titles.search"}}</span>
+      <svg class="ico" aria-hidden="true"><use href="#i-search"/></svg>
+      <input id="titles-q" type="search" autocomplete="off" class="field" placeholder="{{t .Lang "titles.search"}}">
+    </label>
+    {{if .Statuses}}
+    <div class="seg" role="radiogroup" aria-label="{{t .Lang "titles.status"}}">
+      <label><input type="radio" name="status" value="" checked><span>{{t .Lang "titles.all"}}</span></label>
+      {{range .Statuses}}<label><input type="radio" name="status" value="{{.}}"><span>{{.}}</span></label>{{end}}
+    </div>
+    {{end}}
+  </div>
+  {{if .Consoles}}
+  <div class="chips" role="radiogroup" aria-label="{{t .Lang "titles.console"}}">
+    <label><input type="radio" name="console" value="" checked><span>{{t .Lang "titles.all"}}</span></label>
+    {{range .Consoles}}<label><input type="radio" name="console" value="{{.}}"><span><img src="/static/consoles/{{consoleSlug .}}.svg" alt="" width="18" height="18">{{.}}</span></label>{{end}}
+  </div>
+  {{end}}
+</form>
+<p id="titles-count" class="my-3 text-sm text-muted" data-showing="{{t .Lang "titles.showing"}}"></p>
+{{end}}

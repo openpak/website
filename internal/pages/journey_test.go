@@ -482,8 +482,8 @@ func TestStatusPageShowsWhoIsPlaying(t *testing.T) {
 	if !strings.Contains(body, "Planned") || !strings.Contains(body, "Beta") {
 		t.Error("unfinished networks should say so rather than show as online")
 	}
-	if !strings.Contains(body, "state-row warn") || !strings.Contains(body, "state-row idle") {
-		t.Error("beta should tint amber and planned grey")
+	if !strings.Contains(body, "state-row beta") || !strings.Contains(body, "state-row idle") {
+		t.Error("beta should tint indigo and planned grey")
 	}
 	// Photon and Stardew are really checked, and unreachable in a test means
 	// "down" — which the banner must then admit, however healthy the core is.

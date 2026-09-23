@@ -3,6 +3,27 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.54.0 — redesign
+
+- **New look across the site.** Same indigo from the logo, a warmer dark palette, pill buttons,
+  larger cards and one set of status colours: live green, **beta indigo** (it runs, so it is no
+  longer amber), alpha/partial amber, planned grey, down red (`badgeClass` returns `beta`).
+- **Mobile first chrome.** Glass header; below 60rem the links move into a bottom tab bar (Home,
+  Titles, Status, Get started, Account). Plain links, so every page still works without script.
+  The footer is three link columns with the language picker, which now submits on change.
+- **Landing** is a live dashboard: a hero with the people online, in a game and the titles
+  being played right now (from the session leases, hidden if they cannot be read), the
+  platform tiles, how it works, a feature grid with cloud saves and chat, news and titles.
+- **Titles and features** share one filter bar: search (`/` focuses it), a state toggle and
+  console chips over a card grid. `/titles?console=Wii` opens with that console chosen.
+- **Status** is a summary banner with counts and four panels. **Downloads** is a card per
+  client. **Account** has a section nav (sidebar on desktop, a swipeable row on a phone), a
+  profile card with a copyable friend code, and every section in its own card.
+- `web/static/site.js`: the copy button and the language auto-submit; both optional.
+- New strings in all six languages (`nav.home`, `nav.getstarted`, `landing.live.*`,
+  `landing.trust.*`, `landing.f4/f5.*`, `landing.cta.*`, `landing.head.accent`, `footer.*`,
+  `account.copy/copied`).
+
 ## v0.53.1 — voice chat hardening
 
 - A phone may send at most 40 signaling frames a second; the rest are ignored. Before, one

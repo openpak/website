@@ -314,7 +314,7 @@ func consoleSlug(console string) string {
 		return "xbox-360"
 	case "PS2":
 		return "ps2"
-	case "PS3":
+	case "PS3", "PlayStation 3":
 		return "ps3"
 	case "PSP":
 		return "psp"
@@ -332,7 +332,9 @@ func badgeClass(status string) string {
 	switch status {
 	case "live", "working", "active":
 		return "ok"
-	case "beta", "alpha", "partial", "open", "deletion-pending":
+	case "beta": // it runs; only the console check is missing, so not amber
+		return "beta"
+	case "alpha", "partial", "open", "deletion-pending":
 		return "warn"
 	case "banned":
 		return "bad"

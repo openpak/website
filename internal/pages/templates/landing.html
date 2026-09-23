@@ -1,94 +1,146 @@
 {{template "header" .}}
-{{/* One column on a phone, two or three where there is room. Every grid here
-     is `grid-cols-1` first and widens at sm/md — the narrow case is the design,
-     not a fallback. */}}
-<section class="mb-12">
-  <h1 class="max-w-2xl">{{t .Lang "landing.head"}}</h1>
-  <p class="max-w-prose text-lg text-ink-2">{{t .Lang "landing.blurb"}}</p>
-  <div class="mt-6 flex flex-wrap gap-3">
-  {{if .User}}
-    <a class="btn primary" href="/account">{{t .Lang "nav.account"}}</a>
-  {{else}}
-    <a class="btn primary" href="/register">{{t .Lang "landing.cta"}}</a>
-    <a class="btn" href="/login">{{t .Lang "nav.signin"}}</a>
-    <a class="btn" href="/downloads">{{t .Lang "landing.setup"}}</a>
-  {{end}}
+{{/* Mobile first: every grid here is one column on a phone and widens at
+     sm/md — the narrow case is the design, not a fallback. The hero is full
+     bleed, so this page brings its own .wrap for each section. */}}
+<section class="hero">
+  <div class="wrap">
+    <div>
+      {{with .News}}{{with index . 0}}<a class="announce" href="#news"><b>{{t $.Lang "landing.news"}}</b><span>{{.Title}}</span><svg class="ico sm" aria-hidden="true"><use href="#i-arrow"/></svg></a>{{end}}{{end}}
+      <h1>{{t .Lang "landing.head"}} <span class="grad">{{t .Lang "landing.head.accent"}}</span></h1>
+      <p class="lede">{{t .Lang "landing.blurb"}}</p>
+      <div class="cta-row">
+      {{if .User}}
+        <a class="btn primary lg" href="/account">{{t .Lang "nav.account"}} <svg class="ico sm" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="btn lg" href="/downloads">{{t .Lang "landing.setup"}}</a>
+      {{else}}
+        <a class="btn primary lg" href="/register">{{t .Lang "landing.cta"}} <svg class="ico sm" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="btn lg" href="/downloads">{{t .Lang "landing.setup"}}</a>
+      {{end}}
+      </div>
+      <div class="trust">
+        <span><svg class="ico sm" aria-hidden="true"><use href="#i-check"/></svg>{{t .Lang "landing.trust.free"}}</span>
+        <span><svg class="ico sm" aria-hidden="true"><use href="#i-check"/></svg>{{t .Lang "landing.trust.nofiles"}}</span>
+        <span><svg class="ico sm" aria-hidden="true"><use href="#i-check"/></svg>{{t .Lang "landing.trust.emu"}}</span>
+      </div>
+    </div>
+
+    {{if .CountsOK}}
+    <aside class="card live-card" aria-labelledby="live-h">
+      <header>
+        <span class="dot ok pulse" aria-hidden="true"></span>
+        <span id="live-h" class="flex-1">{{t .Lang "landing.live"}}</span>
+        <a class="link-arrow text-sm" href="/status">{{t .Lang "nav.status"}} <svg class="ico sm" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      </header>
+      <div class="stats">
+        <div><b>{{.Online}}</b><span>{{t .Lang "landing.live.online"}}</span></div>
+        <div><b>{{.InGame}}</b><span>{{t .Lang "landing.live.ingame"}}</span></div>
+        <div><b>{{.TitlesTotal}}</b><span>{{t .Lang "landing.live.titles"}}</span></div>
+      </div>
+      <div class="px-5 pt-4 eyebrow">{{t .Lang "status.playing"}}</div>
+      {{if .Playing}}
+      <ul class="now">
+        {{range .Playing}}
+        <li>
+          <span class="min-w-0 flex-1"><span class="block truncate text-sm font-semibold">{{.Name}}</span><progress class="bar" max="100" value="{{.Pct}}"></progress></span>
+          <span class="n">{{.Players}}</span>
+        </li>
+        {{end}}
+      </ul>
+      {{else}}<p class="px-5 pb-5 text-sm text-muted">{{t .Lang "status.nobody"}}</p>{{end}}
+    </aside>
+    {{end}}
+  </div>
+</section>
+
+<div class="wrap">
+<section class="section" aria-labelledby="plat-h">
+  <div class="section-top">
+    <div><div class="eyebrow">{{t .Lang "platforms.title"}}</div><h2 id="plat-h">{{t .Lang "landing.platforms"}}</h2></div>
+    <a class="link-arrow" href="/downloads">{{t .Lang "landing.platforms.link"}} <svg class="ico sm" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+  </div>
+  <div class="platforms">
+    {{range .Platforms}}
+    <a class="plat" href="/titles?console={{.Console}}">
+      <span class="console lg"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>
+      <span class="min-w-0"><b class="truncate">{{.Console}}</b><span class="badge {{badgeClass .Status}}">{{.Status}}</span></span>
+    </a>
+    {{end}}
+  </div>
+</section>
+
+<section class="section" aria-labelledby="how">
+  <div class="section-top"><div><div class="eyebrow">{{t .Lang "landing.how"}}</div><h2 id="how">{{t .Lang "landing.how.sub"}}</h2></div></div>
+  <ol class="howto">
+    <li class="card"><h3>{{t .Lang "landing.s1.title"}}</h3><p>{{t .Lang "landing.s1.body"}}</p></li>
+    <li class="card"><h3>{{t .Lang "landing.s2.title"}}</h3><p>{{t .Lang "landing.s2.body"}}</p></li>
+    <li class="card"><h3>{{t .Lang "landing.s3.title"}}</h3><p>{{t .Lang "landing.s3.body"}}</p></li>
+    <li class="card"><h3>{{t .Lang "landing.s4.title"}}</h3><p>{{t .Lang "landing.s4.body"}}</p></li>
+  </ol>
+</section>
+
+<section class="section" aria-labelledby="what">
+  <div class="section-top">
+    <div><div class="eyebrow">{{t .Lang "nav.features"}}</div><h2 id="what">{{t .Lang "landing.what"}}</h2><p>{{t .Lang "landing.what.sub"}}</p></div>
+    <a class="link-arrow" href="/features">{{t .Lang "landing.allfeatures"}} <svg class="ico sm" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+  </div>
+  <div class="bento">
+    <article class="card feat big"><span class="ic"><svg class="ico" aria-hidden="true"><use href="#i-user"/></svg></span><h3>{{t .Lang "landing.f1.title"}}</h3><p>{{t .Lang "landing.f1.body"}}</p></article>
+    <article class="card feat"><span class="ic"><svg class="ico" aria-hidden="true"><use href="#i-users"/></svg></span><h3>{{t .Lang "landing.f2.title"}}</h3><p>{{t .Lang "landing.f2.body"}}</p></article>
+    <article class="card feat"><span class="ic"><svg class="ico" aria-hidden="true"><use href="#i-cloud"/></svg></span><h3>{{t .Lang "landing.f4.title"}}</h3><p>{{t .Lang "landing.f4.body"}}</p></article>
+    <article class="card feat"><span class="ic"><svg class="ico" aria-hidden="true"><use href="#i-chat"/></svg></span><h3>{{t .Lang "landing.f5.title"}}</h3><p>{{t .Lang "landing.f5.body"}}</p></article>
+    <article class="card feat"><span class="ic"><svg class="ico" aria-hidden="true"><use href="#i-code"/></svg></span><h3>{{t .Lang "landing.f3.title"}}</h3><p>{{t .Lang "landing.f3.body"}}</p></article>
   </div>
 </section>
 
 {{if .News}}
-<section aria-labelledby="news-h" class="mb-12">
-  <h2 id="news-h">{{t .Lang "landing.news"}}</h2>
-  <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-    {{range .News}}
-    <article class="card p-5">
-      <h3>{{.Title}}</h3>
-      <p class="text-sm text-muted"><time datetime="{{.Published.UTC.Format "2006-01-02"}}">{{date $.Lang .Published.UTC}}</time></p>
-      <p class="mb-0 text-ink-2">{{.Summary}}</p>
+<section class="section" id="news" aria-labelledby="news-h">
+  <div class="section-top">
+    <h2 id="news-h">{{t .Lang "landing.news"}}</h2>
+    <a class="link-arrow" href="/feed/news.xml"><svg class="ico sm" aria-hidden="true"><use href="#i-rss"/></svg>{{t .Lang "footer.feed.news"}}</a>
+  </div>
+  <div class="newsgrid">
+    {{range $i, $a := .News}}
+    {{if eq $i 0}}
+    <article class="card post feature">
+      <div class="art"><img src="/static/icon.svg?v={{$.Asset}}" alt="" width="64" height="64"></div>
+      <div class="body"><time datetime="{{.Published.UTC.Format "2006-01-02"}}">{{date $.Lang .Published.UTC}}</time><h3>{{.Title}}</h3><p>{{.Summary}}</p></div>
     </article>
+    {{else}}
+    <article class="card post"><time datetime="{{.Published.UTC.Format "2006-01-02"}}">{{date $.Lang .Published.UTC}}</time><h3>{{.Title}}</h3><p>{{.Summary}}</p></article>
+    {{end}}
     {{end}}
   </div>
 </section>
 {{end}}
 
-<section aria-labelledby="what" class="mb-12">
-  <h2 id="what">{{t .Lang "landing.what"}}</h2>
-  <p class="max-w-prose text-muted">{{t .Lang "landing.what.sub"}}</p>
-  <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-    <article class="card p-5"><h3>{{t .Lang "landing.f1.title"}}</h3><p class="mb-0 text-ink-2">{{t .Lang "landing.f1.body"}}</p></article>
-    <article class="card p-5"><h3>{{t .Lang "landing.f2.title"}}</h3><p class="mb-0 text-ink-2">{{t .Lang "landing.f2.body"}}</p></article>
-    <article class="card p-5"><h3>{{t .Lang "landing.f3.title"}}</h3><p class="mb-0 text-ink-2">{{t .Lang "landing.f3.body"}}</p></article>
+<section class="section" aria-labelledby="titles-h" id="titles">
+  <div class="section-top">
+    <div><div class="eyebrow">{{t .Lang "nav.titles"}}</div><h2 id="titles-h">{{t .Lang "landing.titles"}}</h2><p>{{t .Lang "landing.titles.sub"}}</p></div>
+    <a class="link-arrow" href="/titles">{{t .Lang "landing.titles.all"}} ({{.TitlesTotal}}) <svg class="ico sm" aria-hidden="true"><use href="#i-arrow"/></svg></a>
   </div>
-  <p class="mt-5"><a class="btn" href="/features">{{t .Lang "landing.allfeatures"}}</a></p>
-</section>
-
-<section aria-labelledby="how" class="mb-12">
-  <h2 id="how">{{t .Lang "landing.how"}}</h2>
-  <p class="max-w-prose text-muted">{{t .Lang "landing.how.sub"}}</p>
-  <ol class="mt-5 grid list-none gap-4 p-0 sm:grid-cols-2">
-    <li class="card p-5"><h3>{{t .Lang "landing.s1.title"}}</h3><p class="mb-0 text-ink-2">{{t .Lang "landing.s1.body"}}</p></li>
-    <li class="card p-5"><h3>{{t .Lang "landing.s2.title"}}</h3><p class="mb-0 text-ink-2">{{t .Lang "landing.s2.body"}}</p></li>
-    <li class="card p-5"><h3>{{t .Lang "landing.s3.title"}}</h3><p class="mb-0 text-ink-2">{{t .Lang "landing.s3.body"}}</p></li>
-    <li class="card p-5"><h3>{{t .Lang "landing.s4.title"}}</h3><p class="mb-0 text-ink-2">{{t .Lang "landing.s4.body"}}</p></li>
-  </ol>
-</section>
-
-<section aria-labelledby="titles-h" id="titles">
-  <h2 id="titles-h">{{t .Lang "landing.titles"}}</h2>
-  <p class="max-w-prose text-muted">{{t .Lang "landing.titles.sub"}}</p>
-{{with .Titles}}{{if .}}
-  {{/* A three-column table does not fit a phone, so narrow gets one card per
-       title with its own labels and wide gets the table. Same markup, no
-       horizontal scroll, and the labels stay in the string catalogue. */}}
-  <ul class="mt-5 card list-none divide-y divide-line p-0 md:hidden">
+  {{with .Titles}}
+  <ul class="tgrid">
     {{range .}}
-    <li class="flex flex-wrap items-center gap-x-3 gap-y-1 p-4">
-      <picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img class="console-logo shrink-0" src="/static/consoles/{{consoleSlug .Console}}.svg" alt="{{.Console}}" width="33" height="22" loading="lazy"></picture>
-      <span class="font-semibold break-anywhere">{{.Name}}</span>
-      <span class="badge {{badgeClass .Status}} ml-auto">{{.Status}}</span>
-      <span class="w-full text-sm text-muted">{{.Console}}</span>
+    <li class="tcard">
+      <span class="console lg"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>
+      <span class="t"><b>{{.Name}}</b><span class="sub">{{.Console}}</span></span>
+      <span class="end"><span class="badge {{badgeClass .Status}}">{{.Status}}</span></span>
     </li>
     {{end}}
   </ul>
-  <table class="mt-5 hidden w-full border-collapse text-left md:table">
-    <thead>
-      <tr class="border-b border-line text-sm text-muted">
-        <th scope="col" class="py-2 pr-4 font-medium">{{t $.Lang "landing.col.title"}}</th>
-        <th scope="col" class="py-2 pr-4 font-medium">{{t $.Lang "landing.col.platform"}}</th>
-        <th scope="col" class="py-2 font-medium">{{t $.Lang "landing.col.status"}}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {{range .}}
-      <tr class="border-b border-line last:border-0">
-        <td class="py-3 pr-4 font-medium">{{.Name}}</td>
-        <td class="py-3 pr-4 text-ink-2">{{.Console}}</td>
-        <td class="py-3"><span class="badge {{badgeClass .Status}}">{{.Status}}</span></td>
-      </tr>
-      {{end}}
-    </tbody>
-  </table>
-{{else}}<p class="mt-5 card p-4 text-muted">{{t $.Lang "landing.titles.none"}}</p>{{end}}{{end}}
-  <p class="mt-4"><a href="/titles" class="font-medium">{{t .Lang "landing.titles.all"}} ({{.TitlesTotal}}) &rarr;</a></p>
+  {{else}}<p class="card p-4 text-muted">{{t $.Lang "landing.titles.none"}}</p>{{end}}
 </section>
+
+<section class="section">
+  <div class="cta-band">
+    <h2>{{t .Lang "landing.cta.head"}}</h2>
+    <p>{{t .Lang "landing.cta.body"}}</p>
+    <div class="cta-row">
+      {{if .User}}<a class="btn primary lg" href="/account">{{t .Lang "nav.account"}}</a>
+      {{else}}<a class="btn primary lg" href="/register">{{t .Lang "landing.cta"}}</a>{{end}}
+      <a class="btn lg" href="/downloads">{{t .Lang "landing.setup"}}</a>
+    </div>
+  </div>
+</section>
+</div>
 {{template "footer" .}}

@@ -1,11 +1,12 @@
 {{template "header" .}}
 <div class="page-head">
+  <div class="eyebrow">{{t .Lang "platforms.title"}}</div>
   <h1>{{t .Lang "titles.title"}}</h1>
-  <p>{{t .Lang "titles.sub"}}</p>
+  <p class="lede">{{t .Lang "titles.sub"}}</p>
 </div>
 
 <section aria-labelledby="titles-h">
-  <div class="section-head"><h2 id="titles-h" class="sr-only">{{t .Lang "titles.title"}}</h2></div>
+  <h2 id="titles-h" class="sr-only">{{t .Lang "titles.title"}}</h2>
 
   {{if .Admin}}
   <div class="mb-4 flex flex-wrap gap-2">
@@ -14,71 +15,48 @@
   </div>
   {{end}}
 
-  <form class="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3" role="search" aria-label="{{t .Lang "titles.title"}}">
-    <label class="flex flex-col gap-1 text-sm text-ink-2">
-      <span>{{t .Lang "titles.search"}}</span>
-      <input id="titles-q" type="search" autocomplete="off" class="field" placeholder="{{t .Lang "titles.search"}}">
-    </label>
-    <label class="flex flex-col gap-1 text-sm text-ink-2">
-      <span>{{t .Lang "titles.console"}}</span>
-      <select id="titles-console" class="field">
-        <option value="">{{t .Lang "titles.all"}}</option>
-        {{range .Consoles}}<option value="{{.}}">{{.}}</option>{{end}}
-      </select>
-    </label>
-    <label class="flex flex-col gap-1 text-sm text-ink-2">
-      <span>{{t .Lang "titles.status"}}</span>
-      <select id="titles-status" class="field">
-        <option value="">{{t .Lang "titles.all"}}</option>
-        {{range .Statuses}}<option value="{{.}}">{{.}}</option>{{end}}
-      </select>
-    </label>
-  </form>
-
-  <p id="titles-count" class="mb-3 text-sm text-muted" data-showing="{{t .Lang "titles.showing"}}"></p>
+  {{template "list-filters" .}}
 
   {{with .Titles}}
-  <ul id="titles-list" class="card list-none divide-y divide-line p-0">
+  <ul id="titles-list" class="tgrid">
     {{range .}}
-    <li class="titles-row flex items-center gap-3 p-4"
-        data-name="{{.Name}}" data-console="{{.Console}}" data-status="{{.Status}}">
-      <picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img class="console-logo shrink-0" src="/static/consoles/{{consoleSlug .Console}}.svg" alt="{{.Console}}" width="36" height="24" loading="lazy"></picture>
-      <span class="font-semibold break-anywhere">{{.Name}}</span>
-      <span class="ml-auto shrink-0">
+    <li class="titles-row tcard" data-name="{{.Name}}" data-console="{{.Console}}" data-status="{{.Status}}">
+      <span class="console lg"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>
+      <span class="t"><b>{{.Name}}</b><span class="sub">{{.Console}}</span></span>
+      <span class="end">
+        <span class="badge {{badgeClass .Status}}">{{.Status}}</span>
         {{if or (eq .Status "requestable") (eq .Status "planned")}}
           {{if $.User}}
           <form method="post" action="/request/vote">
             <input type="hidden" name="csrf" value="{{$.CSRF}}">
             <input type="hidden" name="id" value="{{.ID}}">
             <input type="hidden" name="back" value="{{$.Back}}">
-            <button type="submit" class="btn text-sm {{if .Voted}}primary{{end}}"
+            <button type="submit" class="{{if .Voted}}primary{{end}}"
               aria-pressed="{{if .Voted}}true{{else}}false{{end}}">
               {{if .Voted}}{{t $.Lang "requests.requested"}}{{else}}{{t $.Lang "requests.request"}}{{end}}{{if $.Admin}} · {{.Votes}}{{end}}
             </button>
           </form>
           {{else}}
-          <a class="btn text-sm" href="/login" title="{{t $.Lang "requests.signin"}}">{{t $.Lang "requests.request"}}</a>
+          <a class="btn" href="/login" title="{{t $.Lang "requests.signin"}}">{{t $.Lang "requests.request"}}</a>
           {{end}}
-        {{else}}
-          <span class="badge {{badgeClass .Status}}">{{.Status}}</span>
-        {{end}}
-        {{if $.Admin}}
-        <form method="post" action="/admin/titles/status" class="inline">
-          <input type="hidden" name="csrf" value="{{$.CSRF}}">
-          <input type="hidden" name="id" value="{{.ID}}">
-          <input type="hidden" name="notes" value="{{.Notes}}">
-          {{$cur := .Status}}<select name="status" class="field text-sm" aria-label="status of {{.Name}}">
-            {{range $.AllStatuses}}<option value="{{.}}"{{if eq . $cur}} selected{{end}}>{{.}}</option>{{end}}
-          </select>
-          <button type="submit" class="btn text-sm">set</button>
-        </form>
         {{end}}
       </span>
+      {{if $.Admin}}
+      <form method="post" action="/admin/titles/status" class="admin">
+        <input type="hidden" name="csrf" value="{{$.CSRF}}">
+        <input type="hidden" name="id" value="{{.ID}}">
+        <input type="hidden" name="notes" value="{{.Notes}}">
+        {{$cur := .Status}}<select name="status" class="field" aria-label="status of {{.Name}}">
+          {{range $.AllStatuses}}<option value="{{.}}"{{if eq . $cur}} selected{{end}}>{{.}}</option>{{end}}
+        </select>
+        <button type="submit" class="small">set</button>
+      </form>
+      {{end}}
     </li>
     {{end}}
   </ul>
-  <p id="titles-empty" class="mt-5 card p-4 text-muted" hidden>{{t $.Lang "titles.none"}}</p>
-  {{else}}<p class="mt-5 card p-4 text-muted">{{t $.Lang "landing.titles.none"}}</p>{{end}}
+  <p id="titles-empty" class="card p-6 text-center text-muted" hidden>{{t $.Lang "titles.none"}}</p>
+  {{else}}<p class="card p-4 text-muted">{{t $.Lang "landing.titles.none"}}</p>{{end}}
 
   {{if .Requestable}}
   <div class="mt-6 flex flex-wrap items-center gap-3">

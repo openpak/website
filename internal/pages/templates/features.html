@@ -1,40 +1,24 @@
 {{template "header" .}}
 <div class="page-head">
+  <div class="eyebrow">OpenPak</div>
   <h1>{{t .Lang "features.title"}}</h1>
-  <p>{{t .Lang "features.sub"}}</p>
+  <p class="lede">{{t .Lang "features.sub"}}</p>
 </div>
 
 <section aria-labelledby="feat-h">
-  <div class="section-head"><h2 id="feat-h" class="sr-only">{{t .Lang "features.title"}}</h2></div>
-
-  <form class="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2" role="search" aria-label="{{t .Lang "features.title"}}">
-    <label class="flex flex-col gap-1 text-sm text-ink-2">
-      <span>{{t .Lang "titles.search"}}</span>
-      <input id="titles-q" type="search" autocomplete="off" class="field" placeholder="{{t .Lang "titles.search"}}">
-    </label>
-    <label class="flex flex-col gap-1 text-sm text-ink-2">
-      <span>{{t .Lang "titles.status"}}</span>
-      <select id="titles-status" class="field">
-        <option value="">{{t .Lang "titles.all"}}</option>
-        {{range .Statuses}}<option value="{{.}}">{{.}}</option>{{end}}
-      </select>
-    </label>
-  </form>
-
-  <p id="titles-count" class="mb-3 text-sm text-muted" data-showing="{{t .Lang "titles.showing"}}"></p>
-
+  <h2 id="feat-h" class="sr-only">{{t .Lang "features.title"}}</h2>
+  {{template "list-filters" .}}
   {{with .Features}}
-  <ul id="titles-list" class="card list-none divide-y divide-line p-0">
+  <ul id="titles-list" class="tgrid">
     {{range .}}
-    <li class="titles-row flex items-center gap-3 p-4"
-        data-name="{{.Name}}" data-console="{{.Console}}" data-status="{{.Status}}">
-      <picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img class="console-logo shrink-0" src="/static/consoles/{{consoleSlug .Console}}.svg" alt="{{.Console}}" width="36" height="24" loading="lazy"></picture>
-      <span class="font-semibold break-anywhere">{{.Name}}</span>
-      <span class="ml-auto shrink-0"><span class="badge {{badgeClass .Status}}">{{.Status}}</span></span>
+    <li class="titles-row tcard" data-name="{{.Name}}" data-console="{{.Console}}" data-status="{{.Status}}">
+      <span class="console lg"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>
+      <span class="t"><b>{{.Name}}</b><span class="sub">{{.Console}}</span></span>
+      <span class="end"><span class="badge {{badgeClass .Status}}">{{.Status}}</span></span>
     </li>
     {{end}}
   </ul>
-  <p id="titles-empty" class="mt-5 card p-4 text-muted" hidden>{{t $.Lang "titles.none"}}</p>
+  <p id="titles-empty" class="card p-6 text-center text-muted" hidden>{{t $.Lang "titles.none"}}</p>
   {{else}}<p class="mt-5 card p-4 text-muted">{{t $.Lang "features.next.body"}}</p>{{end}}
 </section>
 

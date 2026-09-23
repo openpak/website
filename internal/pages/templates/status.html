@@ -1,82 +1,99 @@
 {{template "header" .}}
-{{/* One row per thing, shaped like the banner: the tint carries the state and
-     the pill carries the fact, so neither has to repeat the other. Green is
-     working, amber is on its way, red is not answering, grey is nothing
-     claimed — planned work, or a server this deployment does not check. */}}
+{{/* A summary banner, then one panel per kind of thing. Every row keeps its
+     state class: the dot carries how it is and the pill says what it is.
+     Green is working, indigo is beta, amber is being built, red is not
+     answering, grey is nothing claimed — planned work, or a server this
+     deployment does not check. */}}
 <div class="page-head">
+  <div class="eyebrow">OpenPak</div>
   <h1>{{t .Lang "status.title"}}</h1>
-  <p>{{t .Lang "status.sub"}}</p>
+  <p class="lede">{{t .Lang "status.sub"}}</p>
 </div>
 
-<div class="state-row {{if .Operational}}ok{{else}}bad{{end}} mb-9" role="status">
-  <span class="name text-lg">{{if .Operational}}{{t .Lang "status.all.ok"}}{{else}}{{t .Lang "status.all.bad"}}{{end}}</span>
-  {{/* Online, not playing: this counts everyone signed in, and the section
+<div class="banner {{if not .Operational}}bad{{end}}" role="status">
+  <div class="flex items-center gap-4">
+    <span class="big-ic"><svg class="ico" aria-hidden="true"><use href="{{if .Operational}}#i-check{{else}}#i-alert{{end}}"/></svg></span>
+    <h2>{{if .Operational}}{{t .Lang "status.all.ok"}}{{else}}{{t .Lang "status.all.bad"}}{{end}}</h2>
+  </div>
+  {{/* Online, not playing: this counts everyone signed in, and the panel
        further down counts who is actually in a game. */}}
-  {{if .CountsOK}}<span class="pill">{{if eq .TotalPlayers 1}}{{t .Lang "status.pill.online.one"}}{{else}}{{.TotalPlayers}} {{t .Lang "status.pill.online.many"}}{{end}}</span>{{end}}
-</div>
-
-<h2 class="mb-3 text-xs font-bold uppercase tracking-widest text-muted">{{t .Lang "status.servers"}}</h2>
-<div class="mb-9">
-  {{range .Servers}}
-  <div class="state-row {{if not .Checkable}}idle{{else if .Up}}ok{{else}}bad{{end}}">
-    <span class="name">{{.Name}}</span>
-    <span class="pill">
-      {{if not .Checkable}}{{t $.Lang "status.unchecked"}}
-      {{else if not .Up}}{{t $.Lang "status.down"}}
-      {{else if eq .Players 1}}{{t $.Lang "status.pill.online.one"}}
-      {{else}}{{.Players}} {{t $.Lang "status.pill.online.many"}}{{end}}
-    </span>
+  {{if .CountsOK}}
+  <div class="kpis">
+    <div class="kpi"><b>{{.TotalPlayers}}</b><span>{{t .Lang "landing.live.online"}}</span></div>
+    <div class="kpi"><b>{{len .Titles}}</b><span>{{t .Lang "status.playing"}}</span></div>
   </div>
   {{end}}
 </div>
 
-<h2 class="mb-3 text-xs font-bold uppercase tracking-widest text-muted">{{t .Lang "status.networks"}}</h2>
-<div class="mb-9">
-  {{range .Networks}}
-  <div class="state-row {{if eq .State "live"}}ok{{else if or (eq .State "beta") (eq .State "building")}}warn{{else}}idle{{end}}">
-    <span class="name">{{.Name}}</span>
-    <span class="pill">
-      {{if eq .State "live"}}{{if eq .Players 1}}{{t $.Lang "status.pill.online.one"}}{{else}}{{.Players}} {{t $.Lang "status.pill.online.many"}}{{end}}
-      {{else if eq .State "beta"}}{{t $.Lang "status.net.beta"}}
-      {{else if eq .State "building"}}{{t $.Lang "status.net.building"}}
-      {{else}}{{t $.Lang "status.net.planned"}}{{end}}
-    </span>
-  </div>
-  {{end}}
-</div>
+<div class="panels">
+  <section class="card panel" aria-labelledby="srv-h">
+    <header><h2 id="srv-h">{{t .Lang "status.servers"}}</h2></header>
+    <ul>
+      {{range .Servers}}
+      <li class="state-row {{if not .Checkable}}idle{{else if .Up}}ok{{else}}bad{{end}}">
+        <span class="name">{{.Name}}</span>
+        <span class="pill">
+          {{if not .Checkable}}{{t $.Lang "status.unchecked"}}
+          {{else if not .Up}}{{t $.Lang "status.down"}}
+          {{else if eq .Players 1}}{{t $.Lang "status.pill.online.one"}}
+          {{else}}{{.Players}} {{t $.Lang "status.pill.online.many"}}{{end}}
+        </span>
+      </li>
+      {{end}}
+    </ul>
+  </section>
 
-{{if .CountsOK}}
-  <h2 class="mb-3 text-xs font-bold uppercase tracking-widest text-muted">{{t .Lang "status.playing"}}</h2>
-  <div class="mb-9">
-    {{if .Titles}}
+  {{if .CountsOK}}
+  <section class="card panel" aria-labelledby="play-h">
+    <header><h2 id="play-h">{{t .Lang "status.playing"}}</h2></header>
+    <ul>
       {{range .Titles}}
-      <div class="state-row ok">
+      <li class="state-row ok">
         <span class="name">{{.Name}}</span>
         <span class="pill">{{if eq .Players 1}}{{t $.Lang "status.pill.one"}}{{else}}{{.Players}} {{t $.Lang "status.pill.many"}}{{end}}</span>
-      </div>
+      </li>
+      {{else}}
+      <li class="state-row idle"><span class="name font-normal text-muted">{{t .Lang "status.nobody"}}</span></li>
       {{end}}
-    {{else}}
-      <div class="state-row idle">
-        <span class="name text-muted font-normal">{{t .Lang "status.nobody"}}</span>
-      </div>
-    {{end}}
-  </div>
-{{end}}
+    </ul>
+  </section>
+  {{end}}
 
-<h2 class="mb-3 text-xs font-bold uppercase tracking-widest text-muted">{{t .Lang "status.services"}}</h2>
-<div>
-  <div class="state-row {{if .CoreOK}}ok{{else}}bad{{end}}">
-    <span class="name">{{t .Lang "status.core"}}</span>
-    <span class="pill">{{if .CoreOK}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</span>
-  </div>
-  <div class="state-row {{if .DBOk}}ok{{else}}bad{{end}}">
-    <span class="name">{{t .Lang "status.db"}}</span>
-    <span class="pill">{{if .DBOk}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</span>
-  </div>
-  <div class="state-row {{if .StorageOK}}ok{{else}}bad{{end}}">
-    <span class="name">{{t .Lang "status.storage"}}</span>
-    <span class="pill">{{if .StorageOK}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</span>
-  </div>
+  <section class="card panel" aria-labelledby="net-h">
+    <header><h2 id="net-h">{{t .Lang "status.networks"}}</h2></header>
+    <ul>
+      {{range .Networks}}
+      <li class="state-row {{if eq .State "live"}}ok{{else if eq .State "beta"}}beta{{else if eq .State "building"}}warn{{else}}idle{{end}}">
+        <span class="console"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Name}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Name}}.svg" alt="" width="24" height="24" loading="lazy"></picture></span>
+        <span class="name">{{.Name}}</span>
+        <span class="pill">
+          {{if eq .State "live"}}{{if eq .Players 1}}{{t $.Lang "status.pill.online.one"}}{{else}}{{.Players}} {{t $.Lang "status.pill.online.many"}}{{end}}
+          {{else if eq .State "beta"}}{{t $.Lang "status.net.beta"}}
+          {{else if eq .State "building"}}{{t $.Lang "status.net.building"}}
+          {{else}}{{t $.Lang "status.net.planned"}}{{end}}
+        </span>
+      </li>
+      {{end}}
+    </ul>
+  </section>
+
+  <section class="card panel" aria-labelledby="svc-h">
+    <header><h2 id="svc-h">{{t .Lang "status.services"}}</h2></header>
+    <ul>
+      <li class="state-row {{if .CoreOK}}ok{{else}}bad{{end}}">
+        <span class="name">{{t .Lang "status.core"}}</span>
+        <span class="pill">{{if .CoreOK}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</span>
+      </li>
+      <li class="state-row {{if .DBOk}}ok{{else}}bad{{end}}">
+        <span class="name">{{t .Lang "status.db"}}</span>
+        <span class="pill">{{if .DBOk}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</span>
+      </li>
+      <li class="state-row {{if .StorageOK}}ok{{else}}bad{{end}}">
+        <span class="name">{{t .Lang "status.storage"}}</span>
+        <span class="pill">{{if .StorageOK}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</span>
+      </li>
+    </ul>
+  </section>
 </div>
 
 <p class="mt-7 max-w-prose text-sm text-muted">{{t .Lang "status.elsewhere"}}</p>

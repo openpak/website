@@ -1,24 +1,24 @@
 {{template "header" .}}
 <div class="page-head">
+  <div class="eyebrow">{{t .Lang "nav.getstarted"}}</div>
   <h1>{{t .Lang "downloads.title"}}</h1>
-  <p>{{t .Lang "downloads.sub"}}</p>
+  <p class="lede">{{t .Lang "downloads.sub"}}</p>
 </div>
 
-<section aria-labelledby="dl-h" class="mb-12">
-  <h2 id="dl-h">{{t .Lang "downloads.clients"}}</h2>
-  <ul class="mt-5 card list-none divide-y divide-line p-0">
+<section aria-labelledby="dl-h">
+  <h2 id="dl-h" class="sr-only">{{t .Lang "downloads.clients"}}</h2>
+  <ul class="dlgrid">
     {{range .Downloads}}
-    <li class="flex items-center gap-3 p-4">
-      <picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img class="console-logo shrink-0" src="/static/consoles/{{consoleSlug .Console}}.svg" alt="{{.Console}}" width="36" height="24" loading="lazy"></picture>
-      <span class="min-w-0">
-        <span class="font-semibold break-anywhere">{{.Name}}</span>
-        {{if .Status}}<span class="badge {{badgeClass .Status}} ml-1">{{.Status}}</span>{{end}}
-        <span class="block text-sm text-muted">{{.Console}} · {{t $.Lang .Kind}}</span>
-      </span>
-      <span class="ml-auto shrink-0">
-        {{if .URL}}<a class="btn text-sm" href="{{.URL}}" rel="noopener">{{t $.Lang "downloads.get"}}</a>
-        {{else}}<span class="badge">{{t $.Lang "downloads.soon"}}</span>{{end}}
-      </span>
+    <li class="card dl">
+      <div class="flex items-center gap-3">
+        <span class="console lg"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>
+        <div class="min-w-0"><div class="kind">{{.Console}} · {{t $.Lang .Kind}}</div><h3 class="break-anywhere">{{.Name}}</h3></div>
+      </div>
+      <div class="foot">
+        {{if .Status}}<span class="badge {{badgeClass .Status}}">{{.Status}}</span>{{else}}<span></span>{{end}}
+        {{if .URL}}<a class="btn primary" href="{{.URL}}" rel="noopener"><svg class="ico sm" aria-hidden="true"><use href="#i-dl"/></svg>{{t $.Lang "downloads.get"}}</a>
+        {{else}}<span class="text-sm text-muted">{{t $.Lang "downloads.soon"}}</span>{{end}}
+      </div>
     </li>
     {{end}}
   </ul>
@@ -27,15 +27,15 @@
 
 <section aria-labelledby="plat-h" id="platforms">
   <h2 id="plat-h">{{t .Lang "platforms.title"}}</h2>
-  <ul class="mt-5 card list-none divide-y divide-line p-0">
+  <p class="text-muted">{{t .Lang "platforms.note"}}</p>
+  <ul class="tgrid">
     {{range .Platforms}}
-    <li class="flex items-center gap-3 p-4">
-      <picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img class="console-logo shrink-0" src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="36" height="24" loading="lazy"></picture>
-      <span class="font-semibold break-anywhere">{{.Name}}</span>
-      <span class="ml-auto shrink-0"><span class="badge {{badgeClass .Status}}">{{.Status}}</span></span>
+    <li class="tcard">
+      <span class="console lg"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>
+      <span class="t"><b>{{.Name}}</b></span>
+      <span class="end"><span class="badge {{badgeClass .Status}}">{{.Status}}</span></span>
     </li>
     {{end}}
   </ul>
-  <p class="mt-4 text-sm text-muted">{{t .Lang "platforms.note"}}</p>
 </section>
 {{template "footer" .}}

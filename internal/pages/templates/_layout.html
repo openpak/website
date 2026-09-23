@@ -1,120 +1,142 @@
 {{/* One shell for every page — public and signed-in alike. The nav swaps
      its links for a session; there is no separate portal chrome.
 
-     Mobile first: the phone layout is the plain one, and the wider layout is
-     added at sm/md. The menu is a <details> element, so it opens and closes
-     with no JavaScript — every journey on this site still works with scripting
-     off, which a hamburger built from a button and a listener would end. */}}
+     Mobile first: on a phone the links live in a tab bar at the bottom of the
+     screen, where a thumb already is, and from 60rem they sit in the header.
+     Both are plain links, so every journey on this site still works with
+     scripting off. */}}
 
 {{define "header"}}<!DOCTYPE html>
 <html lang="{{.Lang}}">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f6f6f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a0b0f" media="(prefers-color-scheme: dark)">
 <meta name="description" content="{{t .Lang "site.tagline"}}">
 <title>{{.Title}} · OpenPak</title>
 <link rel="icon" href="/static/icon.svg?v={{.Asset}}" type="image/svg+xml">
 <link rel="stylesheet" href="/static/site.css?v={{.Asset}}">
 <link rel="alternate" type="application/atom+xml" title="OpenPak news" href="/feed/news.xml">
 <link rel="alternate" type="application/atom+xml" title="OpenPak title status" href="/feed/titles.xml">
+<script src="/static/site.js?v={{.Asset}}" defer></script>
 </head>
 <body class="min-h-screen flex flex-col">
-<a class="sr-only focus:not-sr-only focus:absolute focus:m-3 focus:p-3 focus:card" href="#main">{{t .Lang "nav.skip"}}</a>
+{{/* Icons, drawn once and used by id. */}}
+<svg width="0" height="0" class="absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+  <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></symbol>
+  <symbol id="i-dl" viewBox="0 0 24 24"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 19h16"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c2.2.6 3.5 2.4 3.5 5.2"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="3"/><path d="M16 8V6a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v7a3 3 0 0 0 3 3h2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12.5 5 5L20 6.5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 8v5m0 3.5h.01M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18a5 5 0 0 1-.6-10A6 6 0 0 1 18 8.5 4.5 4.5 0 0 1 17.5 18z"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5m8-10 5 5-5 5M14 4l-4 16"/></symbol>
+  <symbol id="i-gamepad" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="5.5"/><path d="M7 11v3m-1.5-1.5h3M15.5 12h.01M18 13.5h.01"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 3h11l4 4v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M8 3v5h7V3M8 21v-7h8v7"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.5v.7m0 3h.01"/></symbol>
+  <symbol id="i-rss" viewBox="0 0 24 24"><path d="M5 5a14 14 0 0 1 14 14M5 11a8 8 0 0 1 8 8"/><circle cx="6" cy="18" r="1.2"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11"/></symbol>
+</svg>
+<a class="sr-only focus:not-sr-only focus:fixed focus:z-50 focus:m-3 focus:p-3 focus:card" href="#main">{{t .Lang "nav.skip"}}</a>
 
-<header class="border-b border-line bg-paper">
-  <div class="mx-auto w-full max-w-5xl px-4 sm:px-6">
-    <div class="flex items-center gap-3 py-3">
-      <a href="/" class="flex items-center gap-2 font-bold tracking-tight text-ink no-underline">
-        <img src="/static/icon.svg?v={{.Asset}}" alt="" width="26" height="26" class="size-6">
-        OpenPak
-      </a>
-
-      {{/* Wide: the links sit in the bar. Narrow: they live in the menu below. */}}
-      <nav aria-label="{{t .Lang "nav.main"}}" class="hidden md:flex items-center gap-1 ml-4">
-        {{if .User}}
-          <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/account"}}font-semibold text-ink{{end}}" href="/account" {{if eq .Path "/account"}}aria-current="page"{{end}}>{{t .Lang "nav.account"}}</a>
-          <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/account/saves"}}font-semibold text-ink{{end}}" href="/account/saves" {{if eq .Path "/account/saves"}}aria-current="page"{{end}}>{{t .Lang "nav.saves"}}</a>
-          {{if .Admin}}<a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink" href="/admin">{{t .Lang "admin.title"}}</a>{{end}}
-        {{end}}
-        <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/titles"}}font-semibold text-ink{{end}}" href="/titles" {{if eq .Path "/titles"}}aria-current="page"{{end}}>{{t .Lang "nav.titles"}}</a>
-        <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/features"}}font-semibold text-ink{{end}}" href="/features" {{if eq .Path "/features"}}aria-current="page"{{end}}>{{t .Lang "nav.features"}}</a>
-        <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/downloads"}}font-semibold text-ink{{end}}" href="/downloads" {{if eq .Path "/downloads"}}aria-current="page"{{end}}>{{t .Lang "nav.downloads"}}</a>
-        <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/status"}}font-semibold text-ink{{end}}" href="/status" {{if eq .Path "/status"}}aria-current="page"{{end}}>{{t .Lang "nav.status"}}</a>
-        <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/help"}}font-semibold text-ink{{end}}" href="/help" {{if eq .Path "/help"}}aria-current="page"{{end}}>{{t .Lang "nav.help"}}</a>
-      </nav>
-
-      <div class="ml-auto flex items-center gap-2">
-        {{if .User}}
-          <form method="post" action="/logout" class="hidden sm:block">
-            <input type="hidden" name="csrf" value="{{.CSRF}}">
-            <button type="submit" class="btn text-sm">{{t .Lang "nav.signout"}}</button>
-          </form>
-        {{else}}
-          <a class="hidden sm:inline-flex btn text-sm" href="/login">{{t .Lang "nav.signin"}}</a>
-          <a href="/register" class="btn primary text-sm">{{t .Lang "nav.register"}}</a>
-        {{end}}
-
-        {{/* The menu button: only ever on narrow screens. */}}
-        <details class="md:hidden relative" name="nav">
-          <summary class="btn size-11 !p-0 list-none [&::-webkit-details-marker]:hidden" aria-label="{{t .Lang "nav.menu"}}">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-              <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </summary>
-          <nav aria-label="{{t .Lang "nav.main"}}" class="absolute right-0 z-20 mt-2 w-56 card p-2 shadow-lg">
-            {{if .User}}
-              <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/account">{{t .Lang "nav.account"}}</a>
-              <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/account/saves">{{t .Lang "nav.saves"}}</a>
-              {{if .Admin}}<a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/admin">{{t .Lang "admin.title"}}</a>{{end}}
-            {{end}}
-            <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/titles">{{t .Lang "nav.titles"}}</a>
-            <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/features">{{t .Lang "nav.features"}}</a>
-            <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/downloads">{{t .Lang "nav.downloads"}}</a>
-            <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/status">{{t .Lang "nav.status"}}</a>
-            <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/help">{{t .Lang "nav.help"}}</a>
-            {{if .User}}
-              <form method="post" action="/logout" class="sm:hidden mt-1 border-t border-line pt-1">
-                <input type="hidden" name="csrf" value="{{.CSRF}}">
-                <button type="submit" class="w-full rounded-lg px-3 py-3 text-left text-ink hover:bg-paper-2">{{t .Lang "nav.signout"}}</button>
-              </form>
-            {{else}}
-              <a class="sm:hidden mt-1 block border-t border-line px-3 py-3 pt-4 text-ink no-underline hover:bg-paper-2" href="/login">{{t .Lang "nav.signin"}}</a>
-            {{end}}
-          </nav>
-        </details>
-      </div>
+<header class="top">
+  <div class="wrap">
+    <a href="/" class="brand"><img src="/static/icon.svg?v={{.Asset}}" alt="" width="28" height="28">OpenPak</a>
+    <nav aria-label="{{t .Lang "nav.main"}}" class="navlinks">
+      {{if .User}}
+        <a href="/account" {{if eq .Path "/account"}}aria-current="page"{{end}}>{{t .Lang "nav.account"}}</a>
+        <a href="/account/saves" {{if eq .Path "/account/saves"}}aria-current="page"{{end}}>{{t .Lang "nav.saves"}}</a>
+        {{if .Admin}}<a href="/admin" {{if hasPrefix .Path "/admin"}}aria-current="page"{{end}}>{{t .Lang "admin.title"}}</a>{{end}}
+      {{else}}
+        <a href="/" {{if eq .Path "/"}}aria-current="page"{{end}}>{{t .Lang "nav.home"}}</a>
+      {{end}}
+      <a href="/titles" {{if eq .Path "/titles"}}aria-current="page"{{end}}>{{t .Lang "nav.titles"}}</a>
+      <a href="/features" {{if eq .Path "/features"}}aria-current="page"{{end}}>{{t .Lang "nav.features"}}</a>
+      <a href="/downloads" {{if eq .Path "/downloads"}}aria-current="page"{{end}}>{{t .Lang "nav.downloads"}}</a>
+      <a href="/status" {{if eq .Path "/status"}}aria-current="page"{{end}}>{{t .Lang "nav.status"}}</a>
+      <a href="/help" {{if hasPrefix .Path "/help"}}aria-current="page"{{end}}>{{t .Lang "nav.help"}}</a>
+    </nav>
+    <div class="ml-auto flex items-center gap-2">
+      {{if .User}}
+        <form method="post" action="/logout" class="hidden sm:block">
+          <input type="hidden" name="csrf" value="{{.CSRF}}">
+          <button type="submit" class="btn ghost">{{t .Lang "nav.signout"}}</button>
+        </form>
+        {{$n := .User.DisplayName}}{{if not $n}}{{$n = .User.Email}}{{end}}
+        <a class="avatar-btn" href="/account" aria-label="{{t .Lang "nav.account"}}" title="{{$n}}">{{printf "%.1s" $n}}</a>
+      {{else}}
+        <a class="btn ghost hidden sm:inline-flex" href="/login">{{t .Lang "nav.signin"}}</a>
+        <a class="btn primary" href="/register">{{t .Lang "nav.register"}}</a>
+      {{end}}
     </div>
   </div>
 </header>
 
-{{if .Banner}}<div class="border-b border-line bg-paper-2 text-ink-2" role="note"><div class="mx-auto max-w-5xl px-4 py-2.5 text-sm sm:px-6">{{.Banner}}</div></div>{{end}}
+{{if .Banner}}<div class="border-b border-line bg-accent-weak text-ink-2" role="note"><div class="wrap py-2.5 text-sm">{{.Banner}}</div></div>{{end}}
 
-<main id="main" class="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
-{{if .Flash}}<p class="card mb-6 border-accent-line bg-accent-weak px-4 py-3 text-ink-2" role="status">{{.Flash}}</p>{{end}}
+<main id="main" class="flex-1 {{if ne .Path "/"}}wrap pt-6 sm:pt-8{{end}}">
+{{if .Flash}}<p class="card {{if eq .Path "/"}}wrap {{end}}mb-6 mt-4 border-accent-line bg-accent-weak px-4 py-3 text-ink-2" role="status">{{.Flash}}</p>{{end}}
 {{end}}
 
 {{define "footer"}}
 </main>
-<footer class="border-t border-line">
-  <div class="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-7 text-sm text-muted sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-7 sm:px-6">
-    <span>OpenPak</span>
-    <nav aria-label="{{t .Lang "nav.footer"}}" class="flex flex-wrap gap-x-5 gap-y-2">
-      <a class="text-muted no-underline hover:text-ink hover:underline" href="/titles">{{t .Lang "nav.titles"}}</a>
-      <a class="text-muted no-underline hover:text-ink hover:underline" href="/features">{{t .Lang "nav.features"}}</a>
-      <a class="text-muted no-underline hover:text-ink hover:underline" href="/downloads">{{t .Lang "nav.downloads"}}</a>
-      <a class="text-muted no-underline hover:text-ink hover:underline" href="/status">{{t .Lang "nav.status"}}</a>
-      <a class="text-muted no-underline hover:text-ink hover:underline" href="/#titles">{{t .Lang "landing.titles"}}</a>
-      <a class="text-muted no-underline hover:text-ink hover:underline" href="/register">{{t .Lang "nav.register"}}</a>
-    </nav>
-    {{if gt (len langs) 1}}<form action="/lang" method="get" class="flex items-baseline gap-2">
-      <input type="hidden" name="back" value="{{.Path}}">
-      <label for="footer-lang">{{t .Lang "footer.language"}}</label>
-      <select id="footer-lang" name="l" class="rounded border border-line bg-transparent px-1 py-0.5">{{range langs}}<option value="{{.}}" lang="{{.}}"{{if eq . $.Lang}} selected{{end}}>{{t . "lang.name"}}</option>{{end}}</select>
-      <button type="submit" class="rounded border border-line px-2 py-0.5 hover:text-ink">{{t .Lang "footer.language.set"}}</button>
-    </form>{{end}}
-    <p class="m-0 max-w-prose sm:ml-auto">{{t .Lang "footer.note"}}</p>
+<footer class="site-foot">
+  <div class="wrap">
+    <div>
+      <a href="/" class="brand"><img src="/static/icon.svg?v={{.Asset}}" alt="" width="28" height="28">OpenPak</a>
+      <p class="mt-3 mb-0 max-w-sm text-sm text-muted">{{t .Lang "footer.note"}}</p>
+    </div>
+    <nav aria-labelledby="foot-net"><h2 id="foot-net">{{t .Lang "footer.network"}}</h2><ul>
+      <li><a href="/titles">{{t .Lang "nav.titles"}}</a></li>
+      <li><a href="/features">{{t .Lang "nav.features"}}</a></li>
+      <li><a href="/status">{{t .Lang "nav.status"}}</a></li>
+      <li><a href="/#news">{{t .Lang "landing.news"}}</a></li>
+    </ul></nav>
+    <nav aria-labelledby="foot-start"><h2 id="foot-start">{{t .Lang "nav.getstarted"}}</h2><ul>
+      <li><a href="/downloads">{{t .Lang "nav.downloads"}}</a></li>
+      {{if .User}}<li><a href="/account">{{t .Lang "nav.account"}}</a></li>
+      {{else}}<li><a href="/register">{{t .Lang "nav.register"}}</a></li>
+      <li><a href="/login">{{t .Lang "nav.signin"}}</a></li>{{end}}
+      <li><a href="/help">{{t .Lang "nav.help"}}</a></li>
+    </ul></nav>
+    <nav aria-labelledby="foot-proj"><h2 id="foot-proj">{{t .Lang "footer.project"}}</h2><ul>
+      <li><a href="https://github.com/openpak" rel="noopener">{{t .Lang "footer.source"}}</a></li>
+      <li><a href="/feed/news.xml">{{t .Lang "footer.feed.news"}}</a></li>
+      <li><a href="/feed/titles.xml">{{t .Lang "footer.feed.titles"}}</a></li>
+    </ul></nav>
+    <div class="foot-bottom">
+      <span>© OpenPak · AGPL-3.0</span>
+      {{if gt (len langs) 1}}<form action="/lang" method="get" class="flex items-center gap-2">
+        <input type="hidden" name="back" value="{{.Path}}">
+        <svg class="ico sm" aria-hidden="true"><use href="#i-globe"/></svg>
+        <label for="footer-lang" class="sr-only">{{t .Lang "footer.language"}}</label>
+        <select id="footer-lang" name="l" class="field">{{range langs}}<option value="{{.}}" lang="{{.}}"{{if eq . $.Lang}} selected{{end}}>{{t . "lang.name"}}</option>{{end}}</select>
+        <button type="submit" data-autosubmit>{{t .Lang "footer.language.set"}}</button>
+      </form>{{end}}
+    </div>
   </div>
 </footer>
+
+<nav class="tabbar" aria-label="{{t .Lang "nav.main"}}">
+  <a href="/" {{if eq .Path "/"}}aria-current="page"{{end}}><svg class="ico" aria-hidden="true"><use href="#i-home"/></svg>{{t .Lang "nav.home"}}</a>
+  <a href="/titles" {{if or (eq .Path "/titles") (eq .Path "/features")}}aria-current="page"{{end}}><svg class="ico" aria-hidden="true"><use href="#i-grid"/></svg>{{t .Lang "nav.titles"}}</a>
+  <a href="/status" {{if eq .Path "/status"}}aria-current="page"{{end}}><svg class="ico" aria-hidden="true"><use href="#i-pulse"/></svg>{{t .Lang "nav.status"}}</a>
+  <a href="/downloads" {{if eq .Path "/downloads"}}aria-current="page"{{end}}><svg class="ico" aria-hidden="true"><use href="#i-dl"/></svg>{{t .Lang "nav.getstarted"}}</a>
+  {{if .User}}<a href="/account" {{if or (hasPrefix .Path "/account") (hasPrefix .Path "/admin")}}aria-current="page"{{end}}><svg class="ico" aria-hidden="true"><use href="#i-user"/></svg>{{t .Lang "nav.account"}}</a>
+  {{else}}<a href="/login" {{if or (eq .Path "/login") (eq .Path "/register")}}aria-current="page"{{end}}><svg class="ico" aria-hidden="true"><use href="#i-user"/></svg>{{t .Lang "nav.signin"}}</a>{{end}}
+</nav>
 </body>
 </html>{{end}}

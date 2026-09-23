@@ -15,6 +15,7 @@ type featuresPage struct {
 	baseData
 	Features []store.Request
 	Statuses []string
+	Consoles []string
 }
 
 // The feature matrix is display-only: honest status, and NO vote UI (voting is
@@ -27,7 +28,7 @@ func TestFeaturesPageIsDisplayOnly(t *testing.T) {
 	rows := []store.Request{{ID: 4, Name: "Cloud saves (SCSI)", Category: "Content", Console: "Switch", Status: "planned", Votes: 2}}
 
 	var b bytes.Buffer
-	pg := featuresPage{baseData{Lang: "en", Path: "/features", User: &viewUser{ID: "acct-a"}, CSRF: "tok"}, rows, []string{"planned"}}
+	pg := featuresPage{baseData{Lang: "en", Path: "/features", User: &viewUser{ID: "acct-a"}, CSRF: "tok"}, rows, []string{"planned"}, []string{"Switch"}}
 	if err := tmpl.ExecuteTemplate(&b, "features.html", pg); err != nil {
 		t.Fatalf("features.html failed: %v", err)
 	}

@@ -378,15 +378,41 @@ func (s *Server) handleLanding(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		s.log.Error("list requests", "err", err)
 	}
+	type playing struct {
+		Name    string
+		Players int
+		Pct     int
+	}
 	type landing struct {
 		baseData
 		Titles      []store.Request
 		TitlesTotal int
 		News        []news.Article
+		Platforms   []platform
+		// The live card: who is on right now. CountsOK false hides it rather
+		// than showing zeros that would read as an empty network.
+		CountsOK       bool
+		Online, InGame int
+		Playing        []playing
 	}
 	// News is a nice-to-have on this page: unset or failing, the section is
 	// simply not drawn.
-	s.render(w, http.StatusOK, "landing.html", landing{d, popularTitles(titles), len(titles), s.News.Latest(r.Context(), 3)})
+	view := landing{baseData: d, Titles: popularTitles(titles), TitlesTotal: len(titles), News: s.News.Latest(r.Context(), 3), Platforms: platforms[:7]}
+	if s.Invites != nil {
+		if counts, _, total, err := s.Invites.PlayerCounts(r.Context()); err == nil {
+			view.CountsOK, view.Online = true, total
+			sort.Slice(counts, func(i, j int) bool { return counts[i].Players > counts[j].Players })
+			for i, t := range counts {
+				view.InGame += t.Players
+				if i < 3 {
+					view.Playing = append(view.Playing, playing{Name: titleName(t.TitleID), Players: t.Players, Pct: t.Players * 100 / counts[0].Players})
+				}
+			}
+		} else {
+			s.log.Error("player counts", "err", err)
+		}
+	}
+	s.render(w, http.StatusOK, "landing.html", view)
 }
 
 // handleFeatures is the honest feature matrix: every network feature and its
@@ -401,11 +427,15 @@ func (s *Server) handleFeatures(w http.ResponseWriter, r *http.Request) {
 	}
 	// Distinct statuses for the filter dropdown, in stable order.
 	seen := map[string]bool{}
-	var statuses []string
+	var statuses, consoles []string
 	for _, f := range reqs {
 		if f.Status != "" && !seen[f.Status] {
 			seen[f.Status] = true
 			statuses = append(statuses, f.Status)
+		}
+		if f.Console != "" && !seen["c:"+f.Console] {
+			seen["c:"+f.Console] = true
+			consoles = append(consoles, f.Console)
 		}
 	}
 	sort.Strings(statuses)
@@ -413,8 +443,9 @@ func (s *Server) handleFeatures(w http.ResponseWriter, r *http.Request) {
 		baseData
 		Features []store.Request
 		Statuses []string
+		Consoles []string
 	}
-	s.render(w, http.StatusOK, "features.html", featuresPage{d, reqs, statuses})
+	s.render(w, http.StatusOK, "features.html", featuresPage{d, reqs, statuses, consoles})
 }
 
 // handleVote toggles the viewer's vote on one request and returns them to the

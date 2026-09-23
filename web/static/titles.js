@@ -3,19 +3,29 @@
 // the CSP is default-src 'self', so this is loaded from /static.
 (function () {
   var q = document.getElementById("titles-q");
-  var console_ = document.getElementById("titles-console");
-  var status = document.getElementById("titles-status");
   var list = document.getElementById("titles-list");
   var empty = document.getElementById("titles-empty");
   var count = document.getElementById("titles-count");
-  if (!list) return;
+  if (!list || !q) return;
+  var form = q.form;
   var rows = Array.prototype.slice.call(list.querySelectorAll(".titles-row"));
   var showing = (count && count.getAttribute("data-showing")) || "Showing";
+  function picked(name) {
+    var el = form.querySelector('input[name="' + name + '"]:checked');
+    return el ? el.value : "";
+  }
+
+  // A link like /titles?console=Wii arrives with that console already chosen.
+  var want = new URLSearchParams(location.search).get("console");
+  if (want) {
+    form.querySelectorAll('input[name="console"]').forEach(function (el) {
+      if (el.value === want) el.checked = true;
+    });
+  }
 
   function apply() {
     var term = (q.value || "").trim().toLowerCase();
-    var c = console_ ? console_.value : "";
-    var s = status.value;
+    var c = picked("console"), s = picked("status");
     var shown = 0;
     rows.forEach(function (row) {
       var name = (row.getAttribute("data-name") || "").toLowerCase();
@@ -28,10 +38,12 @@
     if (empty) empty.hidden = shown !== 0;
     if (count) count.textContent = showing + " " + shown + " / " + rows.length;
   }
-  [q, console_, status].forEach(function (el) {
-    if (!el) return;
-    el.addEventListener("input", apply);
-    el.addEventListener("change", apply);
+  form.addEventListener("input", apply);
+  form.addEventListener("change", apply);
+  form.addEventListener("submit", function (e) { e.preventDefault(); });
+  // "/" jumps to the search box, as it does on most sites with one.
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "/" && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) { e.preventDefault(); q.focus(); }
   });
   apply();
 })();
