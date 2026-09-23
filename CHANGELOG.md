@@ -3,6 +3,45 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## Unreleased
+
+- **Help tickets.** Signed-in people open a ticket on `/help` (`/support` redirects there):
+  subject, topic, message and an optional file (10 MB), then follow and answer the thread.
+  The app gets the same under `/api/v1/me/tickets` (list, open, thread, reply, attachment;
+  JSON or multipart; in openapi.yaml). `/admin/tickets` is the queue (open, waiting,
+  closed, assigned to me) with replies, internal notes, reply-and-close, assign, close and
+  reopen, all audited. The website has no mail path, so nothing is emailed: replies show
+  on the site and in the app, plus an FCM push (`data.type = ticket_reply`) when push is
+  configured. Migration 0010.
+- **Crash reports.** `POST /api/v1/crash-reports` (public, 20 per 10 minutes per client,
+  optional bearer links the account): multipart `meta` JSON + `attachment` up to 20 MB
+  streamed to disk, or bare JSON; sources ryujinx, citron, eden, nro, app. `POST
+  /api/v1/internal/crash-reports` takes nx-baas's console error reports with
+  `X-Internal-Key` = `WEBSITE_INTERNAL_KEY` (only bad input is a 4xx). `/admin/crashes`
+  groups by signature (source + error code + title + top frame or message, numbers
+  blanked) with counts and versions, filters by source, version, title, error code, date
+  and state, and a report shows its fields and file, resolves alone or with its group, and
+  links to a ticket. Migration 0011.
+- **Console news.** `/admin/console-news` authors the Switch News tab through the news
+  service's admin API (`NEWS_ADMIN_URL`, `NEWS_ADMIN_KEY`): channels (create, edit, icon,
+  retire/restore), articles (languages, body, footer, lifetime, published-at, pickup,
+  priority, essential pickup, motif or image, game/shop/browser button; retire, restore,
+  delete), Publish with the build it switched to or why nothing switched, Rollback to the
+  previous or any kept build. Hidden when unset.
+- **Store.** `/admin/store` manages the homebrew eShop through nx-baas's store admin API
+  (`STORE_ADMIN_URL`, `STORE_ADMIN_KEY` or `NX_INTERNAL_KEY`): titles, metadata per
+  language, icon, publish/unpublish, delete, per-title download stats, and version upload
+  (base or update, with the content list nx-baas verifies the NSP against). The NSP is
+  streamed browser → website → nx-baas and never buffered. Hidden when unset.
+- **Bans everywhere.** `docs/ban-lookup.md` is the contract other services code against:
+  the core's `Identity.GetAccount` status (plus the `account_banned` event), or the
+  website's `GET /internal/bans/{account_id}` / `?namespace=&subject=` (internal key) with
+  reason, actor and time. `/admin/users` lists banned accounts with who banned them and
+  why (migration 0009, backfilled from `admin_audit`), and a ban drops the account's
+  website sessions and bearers at once.
+- Files for tickets and crash reports live under `WEBSITE_ATTACHMENTS_DIR`
+  (default `storage/attachments`; mount a volume) and are always served as downloads.
+
 ## v0.51.0 — 2026-09-23
 
 - A title holds every id it has: `title_ids` (one per region, both games of a pair like

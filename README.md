@@ -24,6 +24,7 @@ internal/accounts/      account actions shared by the pages and the API
 internal/accountpb/     vendored account-core gRPC stubs + .proto sources
 internal/adapter/       client for the Switch (and Wii U/3DS) adapter internal API
 internal/admin/         role-gated operator/moderation pages under /admin
+internal/attachments/   ticket and crash-report files on disk (WEBSITE_ATTACHMENTS_DIR)
 internal/api/           /api/v1 mobile API (+ openapi/openapi.yaml contract)
 internal/chat/          client for the chat service's internal API
 internal/config/        environment configuration
@@ -43,7 +44,9 @@ internal/registry/      v2 revisions, promotion and TUF signing
 internal/registryhttp/  HTTP surface of the registry service (/api/v2, /internal/status)
 internal/saves/         client for the saves service's internal API
 internal/session/       cookie session wrapper, CSRF, bearer hashing
-internal/store/         website-owned Postgres (config, tokens, audit, media, titles)
+internal/store/         website-owned Postgres (config, tokens, audit, media, titles,
+                        bans, help tickets, crash reports)
+internal/support/       help-ticket flows shared by /help, /api/v1/me/tickets, /admin/tickets
 internal/wfc/           asks nn-wfc which console a Wii/DS friend code belongs to
 web/src/                Tailwind input (input.css)
 web/static/             built site.css (committed), icon.svg, consoles/ icons,
@@ -109,6 +112,12 @@ It is authenticated with `WEBSITE_INTERNAL_KEY`, compared in constant time.
 that has not configured this should refuse the call, not accept it from anyone.
 `WEBSITE_INTERNAL_URL` is not read here: it is the **adapter's** variable (where
 it finds this site), and the adapter must hold the same `WEBSITE_INTERNAL_KEY`.
+
+The same key guards `GET /internal/bans/{account_id}` (and `?namespace=&subject=`), the
+HTTP form of the ban lookup in [docs/ban-lookup.md](docs/ban-lookup.md), and `POST
+/api/v1/internal/crash-reports`, where nx-baas relays console error reports. Both accept
+`Authorization: Bearer <key>` or `X-Internal-Key: <key>`. The crash route is documented in
+the OpenAPI so nx-baas has a schema to code against; the ban lookup is not.
 
 ## Styling
 
@@ -207,6 +216,24 @@ open `/admin` — empty means nobody, by design (fail closed).
     resolved, all) and resolve. Both go through the core's Moderation service
     with the admin's account id as the actor, and are also written to
     `admin_audit`.
+    With no search, `/admin/users` lists every banned account with reason,
+    actor and time (`account_bans`). A ban locks the account out of every
+    network: see [docs/ban-lookup.md](docs/ban-lookup.md) for the lookup other
+    services use (`Identity.GetAccount`, or `GET /internal/bans/{id}`).
+  - `/admin/tickets` — help tickets from `/help` and the app: queue by status
+    (open, waiting, closed) and assignee; reply, internal note, reply-and-close,
+    assign, close, reopen. No email is sent (the website has no mail path);
+    replies show on the site and in the app, plus an FCM push when configured.
+  - `/admin/crashes` — crash reports grouped by signature, filters (source,
+    version, title, error code, date, state), detail with fields and file,
+    resolve (one or the group), link to a ticket.
+  - `/admin/console-news` — Switch News tab channels and articles, Publish
+    (build status and errors) and Rollback, through the news service's admin
+    API (`NEWS_ADMIN_URL`, `NEWS_ADMIN_KEY`). Hidden when unset.
+  - `/admin/store` — homebrew store titles, metadata, icon, versions (NSP
+    streamed to nx-baas, never buffered), publish/unpublish, download stats,
+    through nx-baas's store admin API (`STORE_ADMIN_URL`, `STORE_ADMIN_KEY`
+    or `NX_INTERNAL_KEY`). Hidden when unset.
 - **Avatars**: uploaded avatars are validated, center-cropped and resized
   server-side to 256 and 512 px PNG under `WEBSITE_MEDIA_DIR` (filesystem
   first; `internal/media.Storage` is the S3-compatible seam). Both PNGs are
@@ -257,6 +284,13 @@ the admin title forms call the same store method. `GET /api/v1/catalog.json` is 
 read-only export in the old `openpak/catalog` file's shape plus `date_added` and
 `last_updated`. Each entry has a `title_id` (16 hex, unique when set) for tools that
 join on the console id.
+Help tickets: `GET`/`POST /api/v1/me/tickets`, `GET /me/tickets/{id}`, `POST
+/me/tickets/{id}/messages` and `GET /me/tickets/{id}/attachments/{message}` (JSON, or
+multipart with a 10 MB `attachment`). Crash reports: `POST /api/v1/crash-reports` is public
+(20 per 10 minutes per client, an optional bearer links the account; multipart `meta` +
+`attachment` up to 20 MB, or bare JSON), and `POST /api/v1/internal/crash-reports` is
+nx-baas's, with `X-Internal-Key` = `WEBSITE_INTERNAL_KEY`. Files for both live under
+`WEBSITE_ATTACHMENTS_DIR` and are only ever served as downloads.
 `GET /api/v1/news` is public: the latest published articles from the news
 service (`NEWS_URL`), an empty list when none is configured. Where the site and the API do the same thing they share
 `internal/accounts`. `contract_test.go` fails the build when a served
