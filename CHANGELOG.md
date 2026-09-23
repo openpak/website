@@ -3,7 +3,7 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
-## Unreleased
+## v0.49.6 — 2026-09-23
 
 - The Switch claims every family it reaches, Nintendo's and the third parties both:
   `.nintendowifi.net` (so the connection test reaches OpenPak's own answer rather than
