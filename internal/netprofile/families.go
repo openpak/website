@@ -16,10 +16,31 @@ package netprofile
 // the DNS server's list first and this file second — in that order, because
 // the DNS server answers consoles that have nowhere else to go.
 var Universe = []string{
+	// Nintendo's own, plus the connection test's family: a console on OpenPak
+	// reaches OpenPak for everything it would have asked Nintendo, conntest
+	// included, because OpenPak answers that probe as a service rather than
+	// leaving it to measure somebody else's internet.
 	".nintendo.net",
 	".nintendowifi.net",
 	".nintendo.com",
 	".openpak.org",
 	".gamespy.com",
+	// Third parties a console reaches directly, without a Nintendo host in the
+	// path. OpenPak answers on some of these (Battle.net, Photon, Among Us) and
+	// on none of the rest yet, which is the deliberate trade: a title whose
+	// service we do not run fails to connect instead of connecting and being
+	// refused. On this project's audience that refusal was already certain --
+	// these services ask Nintendo to vouch for a token the console does not
+	// have -- so nothing that worked stops working.
 	".battle.net",
+	".among.us",
+	".photonengine.io",
+	".exitgames.com",
+	".demonware.net",
+	".epicgames.dev",
+	".ea.com",
+	".xboxlive.com",
+	".live.com",
+	".mojang.com",
+	".microsoft.com",
 }

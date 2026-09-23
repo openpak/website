@@ -35,34 +35,45 @@ recheck_after: 21600           # a hint, not a contract (6h)
 
 platforms:
   switch:
-    # NPLN, NEX, BAAS, dauth, Penne, BCAT all live under nintendo.net;
-    # accounts.nintendo.com under nintendo.com. No Switch title needs the
-    # DS-era families, so they are narrowed away.
+    # Everything the console reaches goes to OpenPak, not to the service that
+    # would refuse it. NPLN, NEX, BAAS, dauth, Penne and BCAT live under
+    # nintendo.net; accounts under nintendo.com; the connection test under
+    # nintendowifi.net, which OpenPak answers as a service of its own rather
+    # than leaving the console to measure somebody else's internet.
     #
-    # Blizzard titles (Diablo II: Resurrected first) reach Battle.net under
-    # its own names: geo.battle.net for region routing, telemetry-in and
-    # account for login, and the *.actual.battle.net gateways after that —
-    # a family, because the regional variants are more names than anyone
-    # wants to enumerate. Observed 2026-09-13 from a retail D2R boot.
-    families: [".nintendo.net", ".nintendo.com", ".battle.net"]
-    exact:
-      # The Among Us matchmaker sits outside every Nintendo family; the
-      # patched client is redirected by name.
-      - "matchmaker.among.us"
-      - "matchmaker-eu.among.us"
-      - "matchmaker-as.among.us"
-      # Outbound matchmakes over Photon, which is UDP on published ports and has no Traefik
-      # router to be derived from: a UDP router carries no hostname, so this name has to be
-      # declared. The name server is the only one the title resolves; it answers with the
-      # master and game server addresses itself.
-      - "ns.photonengine.io"
+    # The rest are third parties a title dials with no Nintendo host in the
+    # path. OpenPak answers on Battle.net, Photon and Among Us. It answers on
+    # none of the others yet, and they are here anyway: each asks Nintendo to
+    # vouch for a token an OpenPak console does not have, so the connection was
+    # going to be refused. Failing to connect and failing to authenticate cost
+    # the player the same thing, and this way the console never talks to them.
+    #
+    # Nothing here is a guess: every family covers a name observed coming off a
+    # console or an emulator on a dated run. See
+    # console/openpak-nro/docs/researched-hosts.md for the per-host record.
+    families:
+      - ".nintendo.net"
+      - ".nintendo.com"
+      - ".nintendowifi.net"
+      - ".battle.net"
+      - ".among.us"
+      - ".photonengine.io"
+      - ".exitgames.com"
+      - ".demonware.net"
+      - ".epicgames.dev"
+      - ".ea.com"
+      - ".xboxlive.com"
+      - ".live.com"
+      - ".mojang.com"
+      - ".microsoft.com"
+    exact: []                  # every name this platform claims is inside a family above
     overrides:
       # The NAT check probes two addresses from one socket and decides the
       # console's NAT type from what each of them saw. Both probes collapsing
       # onto the server address is a NAT type it cannot determine, so the
       # second responder is named its own box here.
       "nncs2-lp1.n.n.srv.nintendo.net": "145.241.228.207"
-    never: ["conntest.nintendowifi.net"]
+    never: []                  # a console on OpenPak reaches OpenPak, conntest included
     services: {}               # Switch clients resolve names; nothing addresses a URL
 
   wiiu:

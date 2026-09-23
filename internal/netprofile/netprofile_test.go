@@ -66,23 +66,35 @@ func TestSwitchProfileIsGeneratedFromTheLiveRouting(t *testing.T) {
 	if p.Server.Address == "" || p.Server.HTTPSPort != 443 || p.Server.HTTPPort != 80 {
 		t.Fatalf("server block: %+v", p.Server)
 	}
-	// Narrowed to what a Switch speaks: no DS-era families.
-	if strings.Join(p.Redirect.Suffixes, ",") != ".battle.net,.nintendo.com,.nintendo.net" {
+	// Everything a Switch reaches, Nintendo's and the third parties both, and
+	// still no DS-era family: a Wii's .gamespy.com is not a name this console
+	// ever resolves.
+	want := ".among.us,.battle.net,.demonware.net,.ea.com,.epicgames.dev,.exitgames.com," +
+		".live.com,.microsoft.com,.mojang.com,.nintendo.com,.nintendo.net,.nintendowifi.net," +
+		".photonengine.io,.xboxlive.com"
+	if strings.Join(p.Redirect.Suffixes, ",") != want {
 		t.Fatalf("suffixes: %v", p.Redirect.Suffixes)
 	}
-	// Names a family covers never appear as exact; the matchmakers do.
-	for _, e := range p.Redirect.Exact {
-		if strings.HasSuffix(e, "nintendo.net") || strings.HasSuffix(e, "nintendo.com") {
-			t.Errorf("exact repeats a covered family name: %s", e)
+	if contains(p.Redirect.Suffixes, ".gamespy.com") || contains(p.Redirect.Suffixes, ".openpak.org") {
+		t.Errorf("switch is told about a family it never resolves: %v", p.Redirect.Suffixes)
+	}
+	// A family covers every name this platform claims now, so exact is empty --
+	// the matchmakers moved under .among.us rather than being listed one by one.
+	if len(p.Redirect.Exact) != 0 {
+		t.Errorf("exact repeats names a family already covers: %v", p.Redirect.Exact)
+	}
+	for _, name := range []string{"matchmaker.among.us", "matchmaker-eu.among.us", "matchmaker-as.among.us"} {
+		if !coveredByAny(name, p.Redirect.Suffixes) {
+			t.Errorf("no family covers %s: %v", name, p.Redirect.Suffixes)
 		}
 	}
-	for _, want := range []string{"matchmaker.among.us", "matchmaker-eu.among.us", "matchmaker-as.among.us"} {
-		if !contains(p.Redirect.Exact, want) {
-			t.Errorf("exact lacks %s: %v", want, p.Redirect.Exact)
-		}
+	// The connection test reaches OpenPak too: OpenPak answers that probe as a
+	// service, so there is nothing a Switch is left to send to the real internet.
+	if len(p.Redirect.Never) != 0 {
+		t.Errorf("never still holds something: %v", p.Redirect.Never)
 	}
-	if !contains(p.Redirect.Never, "conntest.nintendowifi.net") {
-		t.Errorf("never lacks conntest: %v", p.Redirect.Never)
+	if !coveredByAny("conntest.nintendowifi.net", p.Redirect.Suffixes) {
+		t.Errorf("conntest is not covered: %v", p.Redirect.Suffixes)
 	}
 	if len(p.Services) != 0 {
 		t.Errorf("switch carries services: %v", p.Services)
@@ -137,10 +149,12 @@ func TestUnionProfile(t *testing.T) {
 			t.Errorf("union lacks family %s: %v", f, p.Redirect.Suffixes)
 		}
 	}
-	if !contains(p.Redirect.Exact, "matchmaker.among.us") {
-		t.Errorf("union exact lacks the matchmakers: %v", p.Redirect.Exact)
+	if !coveredByAny("matchmaker.among.us", p.Redirect.Suffixes) {
+		t.Errorf("union covers no matchmaker: %v", p.Redirect.Suffixes)
 	}
-	if len(p.Redirect.Never) != 1 || p.Redirect.Never[0] != "conntest.nintendowifi.net" {
+	// never keeps only what every profile agrees on, and the Switch no longer
+	// agrees: nothing it resolves is left to the real internet.
+	if len(p.Redirect.Never) != 0 {
 		t.Errorf("union never: %v", p.Redirect.Never)
 	}
 	if len(p.Services) != 0 {

@@ -3,6 +3,19 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## Unreleased
+
+- The Switch claims every family it reaches, Nintendo's and the third parties both:
+  `.nintendowifi.net` (so the connection test reaches OpenPak's own answer rather than
+  measuring somebody else's internet), `.among.us`, `.photonengine.io`, `.exitgames.com`,
+  `.demonware.net`, `.epicgames.dev`, `.ea.com`, `.xboxlive.com`, `.live.com`,
+  `.mojang.com` and `.microsoft.com`. A console on OpenPak now reaches OpenPak for
+  everything it resolves; `never` and the per-name `exact` list are empty, because a
+  family covers each of them.
+- `Universe`, the ceiling a platform map may narrow from, grows to match. It is still a
+  ceiling: a family outside it is a startup error, and no profile can ask a client to
+  redirect a name its own build does not already allow.
+
 ## v0.49.1 — 2026-09-20
 
 - Avatar URLs carry the media row's version: after changing the picture, the overview
