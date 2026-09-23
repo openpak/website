@@ -34,6 +34,9 @@ type Request struct {
 	Notes    string
 	Sort     int    // catalog order; lower first. Negative on create: after every other row.
 	TitleID  string // the console's 16-hex title id, upper case; "" when unknown or a feature
+	// TitleIDs is every id the game has (one per region, both halves of a pair like
+	// Pokémon X / Y), primary first: TitleID is always TitleIDs[0].
+	TitleIDs []string
 	Votes    int
 	Voted    bool // did the querying account vote for this one
 	// DateAdded is set once when the row is created; LastUpdated moves with every change.
@@ -105,7 +108,7 @@ func CatalogOrder(reqs []Request) []Request {
 func (s *PG) ListRequests(ctx context.Context, kind, viewerAccountID string) ([]Request, error) {
 	rows, err := s.pool.Query(ctx, `
 		SELECT r.id, r.kind, r.name, r.console, r.category, r.backend, r.status, r.notes, r.sort,
-			r.title_id, r.date_added, r.last_updated, count(v.account_id) AS votes,
+			r.title_id, r.title_ids, r.date_added, r.last_updated, count(v.account_id) AS votes,
 			COALESCE(bool_or(v.account_id = $2), false) AS voted
 		FROM requests r
 		LEFT JOIN request_votes v ON v.request_id = r.id
@@ -120,7 +123,7 @@ func (s *PG) ListRequests(ctx context.Context, kind, viewerAccountID string) ([]
 	for rows.Next() {
 		var r Request
 		if err := rows.Scan(&r.ID, &r.Kind, &r.Name, &r.Console, &r.Category, &r.Backend,
-			&r.Status, &r.Notes, &r.Sort, &r.TitleID, &r.DateAdded, &r.LastUpdated, &r.Votes, &r.Voted); err != nil {
+			&r.Status, &r.Notes, &r.Sort, &r.TitleID, &r.TitleIDs, &r.DateAdded, &r.LastUpdated, &r.Votes, &r.Voted); err != nil {
 			return nil, err
 		}
 		out = append(out, r)
@@ -175,15 +178,18 @@ var Statuses = []string{"live", "working", "beta", "alpha", "partial", "planned"
 var (
 	// ErrInvalid is a request that fails validation; the wrapped message says why.
 	ErrInvalid = errors.New("invalid request")
-	// ErrDuplicate is a create or change onto an existing (kind, name, console) or title_id.
-	ErrDuplicate = errors.New("a request with that kind, name and console, or that title_id, exists")
+	// ErrDuplicate is a create or change onto an existing (kind, name, console) or title id.
+	ErrDuplicate = errors.New("a request with that kind, name and console, or one of those title ids, exists")
 	// ErrHasVotes refuses deleting a request someone voted for: votes are user data.
 	ErrHasVotes = errors.New("the request has votes")
 )
 
 // RequestPatch is a partial update: nil fields stay as they are. Kind is fixed at creation.
+// TitleIDs replaces the whole list; TitleID alone replaces the primary and keeps the others
+// ("" clears them all). Both together: TitleID first, then TitleIDs.
 type RequestPatch struct {
 	Name, Console, Category, Backend, Status, Notes, TitleID *string
+	TitleIDs                                                 *[]string
 	Sort                                                     *int
 }
 
@@ -204,11 +210,23 @@ type FieldChange struct {
 
 func (p RequestPatch) apply(r Request) Request {
 	for _, f := range []struct{ dst, src *string }{{&r.Name, p.Name}, {&r.Console, p.Console},
-		{&r.Category, p.Category}, {&r.Backend, p.Backend}, {&r.Status, p.Status}, {&r.Notes, p.Notes},
-		{&r.TitleID, p.TitleID}} {
+		{&r.Category, p.Category}, {&r.Backend, p.Backend}, {&r.Status, p.Status}, {&r.Notes, p.Notes}} {
 		if f.src != nil {
 			*f.dst = *f.src
 		}
+	}
+	switch {
+	case p.TitleIDs != nil:
+		r.TitleIDs = slices.Clone(*p.TitleIDs)
+		if p.TitleID != nil && *p.TitleID != "" {
+			r.TitleIDs = append([]string{*p.TitleID}, r.TitleIDs...)
+		}
+		r.TitleID = ""
+	case p.TitleID != nil && *p.TitleID == "":
+		r.TitleID, r.TitleIDs = "", nil
+	case p.TitleID != nil:
+		rest := slices.DeleteFunc(slices.Clone(r.TitleIDs), func(id string) bool { return strings.EqualFold(id, r.TitleID) })
+		r.TitleID, r.TitleIDs = *p.TitleID, append([]string{*p.TitleID}, rest...)
 	}
 	if p.Sort != nil {
 		r.Sort = *p.Sort
@@ -221,7 +239,26 @@ func normalize(r Request) (Request, error) {
 	for _, f := range []*string{&r.Kind, &r.Name, &r.Console, &r.Category, &r.Backend, &r.Status, &r.Notes, &r.TitleID} {
 		*f = strings.TrimSpace(*f)
 	}
-	r.TitleID = strings.ToUpper(r.TitleID)
+	// The list is the truth; a bare TitleID (a create that names one id) seeds it.
+	ids := r.TitleIDs
+	if len(ids) == 0 && r.TitleID != "" {
+		ids = []string{r.TitleID}
+	}
+	r.TitleIDs = []string{}
+	for _, id := range ids {
+		id = strings.ToUpper(strings.TrimSpace(id))
+		if id == "" || slices.Contains(r.TitleIDs, id) {
+			continue
+		}
+		if !titleIDPattern.MatchString(id) {
+			return r, fmt.Errorf("%w: title ids must be 16 hex digits", ErrInvalid)
+		}
+		r.TitleIDs = append(r.TitleIDs, id)
+	}
+	r.TitleID = ""
+	if len(r.TitleIDs) > 0 {
+		r.TitleID = r.TitleIDs[0]
+	}
 	switch {
 	case r.Kind != "title" && r.Kind != "feature":
 		return r, fmt.Errorf("%w: kind must be title or feature", ErrInvalid)
@@ -229,8 +266,6 @@ func normalize(r Request) (Request, error) {
 		return r, fmt.Errorf("%w: name is required", ErrInvalid)
 	case !slices.Contains(Statuses, r.Status):
 		return r, fmt.Errorf("%w: status must be one of %s", ErrInvalid, strings.Join(Statuses, ", "))
-	case r.TitleID != "" && !titleIDPattern.MatchString(r.TitleID):
-		return r, fmt.Errorf("%w: title_id must be 16 hex digits", ErrInvalid)
 	}
 	return r, nil
 }
@@ -238,13 +273,14 @@ func normalize(r Request) (Request, error) {
 // fields is what request_changes compares and records.
 func fields(r Request) map[string]any {
 	return map[string]any{"kind": r.Kind, "name": r.Name, "console": r.Console, "category": r.Category,
-		"backend": r.Backend, "status": r.Status, "notes": r.Notes, "sort": r.Sort, "title_id": r.TitleID}
+		"backend": r.Backend, "status": r.Status, "notes": r.Notes, "sort": r.Sort, "title_id": r.TitleID,
+		"title_ids": strings.Join(r.TitleIDs, ",")}
 }
 
 // diff is every field whose value differs; a nil map is the side that does not exist.
 func diff(old, new map[string]any) map[string]FieldChange {
 	out := map[string]FieldChange{}
-	for _, k := range []string{"kind", "name", "console", "category", "backend", "status", "notes", "sort", "title_id"} {
+	for _, k := range []string{"kind", "name", "console", "category", "backend", "status", "notes", "sort", "title_id", "title_ids"} {
 		if old[k] != new[k] {
 			out[k] = FieldChange{old[k], new[k]}
 		}
@@ -263,12 +299,12 @@ func statusAudit(id int64, old, new Request) string {
 
 var titleIDPattern = regexp.MustCompile(`^[0-9A-F]{16}$`)
 
-const requestCols = `id, kind, name, console, category, backend, status, notes, sort, title_id, date_added, last_updated`
+const requestCols = `id, kind, name, console, category, backend, status, notes, sort, title_id, title_ids, date_added, last_updated`
 
 func scanRequest(row pgx.Row) (Request, error) {
 	var r Request
 	err := row.Scan(&r.ID, &r.Kind, &r.Name, &r.Console, &r.Category, &r.Backend, &r.Status,
-		&r.Notes, &r.Sort, &r.TitleID, &r.DateAdded, &r.LastUpdated)
+		&r.Notes, &r.Sort, &r.TitleID, &r.TitleIDs, &r.DateAdded, &r.LastUpdated)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return r, ErrNotFound
 	}
@@ -290,6 +326,27 @@ func isUniqueViolation(err error) bool {
 	return errors.As(err, &pg) && pg.Code == "23505"
 }
 
+// titleIDsTaken refuses ids another request already holds: one id is one game. An array
+// cannot carry a unique index, so the check takes a lock that orders it against every other
+// catalog write (votes and reads do not wait on it).
+func titleIDsTaken(ctx context.Context, tx pgx.Tx, except int64, ids []string) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	if _, err := tx.Exec(ctx, `LOCK TABLE requests IN SHARE ROW EXCLUSIVE MODE`); err != nil {
+		return err
+	}
+	var taken bool
+	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM requests WHERE id <> $1 AND title_ids && $2::text[])`,
+		except, ids).Scan(&taken); err != nil {
+		return err
+	}
+	if taken {
+		return ErrDuplicate
+	}
+	return nil
+}
+
 // CreateRequest adds a title or feature and logs it, in one transaction.
 func (s *PG) CreateRequest(ctx context.Context, r Request, actor string) (Request, error) {
 	r, err := normalize(r)
@@ -301,9 +358,12 @@ func (s *PG) CreateRequest(ctx context.Context, r Request, actor string) (Reques
 		return r, err
 	}
 	defer tx.Rollback(ctx)
-	r, err = scanRequest(tx.QueryRow(ctx, `INSERT INTO requests(kind, name, console, category, backend, status, notes, sort, title_id)
-		VALUES($1,$2,$3,$4,$5,$6,$7, CASE WHEN $8 < 0 THEN (SELECT COALESCE(max(sort)+1, 0) FROM requests) ELSE $8 END, $9)
-		RETURNING `+requestCols, r.Kind, r.Name, r.Console, r.Category, r.Backend, r.Status, r.Notes, r.Sort, r.TitleID))
+	if err := titleIDsTaken(ctx, tx, 0, r.TitleIDs); err != nil {
+		return r, err
+	}
+	r, err = scanRequest(tx.QueryRow(ctx, `INSERT INTO requests(kind, name, console, category, backend, status, notes, sort, title_id, title_ids)
+		VALUES($1,$2,$3,$4,$5,$6,$7, CASE WHEN $8 < 0 THEN (SELECT COALESCE(max(sort)+1, 0) FROM requests) ELSE $8 END, $9, $10)
+		RETURNING `+requestCols, r.Kind, r.Name, r.Console, r.Category, r.Backend, r.Status, r.Notes, r.Sort, r.TitleID, r.TitleIDs))
 	if isUniqueViolation(err) {
 		return r, ErrDuplicate
 	}
@@ -337,9 +397,12 @@ func (s *PG) UpdateRequest(ctx context.Context, id int64, p RequestPatch, actor 
 	if len(ch) == 0 {
 		return old, nil
 	}
+	if err := titleIDsTaken(ctx, tx, id, r.TitleIDs); err != nil {
+		return old, err
+	}
 	r, err = scanRequest(tx.QueryRow(ctx, `UPDATE requests SET name=$2, console=$3, category=$4, backend=$5,
-		status=$6, notes=$7, sort=$8, title_id=$9, last_updated=now() WHERE id=$1 RETURNING `+requestCols,
-		id, r.Name, r.Console, r.Category, r.Backend, r.Status, r.Notes, r.Sort, r.TitleID))
+		status=$6, notes=$7, sort=$8, title_id=$9, title_ids=$10, last_updated=now() WHERE id=$1 RETURNING `+requestCols,
+		id, r.Name, r.Console, r.Category, r.Backend, r.Status, r.Notes, r.Sort, r.TitleID, r.TitleIDs))
 	if isUniqueViolation(err) {
 		return old, ErrDuplicate
 	}

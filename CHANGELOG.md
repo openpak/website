@@ -3,6 +3,20 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.51.0 — 2026-09-23
+
+- A title holds every id it has: `title_ids` (one per region, both games of a pair like
+  Pokémon X / Y), primary first, with `title_id` kept as the first. Shown in
+  `/api/v1/catalog.json`, `/api/v1/titles` and the admin write answers; `PATCH
+  /api/v1/admin/titles/{id}` takes `title_ids` to replace the list (a bare `title_id` still
+  replaces only the primary, `""` clears them all). No id may belong to two titles.
+- Migration 0007 adds the column; 0008 fills every Wii U (27, 84 ids) and 3DS title (39 of
+  40, 154 ids) and 104 Switch titles that had none (156 ids), only where a row has no ids
+  yet. Sources and cross-checks are in `internal/store/title_ids.go`.
+- The title-name lookup (`/internal/titles/name`, and `title_name` in the friends APIs)
+  matches any of a title's ids, and a Wii U or 3DS update id (`0005000E…` / `0004000E…`)
+  names its game. `/internal/titles/name` also takes `?id=`.
+
 ## v0.50.0 — 2026-09-23
 
 - Cross-network presence with client labels. Every online friend in `/api/v1/me/friends`

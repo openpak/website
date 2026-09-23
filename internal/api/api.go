@@ -921,7 +921,7 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 	for _, t := range store.CatalogOrder(reqs) {
 		titles = append(titles, map[string]any{
 			"id": t.ID, "name": t.Name, "console": t.Console, "category": t.Category, "title_id": t.TitleID,
-			"status": t.Status, "notes": t.Notes, "requestable": t.Votable(),
+			"title_ids": titleIDs(t), "status": t.Status, "notes": t.Notes, "requestable": t.Votable(),
 		})
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"titles": titles})

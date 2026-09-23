@@ -3,10 +3,12 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/openpak/website/internal/core"
+	"github.com/openpak/website/internal/store"
 )
 
 // The contract the app builds "<title_name> on <label>" from: every online
@@ -101,5 +103,32 @@ func TestSwitchFriendsAreLabelled(t *testing.T) {
 	}
 	if p2 := fr[2].(map[string]any)["presence"].(map[string]any); p2["label"] != "" {
 		t.Errorf("offline friend labelled: %v", p2)
+	}
+}
+
+// A Wii U or 3DS game has an id per region, and a console on an update can report the
+// update's id: every one of them names the game.
+func TestInternalTitleNameAnyRegion(t *testing.T) {
+	s, _, db := newTestAPI(t)
+	t.Setenv("WEBSITE_INTERNAL_KEY", "k")
+	if _, err := db.CreateRequest(t.Context(), store.Request{Kind: "title", Name: "Mario Kart 7", Console: "3DS", Status: "beta",
+		TitleIDs: []string{"0004000000030800", "0004000000030700", "0004000000030600"}}, "t"); err != nil {
+		t.Fatal(err)
+	}
+	for _, id := range []string{"0004000000030800", "0004000000030600", "0004000e00030700"} {
+		rec := doRaw(t, s, http.MethodGet, "/internal/titles/name?namespace=3ds&title_id="+id, "Bearer k", nil)
+		var out struct{ Name string }
+		_ = json.Unmarshal(rec.Body.Bytes(), &out)
+		if rec.Code != http.StatusOK || out.Name != "Mario Kart 7" {
+			t.Errorf("%s: %d %q", id, rec.Code, out.Name)
+		}
+	}
+	rec := doRaw(t, s, http.MethodGet, "/internal/titles/name?id=0004000000030700", "Bearer k", nil)
+	if !strings.Contains(rec.Body.String(), "Mario Kart 7") {
+		t.Errorf("?id= alias: %s", rec.Body)
+	}
+	rec = doRaw(t, s, http.MethodGet, "/internal/titles/name?namespace=3ds&title_id=0004000000030900", "Bearer k", nil)
+	if strings.Contains(rec.Body.String(), "Mario Kart 7") {
+		t.Errorf("an unknown id named a game: %s", rec.Body)
 	}
 }

@@ -43,11 +43,32 @@ func TitleCatalogue(ctx context.Context, db store.Store) map[string]string {
 	}
 	out := make(map[string]string, len(reqs))
 	for _, r := range reqs {
-		if r.TitleID != "" && r.Name != "" {
-			out[strings.ToUpper(r.TitleID)] = r.Name
+		if r.Name == "" {
+			continue
+		}
+		for _, id := range append([]string{r.TitleID}, r.TitleIDs...) {
+			if id != "" {
+				out[strings.ToUpper(id)] = r.Name
+			}
 		}
 	}
 	return out
+}
+
+// baseTitleID maps a Wii U or 3DS update's title id to its game's: an update shares the
+// game's low word under its own high word (0005000E / 0004000E), and a console can report
+// either. Everything else comes back upper case and unchanged.
+func baseTitleID(id string) string {
+	id = strings.ToUpper(id)
+	if len(id) == 16 {
+		switch id[:8] {
+		case "0005000E":
+			return "00050000" + id[8:]
+		case "0004000E":
+			return "00040000" + id[8:]
+		}
+	}
+	return id
 }
 
 // FriendGame names what a friend's live presence says they are playing: the
@@ -65,6 +86,9 @@ func FriendGame(ctx context.Context, catalogue map[string]string, namespace, tit
 		return n, icon
 	}
 	if n, ok := catalogue[strings.ToUpper(titleID)]; ok {
+		return n, icon
+	}
+	if n, ok := catalogue[baseTitleID(titleID)]; ok {
 		return n, icon
 	}
 	if icon {

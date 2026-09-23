@@ -214,3 +214,26 @@ func TestCatalogExport(t *testing.T) {
 		t.Error("export carries ids; catalog.json never had them")
 	}
 }
+
+// title_ids carries every region's id, primary first; the export shows both fields.
+func TestCatalogTitleIDs(t *testing.T) {
+	t.Setenv("WEBSITE_CATALOG_KEY", "k3y")
+	s, _, db := newTestAPI(t)
+	r, _ := db.CreateRequest(context.Background(), store.Request{Kind: "title", Name: "Splatoon", Console: "Wii U", Status: "beta"}, "t")
+	path := "/api/v1/admin/titles/" + strconv.FormatInt(r.ID, 10)
+	rec := catalogDo(t, s, "PATCH", path, "Bearer k3y", map[string]any{
+		"title_ids": []string{"0005000010176900", "0005000010176a00", "0005000010162B00"}})
+	var e struct {
+		TitleID  string   `json:"title_id"`
+		TitleIDs []string `json:"title_ids"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &e)
+	if rec.Code != http.StatusOK || e.TitleID != "0005000010176900" || len(e.TitleIDs) != 3 || e.TitleIDs[1] != "0005000010176A00" {
+		t.Fatalf("patch: %d %s", rec.Code, rec.Body)
+	}
+	var got []map[string]any
+	_ = json.Unmarshal(do(t, s, "GET", "/api/v1/catalog.json", "", nil).Body.Bytes(), &got)
+	if len(got) != 1 || len(got[0]["title_ids"].([]any)) != 3 || got[0]["title_id"] != "0005000010176900" {
+		t.Errorf("export: %+v", got)
+	}
+}

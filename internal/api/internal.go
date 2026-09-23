@@ -44,6 +44,9 @@ func (s *Server) handleInternalTitleName(w http.ResponseWriter, r *http.Request)
 	}
 	ns, id := r.URL.Query().Get("namespace"), r.URL.Query().Get("title_id")
 	if id == "" {
+		id = r.URL.Query().Get("id")
+	}
+	if id == "" {
 		writeError(w, http.StatusBadRequest, "title_id is required")
 		return
 	}

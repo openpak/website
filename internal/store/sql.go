@@ -136,6 +136,14 @@ var migrations = map[string]string{
 	UPDATE requests SET title_id = upper(substring(notes from '^([0-9A-Fa-f]{16})'))
 		WHERE kind = 'title' AND title_id = '' AND notes ~ '^[0-9A-Fa-f]{16}([^0-9A-Za-z]|$)';
 	CREATE UNIQUE INDEX IF NOT EXISTS requests_title_id_key ON requests(title_id) WHERE title_id <> '';`,
+
+	// Every id a title has: a Wii U or 3DS game has one per region (and a pair like Pokémon
+	// X / Y two games), and a friend's presence carries whichever their console runs.
+	// title_id stays as the primary, always title_ids[1]. Ids are unique across rows; the
+	// store checks that, since an array cannot carry a unique index.
+	"0007_request_title_ids": `ALTER TABLE requests ADD COLUMN IF NOT EXISTS title_ids text[] NOT NULL DEFAULT '{}';
+	UPDATE requests SET title_ids = ARRAY[title_id] WHERE title_id <> '' AND title_ids = '{}';
+	CREATE INDEX IF NOT EXISTS requests_title_ids_idx ON requests USING gin (title_ids);`,
 }
 
 // Ping verifies database connectivity (status page).
