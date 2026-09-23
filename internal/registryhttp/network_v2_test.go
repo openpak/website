@@ -28,6 +28,9 @@ type v2Fixture struct {
 	srv        *Server
 	clientHash string
 	result     registry.PublicationResult
+	// The clock the fixture published at. Verification has to use it rather
+	// than the wall's, or the test expires seven days after it was written.
+	now time.Time
 }
 
 // replaceLimits swaps the v2 quota limiters, so quota tests use tiny
@@ -128,6 +131,7 @@ func newV2ServerFixture(t *testing.T) *v2Fixture {
 		srv:        s,
 		clientHash: clientHash,
 		result:     res,
+		now:        now,
 	}
 }
 
@@ -286,7 +290,11 @@ func TestV2ClientJourney(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := registry.VerifyPublication(rootBytes, targetsBytes, snapshotBytes, timestampBytes, manifestBytes, time.Now()); err != nil {
+	// At the fixture's clock, not the wall's: timestamp metadata lives seven days,
+	// so verifying a fixture publication against time.Now() is a test that passes
+	// until a week after it was written. Expiry has its own test, which checks the
+	// chain is refused past the TTL rather than accepted before it.
+	if err := registry.VerifyPublication(rootBytes, targetsBytes, snapshotBytes, timestampBytes, manifestBytes, f.now); err != nil {
 		t.Fatalf("publication chain does not verify: %v", err)
 	}
 

@@ -207,9 +207,16 @@ func TestPublishRollbackWithdrawJourney(t *testing.T) {
 	if res.code != 0 {
 		t.Fatalf("rollback: code %d stderr %s", res.code, res.stderr)
 	}
+	// The same policy content at a higher sequence, which is what a rollback is
+	// (PRD 06 UPD-007) -- never the old metadata served again. The bundle digest
+	// therefore moves on purpose: the reissued bundle carries the new sequence and
+	// issue time in its own bytes. Canonical content is the thing that must not.
 	rb, err := svc.ResolveChannel(ctx, "switch", "stable")
-	if err != nil || rb.BundleSHA256 != rev.BundleSHA256 || rb.Sequence != rev.Sequence+1 {
+	if err != nil || rb.CanonicalPolicySHA256 != rev.CanonicalPolicySHA256 || rb.Sequence != rev.Sequence+1 {
 		t.Fatalf("channel after rollback: %+v err=%v (was sequence %d)", rb, err, rev.Sequence)
+	}
+	if rb.BundleSHA256 == rev.BundleSHA256 {
+		t.Fatal("rollback reissued the old bundle bytes instead of signing the content afresh")
 	}
 
 	// Status reports the current resolution.

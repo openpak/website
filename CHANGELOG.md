@@ -15,6 +15,10 @@ release, taken from git history. `git log` stays the source of truth.
 - `Universe`, the ceiling a platform map may narrow from, grows to match. It is still a
   ceiling: a family outside it is a startup error, and no profile can ask a client to
   redirect a name its own build does not already allow.
+- Two tests that had stopped reflecting the code are fixed, and `main` builds green again:
+  the v2 journey verified a fixture publication against the wall clock, so it began
+  failing seven days after it was written, and the rollback journey still required the
+  bundle digest to survive a rollback that now reissues and re-signs the bundle.
 
 ## v0.49.1 — 2026-09-20
 
