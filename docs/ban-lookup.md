@@ -117,7 +117,9 @@ Authorization: Bearer <WEBSITE_INTERNAL_KEY>
   (`auth.login.banned` / `403 {"code":"account_suspended"}`).
 - Every signed-in page and every bearer call re-validates the core session;
   the ban revoked those sessions, so the next request is signed out and the
-  bearer is revoked on sight.
+  bearer is revoked on sight. The ban form also drops the website's own
+  session rows and bearers for the account at once, so nothing on the site
+  (the admin included) waits for that check.
 - The website's own new surfaces (help tickets, crash reports with a bearer)
   go through the same checks: a banned account cannot open tickets, and a
   crash report sent with a dead bearer is stored anonymously.

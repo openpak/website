@@ -105,6 +105,13 @@ func (s *Server) handleBan(w http.ResponseWriter, r *http.Request) {
 	if err := s.DB.RecordBan(r.Context(), store.Ban{AccountID: id, Banned: banned, Reason: reason, Actor: ws.AccountID}); err != nil {
 		s.log.Error("admin: record ban", "account", id, "err", err)
 	}
+	if banned {
+		// The core revoked the account's sessions; drop the website's own index
+		// rows and bearers now too, so nothing here (admin pages included)
+		// waits for the next core check to notice.
+		_ = s.DB.DeleteWebSessionsForAccount(r.Context(), id)
+		_ = s.DB.RevokeAPITokensForAccount(r.Context(), id)
+	}
 	action, flash := "account.ban", "banned"
 	if !banned {
 		action, flash = "account.unban", "unbanned"

@@ -96,6 +96,9 @@ func postForm(mux *http.ServeMux, target string, form url.Values) *httptest.Resp
 // without the CSRF token, or without a reason, does nothing.
 func TestAdminUsersSearchAndBan(t *testing.T) {
 	mux, fm, db := newModerationAdmin(t)
+	ctx := context.Background()
+	_ = db.PutWebSession(ctx, store.WebSession{CoreSessionID: "sess-leia", AccountID: "acct-1"})
+	_ = db.CreateAPIToken(ctx, "tok-leia", "hash-leia", "acct-1", "sess-leia", time.Now().Add(time.Hour))
 
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/admin/users?q=x.test", nil))
@@ -125,6 +128,13 @@ func TestAdminUsersSearchAndBan(t *testing.T) {
 		t.Fatalf("audit: %+v", audit)
 	}
 
+	// The website's own session row and bearer for the account are gone at once.
+	if _, err := db.GetWebSession(ctx, "sess-leia"); err == nil {
+		t.Fatal("banned account's web session survived")
+	}
+	if _, err := db.APITokenByHash(ctx, "hash-leia"); err == nil {
+		t.Fatal("banned account's bearer survived")
+	}
 	// The website keeps who banned and why; the users page lists it with no search.
 	if b, err := db.GetBan(context.Background(), "acct-1"); err != nil || !b.Banned || b.Reason != "cheating" || b.Actor != "acct-admin" {
 		t.Fatalf("ban record: %+v %v", b, err)
