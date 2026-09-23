@@ -44,6 +44,10 @@ type statusWriter struct {
 	code int
 }
 
+// Unwrap lets http.ResponseController and WebSocket upgrades reach the
+// connection underneath (the voice-chat socket hijacks it).
+func (w *statusWriter) Unwrap() http.ResponseWriter { return w.ResponseWriter }
+
 func (w *statusWriter) WriteHeader(code int) {
 	w.code = code
 	w.ResponseWriter.WriteHeader(code)

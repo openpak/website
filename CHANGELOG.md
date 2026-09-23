@@ -3,7 +3,22 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
-## Unreleased
+## v0.53.0 — voice chat
+
+- **Voice chat for the phone app** (`internal/voice`). As on Nintendo's service the audio
+  never touches the console: the app talks WebRTC phone to phone and this process only
+  holds rooms and relays signaling. `GET /api/v1/me/voice` finds the room of the game you
+  are in (the matchmaking gathering, asked of the title servers in `VOICE_GATHERING_URLS`;
+  switch-nex v0.3.1 answers), `POST /api/v1/me/voice/rooms` makes a code room,
+  `GET /api/v1/me/voice/rooms/{code}` shows one, and `GET /api/v1/me/voice/ws?code=` is the
+  signaling WebSocket (bearer in the header, or subprotocol `bearer.<token>` from a
+  browser). Full mesh, 8 phones a room. The welcome carries STUN and a time-limited TURN
+  credential for coturn's shared secret (`VOICE_TURN_SECRET`, `VOICE_TURN_URLS`,
+  `VOICE_STUN_URLS`). `GET /internal/voice/room?account_id=` (`WEBSITE_INTERNAL_KEY`) is the
+  console lobby page's data, through nx-baas. New error codes `voice_room_unknown`,
+  `voice_room_full`. New dependency `github.com/coder/websocket`.
+
+## Unreleased (released in v0.52.0)
 
 - **Help tickets.** Signed-in people open a ticket on `/help` (`/support` redirects there):
   subject, topic, message and an optional file (10 MB), then follow and answer the thread.

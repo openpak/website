@@ -556,6 +556,76 @@ paths:
               schema: { $ref: "#/components/schemas/Error" }
         "502": { description: Whether the message is allowed could not be checked. }
         "503": { description: Chat is not available on this deployment. }
+  /me/voice:
+    get:
+      summary: The voice room of the game you are playing right now
+      description: |
+        Voice chat runs on the phone, never on the console. A game room is the matchmaking
+        gathering this account is in right now, as the title server reports it; `room` is null
+        when it is in none (or no title server could say). Members are the gathering's players
+        with an OpenPak account; `in_voice` marks the ones connected to the room.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  room: { oneOf: [{ $ref: "#/components/schemas/VoiceRoom" }, { type: "null" }] }
+                  max_members: { type: integer, description: The mesh ceiling (8). }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/voice/rooms:
+    post:
+      summary: Make a code room, for talking outside a game
+      responses:
+        "201":
+          description: Made
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  room: { $ref: "#/components/schemas/VoiceRoom" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/voice/rooms/{code}:
+    parameters:
+      - { name: code, in: path, required: true, schema: { type: string }, description: Six characters; case, spaces and dashes are ignored. }
+    get:
+      summary: A room and who is connected to it
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  room: { $ref: "#/components/schemas/VoiceRoom" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { description: No room has that code (voice_room_unknown). }
+  /me/voice/ws:
+    get:
+      summary: The room's signaling socket (WebSocket)
+      description: |
+        Upgrade to a WebSocket (subprotocol `openpak-voice`). The bearer goes in the
+        Authorization header, or, from a browser that cannot set one, as a second offered
+        subprotocol `bearer.<token>` (never echoed back). Frames are JSON text:
+
+        - server: `welcome` {self, name, room, peers, ice_servers}, `join` {peer}, `leave` {id},
+          `signal` {from, data}, `state` {id, muted, speaking}, `ping`, `error` {code, message}
+        - client: `signal` {to, data} (relayed to that peer only), `state` {muted, speaking}
+
+        The newcomer sends a WebRTC offer to every peer in its welcome; the others only answer.
+        `ice_servers` carries STUN and a time-limited TURN credential. A room holds 8 phones
+        (full mesh); one account joining again replaces its earlier socket.
+      parameters:
+        - { name: code, in: query, required: true, schema: { type: string } }
+      responses:
+        "101": { description: Switching protocols. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { description: No room has that code (voice_room_unknown). }
+        "409": { description: The room is full (voice_room_full). }
   /regions:
     get:
       summary: The region nodes a room may be served from
@@ -2134,7 +2204,7 @@ components:
           description: |
             Stable identifier for clients to translate. Unknown codes may be added; treat one
             like its HTTP status.
-          enum: [account_suspended, attachment_too_large, attachments_unavailable, avatar_invalid, avatars_unavailable, bad_request, challenge_expired, chat_blocked, chat_not_friends, chat_unavailable, conflict, console_taken, forbidden, friend_code_unknown, friend_conflict, friend_self, internal, invalid_credentials, link_expired, no_pending_request, not_found, not_votable, quota_exceeded, rate_limited, registrations_closed, saves_unavailable, service_unavailable, session_expired, tickets_unavailable, too_large, two_factor_locked, two_factor_required, unauthorized, wfc_not_found, wfc_unavailable, wrong_code, wrong_password]
+          enum: [account_suspended, attachment_too_large, attachments_unavailable, avatar_invalid, avatars_unavailable, bad_request, challenge_expired, chat_blocked, chat_not_friends, chat_unavailable, conflict, console_taken, forbidden, friend_code_unknown, friend_conflict, friend_self, internal, invalid_credentials, link_expired, no_pending_request, not_found, not_votable, quota_exceeded, rate_limited, registrations_closed, saves_unavailable, service_unavailable, session_expired, tickets_unavailable, too_large, two_factor_locked, two_factor_required, unauthorized, voice_room_full, voice_room_unknown, wfc_not_found, wfc_unavailable, wrong_code, wrong_password]
     CrashMeta:
       type: object
       required: [source]
@@ -2231,6 +2301,21 @@ components:
             properties:
               namespace: { type: string }
               link_id: { type: string }
+    VoiceRoom:
+      type: object
+      properties:
+        code: { type: string, description: Six characters from A-Z and 2-9 without I and O. }
+        kind: { type: string, enum: [game, code] }
+        title: { type: string, description: The title server's name for the game (game rooms). }
+        max_members: { type: integer }
+        members:
+          type: array
+          items:
+            type: object
+            properties:
+              account_id: { type: string }
+              display_name: { type: string }
+              in_voice: { type: boolean }
     ChatMessage:
       type: object
       properties:

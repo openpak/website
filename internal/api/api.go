@@ -34,6 +34,7 @@ import (
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/store"
 	"github.com/openpak/website/internal/support"
+	"github.com/openpak/website/internal/voice"
 	"github.com/openpak/website/internal/wfc"
 )
 
@@ -64,7 +65,11 @@ type Server struct {
 	// package owns the lookup. Nil lists bare title ids.
 	SaveTitle func(ctx context.Context, platform, id string) (name string, icon bool)
 	Chat      *chat.Client
-	WFC       *wfc.Client // resolves Wii/DS friend codes; nil answers 503 on /me/links/wfc
+	// Voice is the voice-chat hub (rooms and signaling); Gatherings finds the
+	// game room of an account, nil when no title server is configured.
+	Voice      *voice.Hub
+	Gatherings *voice.Gatherings
+	WFC        *wfc.Client // resolves Wii/DS friend codes; nil answers 503 on /me/links/wfc
 	// Crashes stores crash-report files; nil keeps reports without them.
 	Crashes    *attachments.Store
 	CrashLimit *ratelimit.Limiter // per client, public crash reports
@@ -83,7 +88,9 @@ type Server struct {
 
 // New builds the API server.
 func New(c core.HTTP, id core.Identity, soc core.Social, lnk core.Links, inv core.InvitationsView, db store.Store, sess *session.Manager, md *media.Service, log *slog.Logger) *Server {
+	hub, gatherings := newVoice()
 	return &Server{
+		Voice: hub, Gatherings: gatherings,
 		Core: c, Identity: id, Social: soc, Links: lnk, Invites: inv, DB: db, Sessions: sess,
 		Media:      md,
 		Adapter:    adapter.New(os.Getenv("ADAPTER_INTERNAL_URL"), os.Getenv("NX_INTERNAL_KEY")),
@@ -113,6 +120,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	g("/me/friends", s.auth(s.handleFriends)) // GET /api/v1/me/friends
 	s.registerSaves(mux)
 	s.registerChat(mux)
+	s.registerVoice(mux)
 	s.registerEmulator(mux)
 	g("/me/friends/requests", s.auth(s.handleRequests))
 	h("/me/friends/requests", s.auth(s.handleSendRequest)) // POST: add by friend code
@@ -206,6 +214,8 @@ var errorCodes = map[string]string{
 	"saves service error":                                       "saves_unavailable",
 	"chat is not available on this deployment":                  "chat_unavailable",
 	"chat service error":                                        "chat_unavailable",
+	"no voice room has that code":                               "voice_room_unknown",
+	"the voice room is full":                                    "voice_room_full",
 	"avatars are not configured":                                "avatars_unavailable",
 	"Wii/DS linking is not available":                           "wfc_unavailable",
 	"could not reach the Wii/DS server":                         "wfc_unavailable",

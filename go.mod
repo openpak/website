@@ -3,6 +3,7 @@ module github.com/openpak/website
 go 1.27.0
 
 require (
+	github.com/coder/websocket v1.8.15
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
 	github.com/sigstore/sigstore v1.10.10
