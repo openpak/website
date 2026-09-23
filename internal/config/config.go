@@ -36,6 +36,10 @@ type Config struct {
 	FCMCredentialsFile string
 
 	MediaDir string // filesystem storage root for avatars
+	// AttachmentsDir holds help-ticket attachments and crash-report files
+	// (WEBSITE_ATTACHMENTS_DIR). Put it on a volume: it is not rebuilt from
+	// anywhere.
+	AttachmentsDir string
 
 	// NetProfileTraefikFile is the read-only mount of Traefik's dynamic
 	// configuration; the network profile (PRD prds/network-profile-service-prd.md) is
@@ -65,6 +69,7 @@ func Load() (Config, error) {
 		SessionSecret:         os.Getenv("WEBSITE_SESSION_SECRET"),
 		Environment:           env("WEBSITE_ENVIRONMENT", "development"),
 		MediaDir:              env("WEBSITE_MEDIA_DIR", "storage/media"),
+		AttachmentsDir:        env("WEBSITE_ATTACHMENTS_DIR", "storage/attachments"),
 		NetProfileTraefikFile: os.Getenv("NETPROFILE_TRAEFIK_FILE"),
 		NetProfilePlatformMap: os.Getenv("NETPROFILE_PLATFORM_MAP"),
 	}

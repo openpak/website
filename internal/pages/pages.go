@@ -35,6 +35,7 @@ import (
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/store"
+	"github.com/openpak/website/internal/support"
 	"github.com/openpak/website/internal/wfc"
 )
 
@@ -56,6 +57,8 @@ type Server struct {
 	Saves *saves.Client
 	// Chat is the neutral chat service; nil renders the page as "not available".
 	Chat *chat.Client
+	// Support is the help-ticket service; nil says tickets are not available.
+	Support *support.Service
 	// News is the public news feed for the landing page; nil shows none.
 	News       *news.Feed
 	Sessions   *session.Manager
@@ -190,6 +193,10 @@ func flashText(lang, code string) string {
 		return i18n.T(lang, "saves.restored")
 	case "saves-deleted":
 		return i18n.T(lang, "saves.deleted")
+	case "ticket-opened":
+		return i18n.T(lang, "help.opened")
+	case "ticket-replied":
+		return i18n.T(lang, "help.replied")
 	case "saves-failed":
 		return i18n.T(lang, "saves.failed")
 	default:
@@ -342,6 +349,12 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /lang", s.handleLang)
 	mux.HandleFunc("GET /feed/news.xml", s.handleNewsFeed)
 	mux.HandleFunc("GET /feed/titles.xml", s.handleTitlesFeed)
+	mux.HandleFunc("GET /help", s.handleHelp)
+	mux.Handle("GET /support", http.RedirectHandler("/help", http.StatusMovedPermanently))
+	mux.HandleFunc("POST /help", s.handleHelpOpen)
+	mux.HandleFunc("GET /help/{id}", s.handleHelpTicket)
+	mux.HandleFunc("POST /help/{id}", s.handleHelpReply)
+	mux.HandleFunc("GET /help/attachments/{msg}", s.handleHelpAttachment)
 	// Console linking: the page itself lives in the Switch adapter, but a phone must reach it
 	// under a name with a certificate it trusts — a QR pointing at a bare IP means a warning
 	// page, and one pointing at accounts.nintendo.com only resolves on the console.

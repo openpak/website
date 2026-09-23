@@ -22,6 +22,7 @@ import (
 	"github.com/openpak/website/internal/pages"
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/store"
+	"github.com/openpak/website/internal/support"
 )
 
 // Server hosts the admin surface.
@@ -57,6 +58,8 @@ type Server struct {
 	Registry *RegistryAPI
 	// Ops is the host agents behind /admin/services; nil says "not configured".
 	Ops *OpsAPI
+	// Support is the help-ticket service behind /admin/tickets; nil says "not configured".
+	Support *support.Service
 
 	tmpl *template.Template
 	log  *slog.Logger
@@ -113,6 +116,7 @@ var adminNav = []struct{ href, key string }{
 	{"/admin/events", "admin.nav.events"},
 	{"/admin/users", "admin.nav.users"},
 	{"/admin/reports", "admin.reports"},
+	{"/admin/tickets", "admin.tickets"},
 }
 
 func navFor(path string) []navLink {
@@ -172,7 +176,14 @@ func (s *Server) authorizePost(w http.ResponseWriter, r *http.Request) (store.We
 	if !ok {
 		return ws, false
 	}
-	if err := r.ParseForm(); err != nil {
+	// Multipart forms (ticket replies with a file) are parsed too, so the csrf
+	// field is visible; files over 1 MiB spill to disk, never to memory.
+	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
+		if err := r.ParseMultipartForm(1 << 20); err != nil {
+			http.Error(w, "invalid form", http.StatusBadRequest)
+			return ws, false
+		}
+	} else if err := r.ParseForm(); err != nil {
 		http.Error(w, "invalid form", http.StatusBadRequest)
 		return ws, false
 	}
@@ -225,6 +236,11 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/users/{id}/ban", s.handleBan)
 	mux.HandleFunc("GET /admin/reports", s.handleReports)
 	mux.HandleFunc("POST /admin/reports/{id}/resolve", s.handleResolveReport)
+	mux.HandleFunc("GET /admin/tickets", s.handleTickets)
+	mux.HandleFunc("GET /admin/tickets/{id}", s.handleTicketView)
+	mux.HandleFunc("POST /admin/tickets/{id}", s.handleTicketReply)
+	mux.HandleFunc("POST /admin/tickets/{id}/{action}", s.handleTicketUpdate)
+	mux.HandleFunc("GET /admin/tickets/attachments/{msg}", s.handleTicketAttachment)
 	mux.HandleFunc("GET /admin/nodes", s.handleNodes)
 	mux.HandleFunc("POST /admin/nodes", s.handleNodeCreate)
 	mux.HandleFunc("POST /admin/nodes/{id}/approve", s.handleNodeApprove)

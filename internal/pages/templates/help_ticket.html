@@ -1,0 +1,27 @@
+{{template "header" .}}
+<div class="page-head">
+  <h1 class="break-anywhere">{{.Ticket.Subject}} <span class="badge {{if eq .Ticket.Status "waiting"}}ok{{else if eq .Ticket.Status "open"}}warn{{end}} align-middle">{{t .Lang (printf "help.status.%s" .Ticket.Status)}}</span></h1>
+  <p>#{{.Ticket.ID}} · {{t .Lang (printf "help.cat.%s" .Ticket.Category)}} · <a href="/help">{{t .Lang "help.back"}}</a></p>
+</div>
+<ol class="card list-none divide-y divide-line p-0 mb-9">
+  {{range .Messages}}
+  <li class="p-4">
+    <span class="block text-sm text-muted">{{if .Staff}}<strong>{{t $.Lang "help.staff"}}</strong>{{else}}{{t $.Lang "help.you"}}{{end}} · {{date $.Lang .CreatedAt}} {{.CreatedAt.Format "15:04"}}</span>
+    <p class="mb-0 whitespace-pre-wrap break-anywhere">{{.Body}}</p>
+    {{if .Attachment.Key}}<p class="mb-0 mt-2 text-sm"><a href="/help/attachments/{{.ID}}">{{.Attachment.Name}}</a> ({{.Attachment.Size}} B)</p>{{end}}
+  </li>
+  {{end}}
+</ol>
+{{if .Error}}<p class="notice bad mb-6" role="alert">{{.Error}}</p>{{end}}
+<form method="post" action="/help/{{.Ticket.ID}}" enctype="multipart/form-data" class="form-stack max-w-2xl">
+  <input type="hidden" name="csrf" value="{{.CSRF}}">
+  <label for="message">{{if eq .Ticket.Status "closed"}}{{t .Lang "help.reopen"}}{{else}}{{t .Lang "help.reply"}}{{end}}</label>
+  <textarea id="message" name="message" rows="6" required maxlength="20000"></textarea>
+  {{if .Files}}
+  <label for="attachment">{{t .Lang "help.attachment"}}</label>
+  <input id="attachment" name="attachment" type="file">
+  <p class="hint">{{t .Lang "help.attachment.hint"}}</p>
+  {{end}}
+  <button type="submit" class="btn primary">{{t .Lang "help.send"}}</button>
+</form>
+{{template "footer" .}}

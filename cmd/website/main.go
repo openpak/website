@@ -14,6 +14,7 @@ import (
 
 	"github.com/openpak/website/internal/admin"
 	"github.com/openpak/website/internal/api"
+	"github.com/openpak/website/internal/attachments"
 	"github.com/openpak/website/internal/chat"
 	"github.com/openpak/website/internal/config"
 	"github.com/openpak/website/internal/core"
@@ -28,6 +29,7 @@ import (
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/store"
+	"github.com/openpak/website/internal/support"
 )
 
 func main() {
@@ -146,6 +148,7 @@ func run(log *slog.Logger) error {
 	// app can still register a token, and nothing is delivered until a service
 	// account exists.
 	pushOn := false
+	var pushSender push.Sender // nil unless FCM is configured; a typed nil must not reach it
 	if fcm, err := push.NewFCM(cfg.FCMCredentialsFile); err != nil {
 		return err
 	} else if fcm == nil {
@@ -154,8 +157,21 @@ func run(log *slog.Logger) error {
 		notifier := push.NewNotifier(coreGRPC, coreGRPC, coreGRPC, db, fcm, log)
 		go notifier.Run(ctx)
 		pushOn = true
+		pushSender = fcm
 		log.Info("push: notifier started")
 	}
+
+	// Help tickets and crash-report files live on disk under
+	// WEBSITE_ATTACHMENTS_DIR. If the directory cannot be made, tickets still
+	// work without files rather than taking the site down.
+	files, err := attachments.New(cfg.AttachmentsDir)
+	if err != nil {
+		log.Warn("attachments unavailable; tickets and crash reports carry no files", "dir", cfg.AttachmentsDir, "err", err)
+		files = nil
+	}
+	supportSvc := &support.Service{DB: db, Files: files, Push: pushSender, Log: log}
+	pageSrv.Support = supportSvc
+	apiSrv.Support = supportSvc
 	adminSrv := admin.New(tmpl, coreGRPC, db, sessions, cfg.AdminAccountIDs, log)
 	adminSrv.Federation = coreGRPC
 	adminSrv.Moderation = coreGRPC
@@ -174,6 +190,7 @@ func run(log *slog.Logger) error {
 	adminSrv.Mods = admin.NewModsAPI(os.Getenv("MODS_INTERNAL_URL"), os.Getenv("MODS_INTERNAL_KEY"))
 	adminSrv.Registry = admin.NewRegistryAPI(os.Getenv("REGISTRY_INTERNAL_URL"), os.Getenv("REGISTRY_ADMIN_KEY"))
 	adminSrv.Ops = admin.NewOpsAPI(os.Getenv("WEBSITE_OPSD_HOSTS"), os.Getenv("WEBSITE_OPSD_KEY"))
+	adminSrv.Support = supportSvc
 
 	// News: the public feed for the landing page, and the operator gRPC for
 	// /admin/news. Either can be absent; the landing page then has no news

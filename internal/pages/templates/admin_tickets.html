@@ -1,0 +1,24 @@
+{{template "header" .}}
+{{template "adminnav" .}}
+<div class="page-head">
+  <h1>{{t .Lang "admin.tickets"}}</h1>
+  <p>{{t .Lang "admin.tickets.help"}}</p>
+</div>
+<nav class="mb-4 flex flex-wrap gap-2" aria-label="{{t .Lang "admin.tickets.filter"}}">
+  {{range .Filters}}<a class="btn text-sm {{if eq . $.Status}}primary{{end}}" href="/admin/tickets?status={{.}}{{if $.Mine}}&amp;mine=1{{end}}" {{if eq . $.Status}}aria-current="page"{{end}}>{{.}}</a>{{end}}
+  <a class="btn text-sm {{if .Mine}}primary{{end}}" href="/admin/tickets?status={{.Status}}{{if not .Mine}}&amp;mine=1{{end}}">{{t .Lang "admin.tickets.mine"}}</a>
+</nav>
+{{if .Error}}<p class="notice bad mb-6" role="alert">{{.Error}}</p>{{end}}
+{{if .Tickets}}
+<ul class="card list-none divide-y divide-line p-0">
+  {{range .Tickets}}
+  <li class="p-4">
+    <a class="font-semibold break-anywhere" href="/admin/tickets/{{.ID}}">#{{.ID}} {{.Subject}}</a>
+    <span class="badge {{if eq .Status "open"}}warn{{else if eq .Status "waiting"}}ok{{end}} ml-1">{{.Status}}</span>
+    <span class="badge">{{.Category}}</span>
+    <span class="block text-sm text-muted break-anywhere">{{if .DisplayName}}{{.DisplayName}} · {{end}}<code>{{.AccountID}}</code> · {{.Messages}} {{t $.Lang "admin.tickets.messages"}} · {{t $.Lang "admin.tickets.updated"}} {{.UpdatedAt.Format "2 Jan 2006 15:04"}}{{if .Assignee}} · {{t $.Lang "admin.tickets.assigned"}} <code>{{.Assignee}}</code>{{end}}</span>
+  </li>
+  {{end}}
+</ul>
+{{else if not .Error}}<p class="card p-4 text-muted">{{t .Lang "admin.tickets.none"}}</p>{{end}}
+{{template "footer" .}}

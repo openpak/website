@@ -1,0 +1,48 @@
+{{template "header" .}}
+<div class="page-head">
+  <h1>{{t .Lang "help.title"}}</h1>
+  <p>{{t .Lang "help.sub"}}</p>
+</div>
+{{if .Off}}
+<p class="empty">{{t .Lang "help.off"}}</p>
+{{else if not .User}}
+<p class="card p-4">{{t .Lang "help.signin"}} <a href="/login">{{t .Lang "nav.signin"}}</a></p>
+{{else}}
+{{if .Tickets}}
+<section aria-labelledby="tickets-h" class="mb-9">
+  <div class="section-head"><h2 id="tickets-h">{{t .Lang "help.yours"}}</h2></div>
+  <ul class="card list-none divide-y divide-line p-0">
+    {{range .Tickets}}
+    <li class="p-4">
+      <a class="font-semibold break-anywhere" href="/help/{{.ID}}">{{.Subject}}</a>
+      <span class="badge {{if eq .Status "waiting"}}ok{{else if eq .Status "open"}}warn{{end}} ml-1">{{t $.Lang (printf "help.status.%s" .Status)}}</span>
+      <span class="block text-sm text-muted">#{{.ID}} · {{t $.Lang (printf "help.cat.%s" .Category)}} · {{date $.Lang .UpdatedAt}}</span>
+    </li>
+    {{end}}
+  </ul>
+</section>
+{{end}}
+<section aria-labelledby="new-h">
+  <div class="section-head"><h2 id="new-h">{{t .Lang "help.new"}}</h2><p>{{t .Lang "help.new.sub"}}</p></div>
+  {{if .Error}}<p class="notice bad mb-6" role="alert">{{.Error}}</p>{{end}}
+  <form method="post" action="/help" enctype="multipart/form-data" class="form-stack max-w-2xl">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <label for="subject">{{t .Lang "help.subject"}}</label>
+    <input id="subject" name="subject" type="text" value="{{.Subject}}" required maxlength="200">
+    <label for="category">{{t .Lang "help.category"}}</label>
+    <select id="category" name="category" required>
+      {{$cur := .Category}}{{range .Categories}}<option value="{{.}}"{{if eq . $cur}} selected{{end}}>{{t $.Lang (printf "help.cat.%s" .)}}</option>{{end}}
+    </select>
+    <label for="message">{{t .Lang "help.message"}}</label>
+    <textarea id="message" name="message" rows="8" required maxlength="20000">{{.Message}}</textarea>
+    {{if .Files}}
+    <label for="attachment">{{t .Lang "help.attachment"}}</label>
+    <input id="attachment" name="attachment" type="file">
+    <p class="hint">{{t .Lang "help.attachment.hint"}}</p>
+    {{end}}
+    <p class="hint">{{t .Lang "help.noemail"}}</p>
+    <button type="submit" class="btn primary">{{t .Lang "help.send"}}</button>
+  </form>
+</section>
+{{end}}
+{{template "footer" .}}

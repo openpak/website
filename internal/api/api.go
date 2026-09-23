@@ -32,6 +32,7 @@ import (
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/store"
+	"github.com/openpak/website/internal/support"
 	"github.com/openpak/website/internal/wfc"
 )
 
@@ -63,6 +64,8 @@ type Server struct {
 	SaveTitle func(ctx context.Context, platform, id string) (name string, icon bool)
 	Chat      *chat.Client
 	WFC       *wfc.Client // resolves Wii/DS friend codes; nil answers 503 on /me/links/wfc
+	// Support is the help-ticket service; nil answers 503 on /me/tickets.
+	Support *support.Service
 	// News is the public news feed; nil answers an empty list on /news.
 	News       *news.Feed
 	MediaLimit *ratelimit.Limiter
@@ -157,6 +160,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 
 	s.registerInternal(mux)
 	s.registerBans(mux)
+	s.registerTickets(mux)
 	h("/me/avatar", s.auth(s.handleChooseAvatar))
 	s.registerSecurity(mux)
 }
@@ -215,6 +219,9 @@ var errorCodes = map[string]string{
 	"the reset link is invalid or has expired":                  "link_expired",
 	"the confirmation link is invalid or has expired":           "link_expired",
 	"no such version":                                           "not_found",
+	"help tickets are not available on this deployment":         "tickets_unavailable",
+	"the attachment is larger than 10 MB":                       "attachment_too_large",
+	"attachments are not available on this deployment":          "attachments_unavailable",
 	"session not found":                                         "not_found",
 }
 
@@ -223,7 +230,7 @@ var statusCodes = map[int]string{
 	http.StatusForbidden: "forbidden", http.StatusNotFound: "not_found",
 	http.StatusConflict: "conflict", http.StatusLengthRequired: "bad_request",
 	http.StatusTooManyRequests: "rate_limited", http.StatusBadGateway: "service_unavailable",
-	http.StatusServiceUnavailable: "service_unavailable",
+	http.StatusServiceUnavailable: "service_unavailable", http.StatusRequestEntityTooLarge: "too_large",
 }
 
 func errorCode(status int, msg string) string {

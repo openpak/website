@@ -41,6 +41,7 @@
         <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/features"}}font-semibold text-ink{{end}}" href="/features" {{if eq .Path "/features"}}aria-current="page"{{end}}>{{t .Lang "nav.features"}}</a>
         <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/downloads"}}font-semibold text-ink{{end}}" href="/downloads" {{if eq .Path "/downloads"}}aria-current="page"{{end}}>{{t .Lang "nav.downloads"}}</a>
         <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/status"}}font-semibold text-ink{{end}}" href="/status" {{if eq .Path "/status"}}aria-current="page"{{end}}>{{t .Lang "nav.status"}}</a>
+        <a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if eq .Path "/help"}}font-semibold text-ink{{end}}" href="/help" {{if eq .Path "/help"}}aria-current="page"{{end}}>{{t .Lang "nav.help"}}</a>
       </nav>
 
       <div class="ml-auto flex items-center gap-2">
@@ -71,6 +72,7 @@
             <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/features">{{t .Lang "nav.features"}}</a>
             <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/downloads">{{t .Lang "nav.downloads"}}</a>
             <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/status">{{t .Lang "nav.status"}}</a>
+            <a class="block rounded-lg px-3 py-3 text-ink no-underline hover:bg-paper-2" href="/help">{{t .Lang "nav.help"}}</a>
             {{if .User}}
               <form method="post" action="/logout" class="sm:hidden mt-1 border-t border-line pt-1">
                 <input type="hidden" name="csrf" value="{{.CSRF}}">
