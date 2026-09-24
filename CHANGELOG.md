@@ -3,6 +3,14 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.57.2 — signed redirect ceiling (v0.57.1 rebuilt)
+
+- The website serves the signed redirect ceiling at `/api/v1/network/ceiling` and generates
+  network profiles against it; `openpak-policy` signs it on the owner's machine
+  (docs/signed-ceiling.md).
+- v0.57.1 carried this but its image did not build (the CI scratch directory sat inside the
+  build context); v0.57.2 is the same code with the image built.
+
 ## v0.57.0 — add a friend by email; the address among your friend codes
 
 - Add friend has an "Email address" choice, on the site and in the API (`kind: "email"`). The
