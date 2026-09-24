@@ -121,7 +121,7 @@ release, taken from git history. `git log` stays the source of truth.
   console lobby page's data, through nx-baas. New error codes `voice_room_unknown`,
   `voice_room_full`. New dependency `github.com/coder/websocket`.
 
-## Unreleased (released in v0.52.0)
+## v0.52.0 — 2026-09-23
 
 - **Help tickets.** Signed-in people open a ticket on `/help` (`/support` redirects there):
   subject, topic, message and an optional file (10 MB), then follow and answer the thread.
@@ -204,6 +204,23 @@ release, taken from git history. `git log` stays the source of truth.
   the v2 journey verified a fixture publication against the wall clock, so it began
   failing seven days after it was written, and the rollback journey still required the
   bundle digest to survive a rollback that now reissues and re-signs the bundle.
+
+## v0.49.5 — 2026-09-20
+
+- The catalogue names the game servers; the players file only knows where they answer.
+
+## v0.49.4 — 2026-09-20
+
+- Every game server has its title id, so its players are counted.
+
+## v0.49.3 — 2026-09-20
+
+- A game's players are counted whatever case its id arrives in.
+
+## v0.49.2 — 2026-09-20
+
+- Friends: the game they are playing, not a title id.
+- docs: the hosts' ssh agent moved off /tmp.
 
 ## v0.49.1 — 2026-09-20
 
