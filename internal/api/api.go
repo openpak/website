@@ -58,6 +58,8 @@ type Server struct {
 	// from the live Traefik routing. Set by main when NETPROFILE_TRAEFIK_FILE
 	// is configured; nil answers 503 on /api/v1/network/*.
 	Profiles *netprofile.Service
+	// Ceiling serves the signed redirect ceiling file; nil answers 503.
+	Ceiling *netprofile.CeilingStore
 	// Adapter answers the console-shaped questions the core cannot: the friend
 	// code is minted by the Switch adapter and lives only there.
 	Adapter   *adapter.Client

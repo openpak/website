@@ -6,10 +6,11 @@
 //
 //  1. Traefik's dynamic configuration — the authoritative list of names this
 //     server answers on. Mounted read-only; re-read on every cache expiry.
-//  2. The console DNS family list — the families a real console may be
-//     redirected with. Mirrored as families.Universe and enforced as a
-//     ceiling on the map below. Since NP-4, nn-sssl-dns reads this package's
-//     map instead of its own list, which closes the loop.
+//  2. The signed redirect ceiling (docs/signed-ceiling.md) — per platform,
+//     the families a client may redirect at all. Signed off the box, served
+//     verbatim, and enforced on the map below: a family outside it is dropped
+//     from the profile, individually and logged. Without a verified ceiling
+//     file the compiled families.Universe stands in.
 //  3. platforms.yml — the per-platform map. The only authored input, small
 //     and reviewed like code.
 //
@@ -30,7 +31,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"maps"
 	"net"
 	"net/url"
 	"os"
@@ -137,6 +137,9 @@ type Options struct {
 	Log         *slog.Logger
 	CacheTTL    time.Duration // profile rebuild cadence; default 30s
 	CACacheTTL  time.Duration // CA refetch cadence; default 1h
+	// Ceiling is the signed ceiling file; nil (or no verified file) means the
+	// compiled Universe bounds every platform.
+	Ceiling *CeilingStore
 }
 
 // Service generates profiles on demand and keeps the last good set in memory.
@@ -175,7 +178,7 @@ func New(opts Options) (*Service, error) {
 		}
 		data = b
 	}
-	m, err := LoadMap(data)
+	m, err := parseMap(data)
 	if err != nil {
 		return nil, err
 	}
@@ -191,17 +194,69 @@ func New(opts Options) (*Service, error) {
 	if opts.CACacheTTL <= 0 {
 		opts.CACacheTTL = time.Hour
 	}
+	// A family outside the ceiling is not a startup error: the ceiling can
+	// change under a running server (scp), and one family out of bounds must
+	// not take every other redirect down with it. Say so now; generation
+	// drops it every time.
+	for _, d := range m.outside(opts.Ceiling.Effective()) {
+		opts.Log.Warn("netprofile: platform map entry outside the redirect ceiling; it will be dropped from profiles", "entry", d)
+	}
 	return &Service{opts: opts, m: m, built: map[string]built{}}, nil
 }
 
-// LoadMap parses and validates a platform map. The checks are the PRD's
-// security rules turned into load errors:
+// LoadMap parses and validates a platform map strictly against the compiled
+// fallback ceiling (Universe): the check the v2 policy tooling and the tests
+// use. LoadMapWithin is the same against a signed ceiling.
+func LoadMap(data []byte) (*PlatformMap, error) {
+	return LoadMapWithin(data, FallbackCeiling())
+}
+
+// LoadMapWithin parses a platform map and fails if any family lies outside
+// that platform's ceiling (the server may narrow, never widen).
+func LoadMapWithin(data []byte, c *Ceiling) (*PlatformMap, error) {
+	m, err := parseMap(data)
+	if err != nil {
+		return nil, err
+	}
+	if out := m.outside(c); len(out) > 0 {
+		return nil, fmt.Errorf("netprofile: outside the redirect ceiling; the server may narrow, never widen: %s", strings.Join(out, ", "))
+	}
+	return m, nil
+}
+
+// outside lists every family, exact name and override of the map that lies
+// outside its platform's ceiling, as "platform family" strings.
+func (m *PlatformMap) outside(c *Ceiling) []string {
+	var out []string
+	for _, name := range sortedKeys(m.Platforms) {
+		p := m.Platforms[name]
+		for _, f := range p.Families {
+			if !c.Covers(name, f) {
+				out = append(out, name+" family "+f)
+			}
+		}
+		for _, e := range p.Exact {
+			if !c.Covers(name, e) {
+				out = append(out, name+" exact "+e)
+			}
+		}
+		for _, h := range sortedKeys(p.Overrides) {
+			if !c.Covers(name, h) {
+				out = append(out, name+" override "+h)
+			}
+		}
+	}
+	return out
+}
+
+// parseMap parses and validates a platform map without a ceiling. The checks
+// are the PRD's security rules turned into load errors:
 //
-//   - every family is inside the Universe (the server may narrow, never widen)
+//   - every family is well formed (docs/signed-ceiling.md's family rule)
 //   - every platform is one the PRD names
 //   - server.address is a literal IP, since a redirected name resolves to it
 //   - every service URL's host is inside its platform's families
-func LoadMap(data []byte) (*PlatformMap, error) {
+func parseMap(data []byte) (*PlatformMap, error) {
 	var m PlatformMap
 	if err := yaml.Unmarshal(data, &m); err != nil {
 		return nil, fmt.Errorf("netprofile: platform map: %w", err)
@@ -233,8 +288,8 @@ func LoadMap(data []byte) (*PlatformMap, error) {
 			return nil, fmt.Errorf("netprofile: platform %q lists no families", name)
 		}
 		for _, f := range p.Families {
-			if !slices.Contains(Universe, f) {
-				return nil, fmt.Errorf("netprofile: platform %q family %q is outside the console DNS universe; the server may narrow, never widen", name, f)
+			if err := ValidFamily(f); err != nil {
+				return nil, fmt.Errorf("netprofile: platform %q: %w", name, err)
 			}
 		}
 		for _, e := range append(slices.Clone(p.Exact), p.Never...) {
@@ -403,7 +458,10 @@ func (s *Service) build(ctx context.Context, platform string) (built, error) {
 		s.opts.Log.Error("netprofile: routed name no platform claims; omitting it from every profile", "name", name)
 	}
 
-	prof := s.m.generate(platform, routes)
+	prof, dropped := s.m.generate(platform, routes, s.opts.Ceiling.Effective())
+	for _, d := range dropped {
+		s.opts.Log.Warn("netprofile: outside the redirect ceiling; dropped from the profile", "platform", prof.Platform, "entry", d)
+	}
 	prof.RecheckAfter = s.m.RecheckAfter
 	// Best-effort and cached: a CA that cannot be fetched right now leaves
 	// the block out, and the client keeps the CA it already pinned.
@@ -523,18 +581,22 @@ func caInfo(base string, pemBytes []byte) (*CAInfo, error) {
 	}, nil
 }
 
-// generate builds the document for one platform from the live routes and the
-// map. The rules, in order:
+// generate builds the document for one platform from the live routes, the
+// map and the ceiling. Anything outside the platform's ceiling is dropped on
+// its own and reported in the second return — never the whole platform (the
+// failure a single new family once caused in a client). The rules, in order:
 //
-//   - suffixes: the platform's families, verbatim. Every one is inside the
-//     console DNS universe (enforced at load) and inside what the platform's
-//     clients compile in (enforced by review — this file is the review).
+//   - suffixes: the platform's families that lie inside its ceiling.
 //   - exact: names this platform claims that no family of its covers — the
 //     authored entries plus routed names that would otherwise be lost to a
 //     narrowed suffix list. A name a family covers is never repeated here.
 //   - never: the platform's list, verbatim.
 //   - services: the platform's URL table, for clients that address URLs.
-func (m *PlatformMap) generate(platform string, routes Routes) *Profile {
+//
+// exact names, overrides and service hosts obey the ceiling too, and an
+// override or service whose family was dropped goes with it.
+func (m *PlatformMap) generate(platform string, routes Routes, c *Ceiling) (*Profile, []string) {
+	var dropped []string
 	prof := &Profile{
 		Platform: platform,
 		Server:   m.Server,
@@ -544,9 +606,13 @@ func (m *PlatformMap) generate(platform string, routes Routes) *Profile {
 	if platform == PlatformAll {
 		families := map[string]bool{}
 		never := map[string]int{}
-		for _, p := range m.Platforms {
-			for _, f := range p.Families {
-				families[f] = true
+		for _, name := range sortedKeys(m.Platforms) {
+			for _, f := range m.Platforms[name].Families {
+				if c.Covers(name, f) {
+					families[f] = true
+				} else {
+					dropped = append(dropped, name+" family "+f)
+				}
 			}
 		}
 		for _, p := range m.Platforms {
@@ -565,32 +631,54 @@ func (m *PlatformMap) generate(platform string, routes Routes) *Profile {
 			}
 		}
 		for _, name := range routes.Names {
-			if !coveredByAny(name, prof.Redirect.Suffixes) && !slices.Contains(prof.Redirect.Exact, name) {
-				prof.Redirect.Exact = append(prof.Redirect.Exact, name)
+			if coveredByAny(name, prof.Redirect.Suffixes) || slices.Contains(prof.Redirect.Exact, name) {
+				continue
 			}
+			if !c.CoversAny(name) {
+				dropped = append(dropped, "routed "+name)
+				continue
+			}
+			prof.Redirect.Exact = append(prof.Redirect.Exact, name)
 		}
 		sort.Strings(prof.Redirect.Exact)
 		prof.Platform = "all"
-		return prof
+		return prof, dropped
 	}
 
 	p := m.Platforms[platform]
-	prof.Redirect.Suffixes = append(prof.Redirect.Suffixes, p.Families...)
+	for _, f := range p.Families {
+		if c.Covers(platform, f) {
+			prof.Redirect.Suffixes = append(prof.Redirect.Suffixes, f)
+		} else {
+			dropped = append(dropped, "family "+f)
+		}
+	}
 	sort.Strings(prof.Redirect.Suffixes)
 	prof.Redirect.Never = append(prof.Redirect.Never, p.Never...)
 	sort.Strings(prof.Redirect.Never)
 
 	exact := map[string]bool{}
 	for _, e := range p.Exact {
-		exact[e] = true
+		if c.Covers(platform, e) {
+			exact[e] = true
+		} else {
+			dropped = append(dropped, "exact "+e)
+		}
 	}
 	// A routed name the families already cover is never repeated as exact;
 	// a routed name claimed by nobody is drift — omitted here, logged by the
 	// caller. What remains is the authored list.
 	prof.Redirect.Exact = sortedKeys(exact)
 
-	if len(p.Overrides) > 0 {
-		prof.Redirect.Overrides = maps.Clone(p.Overrides)
+	for _, host := range sortedKeys(p.Overrides) {
+		if !c.Covers(platform, host) || !coveredByAny(host, prof.Redirect.Suffixes) && !exact[host] {
+			dropped = append(dropped, "override "+host)
+			continue
+		}
+		if prof.Redirect.Overrides == nil {
+			prof.Redirect.Overrides = map[string]string{}
+		}
+		prof.Redirect.Overrides[host] = p.Overrides[host]
 	}
 
 	ids := make([]string, 0, len(p.Services))
@@ -599,9 +687,15 @@ func (m *PlatformMap) generate(platform string, routes Routes) *Profile {
 	}
 	sort.Strings(ids)
 	for _, id := range ids {
+		// parseMap checked the host is inside the platform's own families;
+		// it must also be inside one that survived the ceiling.
+		if u, err := url.Parse(p.Services[id]); err != nil || !coveredByAny(u.Hostname(), prof.Redirect.Suffixes) {
+			dropped = append(dropped, "service "+id)
+			continue
+		}
 		prof.Services = append(prof.Services, ServiceEntry{ID: id, URL: p.Services[id]})
 	}
-	return prof
+	return prof, dropped
 }
 
 func sortedKeys[V any](m map[string]V) []string {

@@ -1,5 +1,11 @@
 package netprofile
 
+// Since 2026-09-24 the ceiling is the signed file (docs/signed-ceiling.md,
+// ceiling.go). Universe below is only the fallback applied to every platform
+// when no verified ceiling file is present — development, tests, a box not
+// yet given one. Like the clients' compiled lists it is not updated again: a
+// new family is `openpak-policy ceiling add`, not an edit here.
+//
 // Universe is the ceiling on any family a platform map may list: the domain
 // families a real console is allowed to be redirected with — nn-sssl-dns's
 // compiled-in list, which was the second source of this answer until NP-4

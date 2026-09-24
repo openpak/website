@@ -51,6 +51,11 @@ type Config struct {
 	// override is for experiments, not for shipping a change without a
 	// reviewed file.
 	NetProfilePlatformMap string
+	// NetProfileCeilingFile is the signed redirect ceiling envelope
+	// (docs/signed-ceiling.md), served verbatim at /api/v1/network/ceiling
+	// and re-read when it changes. Missing or invalid: 503 there, and
+	// profiles fall back to the compiled Universe.
+	NetProfileCeilingFile string
 }
 
 // Load reads the environment and validates required fields.
@@ -72,6 +77,7 @@ func Load() (Config, error) {
 		AttachmentsDir:        env("WEBSITE_ATTACHMENTS_DIR", "storage/attachments"),
 		NetProfileTraefikFile: os.Getenv("NETPROFILE_TRAEFIK_FILE"),
 		NetProfilePlatformMap: os.Getenv("NETPROFILE_PLATFORM_MAP"),
+		NetProfileCeilingFile: env("NETPROFILE_CEILING_FILE", "/data/netprofile-ceiling.json"),
 	}
 	for _, id := range strings.Split(os.Getenv("WEBSITE_ADMIN_ACCOUNT_IDS"), ",") {
 		if id = strings.TrimSpace(id); id != "" {

@@ -7,11 +7,12 @@
 #             name must be claimed by at least one platform below, either by
 #             one of its families or by its exact list; internal/drift_test
 #             fails the build when one is not.
-#   source 2  The console DNS family list (nn-sssl-dns, before NP-4) — the
-#             ceiling a family may belong to. It is mirrored in families.go;
-#             a family outside it is rejected at load. Since NP-4 the DNS
-#             server reads this map, and this ceiling is what keeps the loop
-#             closed.
+#   source 2  The signed redirect ceiling (docs/signed-ceiling.md), served at
+#             /api/v1/network/ceiling from NETPROFILE_CEILING_FILE. A family
+#             here must lie inside its platform's signed ceiling; one outside
+#             is dropped from the profile on its own and logged, and
+#             drift_test fails against testdata/netprofile-ceiling.json.
+#             Adding a family: `openpak-policy ceiling add` first, then here.
 #
 # This file changes rarely and is reviewed like code. Adding a title needs no
 # edit here: the title's HostSNI lands in Traefik, its name ends in a family

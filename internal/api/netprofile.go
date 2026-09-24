@@ -15,6 +15,7 @@ import (
 //
 //	GET /api/v1/network/profile?platform=switch   the generated profile
 //	GET /api/v1/network/ca.pem                    the console CA the profile pins
+//	GET /api/v1/network/ceiling                   the signed redirect ceiling, verbatim
 //
 // Served only because the endpoint has no write side: it tells a client
 // "send these hostnames to this address", which is a redirection primitive,
@@ -22,6 +23,34 @@ import (
 func (s *Server) registerNetwork(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/network/profile", s.handleNetworkProfile)
 	mux.HandleFunc("GET /api/v1/network/ca.pem", s.handleNetworkCA)
+	mux.HandleFunc("GET /api/v1/network/ceiling", s.handleNetworkCeiling)
+}
+
+// handleNetworkCeiling serves the signed redirect ceiling
+// (docs/signed-ceiling.md) byte for byte as the owner signed it. The server
+// holds no key and never rewrites the file; it only refuses to serve one
+// that does not verify under the pinned key. Rollback protection is the
+// clients' job: an older, validly signed file is served as it is.
+func (s *Server) handleNetworkCeiling(w http.ResponseWriter, r *http.Request) {
+	if s.Ceiling == nil {
+		writeError(w, http.StatusServiceUnavailable, "network ceiling is not configured")
+		return
+	}
+	body, etag, _, err := s.Ceiling.Current()
+	if err != nil {
+		writeError(w, http.StatusServiceUnavailable, "network ceiling unavailable")
+		return
+	}
+	w.Header().Set("ETag", etag)
+	w.Header().Set("Cache-Control", "public, max-age=300")
+	if etagMatch(r.Header.Get("If-None-Match"), etag) {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(body)
 }
 
 // handleNetworkProfile answers with the generated profile for one platform.

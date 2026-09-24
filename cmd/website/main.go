@@ -127,8 +127,17 @@ func run(log *slog.Logger) error {
 	// client releases. The file is mounted read-only; without it there is
 	// nothing to generate from and /api/v1/network/* answers 503 while the
 	// rest of the site is unaffected.
+	//
+	// The signed redirect ceiling (docs/signed-ceiling.md) is served from a
+	// file the owner signs off the box and scp's in; it is re-read on change.
+	// Without a verified file the endpoint answers 503 and profiles are
+	// bounded by the compiled fallback.
+	ceiling := netprofile.NewCeilingStore(cfg.NetProfileCeilingFile, nil, log)
+	ceiling.Current() // log the state at startup
+	apiSrv.Ceiling = ceiling
 	if cfg.NetProfileTraefikFile != "" {
 		np, err := netprofile.New(netprofile.Options{
+			Ceiling:     ceiling,
 			TraefikFile: cfg.NetProfileTraefikFile,
 			PlatformMap: cfg.NetProfilePlatformMap,
 			CA:          apiSrv.Adapter.CA,

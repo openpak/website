@@ -142,6 +142,11 @@ primitive, and it must be treated as one.
 - **The client's compiled-in allowlist is the ceiling.** The server may name a subset of the
   domain families a client already ships with; anything else the client drops and logs. This is
   the load-bearing mitigation: a compromised or spoofed profile still cannot redirect a bank.
+  *Superseded 2026-09-24 by the signed redirect ceiling* (`docs/signed-ceiling.md`): the ceiling
+  is now a per-platform file signed off the box with a pinned Ed25519 key, served verbatim at
+  `GET /api/v1/network/ceiling`; clients drop out-of-ceiling names individually, and the compiled
+  list is only the first-boot fallback. The generator here validates the map against the same
+  signed file (`families.go`'s `Universe` only when none is present).
 - **The CA is fetched separately and pinned by digest**, so a profile cannot swap the trust
   anchor without the hash changing.
 - **No credentials.** The profile is public, identical for everyone, and cacheable. It must

@@ -15,6 +15,7 @@
 //	openpak-policy register --repository openpak/citron --kind emulator \
 //	    --platform switch --channel staging --workflow .github/workflows/release.yml
 //	openpak-policy client-status --client-id <id> --status suspended
+//	openpak-policy ceiling show|add|remove|sign   (signed redirect ceiling)
 package main
 
 import (
@@ -75,6 +76,8 @@ func run(args []string, getenv func(string) string, stdout, stderr io.Writer) in
 		err = cmdRegister(rest, getenv, stdout)
 	case "client-status":
 		err = cmdClientStatus(rest, getenv, stdout)
+	case "ceiling":
+		err = cmdCeiling(rest, stdout)
 	case "help", "-h", "--help":
 		usage(stdout)
 		return 0
@@ -106,6 +109,15 @@ func usage(w io.Writer) {
                           [--workflow PATH]... [--status requested]
                           [--environment production] [--client-id ID]
   openpak-policy client-status --client-id ID --status STATUS
+  openpak-policy ceiling show [--file PATH | --url URL]
+  openpak-policy ceiling add|remove PLATFORM .FAMILY [--file PATH | --url URL]
+                         [--key PEM] [--out PATH]
+  openpak-policy ceiling sign --in PAYLOAD.json [--no-current]
+                         [--file PATH | --url URL] [--key PEM] [--out PATH]
+
+The ceiling commands (docs/signed-ceiling.md) run on the owner's machine with
+the Ed25519 key (default `+ceilingDefaultKey+`); they need no REGISTRY_*
+configuration and print the scp line that installs the envelope on the box.
 
 Configuration comes from the same REGISTRY_* environment the website uses:
   REGISTRY_DATABASE_URL       Postgres connection for the registry store

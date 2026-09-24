@@ -757,6 +757,43 @@ paths:
         "304": { description: Unchanged. }
         "404": { description: No CA available on this deployment. }
         "503": { description: Profiles not configured on this deployment. }
+  /network/ceiling:
+    get:
+      summary: The signed redirect ceiling
+      security: []
+      description: |
+        Per platform, the domain families a client may redirect at all
+        (docs/signed-ceiling.md). An envelope signed off the box with a
+        pinned Ed25519 key and served byte for byte as signed: the server
+        holds no key and never rewrites it. Verify the signature over the
+        decoded payload bytes, then parse them; rollback protection is the
+        client's.
+      responses:
+        "200":
+          description: The signed envelope
+          headers:
+            ETag:
+              description: sha256 of the served bytes
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [payload, signatures]
+                properties:
+                  payload:
+                    type: string
+                    description: base64 of the exact payload bytes
+                  signatures:
+                    type: array
+                    items:
+                      type: object
+                      required: [keyid, sig]
+                      properties:
+                        keyid: { type: string, description: hex sha256 of the raw public key }
+                        sig: { type: string, description: base64 Ed25519 signature over the payload bytes }
+        "304": { description: Unchanged. }
+        "503": { description: No verified ceiling file on this deployment. }
   /requests:
     get:
       summary: The votable catalogue (titles and network features)

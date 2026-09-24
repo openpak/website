@@ -463,9 +463,10 @@ platforms:
 }
 
 // The shipped map itself loads, so the package cannot build with a broken
-// default.
+// default. Its families are checked against the signed ceiling in
+// drift_test.go, not against the compiled Universe.
 func TestEmbeddedMapLoads(t *testing.T) {
-	if _, err := LoadMap(embeddedMap); err != nil {
+	if _, err := parseMap(embeddedMap); err != nil {
 		t.Fatal(err)
 	}
 }
