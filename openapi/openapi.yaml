@@ -1088,11 +1088,11 @@ paths:
               properties:
                 friend_code:
                   type: string
-                  description: Display form (SW-xxxx-xxxx-xxxx, OP-XXXX-XXXX, xxxx-xxxx-xxxx) or bare subject.
+                  description: Display form (SW-xxxx-xxxx-xxxx, OP-XXXX-XXXX, xxxx-xxxx-xxxx), a Nintendo Network ID, or a bare subject.
                   examples: ["SW-0123-4567-89ab"]
                 kind:
                   type: string
-                  enum: [openpak, switch, 3ds]
+                  enum: [openpak, switch, 3ds, wiiu]
                   description: |
                     Which kind of code friend_code is. Omitted, an OpenPak-shaped
                     code is taken as one and anything else as a Switch code.

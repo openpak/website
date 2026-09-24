@@ -23,11 +23,14 @@
     var shapes = {
       openpak: { prefix: "OP-", groups: [4, 4], keep: /[^2-9A-HJKMNP-TV-Z]/g, pattern: "OP-[2-9A-HJKMNP-TV-Z]{4}-[2-9A-HJKMNP-TV-Z]{4}", mode: "text" },
       switch: { prefix: "SW-", groups: [4, 4, 4, 4], keep: /[^0-9A-F]/g, pattern: "SW-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}(-[0-9A-F]{4})?", mode: "text" },
-      "3ds": { prefix: "", groups: [4, 4, 4], keep: /[^0-9]/g, pattern: "[0-9]{4}-[0-9]{4}-[0-9]{4}", mode: "numeric" }
+      "3ds": { prefix: "", groups: [4, 4, 4], keep: /[^0-9]/g, pattern: "[0-9]{4}-[0-9]{4}-[0-9]{4}", mode: "numeric" },
+      // A Nintendo Network ID is a name, not a code: 6 to 16 letters, digits, dots, dashes, underscores, as typed.
+      wiiu: { free: true, pattern: "[A-Za-z0-9._\\-]{6,16}", mode: "text" }
     };
     function shape() { return shapes[kind.value] || shapes.openpak; }
     function fit() {
       var sh = shape();
+      if (sh.free) return;
       var raw = input.value.toUpperCase();
       if (sh.prefix && raw.indexOf(sh.prefix.slice(0, 2)) === 0) raw = raw.slice(2);
       raw = raw.replace(sh.keep, "");

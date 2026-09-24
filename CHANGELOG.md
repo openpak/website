@@ -3,6 +3,15 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.56.0 — add a Wii U friend by NNID
+
+- The add-friend dialog has a **Wii U Nintendo Network ID** option, resolved through the NNID
+  nn-account (v0.8.0) publishes on the Wii U link. The API's `kind` takes `wiiu` too, and the
+  profile's friend codes show the NNID once it is published.
+- The per-kind patterns live in `site.js` only: a single static pattern could not accept a name
+  without also accepting a malformed code. Without script the field takes any text and a code
+  that is not one gets "no account for that code", as a wrong code always has.
+
 ## v0.55.1 — every friend code in /me
 
 - `GET /api/v1/me` returns `friend_codes`: the list the profile banner shows (kind, console,

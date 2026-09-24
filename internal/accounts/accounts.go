@@ -124,6 +124,7 @@ const (
 	CodeOpenPak = "openpak"
 	CodeSwitch  = "switch"
 	Code3DS     = "3ds"
+	CodeWiiU    = "wiiu"
 )
 
 // ResolveFriendCode finds the account behind a code of the given kind; ""
@@ -132,6 +133,13 @@ func ResolveFriendCode(ctx context.Context, codes store.OpenPakCodeStore, links 
 	if kind == CodeOpenPak || (kind == "" && store.NormalizeOpenPakCode(typed) != "") {
 		id, _ := codes.AccountByOpenPakCode(ctx, typed)
 		return id
+	}
+	if kind == CodeWiiU {
+		// The NNID nn-account published on the Wii U link.
+		if id, err := links.AccountByPublicCode(ctx, "wiiu", typed); err == nil {
+			return id
+		}
+		return ""
 	}
 	if kind == Code3DS {
 		if pid, ok := PIDFrom3DSCode(typed); ok {
@@ -200,7 +208,7 @@ func FriendCodes(ctx context.Context, codes store.OpenPakCodeStore, links core.L
 	// Wii U friends add each other by Nintendo Network ID, which nn-account
 	// owns; it appears once nn-account publishes it on the link.
 	if link, err := links.ActiveLinkByAccount(ctx, "wiiu", accountID); err == nil && link.PublicCode != "" {
-		out = append(out, Code{"wiiu", "Wii U", "Wii U · NNID", link.PublicCode})
+		out = append(out, Code{CodeWiiU, "Wii U", "Wii U · NNID", link.PublicCode})
 	}
 	// A 3DS code is derived from the console's principal id, the link's
 	// subject, so it needs no call to nn-account.

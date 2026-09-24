@@ -352,8 +352,9 @@
 </div>
 
 {{/* Add a friend: the same no-script modal as the avatar picker. The kind
-     picks which lookup runs; site.js masks the field to match the kind, and
-     without it the one pattern below accepts any of the three shapes. */}}
+     picks which lookup runs; site.js masks the field and sets its pattern to
+     match the kind. Without script any text goes, and a code that is not one
+     gets the same "no account for that code" as a wrong one. */}}
 <div class="modal" id="add-friend">
   <a class="modal-backdrop" href="#friends" tabindex="-1" aria-hidden="true"></a>
   <section class="modal-card" role="dialog" aria-labelledby="add-h">
@@ -369,10 +370,10 @@
         <option value="openpak" data-placeholder="OP-XXXX-XXXX">{{t .Lang "friends.kind.openpak"}}</option>
         <option value="switch" data-placeholder="SW-1234-5678-9012">{{t .Lang "friends.kind.switch"}}</option>
         <option value="3ds" data-placeholder="1234-5678-9012">{{t .Lang "friends.kind.3ds"}}</option>
+        <option value="wiiu" data-placeholder="NNID">{{t .Lang "friends.kind.wiiu"}}</option>
       </select>
       <label for="add-code">{{t .Lang "friends.code"}}</label>
       <input id="add-code" name="friend_code" type="text" required class="font-mono tracking-wider"
-             pattern="(?:[Oo][Pp]-?)?[2-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{4}-?[2-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{4}|(?:[Ss][Ww]-?)?[0-9a-fA-F]{4}(?:-?[0-9a-fA-F]{4}){2,3}"
              placeholder="OP-XXXX-XXXX" autocapitalize="characters" autocorrect="off" spellcheck="false" autocomplete="off"
              title="{{t .Lang "friends.code.title"}}">
       <button type="submit" class="primary">{{t .Lang "friends.send"}}</button>

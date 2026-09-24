@@ -344,6 +344,7 @@ var cataloguePTBR = Catalogue{
 	"footer.language":                  "Idioma",
 	"footer.language.set":              "Alterar",
 	"footer.note":                      "O OpenPak é uma rede comunitária independente. Não é afiliado a nenhum fabricante de consoles.",
+	"friends.kind.wiiu":                "ID da Nintendo Network do Wii U",
 	"account.codes":                    "Seus códigos de amigo",
 	"friends.add.button":               "Adicionar amigo",
 	"friends.add.title":                "Adicionar um amigo",

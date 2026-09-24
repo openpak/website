@@ -786,6 +786,7 @@ var languages = map[string]Catalogue{
 		"footer.language":                   "Language",
 		"footer.language.set":               "Change",
 		"footer.note":                       "OpenPak is an independent community network. Not affiliated with any console vendor.",
+		"friends.kind.wiiu":                 "Wii U Nintendo Network ID",
 		"account.codes":                     "Your friend codes",
 		"friends.add.button":                "Add friend",
 		"friends.add.title":                 "Add a friend",

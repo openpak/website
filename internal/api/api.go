@@ -576,7 +576,7 @@ func (s *Server) handleRequests(w http.ResponseWriter, r *http.Request, tok stor
 func (s *Server) handleSendRequest(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
 	var req struct {
 		FriendCode string `json:"friend_code"`
-		// Kind is "openpak", "switch" or "3ds"; omitted, an OpenPak-shaped
+		// Kind is "openpak", "switch", "3ds" or "wiiu"; omitted, an OpenPak-shaped
 		// code is taken as one and anything else as a Switch code.
 		Kind string `json:"kind"`
 	}
