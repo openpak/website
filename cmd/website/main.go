@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -238,6 +239,17 @@ func run(log *slog.Logger) error {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(`{"status":"ok","service":"website"}`))
 	})
+	// The internal services behind the site, for status.openpak.org: it watches from another host
+	// and can only reach what is public. Up or down only, nothing else about them.
+	// ponytail: one fixed map; add a service here when the status page should watch it.
+	behind := map[string]healthChecker{}
+	if savesCli != nil {
+		behind["saves"] = savesCli
+	}
+	if chatCli != nil {
+		behind["chat"] = chatCli
+	}
+	mux.HandleFunc("GET /healthz/{service}", healthzBehind(behind))
 
 	// Minimal metrics/pprof listener on the website block's +2 port.
 	metrics := metrics.New()
@@ -298,5 +310,27 @@ func logRequests(log *slog.Logger) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			log.Debug("http", "method", r.Method, "path", r.URL.Path, "dur", time.Since(start).String())
 		})
+	}
+}
+
+type healthChecker interface{ Healthy(context.Context) error }
+
+// healthzBehind answers GET /healthz/{service} for the services in behind: 200 when the service's
+// own health check passes, 503 when it fails, 404 for anything not listed.
+func healthzBehind(behind map[string]healthChecker) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		name := r.PathValue("service")
+		h, ok := behind[name]
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := h.Healthy(r.Context()); err != nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_, _ = fmt.Fprintf(w, `{"status":"down","service":%q}`, name)
+			return
+		}
+		_, _ = fmt.Fprintf(w, `{"status":"ok","service":%q}`, name)
 	}
 }
