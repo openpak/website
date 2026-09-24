@@ -20,6 +20,11 @@ import (
 var titleNames = map[string]string{
 	"0100ED9024EB8000": "Outbound",
 	"0100E65002BB8000": "Stardew Valley",
+	// Game servers keyed by an id the titles catalogue does not carry: Mario
+	// Golf's server by the update's id (the game's ends in 000), Splatoon 2's
+	// by the European edition's.
+	"0100C9C00E25C800": "Mario Golf: Super Rush",
+	"0100F8F0000A2000": "Splatoon 2",
 }
 
 // titleName is case-insensitive: the core reports a title id in lower case

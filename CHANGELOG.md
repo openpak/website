@@ -3,6 +3,11 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.56.1 — two game servers named
+
+- The status page named two game servers by their title id: Mario Golf: Super Rush (its server
+  is keyed by the update's id) and Splatoon 2 (the European edition's id). Both are named now.
+
 ## v0.56.0 — add a Wii U friend by NNID
 
 - The add-friend dialog has a **Wii U Nintendo Network ID** option, resolved through the NNID
