@@ -3,6 +3,11 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.57.3 — 2026-09-24
+
+- healthz: GET /healthz/{saves,chat} answers up (200) or down (503) for the off-box status page
+- deps: grpc 1.83.2, x/image 0.46, pgx 5.11 (Dependabot)
+
 ## v0.57.2 — signed redirect ceiling (v0.57.1 rebuilt)
 
 - The website serves the signed redirect ceiling at `/api/v1/network/ceiling` and generates
