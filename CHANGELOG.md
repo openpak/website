@@ -3,6 +3,11 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.56.3 — friend codes one column until a wide desktop
+
+- The profile's friend codes are one column on phones, tablets and laptops, two from 64rem,
+  and a code never wraps mid-way (at 940px the Switch code broke onto two lines).
+
 ## v0.56.2 — console logos from Wikimedia Commons
 
 - Switch, 3DS, DS, Wii, Wii U, PS3, PSP, Vita and Xbox 360 use their Commons logos, generated
