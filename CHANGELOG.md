@@ -3,6 +3,15 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.56.2 — console logos from Wikimedia Commons
+
+- Switch, 3DS, DS, Wii, Wii U, PS3, PSP, Vita and Xbox 360 use their Commons logos, generated
+  into `web/static/consoles/` by the new `scripts/consoles.py`: cropped to the drawn art,
+  fitted to the 36x24 slot, and given the contrast rule in both directions (lighter for the
+  dark file, darker for the light one). `CREDITS.md` lists the sources.
+- Console tiles are 3:2 instead of square, and the filter chips' logos wider, so the
+  wordmarks are not shrunk to a hairline.
+
 ## v0.56.1 — two game servers named
 
 - The status page named two game servers by their title id: Mario Golf: Super Rush (its server
