@@ -25,7 +25,8 @@
       switch: { prefix: "SW-", groups: [4, 4, 4, 4], keep: /[^0-9A-F]/g, pattern: "SW-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}(-[0-9A-F]{4})?", mode: "text" },
       "3ds": { prefix: "", groups: [4, 4, 4], keep: /[^0-9]/g, pattern: "[0-9]{4}-[0-9]{4}-[0-9]{4}", mode: "numeric" },
       // A Nintendo Network ID is a name, not a code: 6 to 16 letters, digits, dots, dashes, underscores, as typed.
-      wiiu: { free: true, pattern: "[A-Za-z0-9._\\-]{6,16}", mode: "text" }
+      wiiu: { free: true, pattern: "[A-Za-z0-9._\\-]{6,16}", mode: "text" },
+      email: { free: true, pattern: "[^@\\s]+@[^@\\s]+", mode: "email" }
     };
     function shape() { return shapes[kind.value] || shapes.openpak; }
     function fit() {
@@ -42,6 +43,8 @@
       var sh = shape();
       input.pattern = sh.pattern;
       input.inputMode = sh.mode;
+      // Codes are upper case; a name or an address is kept as typed.
+      input.autocapitalize = sh.free ? "none" : "characters";
       input.placeholder = kind.options[kind.selectedIndex].getAttribute("data-placeholder") || "";
       fit();
     }

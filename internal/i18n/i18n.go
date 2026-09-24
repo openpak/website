@@ -795,6 +795,8 @@ var languages = map[string]Catalogue{
 		"friends.kind.openpak":              "OpenPak code",
 		"friends.kind.switch":               "Switch friend code",
 		"friends.kind.3ds":                  "3DS friend code",
+		"friends.kind.email":                "Email address",
+		"friends.request.email":             "If that address has an OpenPak account, your friend request was sent.",
 		"nav.home":                          "Home",
 		"nav.getstarted":                    "Get started",
 		"landing.trust.free":                "Free & AGPL-3.0",

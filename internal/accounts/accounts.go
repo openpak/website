@@ -125,7 +125,28 @@ const (
 	CodeSwitch  = "switch"
 	Code3DS     = "3ds"
 	CodeWiiU    = "wiiu"
+	CodeEmail   = "email"
 )
+
+// AccountByEmail is the account signed in with exactly this address, compared
+// case-insensitively; "" when none. The core's search also matches parts of
+// addresses and names, so only an exact, active match counts.
+func AccountByEmail(ctx context.Context, mod core.Moderation, typed string) string {
+	typed = strings.TrimSpace(typed)
+	if mod == nil || !strings.Contains(typed, "@") {
+		return ""
+	}
+	found, err := mod.SearchAccounts(ctx, typed, 5)
+	if err != nil {
+		return ""
+	}
+	for _, a := range found {
+		if a.Status == "active" && strings.EqualFold(a.Email, typed) {
+			return a.ID
+		}
+	}
+	return ""
+}
 
 // ResolveFriendCode finds the account behind a code of the given kind; ""
 // when nobody has it.
@@ -182,8 +203,8 @@ func PIDFrom3DSCode(typed string) (int64, bool) {
 	return 0, false
 }
 
-// Code is one way to be added as a friend: its kind ("openpak", "switch",
-// "wiiu", "3ds"), the console it works on, a label and the code itself.
+// Code is one way to be added as a friend: its kind ("openpak", "email",
+// "switch", "wiiu", "3ds"), the console it works on, a label and the code itself.
 type Code struct {
 	Kind    string `json:"kind"`
 	Console string `json:"console"`
@@ -194,11 +215,15 @@ type Code struct {
 // FriendCodes is every code the account can be added by, in the order the
 // profile shows them. The website's banner and the API's /me both read this,
 // so the app and the site never list different codes.
-func FriendCodes(ctx context.Context, codes store.OpenPakCodeStore, links core.Links, ad *adapter.Client, accountID string) []Code {
+func FriendCodes(ctx context.Context, codes store.OpenPakCodeStore, links core.Links, ad *adapter.Client, accountID, email string) []Code {
 	var out []Code
-	// The OpenPak code first: it is the one that works for everybody.
+	// The OpenPak code first: it is the one that works for everybody. The
+	// address works everywhere too, but only for someone who already knows it.
 	if c, err := codes.OpenPakCode(ctx, accountID); err == nil {
 		out = append(out, Code{CodeOpenPak, "OpenPak", "OpenPak", c})
+	}
+	if email != "" {
+		out = append(out, Code{CodeEmail, "OpenPak", "Email", email})
 	}
 	if link, err := links.ActiveLinkByAccount(ctx, "switch", accountID); err == nil {
 		if c := FriendCode(ctx, link, ad, accountID); c != "" {

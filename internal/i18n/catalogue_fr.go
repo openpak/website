@@ -353,6 +353,8 @@ var catalogueFR = Catalogue{
 	"friends.kind.openpak":             "Code OpenPak",
 	"friends.kind.switch":              "Code ami Switch",
 	"friends.kind.3ds":                 "Code ami 3DS",
+	"friends.kind.email":               "Adresse e-mail",
+	"friends.request.email":            "Si cette adresse a un compte OpenPak, ta demande d'ami a été envoyée.",
 	"nav.home":                         "Accueil",
 	"nav.getstarted":                   "Commencer",
 	"landing.trust.free":               "Gratuit et AGPL-3.0",

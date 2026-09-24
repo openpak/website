@@ -3,6 +3,16 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.57.0 — add a friend by email; the address among your friend codes
+
+- Add friend has an "Email address" choice, on the site and in the API (`kind: "email"`). The
+  answer is the same whether or not the address has an account, so the field cannot be used to
+  find out who is registered; only an exact, active address sends a request.
+- Your email is listed with your friend codes (with a copy button) and in `/me`'s
+  `friend_codes`, instead of under the name in the banner.
+- The banner shows the account's current name. It read a copy saved at sign-in, which could be
+  blank, so it showed the email instead.
+
 ## v0.56.3 — friend codes one column until a wide desktop
 
 - The profile's friend codes are one column on phones, tablets and laptops, two from 64rem,

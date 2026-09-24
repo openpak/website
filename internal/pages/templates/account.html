@@ -1,7 +1,8 @@
 {{template "header" .}}
-{{/* An account may have no display name; fall back to the address so the
-     heading is never blank. */}}
-{{$name := .User.DisplayName}}{{if not $name}}{{$name = .User.Email}}{{end}}
+{{/* The name as the core holds it now (the session's copy can be stale); an
+     account with no name falls back to the address so the heading is never
+     blank. The address itself is listed with the friend codes. */}}
+{{$name := .DisplayName}}{{if not $name}}{{$name = .User.DisplayName}}{{end}}{{if not $name}}{{$name = .User.Email}}{{end}}
 {{/* A section nav beside the content on a wide screen, a swipeable row of
      links above it on a phone; both are plain anchors into this one page. */}}
 <div class="acct">
@@ -31,7 +32,7 @@
       </a>
       <div>
         <h1>{{$name}}</h1>
-        <p class="flex flex-wrap items-center gap-2">{{if ne $name .Email}}{{.Email}}{{end}}
+        <p class="flex flex-wrap items-center gap-2">
           {{if .EmailVerified}}<span class="badge ok">{{t .Lang "account.email.verified"}}</span>
           {{else}}<a class="badge warn no-underline" href="#security">{{t .Lang "account.email.unverified"}}</a>{{end}}</p>
       </div>
@@ -371,6 +372,7 @@
         <option value="switch" data-placeholder="SW-1234-5678-9012">{{t .Lang "friends.kind.switch"}}</option>
         <option value="3ds" data-placeholder="1234-5678-9012">{{t .Lang "friends.kind.3ds"}}</option>
         <option value="wiiu" data-placeholder="NNID">{{t .Lang "friends.kind.wiiu"}}</option>
+        <option value="email" data-placeholder="name@example.com">{{t .Lang "friends.kind.email"}}</option>
       </select>
       <label for="add-code">{{t .Lang "friends.code"}}</label>
       <input id="add-code" name="friend_code" type="text" required class="font-mono tracking-wider"

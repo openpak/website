@@ -353,6 +353,8 @@ var cataloguePTBR = Catalogue{
 	"friends.kind.openpak":             "Código OpenPak",
 	"friends.kind.switch":              "Código de amigo do Switch",
 	"friends.kind.3ds":                 "Código de amigo do 3DS",
+	"friends.kind.email":               "Endereço de e-mail",
+	"friends.request.email":            "Se esse endereço tiver uma conta OpenPak, seu pedido de amizade foi enviado.",
 	"nav.home":                         "Início",
 	"nav.getstarted":                   "Começar",
 	"landing.trust.free":               "Grátis e AGPL-3.0",

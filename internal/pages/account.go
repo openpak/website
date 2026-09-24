@@ -71,7 +71,7 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Every code people can add this account by, shared with the API's /me.
-	view.Codes = accounts.FriendCodes(ctx, s.DB, s.Links, s.Adapter, v.AccountID)
+	view.Codes = accounts.FriendCodes(ctx, s.DB, s.Links, s.Adapter, v.AccountID, v.Email)
 	for _, c := range view.Codes {
 		if c.Kind == accounts.CodeSwitch {
 			view.FriendCode, view.HasFriendCode = c.Code, true
@@ -535,6 +535,17 @@ func (s *Server) handleFriendRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	typed := strings.TrimSpace(r.PostFormValue("friend_code"))
+	if r.PostFormValue("kind") == accounts.CodeEmail {
+		// The answer is the same whether or not the address has an account,
+		// so the field cannot be used to find out who is registered.
+		if target := accounts.AccountByEmail(r.Context(), s.Moderation, typed); target != "" && target != v.AccountID {
+			if err := s.Social.RequestFriend(r.Context(), v.AccountID, target); err != nil {
+				s.log.Error("request friend by email", "err", err)
+			}
+		}
+		redirectMsg(w, r, "/account", "frequest-email")
+		return
+	}
 	code := normalizeFriendCode(typed)
 	if code == "" {
 		http.Error(w, "friend code required", http.StatusBadRequest)

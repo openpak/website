@@ -44,11 +44,13 @@ type Server struct {
 	Core     core.HTTP
 	Identity core.Identity
 	Social   core.Social
-	Links    core.Links
-	Events   core.Events
-	Invites  core.InvitationsView
-	DB       store.Store
-	Media    *media.Service
+	// Moderation finds an account by exact email for "add friend by email".
+	Moderation core.Moderation
+	Links      core.Links
+	Events     core.Events
+	Invites    core.InvitationsView
+	DB         store.Store
+	Media      *media.Service
 	// Adapter answers what only the Switch adapter knows: the friend code.
 	Adapter *adapter.Client
 	// WFC resolves Wii/DS friend codes for the link flow; nil hides the form.
@@ -133,6 +135,8 @@ func flashText(lang, code string) string {
 		return i18n.T(lang, "auth.reset.ok")
 	case "frequest":
 		return i18n.T(lang, "friends.request.ok")
+	case "frequest-email":
+		return i18n.T(lang, "friends.request.email")
 	case "funknown":
 		return i18n.T(lang, "friends.request.unknown")
 	case "fself":

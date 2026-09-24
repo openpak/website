@@ -91,6 +91,7 @@ func run(log *slog.Logger) error {
 	pageSrv.Core = coreHTTP
 	pageSrv.Identity = coreGRPC
 	pageSrv.Social = coreGRPC
+	pageSrv.Moderation = coreGRPC
 	pageSrv.Links = coreGRPC
 	pageSrv.Events = coreGRPC
 	pageSrv.Invites = coreGRPC
@@ -115,6 +116,7 @@ func run(log *slog.Logger) error {
 
 	apiSrv := api.New(coreHTTP, coreGRPC, coreGRPC, coreGRPC, coreGRPC, db, sessions, mediaSvc, log)
 	apiSrv.Federation = coreGRPC
+	apiSrv.Moderation = coreGRPC
 	apiSrv.Saves = savesCli
 	apiSrv.SaveTitle = pages.SaveTitle
 	apiSrv.Chat = chatCli

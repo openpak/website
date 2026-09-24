@@ -48,7 +48,9 @@ type Server struct {
 	Identity core.Identity
 	Social   core.Social
 	Links    core.Links
-	Invites  core.InvitationsView
+	// Moderation finds an account by exact email for "add friend by email".
+	Moderation core.Moderation
+	Invites    core.InvitationsView
 	// Federation is set by main; nil answers 503 on the region routes.
 	Federation core.Federation
 	Media      *media.Service
@@ -435,8 +437,10 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request, tok store.APIT
 		// fallback rather than a broken image. Relative to the site.
 		"avatar_url": nil,
 	}
+	email := ""
 	if me, err := s.Core.Whoami(r.Context(), tok.CoreSessionID); err == nil {
-		resp["email"] = me.Email
+		email = me.Email
+		resp["email"] = email
 	}
 	if s.Media != nil {
 		// Always set: every account has a picture, its own or the preset its
@@ -463,7 +467,7 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request, tok store.APIT
 	// Every code the account can be added by, as the website's profile lists
 	// them; openpak_code is the first of them, kept as its own field for
 	// clients that only want that one.
-	codes := accounts.FriendCodes(r.Context(), s.DB, s.Links, s.Adapter, tok.AccountID)
+	codes := accounts.FriendCodes(r.Context(), s.DB, s.Links, s.Adapter, tok.AccountID, email)
 	if codes == nil {
 		codes = []accounts.Code{}
 	}
@@ -576,7 +580,7 @@ func (s *Server) handleRequests(w http.ResponseWriter, r *http.Request, tok stor
 func (s *Server) handleSendRequest(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
 	var req struct {
 		FriendCode string `json:"friend_code"`
-		// Kind is "openpak", "switch", "3ds" or "wiiu"; omitted, an OpenPak-shaped
+		// Kind is "openpak", "email", "switch", "3ds" or "wiiu"; omitted, an OpenPak-shaped
 		// code is taken as one and anything else as a Switch code.
 		Kind string `json:"kind"`
 	}
@@ -589,6 +593,17 @@ func (s *Server) handleSendRequest(w http.ResponseWriter, r *http.Request, tok s
 	// code: the adapter mints codes and publishes them on the link. So the
 	// published code first, the adapter while codes are not published yet, and
 	// the subject last, for someone who pastes that verbatim.
+	if req.Kind == accounts.CodeEmail {
+		// Same answer whether or not the address has an account, so the
+		// endpoint cannot be used to find out who is registered.
+		if target := accounts.AccountByEmail(r.Context(), s.Moderation, req.FriendCode); target != "" && target != tok.AccountID {
+			if err := s.Social.RequestFriend(r.Context(), tok.AccountID, target); err != nil && !errors.Is(err, core.ErrConflict) {
+				s.log.Error("request friend by email", "err", err)
+			}
+		}
+		writeJSON(w, http.StatusAccepted, map[string]string{"message": "if that address has an account, a friend request was sent"})
+		return
+	}
 	target := accounts.ResolveFriendCode(r.Context(), s.DB, s.Links, s.Adapter, req.Kind, req.FriendCode, normalizeCode(req.FriendCode))
 	if target == "" {
 		writeError(w, http.StatusNotFound, "no account for that friend code")

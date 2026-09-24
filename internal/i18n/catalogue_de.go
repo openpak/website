@@ -353,6 +353,8 @@ var catalogueDE = Catalogue{
 	"friends.kind.openpak":             "OpenPak-Code",
 	"friends.kind.switch":              "Switch-Freundescode",
 	"friends.kind.3ds":                 "3DS-Freundescode",
+	"friends.kind.email":               "E-Mail-Adresse",
+	"friends.request.email":            "Falls diese Adresse ein OpenPak-Konto hat, wurde deine Freundschaftsanfrage gesendet.",
 	"nav.home":                         "Start",
 	"nav.getstarted":                   "Loslegen",
 	"landing.trust.free":               "Kostenlos & AGPL-3.0",
