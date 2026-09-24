@@ -23,12 +23,12 @@ jobs:
       contents: write # release assets only
     steps:
       - uses: actions/checkout@v4
-      - name: Scratch in the workspace, not the runner's shared /tmp
+      - name: Scratch in the runner's temp, not the machine's shared /tmp
         # /tmp is a RAM disk every build on the machine shares; when it filled on
         # 2026-09-24 a compiler died and a job hung for hours instead of failing.
         run: |
-          mkdir -p "$GITHUB_WORKSPACE/.tmp"
-          echo "TMPDIR=$GITHUB_WORKSPACE/.tmp" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/scratch"
+          echo "TMPDIR=$RUNNER_TEMP/scratch" >> "$GITHUB_ENV"
       - uses: actions/setup-go@v5
         with:
           go-version: "1.27.x"
@@ -61,18 +61,18 @@ jobs:
           gh release upload "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --clobber
       - name: Clear scratch
         if: always()
-        run: rm -rf "$GITHUB_WORKSPACE/.tmp"
+        run: rm -rf "$RUNNER_TEMP/scratch"
 
   image:
     runs-on: [self-hosted, linux, podman]
     steps:
       - uses: actions/checkout@v4
-      - name: Scratch in the workspace, not the runner's shared /tmp
+      - name: Scratch in the runner's temp, not the machine's shared /tmp
         # /tmp is a RAM disk every build on the machine shares; when it filled on
         # 2026-09-24 a compiler died and a job hung for hours instead of failing.
         run: |
-          mkdir -p "$GITHUB_WORKSPACE/.tmp"
-          echo "TMPDIR=$GITHUB_WORKSPACE/.tmp" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/scratch"
+          echo "TMPDIR=$RUNNER_TEMP/scratch" >> "$GITHUB_ENV"
       - run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u "${{ github.actor }}" --password-stdin
         env:
           REGISTRY_AUTH_FILE: ${{ runner.temp }}/auth.json # job-scoped login; never the runner user's own
@@ -93,4 +93,4 @@ jobs:
           REGISTRY_AUTH_FILE: ${{ runner.temp }}/auth.json # job-scoped login; never the runner user's own
       - name: Clear scratch
         if: always()
-        run: rm -rf "$GITHUB_WORKSPACE/.tmp"
+        run: rm -rf "$RUNNER_TEMP/scratch"
