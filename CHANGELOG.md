@@ -3,6 +3,10 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.57.6 — 2026-09-25
+
+- Network status lists Streets of Rage 4 (switch-nexd, 22882).
+
 ## v0.57.5 — 2026-09-25
 
 - Network status lists Moving Out 2. Its sessions will live on Photon (the Fusion stack Outbound

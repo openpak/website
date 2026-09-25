@@ -60,6 +60,7 @@ func gameServerHealth() map[string]string {
 		"0100152000022000": nexd("MK8D_HEALTH_URL", 22152),
 		"01006FE013472000": nexd("MPS_HEALTH_URL", 22112),
 		"010019401051C000": nexd("STRIKERS_HEALTH_URL", 22302),
+		"0100EC9010258000": nexd("SOR4_HEALTH_URL", 22882),
 		"0100BDE00862A000": nexd("MTA_HEALTH_URL", 22172),
 		"0100D71004694000": nexd("MINECRAFT_HEALTH_URL", 22312),
 		"0100770008DD8000": healthURL("MHGU_HEALTH_URL", "http://openpak-monster-hunter-generations-ultimate:22122/healthz"),
