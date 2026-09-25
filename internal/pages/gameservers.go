@@ -52,6 +52,7 @@ func gameServerHealth() map[string]string {
 	return map[string]string{
 		"01006F8002326000": nexd("ACNH_HEALTH_URL", 22182),
 		"01009B500007C000": nexd("ARMS_HEALTH_URL", 22142),
+		"0100AAA00ACBE800": nexd("RISK_OF_RAIN_HEALTH_URL", 22892),
 		"010047700D540000": nexd("CLUBHOUSE_HEALTH_URL", 22872),
 		"0100A8E016236000": nexd("KIRBY_HEALTH_URL", 22382),
 		"0100DCA0064A6000": nexd("LM3_HEALTH_URL", 22192),
@@ -66,6 +67,7 @@ func gameServerHealth() map[string]string {
 		"0100F8F0000A2000": nexd("SPLATOON2_HEALTH_URL", 22322),
 		"0100C2500FC20000": healthURL("SPLATOON3_HEALTH_URL", "http://openpak-splatoon-3:21013/health"),
 		"0100E65002BB8000": healthURL("STARDEW_HEALTH_URL", "http://openpak-stardew:21011/health"),
+		"0100E46006708000": healthURL("TERRARIA_HEALTH_URL", "http://openpak-terraria:21117/health"),
 		"010028600EBDA000": nexd("SM3DW_HEALTH_URL", 22372),
 		"0100277011F1A000": nexd("SMB35_HEALTH_URL", 22162),
 		"01009B90006DC000": nexd("SMM2_HEALTH_URL", 22332),

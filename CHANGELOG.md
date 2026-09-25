@@ -3,6 +3,11 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.57.4 — 2026-09-25
+
+- Network status lists Terraria (NPLN, openpak-terraria:21117) and Risk of Rain (switch-nexd,
+  22892). Both were serving but neither had a health URL, so neither appeared on the page.
+
 ## v0.57.3 — 2026-09-24
 
 - healthz: GET /healthz/{saves,chat} answers up (200) or down (503) for the off-box status page
