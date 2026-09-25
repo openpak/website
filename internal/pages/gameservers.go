@@ -64,6 +64,7 @@ func gameServerHealth() map[string]string {
 		"0100D71004694000": nexd("MINECRAFT_HEALTH_URL", 22312),
 		"0100770008DD8000": healthURL("MHGU_HEALTH_URL", "http://openpak-monster-hunter-generations-ultimate:22122/healthz"),
 		"0100ED9024EB8000": healthURL("PHOTON_HEALTH_URL", "http://openpak-photon:8080/health"),
+		"010065D018172000": healthURL("MOVING_OUT_2_HEALTH_URL", "http://openpak-photon:8080/health"),
 		"0100F8F0000A2000": nexd("SPLATOON2_HEALTH_URL", 22322),
 		"0100C2500FC20000": healthURL("SPLATOON3_HEALTH_URL", "http://openpak-splatoon-3:21013/health"),
 		"0100E65002BB8000": healthURL("STARDEW_HEALTH_URL", "http://openpak-stardew:21011/health"),

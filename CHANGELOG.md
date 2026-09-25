@@ -3,6 +3,11 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.57.5 — 2026-09-25
+
+- Network status lists Moving Out 2. Its sessions will live on Photon (the Fusion stack Outbound
+  runs), so it answers on Photon's health endpoint; its Team17 gate is in nx-baas.
+
 ## v0.57.4 — 2026-09-25
 
 - Network status lists Terraria (NPLN, openpak-terraria:21117) and Risk of Rain (switch-nexd,
