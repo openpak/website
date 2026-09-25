@@ -3,6 +3,12 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.57.7 — 2026-09-25
+
+- Network status lists Risk of Rain Returns (switch-nexd, 23002). It went live on block 23000
+  and was console-verified playable the same evening, but the game-server health map is keyed
+  by title id by hand, so it was absent from the page while the catalogue already said `live`.
+
 ## v0.57.6 — 2026-09-25
 
 - Network status lists Streets of Rage 4 (switch-nexd, 22882).
