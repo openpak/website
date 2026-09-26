@@ -44,9 +44,13 @@ func healthURL(key, def string) string {
 // here as well had already drifted, and nine rows carried no id at all, so
 // their players were never counted).
 //
-// The Switch-era NEX titles all run inside the one switch-nexd container on the
-// host network, which answers GET /healthz on each title's base+2 (switch-nex
-// v0.2.16). From the website's container the host is host.containers.internal.
+// The Switch-era NEX titles each run in their own switch-nex container on the
+// host network (one per title since 2026-09-26; before that a single switch-nexd
+// served all of them), answering GET /healthz on the title's base+2. The ports
+// did not move in that split, so this map did not change. From the website's
+// container the host is host.containers.internal — and reaching it needs the
+// INPUT rule admitting 10.89.2.0/24 to 22000:23099, without which every row
+// here reported down except MK8D's 22152.
 // MHGU stays on the nex-go lineage in its own container and keeps its name.
 func gameServerHealth() map[string]string {
 	return map[string]string{
