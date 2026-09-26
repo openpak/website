@@ -269,6 +269,42 @@ paths:
                     type: array
                     items: { $ref: "#/components/schemas/Invitation" }
         "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/parental-controls:
+    get:
+      summary: The consoles this account manages
+      description: |
+        Parental controls, parent side. The records live with nx-baas because the
+        console asks it for them over its own API; this is the read the OpenPak
+        app lists. A `pairing_code` appears only while it is still live — an
+        expired code on a screen is worse than none, because someone types it.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  devices:
+                    type: array
+                    items: { $ref: "#/components/schemas/ParentalDevice" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "503": { description: parental controls are not configured on this deployment }
+  /me/parental-controls/pairing:
+    post:
+      summary: Mint a pairing code to type on a console
+      description: |
+        Creates the device record a console adopts and returns the code to enter
+        in System Settings → Parental Controls. Not idempotent: asking again is
+        how someone who walked away from the console gets a fresh code.
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ParentalPairing" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "503": { description: parental controls are not configured on this deployment }
   /me/invitations/decline:
     post:
       summary: Decline an invitation
@@ -2523,6 +2559,39 @@ components:
         Deliberately carries no payload and no nonce: both belong to the adapter
         that has to deliver the invitation to a console, and reading this inbox
         never consumes an invitation or interferes with that delivery.
+    ParentalDevice:
+      type: object
+      required: [moon_id, paired, has_setting]
+      properties:
+        moon_id:
+          type: string
+          description: The device id the console spells in its own paths, 16 hex digits.
+        paired:
+          type: boolean
+          description: True once a console has claimed the record.
+        pairing_code:
+          type: string
+          description: Present only while the code is still live.
+        expires_at: { type: integer, format: int64, description: Unix seconds; with pairing_code. }
+        activated_at: { type: integer, format: int64 }
+        updated_at: { type: integer, format: int64 }
+        owners:
+          type: array
+          items: { type: string }
+          description: |
+            Nintendo-Account-shaped ids, learned when the console links an owner.
+            Not the OpenPak account that manages the record, which is never sent
+            to a console.
+        has_setting:
+          type: boolean
+          description: Whether a parental_control_setting document has been stored yet.
+    ParentalPairing:
+      type: object
+      required: [moon_id, pairing_code, expires_at]
+      properties:
+        moon_id: { type: string }
+        pairing_code: { type: string }
+        expires_at: { type: integer, format: int64, description: Unix seconds. }
     DeclineBody:
       type: object
       required: [invitation_id]

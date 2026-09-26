@@ -29,6 +29,7 @@ import (
 	"github.com/openpak/website/internal/netprofile"
 	"github.com/openpak/website/internal/news"
 	"github.com/openpak/website/internal/pages"
+	"github.com/openpak/website/internal/pctl"
 	"github.com/openpak/website/internal/ratelimit"
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/session"
@@ -65,6 +66,9 @@ type Server struct {
 	Adapter   *adapter.Client
 	NNAdapter *adapter.Client // the Wii U/3DS adapter (nn-account), nil when not configured
 	Saves     *saves.Client
+	// Parental relays the app's parental-controls calls to nx-baas, which owns
+	// the device records because the console asks it for them; nil answers 503.
+	Parental *pctl.Client
 	// SaveTitle names a save's game and says whether /titles/icon/{id} draws it; the pages
 	// package owns the lookup. Nil lists bare title ids.
 	SaveTitle func(ctx context.Context, platform, id string) (name string, icon bool)
@@ -125,6 +129,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	s.registerSaves(mux)
 	s.registerChat(mux)
 	s.registerVoice(mux)
+	s.registerParental(mux)
 	s.registerEmulator(mux)
 	g("/me/friends/requests", s.auth(s.handleRequests))
 	h("/me/friends/requests", s.auth(s.handleSendRequest)) // POST: add by friend code

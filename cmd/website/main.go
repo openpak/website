@@ -25,6 +25,7 @@ import (
 	"github.com/openpak/website/internal/netprofile"
 	"github.com/openpak/website/internal/news"
 	"github.com/openpak/website/internal/pages"
+	"github.com/openpak/website/internal/pctl"
 	"github.com/openpak/website/internal/push"
 	"github.com/openpak/website/internal/ratelimit"
 	"github.com/openpak/website/internal/saves"
@@ -120,6 +121,13 @@ func run(log *slog.Logger) error {
 	apiSrv.Federation = coreGRPC
 	apiSrv.Moderation = coreGRPC
 	apiSrv.Saves = savesCli
+	// Parental controls: nx-baas owns the device records because the console
+	// asks it for them; the app reaches them through /api/v1/me/parental-*.
+	parentalCli := pctl.New(os.Getenv("NX_BAAS_URL"), os.Getenv("NX_BAAS_INTERNAL_KEY"))
+	if parentalCli == nil {
+		log.Info("parental controls: NX_BAAS_URL not set; the API answers 503")
+	}
+	apiSrv.Parental = parentalCli
 	apiSrv.SaveTitle = pages.SaveTitle
 	apiSrv.Chat = chatCli
 	apiSrv.AdminIDs = cfg.AdminAccountIDs
