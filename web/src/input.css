@@ -600,6 +600,25 @@
   .tdialog .icon { border-radius: 12px; flex: none; }
   .tdialog .field { width: auto; }
   .tdialog h3 { margin: 1.25rem 0 .25rem; }
+  /* Compatibility: a row per console or emulator, a mark per OS. Colour means someone
+     played it there; greyscale means nobody has yet. A ring says how the reports went. */
+  .compat { display: table; margin-top: 12px; }
+  /* Stays a grid on a phone: six narrow columns fit, stacked records would not compare. */
+  .compat thead { position: static; width: auto; height: auto; clip-path: none; }
+  .compat tbody { display: table-row-group; }
+  .compat tr { display: table-row; padding: 0; }
+  .compat th, .compat td { display: table-cell; padding: 5px 4px; border-bottom: 1px solid var(--line); vertical-align: middle; text-align: center; }
+  .compat tr:last-child th, .compat tr:last-child td { border-bottom: 0; }
+  .compat th[scope=row] { text-align: left; width: 100%; }
+  .compat th[scope=row] b { font-weight: 600; font-size: .9rem; margin-left: 8px; }
+  .compat thead img { display: inline-block; opacity: .75; }
+  .compat .mark { display: inline-grid; place-items: center; vertical-align: middle; min-width: 30px; height: 30px; padding: 0 3px; border-radius: 8px; border: 2px solid transparent; }
+  .compat th .mark { min-width: 40px; }
+  .compat .mark img { display: block; }
+  .compat .mark:not(.ok, .warn, .bad) { filter: grayscale(1); opacity: .45; }
+  .compat .mark.ok { border-color: var(--ok-line); background: var(--ok-weak); }
+  .compat .mark.warn { border-color: var(--warn-line); background: var(--warn-weak); }
+  .compat .mark.bad { border-color: var(--bad-line); background: var(--bad-weak); }
   .facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 16px; margin: 16px 0 0; font-size: .9rem; }
   .facts dt { color: var(--muted); }
   .facts dd { margin: 0; overflow-wrap: anywhere; }

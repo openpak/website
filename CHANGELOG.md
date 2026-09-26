@@ -3,6 +3,14 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.58.2 — 2026-09-26
+
+- Titles: the compatibility grid is icons — a row per console or emulator, a column per OS
+  (Windows, macOS, Linux, Android, iOS). Colour means players report it working, greyscale means
+  untested; an amber or red ring means mixed or failing reports. A blank cell is a client that does
+  not ship there. The dialog drops network, title ids and notes, and no longer lists Switch 2.
+  Citron, Azahar and PPSSPP gain iOS.
+
 ## v0.58.1 — 2026-09-26
 
 - Titles: a "Report a problem" button in each title's dialog opens a help ticket with the

@@ -65,24 +65,20 @@
     </div>
     <dl class="facts">
       {{with .Category}}<dt>{{t $.Lang "titles.info.category"}}</dt><dd>{{.}}</dd>{{end}}
-      {{with .Backend}}<dt>{{t $.Lang "titles.info.backend"}}</dt><dd>{{.}}</dd>{{end}}
-      {{with .TitleIDs}}<dt>{{t $.Lang "titles.info.ids"}}</dt><dd>{{range $i, $id := .}}{{if $i}}, {{end}}<code>{{$id}}</code>{{end}}</dd>{{end}}
-      {{with .Notes}}<dt>{{t $.Lang "titles.info.notes"}}</dt><dd>{{.}}</dd>{{end}}
       {{if not .DateAdded.IsZero}}<dt>{{t $.Lang "titles.info.added"}}</dt><dd>{{date $.Lang .DateAdded}}</dd>{{end}}
       {{if not .LastUpdated.IsZero}}<dt>{{t $.Lang "titles.info.updated"}}</dt><dd>{{date $.Lang .LastUpdated}}</dd>{{end}}
     </dl>
 
     <h3>{{t $.Lang "titles.compat.title"}}</h3>
     <p class="text-sm text-muted">{{t $.Lang "titles.compat.sub"}}</p>
-    <div class="table-wrap"><table>
-      <thead><tr><th>{{t $.Lang "titles.compat.client"}}</th><th>{{t $.Lang "titles.compat.os"}}</th><th>{{t $.Lang "titles.compat.result"}}</th></tr></thead>
-      <tbody>{{range .Compat}}
-        <tr><td><span class="cl">{{t $.Lang "titles.compat.client"}}: </span>{{.Client}}</td>
-          <td><span class="cl">{{t $.Lang "titles.compat.os"}}: </span>{{if eq .OS "hardware"}}{{t $.Lang "titles.compat.hardware"}}{{else}}{{.OS}}{{end}}</td>
-          <td>{{if and (eq .Works 0) (eq .Broken 0)}}<span class="badge">{{t $.Lang "titles.compat.untested"}}</span>
-            {{- else if eq .Broken 0}}<span class="badge ok">{{t $.Lang "titles.compat.works"}} · {{.Works}}</span>
-            {{- else if eq .Works 0}}<span class="badge bad">{{t $.Lang "titles.compat.broken"}} · {{.Broken}}</span>
-            {{- else}}<span class="badge warn">{{t $.Lang "titles.compat.works"}} · {{.Works}} / {{t $.Lang "titles.compat.broken"}} · {{.Broken}}</span>{{end}}</td></tr>
+    <div class="table-wrap"><table class="compat">
+      <thead><tr><th><span class="sr-only">{{t $.Lang "titles.compat.title"}}</span></th>{{range .OSColumns}}<th><img src="/static/clients/{{lower .}}.svg" alt="{{.}}" title="{{.}}" width="18" height="18"></th>{{end}}</tr></thead>
+      <tbody>{{range .Clients}}
+        <tr>
+          <th scope="row">{{if .Hardware}}{{$c := index .Cells 0}}<span class="mark {{$c.State}}" title="{{template "compat-tip" (arr $.Lang $c)}}"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Client}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Client}}.svg" alt="" width="36" height="24" loading="lazy"></picture></span>
+            {{- else}}<span class="mark {{.State}}">{{with .Icon}}<img src="{{.}}" alt="" width="26" height="26" loading="lazy">{{end}}</span>{{end}}<b>{{.Client}}</b></th>
+          {{range .Cols}}<td>{{with .}}<span class="mark {{.State}}" title="{{template "compat-tip" (arr $.Lang .)}}"><img src="/static/clients/{{lower .OS}}.svg" alt="{{.OS}}" width="18" height="18" loading="lazy"></span>{{end}}</td>{{end}}
+        </tr>
       {{end}}</tbody>
     </table></div>
 
@@ -153,3 +149,5 @@
 
 <script src="/static/titles.js?v={{.Asset}}"></script>
 {{template "footer" .}}
+
+{{define "compat-tip"}}{{$l := index . 0}}{{with index . 1}}{{.Client}}{{if ne .OS "hardware"}} · {{.OS}}{{end}}: {{if and (eq .Works 0) (eq .Broken 0)}}{{t $l "titles.compat.untested"}}{{else}}{{t $l "titles.compat.works"}} {{.Works}} · {{t $l "titles.compat.broken"}} {{.Broken}}{{end}}{{end}}{{end}}

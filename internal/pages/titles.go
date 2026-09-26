@@ -387,6 +387,84 @@ func (t titleRow) ProblemURL() string {
 	return "/help?" + url.Values{"subject": {t.Name + ": problem"}, "category": {category}, "message": {msg}}.Encode() + "#new-h"
 }
 
+// State is the cell's colour: ok when every report says it works, bad when every
+// one says it does not, warn when they disagree, "" when untested.
+func (c compatCell) State() string {
+	switch {
+	case c.Works == 0 && c.Broken == 0:
+		return ""
+	case c.Broken == 0:
+		return "ok"
+	case c.Works == 0:
+		return "bad"
+	default:
+		return "warn"
+	}
+}
+
+// compatClient is one row of the compatibility grid: a console or an emulator
+// with a cell per OS it runs on (a console has one, "hardware").
+type compatClient struct {
+	Client string
+	Icon   string // an emulator's mark under /static/clients; "" for a console or one without a mark
+	Cells  []compatCell
+}
+
+// osColumns are the grid's columns after the client, the same on every row.
+var osColumns = []string{"Windows", "macOS", "Linux", "Android", "iOS"}
+
+// OSColumns is the template's view of osColumns.
+func (titleRow) OSColumns() []string { return osColumns }
+
+// Cols lines the row's cells up under osColumns; nil where the client does not run.
+func (c compatClient) Cols() []*compatCell {
+	out := make([]*compatCell, len(osColumns))
+	for i := range c.Cells {
+		if j := slices.Index(osColumns, c.Cells[i].OS); j >= 0 {
+			out[j] = &c.Cells[i]
+		}
+	}
+	return out
+}
+
+// Hardware is a console row: the console's mark stands for the one cell.
+func (c compatClient) Hardware() bool { return len(c.Cells) == 1 && c.Cells[0].OS == hardware }
+
+// State is the row's colour: the best any of its cells reached.
+func (c compatClient) State() string {
+	for _, want := range []string{"ok", "warn", "bad"} {
+		for _, cell := range c.Cells {
+			if cell.State() == want {
+				return want
+			}
+		}
+	}
+	return ""
+}
+
+// clientIcons are the emulators with a mark in web/static/clients.
+var clientIcons = map[string]string{
+	"Ryujinx": "ryujinx.png", "Eden": "eden.png", "Citron": "citron.png", "Cemu": "cemu.png",
+	"Azahar": "azahar.png", "Dolphin": "dolphin.png", "melonDS": "melonds.png",
+}
+
+// Clients groups the title's cells by client, in the grid's order.
+func (t titleRow) Clients() []compatClient {
+	var out []compatClient
+	for _, c := range t.Compat {
+		if n := len(out); n > 0 && out[n-1].Client == c.Client {
+			out[n-1].Cells = append(out[n-1].Cells, c)
+			continue
+		}
+		icon := ""
+		if f, ok := clientIcons[c.Client]; ok {
+			icon = "/static/clients/" + f
+		}
+		out = append(out, compatClient{c.Client, icon, []compatCell{c}})
+	}
+	return out
+}
+
 // Combo is the report form's value for the cell, parsed back by parseCombo.
 func (c compatCell) Combo() string { return c.Client + "|" + c.OS }
 
@@ -396,7 +474,6 @@ const hardware = "hardware"
 var (
 	desktop    = []string{"Windows", "Linux", "macOS"}
 	allOSes    = []string{"Windows", "Linux", "macOS", "Android"}
-	noMacOSes  = []string{"Windows", "Linux", "Android"}
 	onHardware = []string{hardware}
 )
 
@@ -411,9 +488,9 @@ type playTarget struct {
 // own emulator forks come first; a console with none here offers only itself.
 // Keep in step with the emulators OpenPak ships (see /downloads).
 var playTargets = map[string][]playTarget{
-	"Switch":        {{"Switch", onHardware}, {"Switch 2", onHardware}, {"Ryujinx", desktop}, {"Eden", allOSes}, {"Citron", noMacOSes}},
+	"Switch":        {{"Switch", onHardware}, {"Ryujinx", desktop}, {"Eden", allOSes}, {"Citron", []string{"Windows", "Linux", "Android", "iOS"}}},
 	"Wii U":         {{"Wii U", onHardware}, {"Cemu", desktop}},
-	"3DS":           {{"3DS", onHardware}, {"Azahar", allOSes}},
+	"3DS":           {{"3DS", onHardware}, {"Azahar", []string{"Windows", "macOS", "Linux", "Android", "iOS"}}},
 	"Wii":           {{"Wii", onHardware}, {"Wii U", onHardware}, {"Dolphin", allOSes}},
 	"DS":            {{"DS", onHardware}, {"3DS", onHardware}, {"melonDS", desktop}},
 	"Xbox":          {{"Xbox", onHardware}, {"Xbox 360", onHardware}, {"xemu", desktop}},
@@ -421,7 +498,7 @@ var playTargets = map[string][]playTarget{
 	"PS2":           {{"PS2", onHardware}, {"PCSX2", desktop}},
 	"PS3":           {{"PS3", onHardware}, {"RPCS3", desktop}},
 	"PlayStation 3": {{"PS3", onHardware}, {"RPCS3", desktop}},
-	"PSP":           {{"PSP", onHardware}, {"PPSSPP", allOSes}},
+	"PSP":           {{"PSP", onHardware}, {"PPSSPP", []string{"Windows", "macOS", "Linux", "Android", "iOS"}}},
 	"Vita":          {{"Vita", onHardware}, {"Vita3K", allOSes}},
 }
 

@@ -127,7 +127,7 @@ func TestCompatReportThroughTheSite(t *testing.T) {
 	if len(tallies) != 1 || tallies[0].Client != "Eden" || tallies[0].OS != "Android" || tallies[0].Works != 0 || tallies[0].Broken != 1 {
 		t.Fatalf("tallies = %+v, want one Eden/Android broken", tallies)
 	}
-	if page := authedRequest(s, rec, http.MethodGet, "/titles", nil).Body.String(); !bytes.Contains([]byte(page), []byte("Broken · 1")) {
+	if page := authedRequest(s, rec, http.MethodGet, "/titles", nil).Body.String(); !bytes.Contains([]byte(page), []byte(`class="mark bad" title="Eden · Android: Works 0 · Broken 1"`)) {
 		t.Error("titles page does not show the report")
 	}
 }
