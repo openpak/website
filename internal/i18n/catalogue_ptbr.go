@@ -75,7 +75,7 @@ var cataloguePTBR = Catalogue{
 	"titles.info.added":                "Adicionado",
 	"titles.info.updated":              "Atualizado",
 	"titles.compat.title":              "Compatibilidade",
-	"titles.compat.sub":                "Onde foi jogado online por um tempo: 15 minutos seguidos ou 30 no total entre todos os jogadores. Cinza significa não testado.",
+	"titles.compat.sub":                "Colorido: jogado online. Cinza: não testado.",
 	"titles.compat.untested":           "Não testado",
 	"titles.compat.minutes":            "min jogados online",
 	"titles.compat.works":              "Funciona",

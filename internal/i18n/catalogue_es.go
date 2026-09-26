@@ -75,7 +75,7 @@ var catalogueES = Catalogue{
 	"titles.info.added":                "Añadido",
 	"titles.info.updated":              "Actualizado",
 	"titles.compat.title":              "Compatibilidad",
-	"titles.compat.sub":                "Dónde se ha jugado en línea un rato: 15 minutos seguidos o 30 en total entre todos los jugadores. Gris significa sin probar.",
+	"titles.compat.sub":                "En color: jugado en línea. Gris: sin probar.",
 	"titles.compat.untested":           "Sin probar",
 	"titles.compat.minutes":            "min jugados en línea",
 	"titles.compat.works":              "Funciona",

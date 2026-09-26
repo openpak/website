@@ -75,7 +75,7 @@ var catalogueIT = Catalogue{
 	"titles.info.added":                "Aggiunto",
 	"titles.info.updated":              "Aggiornato",
 	"titles.compat.title":              "Compatibilità",
-	"titles.compat.sub":                "Dove è stato giocato online per un po': 15 minuti di fila o 30 in totale tra tutti i giocatori. Grigio vuol dire non testato.",
+	"titles.compat.sub":                "A colori: giocato online. Grigio: non testato.",
 	"titles.compat.untested":           "Non testato",
 	"titles.compat.minutes":            "min giocati online",
 	"titles.compat.works":              "Funziona",

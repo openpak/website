@@ -3,6 +3,11 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.60.2 — 2026-09-26
+
+- Titles: the compatibility line under the heading is one short sentence ("Coloured: played
+  online. Grey: untested."). v0.60.0 and v0.60.1 were never built; this carries both.
+
 ## v0.60.1 — 2026-09-26
 
 - Titles: a French reader gets Micromania where everyone else gets GameStop (chosen by the page

@@ -75,7 +75,7 @@ var catalogueDE = Catalogue{
 	"titles.info.added":                "Hinzugefügt",
 	"titles.info.updated":              "Aktualisiert",
 	"titles.compat.title":              "Kompatibilität",
-	"titles.compat.sub":                "Wo eine Weile online gespielt wurde: 15 Minuten am Stück oder 30 insgesamt über alle Spieler. Grau heißt ungetestet.",
+	"titles.compat.sub":                "Farbig: online gespielt. Grau: ungetestet.",
 	"titles.compat.untested":           "Ungetestet",
 	"titles.compat.minutes":            "Min. online gespielt",
 	"titles.compat.works":              "Läuft",

@@ -94,7 +94,7 @@ var languages = map[string]Catalogue{
 		"titles.info.added":        "Added",
 		"titles.info.updated":      "Updated",
 		"titles.compat.title":      "Compatibility",
-		"titles.compat.sub":        "Where it has been played online for a while: 15 minutes in one go, or 30 in total across every player. Grey means untested.",
+		"titles.compat.sub":        "Coloured: played online. Grey: untested.",
 		"titles.compat.untested":   "Untested",
 		"titles.compat.minutes":    "min played online",
 		"titles.compat.works":      "Works",
