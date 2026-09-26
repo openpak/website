@@ -1,8 +1,9 @@
 // Package pctl talks to nx-baas's internal parental-controls API on behalf of a
 // signed-in account. The device records live with the console-facing service,
 // because that is what the console asks; the website only decides who is asking
-// and relays. Contract: nx-baas docs/parental-controls-firmware-2026-09-26.md
-// and its README's internal-API table.
+// and relays. Contract: the docs repo's
+// docs/switch/parental-controls-firmware-2026-09-26.md, and nx-baas's README
+// internal-API table.
 package pctl
 
 import (

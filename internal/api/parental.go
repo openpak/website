@@ -1,8 +1,8 @@
 package api
 
 // Parental controls, the app's half. The console-facing API is nx-baas's
-// (`api-<env>.pctl.srv.nintendo.net/moon/v1/…`, its
-// docs/parental-controls-firmware-2026-09-26.md); this is the parent side, which
+// (`api-<env>.pctl.srv.nintendo.net/moon/v1/…`, contract in the docs repo at
+// docs/switch/parental-controls-firmware-2026-09-26.md); this is the parent side, which
 // is ours to shape because nothing in the firmware reads it.
 //
 //	GET  /api/v1/me/parental-controls          the consoles this account manages
