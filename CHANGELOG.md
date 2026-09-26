@@ -3,6 +3,17 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.61.0 — 2026-09-26
+
+- **Parental controls for the app** (app v0.15.0): `GET /api/v1/me/parental-controls` lists the
+  consoles an account manages and `POST /api/v1/me/parental-controls/pairing` mints the code to
+  type on one. Both relay to nx-baas with `X-Internal-Key` — the device records live with the
+  console-facing service because that is what the console asks for them — so this needs
+  `NX_BAAS_URL` and `NX_BAAS_INTERNAL_KEY`; unset, the routes answer 503 and say they are not
+  configured, which is kept distinct from 502 when the service itself answers badly.
+- The account is always the bearer's: no request field names an account, or one household could
+  read another's consoles.
+
 ## v0.60.3 — 2026-09-26
 
 - Titles: a shop without a stored product page falls back to that shop's own search (GameStop,
