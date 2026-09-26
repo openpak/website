@@ -3,6 +3,12 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.58.1 — 2026-09-26
+
+- Titles: a "Report a problem" button in each title's dialog opens a help ticket with the
+  subject, category (Switch, Wii U/3DS or other) and a message naming the title already filled
+  in. `/help` accepts `subject`, `category` and `message` query parameters for this.
+
 ## v0.58.0 — 2026-09-26
 
 - Titles: clicking a title opens its details (category, network, title ids, notes, dates), a

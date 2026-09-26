@@ -95,6 +95,7 @@ var catalogueES = Catalogue{
 	"titles.buy.cex":                   "Buscar en CeX",
 	"titles.buy.region":                "Tienda CeX",
 	"titles.buy.global":                "CeX (tu país)",
+	"titles.problem":                   "Informar de un problema",
 	"requests.votes":                   "votos",
 	"requests.vote":                    "Votar",
 	"requests.voted":                   "Votado",

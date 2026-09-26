@@ -93,7 +93,7 @@ func TestTitlesVoteGating(t *testing.T) {
 		}
 	}
 	// Its details dialog: every Switch client, a report form, and a CeX search.
-	for _, want := range []string{`id="t-8"`, `href="#t-8"`, `action="/titles/report"`, `value="Ryujinx|Linux"`, `value="Switch|hardware"`, "Untested", "https://webuy.com/search?stext=Mario&#43;Kart&#43;8&#43;Deluxe"} {
+	for _, want := range []string{`id="t-8"`, `href="#t-8"`, `action="/titles/report"`, `value="Ryujinx|Linux"`, `value="Switch|hardware"`, "Untested", "https://webuy.com/search?stext=Mario&#43;Kart&#43;8&#43;Deluxe", "/help?category=switch&amp;message=Mario", "Report a problem"} {
 		if !bytes.Contains([]byte(beta), []byte(want)) {
 			t.Errorf("beta dialog missing %q", want)
 		}

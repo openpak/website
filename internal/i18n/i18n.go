@@ -114,6 +114,7 @@ var languages = map[string]Catalogue{
 		"titles.buy.cex":           "Find it on CeX",
 		"titles.buy.region":        "CeX store",
 		"titles.buy.global":        "CeX (your country)",
+		"titles.problem":           "Report a problem",
 		"requests.votes":           "votes",
 		"requests.vote":            "Vote",
 		"requests.voted":           "Voted",

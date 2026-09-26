@@ -370,6 +370,23 @@ type compatCell struct {
 	Works, Broken int
 }
 
+// ProblemURL opens a help ticket about the title, subject and category filled in.
+func (t titleRow) ProblemURL() string {
+	category := "other"
+	switch t.Console {
+	case "Switch":
+		category = "switch"
+	case "Wii U", "3DS":
+		category = "wiiu-3ds"
+	}
+	msg := t.Name + " (" + t.Console
+	if t.TitleID != "" {
+		msg += ", " + t.TitleID
+	}
+	msg += ")\nPlayed on (console or emulator, and OS): \nWhat happened: \n"
+	return "/help?" + url.Values{"subject": {t.Name + ": problem"}, "category": {category}, "message": {msg}}.Encode() + "#new-h"
+}
+
 // Combo is the report form's value for the cell, parsed back by parseCombo.
 func (c compatCell) Combo() string { return c.Client + "|" + c.OS }
 

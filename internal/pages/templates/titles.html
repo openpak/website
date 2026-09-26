@@ -105,7 +105,7 @@
       <select class="field cex-region" aria-label="{{t $.Lang "titles.buy.region"}}">{{range cexRegions}}<option value="{{.}}">{{if .}}{{.}}.webuy.com{{else}}{{t $.Lang "titles.buy.global"}}{{end}}</option>{{end}}</select>
     </div>
 
-    <div class="mt-5 flex justify-end"><button type="button" class="btn" data-close>{{t $.Lang "titles.request.close"}}</button></div>
+    <div class="mt-5 flex flex-wrap justify-between gap-2"><a class="btn" href="{{.ProblemURL}}">{{t $.Lang "titles.problem"}}</a><button type="button" class="btn" data-close>{{t $.Lang "titles.request.close"}}</button></div>
   </dialog>
   {{end}}
   <p id="titles-empty" class="card p-6 text-center text-muted" hidden>{{t $.Lang "titles.none"}}</p>

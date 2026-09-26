@@ -135,3 +135,24 @@ func TestHelpTickets(t *testing.T) {
 		t.Fatalf("forged reply: %d", rec.Code)
 	}
 }
+
+// "Report a problem" lands on the help form filled in; a category the desk does not
+// offer is dropped rather than preselected.
+func TestHelpPrefillFromLink(t *testing.T) {
+	s, fc, db := newTestServer(t)
+	s.Support = &support.Service{DB: db}
+	emailA, _ := seedTwoAccounts(fc)
+	rec := login(t, s, emailA, "password-A-1")
+	page := authedRequest(s, rec, http.MethodGet, "/help?subject=Splatoon+3%3A+problem&category=switch&message=lobby+hangs", nil).Body.String()
+	for _, want := range []string{`value="Splatoon 3: problem"`, `value="switch" selected`, ">lobby hangs</textarea>"} {
+		if !strings.Contains(page, want) {
+			t.Errorf("help form missing %q", want)
+		}
+	}
+	page = authedRequest(s, rec, http.MethodGet, "/help?category=bogus", nil).Body.String()
+	for _, c := range store.TicketCategories {
+		if strings.Contains(page, `value="`+c+`" selected`) {
+			t.Errorf("an unknown category preselected %q", c)
+		}
+	}
+}

@@ -3,6 +3,7 @@ package pages
 import (
 	"errors"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -41,6 +42,13 @@ func (s *Server) handleHelp(w http.ResponseWriter, r *http.Request) {
 	v := s.viewerOf(w, r)
 	d := helpView{baseData: s.data(r, v, i18n.T(i18n.FromRequest(r), "help.title")), Categories: store.TicketCategories,
 		Off: !s.helpOn()}
+	// A link can start a ticket (the titles page's "Report a problem"); submitting still
+	// validates every field, so this only fills the form in.
+	q := r.URL.Query()
+	d.Subject, d.Message = q.Get("subject"), q.Get("message")
+	if c := q.Get("category"); slices.Contains(store.TicketCategories, c) {
+		d.Category = c
+	}
 	if v != nil && s.helpOn() {
 		d.Files = s.Support.Files != nil
 		ts, err := s.DB.ListTickets(r.Context(), store.TicketFilter{AccountID: v.AccountID}, 100)

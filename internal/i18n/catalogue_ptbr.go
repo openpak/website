@@ -95,6 +95,7 @@ var cataloguePTBR = Catalogue{
 	"titles.buy.cex":                   "Encontrar na CeX",
 	"titles.buy.region":                "Loja CeX",
 	"titles.buy.global":                "CeX (seu país)",
+	"titles.problem":                   "Relatar um problema",
 	"requests.votes":                   "votos",
 	"requests.vote":                    "Votar",
 	"requests.voted":                   "Votado",
