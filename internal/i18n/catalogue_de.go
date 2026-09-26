@@ -72,7 +72,6 @@ var catalogueDE = Catalogue{
 	"titles.request.hint":              "Alles oben hat einen Server. Alles andere kannst du dir hier wünschen; die Wünsche entscheiden, was als Nächstes gebaut wird.",
 	"titles.request.requested":         "(gewünscht)",
 	"titles.request.close":             "Schließen",
-	"titles.info.category":             "Kategorie",
 	"titles.info.added":                "Hinzugefügt",
 	"titles.info.updated":              "Aktualisiert",
 	"titles.compat.title":              "Kompatibilität",

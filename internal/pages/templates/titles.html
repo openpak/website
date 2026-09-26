@@ -64,7 +64,6 @@
       <span class="badge {{badgeClass .Status}}">{{.Status}}</span>
     </div>
     <dl class="facts">
-      {{with .Category}}<dt>{{t $.Lang "titles.info.category"}}</dt><dd>{{.}}</dd>{{end}}
       {{if not .DateAdded.IsZero}}<dt>{{t $.Lang "titles.info.added"}}</dt><dd>{{date $.Lang .DateAdded}}</dd>{{end}}
       {{if not .LastUpdated.IsZero}}<dt>{{t $.Lang "titles.info.updated"}}</dt><dd>{{date $.Lang .LastUpdated}}</dd>{{end}}
     </dl>

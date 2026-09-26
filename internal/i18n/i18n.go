@@ -91,7 +91,6 @@ var languages = map[string]Catalogue{
 		"titles.request.hint":      "Everything above has a server. Anything else, ask for it here; requests decide what gets built next.",
 		"titles.request.requested": "(requested)",
 		"titles.request.close":     "Close",
-		"titles.info.category":     "Category",
 		"titles.info.added":        "Added",
 		"titles.info.updated":      "Updated",
 		"titles.compat.title":      "Compatibility",

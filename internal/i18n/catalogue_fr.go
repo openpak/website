@@ -72,7 +72,6 @@ var catalogueFR = Catalogue{
 	"titles.request.hint":              "Tout ce qui figure ci-dessus a un serveur. Pour tout autre jeu, faites-en la demande ici ; les demandes décident de ce qui sera développé ensuite.",
 	"titles.request.requested":         "(demandé)",
 	"titles.request.close":             "Fermer",
-	"titles.info.category":             "Catégorie",
 	"titles.info.added":                "Ajouté",
 	"titles.info.updated":              "Mis à jour",
 	"titles.compat.title":              "Compatibilité",

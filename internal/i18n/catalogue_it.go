@@ -72,7 +72,6 @@ var catalogueIT = Catalogue{
 	"titles.request.hint":              "Tutto ciò che è sopra ha un server. Per qualsiasi altro gioco, richiedilo qui; le richieste decidono cosa verrà realizzato dopo.",
 	"titles.request.requested":         "(richiesto)",
 	"titles.request.close":             "Chiudi",
-	"titles.info.category":             "Categoria",
 	"titles.info.added":                "Aggiunto",
 	"titles.info.updated":              "Aggiornato",
 	"titles.compat.title":              "Compatibilità",

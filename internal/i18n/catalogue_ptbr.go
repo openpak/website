@@ -72,7 +72,6 @@ var cataloguePTBR = Catalogue{
 	"titles.request.hint":              "Tudo acima tem um servidor. Para qualquer outro, peça aqui; os pedidos decidem o que será feito a seguir.",
 	"titles.request.requested":         "(pedido)",
 	"titles.request.close":             "Fechar",
-	"titles.info.category":             "Categoria",
 	"titles.info.added":                "Adicionado",
 	"titles.info.updated":              "Atualizado",
 	"titles.compat.title":              "Compatibilidade",

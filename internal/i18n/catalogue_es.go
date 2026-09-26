@@ -72,7 +72,6 @@ var catalogueES = Catalogue{
 	"titles.request.hint":              "Todo lo anterior tiene servidor. Cualquier otro, pídelo aquí; las peticiones deciden qué se desarrolla a continuación.",
 	"titles.request.requested":         "(pedido)",
 	"titles.request.close":             "Cerrar",
-	"titles.info.category":             "Categoría",
 	"titles.info.added":                "Añadido",
 	"titles.info.updated":              "Actualizado",
 	"titles.compat.title":              "Compatibilidad",

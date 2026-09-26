@@ -7,6 +7,7 @@ release, taken from git history. `git log` stays the source of truth.
 
 - Titles: CeX and GameStop are two plain buttons side by side; the CeX storefront picker is gone
   (webuy.com already sends a visitor to their own country's store).
+- Titles: the dialog no longer shows the category (NEX, NPLN, …); only when it was added and updated.
 
 ## v0.59.0 — 2026-09-26
 
