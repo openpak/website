@@ -49,8 +49,10 @@ type Server struct {
 	Links      core.Links
 	Events     core.Events
 	Invites    core.InvitationsView
-	DB         store.Store
-	Media      *media.Service
+	// Playtime marks titles tested from online play; nil leaves the titles page on player reports.
+	Playtime core.Playtime
+	DB       store.Store
+	Media    *media.Service
 	// Adapter answers what only the Switch adapter knows: the friend code.
 	Adapter *adapter.Client
 	// WFC resolves Wii/DS friend codes for the link flow; nil hides the form.

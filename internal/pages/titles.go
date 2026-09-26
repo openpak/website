@@ -9,7 +9,9 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/store"
 )
@@ -233,6 +235,14 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		s.log.Error("list compat", "err", err)
 	}
+	var plays []core.PlayTally
+	if s.Playtime != nil {
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		if plays, err = s.Playtime.Playtime(ctx); err != nil {
+			s.log.Warn("playtime", "err", err) // the page still has player reports
+		}
+		cancel()
+	}
 	type titlesPage struct {
 		baseData
 		Titles      []titleRow
@@ -243,7 +253,7 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 		ByVotes     bool
 		Back        string
 	}
-	s.render(w, http.StatusOK, "titles.html", titlesPage{d, titleRows(reqs, tallies), requestable, consoles, statuses, allStatuses, byVotes, backPath("/titles", byVotes)})
+	s.render(w, http.StatusOK, "titles.html", titlesPage{d, titleRows(reqs, tallies, plays), requestable, consoles, statuses, allStatuses, byVotes, backPath("/titles", byVotes)})
 }
 
 // allStatuses is every status the title forms offer, in rank order. The word means the same
@@ -364,11 +374,24 @@ type titleRow struct {
 	Compat []compatCell
 }
 
-// compatCell is one client and OS for a title. Works and Broken both zero is untested.
+// compatCell is one client and OS for a title: what players reported, and how long it has
+// been played online there. No reports and not Verified is untested.
 type compatCell struct {
 	Client, OS    string
 	Works, Broken int
+	Played        time.Duration // online playtime, every player added up
+	Verified      bool          // Played crossed a playtime threshold
 }
+
+// Played long enough online to count as tested: one session this long, or this much added up
+// across every player.
+const (
+	verifySession = 15 * time.Minute
+	verifyTotal   = 30 * time.Minute
+)
+
+// Minutes is Played for the tooltip.
+func (c compatCell) Minutes() int { return int(c.Played / time.Minute) }
 
 // ProblemURL opens a help ticket about the title, subject and category filled in.
 func (t titleRow) ProblemURL() string {
@@ -389,8 +412,14 @@ func (t titleRow) ProblemURL() string {
 
 // State is the cell's colour: ok when every report says it works, bad when every
 // one says it does not, warn when they disagree, "" when untested.
+// Playtime counts as a report that it works; with failure reports too it is amber, a
+// conflict to investigate rather than one side outvoting the other.
 func (c compatCell) State() string {
 	switch {
+	case c.Verified && c.Broken == 0:
+		return "ok"
+	case c.Verified:
+		return "warn"
 	case c.Works == 0 && c.Broken == 0:
 		return ""
 	case c.Broken == 0:
@@ -513,7 +542,7 @@ func playTargetsOf(console string) []playTarget {
 
 // titleRows pairs every title with its full client×OS grid, reports filled in.
 // ponytail: every title's dialog is rendered into the page; fetch it per title if the list grows into the thousands.
-func titleRows(reqs []store.Request, tallies []store.CompatTally) []titleRow {
+func titleRows(reqs []store.Request, tallies []store.CompatTally, plays []core.PlayTally) []titleRow {
 	type key struct {
 		id         int64
 		client, os string
@@ -522,17 +551,60 @@ func titleRows(reqs []store.Request, tallies []store.CompatTally) []titleRow {
 	for _, t := range tallies {
 		byKey[key{t.RequestID, t.Client, t.OS}] = t
 	}
+	// Playtime arrives keyed by title id and the core's tokens; one game can have several
+	// ids (regions, an update's), so it is added up per row.
+	type played struct{ total, longest time.Duration }
+	byID := map[string]int64{}
+	for _, r := range reqs {
+		for _, id := range append([]string{r.TitleID}, r.TitleIDs...) {
+			if id != "" {
+				byID[strings.ToUpper(id)] = r.ID
+			}
+		}
+	}
+	playedBy := map[key]played{}
+	for _, p := range plays {
+		id, ok := byID[baseTitleID(p.TitleID)]
+		client, os := playClient(p.Client, p.OS)
+		if !ok || client == "" {
+			continue
+		}
+		k := key{id, client, os}
+		cur := playedBy[k]
+		cur.total += p.Total
+		cur.longest = max(cur.longest, p.Longest)
+		playedBy[k] = cur
+	}
 	out := make([]titleRow, len(reqs))
 	for i, r := range reqs {
 		out[i].Request = r
 		for _, p := range playTargetsOf(r.Console) {
 			for _, os := range p.OSes {
-				t := byKey[key{r.ID, p.Client, os}]
-				out[i].Compat = append(out[i].Compat, compatCell{p.Client, os, t.Works, t.Broken})
+				k := key{r.ID, p.Client, os}
+				t, pl := byKey[k], playedBy[k]
+				out[i].Compat = append(out[i].Compat, compatCell{p.Client, os, t.Works, t.Broken,
+					pl.total, pl.longest >= verifySession || pl.total >= verifyTotal})
 			}
 		}
 	}
 	return out
+}
+
+// playClient maps the core's client and OS tokens onto the grid's names. A console
+// session names no OS; an emulator that did not say which OS it ran on cannot be
+// placed in a column, so it is left out ("" client).
+func playClient(client, os string) (string, string) {
+	consoles := map[string]string{"switch": "Switch", "wiiu": "Wii U", "3ds": "3DS"}
+	emulators := map[string]string{"ryujinx": "Ryujinx", "eden": "Eden", "citron": "Citron",
+		"cemu": "Cemu", "azahar": "Azahar", "dolphin": "Dolphin", "melonds": "melonDS"}
+	oses := map[string]string{"windows": "Windows", "macos": "macOS", "linux": "Linux", "android": "Android", "ios": "iOS"}
+	if c, ok := consoles[client]; ok && os == "" {
+		return c, hardware
+	}
+	if c, ok := emulators[client]; ok && oses[os] != "" {
+		return c, oses[os]
+	}
+	return "", ""
 }
 
 // parseCombo checks a report's "client|os" against the title's console, so the
@@ -587,6 +659,12 @@ func (s *Server) handleCompatReport(w http.ResponseWriter, r *http.Request) {
 // cexRegions are CeX's storefronts. "" is webuy.com, which sends a visitor to
 // their own country's store, so it is the default.
 var cexRegions = []string{"", "uk", "ie", "es", "pt", "nl", "it", "pl", "mx", "au", "in"}
+
+// gamestopURL is a GameStop search. Only the US store: its other storefronts closed
+// or became other shops (Italy is GameLife now).
+func gamestopURL(name string) string {
+	return "https://www.gamestop.com/search/?q=" + url.QueryEscape(name)
+}
 
 // cexURL is a CeX search for the game, where it can be bought second hand.
 func cexURL(name string) string {

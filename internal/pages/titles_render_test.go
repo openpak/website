@@ -3,7 +3,9 @@ package pages
 import (
 	"bytes"
 	"testing"
+	"time"
 
+	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/store"
 )
 
@@ -42,7 +44,7 @@ func TestTitlesVoteGating(t *testing.T) {
 
 	// Signed out, not-started: a Request affordance to sign in, no form, and a
 	// console logo for the row.
-	out := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles"}, titleRows(votableRow, nil), nil, []string{"Switch"}, []string{"requestable"}, nil, false, "/titles"})
+	out := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles"}, titleRows(votableRow, nil, nil), nil, []string{"Switch"}, []string{"requestable"}, nil, false, "/titles"})
 	for _, want := range []string{"Tetris 99", "/static/titles.js", "Sign in to request", "Request", "/static/consoles/switch.svg"} {
 		if !bytes.Contains([]byte(out), []byte(want)) {
 			t.Errorf("signed-out not-started missing %q", want)
@@ -54,7 +56,7 @@ func TestTitlesVoteGating(t *testing.T) {
 
 	// Signed in, not-started: a request form with the id and CSRF token, the
 	// "Requested" label (Voted), and NO vote count (ranking is admin-only).
-	in := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok"}, titleRows(votableRow, nil), nil, []string{"Switch"}, []string{"requestable"}, nil, false, "/titles"})
+	in := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok"}, titleRows(votableRow, nil, nil), nil, []string{"Switch"}, []string{"requestable"}, nil, false, "/titles"})
 	for _, want := range []string{`action="/request/vote"`, `name="id" value="7"`, `value="tok"`, "Requested"} {
 		if !bytes.Contains([]byte(in), []byte(want)) {
 			t.Errorf("signed-in not-started missing %q", want)
@@ -66,7 +68,7 @@ func TestTitlesVoteGating(t *testing.T) {
 
 	// Admin, not-started: the vote count rides the button, and the scoreboard
 	// toggle is present.
-	adm := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok", Admin: true}, titleRows(votableRow, nil), nil, []string{"Switch"}, []string{"requestable"}, nil, false, "/titles"})
+	adm := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok", Admin: true}, titleRows(votableRow, nil, nil), nil, []string{"Switch"}, []string{"requestable"}, nil, false, "/titles"})
 	for _, want := range []string{"· 3", `href="/titles?sort=votes"`} {
 		if !bytes.Contains([]byte(adm), []byte(want)) {
 			t.Errorf("admin view missing %q", want)
@@ -74,7 +76,7 @@ func TestTitlesVoteGating(t *testing.T) {
 	}
 
 	// Signed in, alpha: a status pill, never a request form (alpha is started).
-	al := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok"}, titleRows(alphaRow, nil), nil, []string{"Switch"}, []string{"alpha"}, nil, false, "/titles"})
+	al := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok"}, titleRows(alphaRow, nil, nil), nil, []string{"Switch"}, []string{"alpha"}, nil, false, "/titles"})
 	if !bytes.Contains([]byte(al), []byte(">alpha<")) {
 		t.Error("alpha row should show its status pill")
 	}
@@ -83,7 +85,7 @@ func TestTitlesVoteGating(t *testing.T) {
 	}
 
 	// Signed in, NON-votable (beta): status shown, but no request UI at all.
-	beta := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok"}, titleRows(betaRow, nil), nil, []string{"Switch"}, []string{"beta"}, nil, false, "/titles"})
+	beta := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok"}, titleRows(betaRow, nil, nil), nil, []string{"Switch"}, []string{"beta"}, nil, false, "/titles"})
 	if !bytes.Contains([]byte(beta), []byte("Mario Kart 8 Deluxe")) || !bytes.Contains([]byte(beta), []byte(">beta<")) {
 		t.Error("beta row should still show name and status")
 	}
@@ -93,7 +95,7 @@ func TestTitlesVoteGating(t *testing.T) {
 		}
 	}
 	// Its details dialog: every Switch client, a report form, and a CeX search.
-	for _, want := range []string{`id="t-8"`, `href="#t-8"`, `action="/titles/report"`, `value="Ryujinx|Linux"`, `value="Switch|hardware"`, "Untested", "https://webuy.com/search?stext=Mario&#43;Kart&#43;8&#43;Deluxe", "/help?category=switch&amp;message=Mario", "Report a problem"} {
+	for _, want := range []string{`id="t-8"`, `href="#t-8"`, `action="/titles/report"`, `value="Ryujinx|Linux"`, `value="Switch|hardware"`, "Untested", "https://webuy.com/search?stext=Mario&#43;Kart&#43;8&#43;Deluxe", "/help?category=switch&amp;message=Mario", "Report a problem", "https://www.gamestop.com/search/?q=Mario&#43;Kart&#43;8&#43;Deluxe"} {
 		if !bytes.Contains([]byte(beta), []byte(want)) {
 			t.Errorf("beta dialog missing %q", want)
 		}
@@ -112,5 +114,55 @@ func TestMostRequestedOrdersByVotes(t *testing.T) {
 		if got[i].Name != n {
 			t.Errorf("position %d: got %q, want %q", i, got[i].Name, n)
 		}
+	}
+}
+
+// Playtime marks a cell tested: 15 minutes in one session or 30 across every player,
+// matched by any of the title's ids and the core's client and OS tokens. With failure
+// reports too it is a conflict (amber), and an emulator that named no OS is not placed.
+func TestTitleRowsPlaytime(t *testing.T) {
+	reqs := []store.Request{
+		{ID: 1, Kind: "title", Name: "Splatoon 3", Console: "Switch", Status: "beta", TitleID: "0100C2500FC20000", TitleIDs: []string{"0100C2500FC20000", "0100C2500FC21000"}},
+		{ID: 2, Kind: "title", Name: "Mario Kart 8", Console: "Wii U", Status: "live", TitleID: "000500001010EC00", TitleIDs: []string{"000500001010EC00"}},
+	}
+	m := time.Minute
+	plays := []core.PlayTally{
+		{Namespace: "switch", TitleID: "0100c2500fc21000", Client: "ryujinx", OS: "macos", Total: 16 * m, Longest: 16 * m}, // one long session
+		{Namespace: "switch", TitleID: "0100C2500FC20000", Client: "eden", OS: "android", Total: 20 * m, Longest: 10 * m},  // short
+		{Namespace: "switch", TitleID: "0100C2500FC21000", Client: "eden", OS: "android", Total: 12 * m, Longest: 5 * m},   // other region: 32 in total
+		{Namespace: "switch", TitleID: "0100C2500FC20000", Client: "citron", OS: "linux", Total: 40 * m, Longest: 40 * m},  // conflicts with a report
+		{Namespace: "switch", TitleID: "0100C2500FC20000", Client: "eden", OS: "", Total: 60 * m, Longest: 60 * m},         // no OS: nowhere to put it
+		{Namespace: "switch", TitleID: "0100C2500FC20000", Client: "switch", OS: "", Total: 9 * m, Longest: 9 * m},         // console, too short
+		{Namespace: "wiiu", TitleID: "0005000E1010EC00", Client: "cemu", OS: "windows", Total: 31 * m, Longest: 31 * m},    // an update's id
+	}
+	reports := []store.CompatTally{{RequestID: 1, Client: "Citron", OS: "Linux", Broken: 1}}
+	rows := titleRows(reqs, reports, plays)
+	cell := func(r int, client, os string) compatCell {
+		for _, c := range rows[r].Compat {
+			if c.Client == client && c.OS == os {
+				return c
+			}
+		}
+		t.Fatalf("no cell %s/%s", client, os)
+		return compatCell{}
+	}
+	for _, c := range []struct {
+		row        int
+		client, os string
+		state      string
+	}{
+		{0, "Ryujinx", "macOS", "ok"},
+		{0, "Eden", "Android", "ok"},
+		{0, "Citron", "Linux", "warn"},
+		{0, "Eden", "Linux", ""},
+		{0, "Switch", "hardware", ""},
+		{1, "Cemu", "Windows", "ok"},
+	} {
+		if got := cell(c.row, c.client, c.os).State(); got != c.state {
+			t.Errorf("%s/%s: state %q, want %q", c.client, c.os, got, c.state)
+		}
+	}
+	if got := cell(0, "Switch", "hardware").Minutes(); got != 9 {
+		t.Errorf("console minutes %d, want 9", got)
 	}
 }

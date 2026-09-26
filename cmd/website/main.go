@@ -96,6 +96,7 @@ func run(log *slog.Logger) error {
 	pageSrv.Links = coreGRPC
 	pageSrv.Events = coreGRPC
 	pageSrv.Invites = coreGRPC
+	pageSrv.Playtime = coreGRPC
 	pageSrv.DB = db
 	pageSrv.Media = mediaSvc
 	pageSrv.Sessions = sessions

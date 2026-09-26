@@ -406,6 +406,22 @@ func (g *GRPC) PlayerCounts(ctx context.Context) ([]TitlePlayers, map[string]int
 	return out, nets, int(resp.GetTotalPlayers()), nil
 }
 
+// Playtime reads the core's per title, client and OS playtime.
+func (g *GRPC) Playtime(ctx context.Context) ([]PlayTally, error) {
+	resp, err := accountv1.NewSessionsClient(g.conn).GetPlaytime(ctx, &accountv1.GetPlaytimeRequest{})
+	if err != nil {
+		return nil, err
+	}
+	out := make([]PlayTally, 0, len(resp.GetTallies()))
+	for _, t := range resp.GetTallies() {
+		out = append(out, PlayTally{
+			Namespace: t.GetNamespace(), TitleID: t.GetTitleId(), Client: t.GetClient(), OS: t.GetOs(),
+			Total: time.Duration(t.GetTotalSeconds()) * time.Second, Longest: time.Duration(t.GetLongestSeconds()) * time.Second,
+		})
+	}
+	return out, nil
+}
+
 // --- InvitationsView ---
 
 // ListPending reads the invitations waiting for an account. It calls

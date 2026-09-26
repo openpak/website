@@ -99,6 +99,7 @@
     <div class="flex flex-wrap items-center gap-2">
       <a class="btn primary cex" href="{{cexURL .Name}}" target="_blank" rel="noopener noreferrer">{{t $.Lang "titles.buy.cex"}}</a>
       <select class="field cex-region" aria-label="{{t $.Lang "titles.buy.region"}}">{{range cexRegions}}<option value="{{.}}">{{if .}}{{.}}.webuy.com{{else}}{{t $.Lang "titles.buy.global"}}{{end}}</option>{{end}}</select>
+      <a class="btn" href="{{gamestopURL .Name}}" target="_blank" rel="noopener noreferrer">{{t $.Lang "titles.buy.gamestop"}}</a>
     </div>
 
     <div class="mt-5 flex flex-wrap justify-between gap-2"><a class="btn" href="{{.ProblemURL}}">{{t $.Lang "titles.problem"}}</a><button type="button" class="btn" data-close>{{t $.Lang "titles.request.close"}}</button></div>
@@ -150,4 +151,4 @@
 <script src="/static/titles.js?v={{.Asset}}"></script>
 {{template "footer" .}}
 
-{{define "compat-tip"}}{{$l := index . 0}}{{with index . 1}}{{.Client}}{{if ne .OS "hardware"}} · {{.OS}}{{end}}: {{if and (eq .Works 0) (eq .Broken 0)}}{{t $l "titles.compat.untested"}}{{else}}{{t $l "titles.compat.works"}} {{.Works}} · {{t $l "titles.compat.broken"}} {{.Broken}}{{end}}{{end}}{{end}}
+{{define "compat-tip"}}{{$l := index . 0}}{{with index . 1}}{{.Client}}{{if ne .OS "hardware"}} · {{.OS}}{{end}}: {{if or .Works .Broken}}{{t $l "titles.compat.works"}} {{.Works}} · {{t $l "titles.compat.broken"}} {{.Broken}}{{else if not .Played}}{{t $l "titles.compat.untested"}}{{end}}{{if .Played}}{{if or .Works .Broken}} · {{end}}{{.Minutes}} {{t $l "titles.compat.minutes"}}{{end}}{{end}}{{end}}

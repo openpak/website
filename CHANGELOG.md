@@ -3,6 +3,18 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.59.0 — 2026-09-26
+
+- Titles: playtime marks a combination tested. The core (account v0.11.0 `GetPlaytime`) reports
+  how long each title has been played online per client and OS across every player; a cell turns
+  green at 15 minutes in one session or 30 in total, and amber when failure reports disagree (to
+  investigate, neither side outvotes the other). Emulators name their OS in `X-OpenPak-Client`
+  (`ryujinx/1.3.2 (macos)`); a console counts on its hardware cell; an emulator that named no OS
+  is left out. The tooltip shows the minutes played. Without the core call the page keeps player
+  reports alone.
+- Titles: a "Find it on GameStop" button (the US store; its other storefronts closed or changed
+  hands) next to CeX.
+
 ## v0.58.2 — 2026-09-26
 
 - Titles: the compatibility grid is icons — a row per console or emulator, a column per OS

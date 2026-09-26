@@ -260,6 +260,20 @@ type InvitationsView interface {
 	PlayerCounts(ctx context.Context) ([]TitlePlayers, map[string]int, int, error)
 }
 
+// Playtime is how long titles have been played online, per client and OS,
+// across every account. Separate from InvitationsView so a core without it (or
+// a test fake) simply leaves the titles page on player reports alone.
+type Playtime interface {
+	Playtime(ctx context.Context) ([]PlayTally, error)
+}
+
+// PlayTally is one title on one client and OS: Client and OS are the core's
+// tokens ("ryujinx", "macos"; OS "" for a console or an emulator that did not say).
+type PlayTally struct {
+	Namespace, TitleID, Client, OS string
+	Total, Longest                 time.Duration
+}
+
 // TitlePlayers is how many people are in one title. The second return of
 // PlayerCounts is players per adapter namespace, keyed by namespace.
 type TitlePlayers struct {
