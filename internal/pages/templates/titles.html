@@ -82,12 +82,12 @@
     </table></div>
 
     <h3 class="mt-5">{{t $.Lang "titles.buy.title"}}</h3>
-    <div class="flex flex-wrap items-center gap-2">
-      <a class="btn" href="{{cexURL .Name}}" target="_blank" rel="noopener noreferrer">{{t $.Lang "titles.buy.cex"}}</a>
-      <a class="btn" href="{{gamestopURL .Name}}" target="_blank" rel="noopener noreferrer">{{t $.Lang "titles.buy.gamestop"}}</a>
+    <div class="actions">
+      <a class="btn" href="{{cexURL .Name}}" target="_blank" rel="noopener noreferrer">{{t $.Lang "titles.buy.cex"}}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+      <a class="btn" href="{{gamestopURL .Name}}" target="_blank" rel="noopener noreferrer">{{t $.Lang "titles.buy.gamestop"}}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
     </div>
 
-    <div class="mt-5 flex flex-wrap justify-between gap-2"><a class="btn" href="{{.ProblemURL}}">{{t $.Lang "titles.problem"}}</a><button type="button" class="btn" data-close>{{t $.Lang "titles.request.close"}}</button></div>
+    <div class="actions foot"><a class="btn" href="{{.ProblemURL}}">{{t $.Lang "titles.problem"}}</a><button type="button" class="btn primary" data-close>{{t $.Lang "titles.request.close"}}</button></div>
   </dialog>
   {{end}}
   <p id="titles-empty" class="card p-6 text-center text-muted" hidden>{{t $.Lang "titles.none"}}</p>

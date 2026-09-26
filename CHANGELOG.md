@@ -3,6 +3,11 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.59.2 — 2026-09-26
+
+- Titles: the dialog's buttons sit in even columns that fill its width and stack full-width on a
+  narrow phone; the store buttons carry an ↗ (they open another site) and Close is the primary one.
+
 ## v0.59.1 — 2026-09-26
 
 - Titles: CeX and GameStop are two plain buttons side by side; the CeX storefront picker is gone
