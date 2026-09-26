@@ -64,7 +64,7 @@ Every route except `GET /healthz` needs `Authorization: Bearer <OPSD_KEY>`. The 
 ### Port
 
 **20013** — the first spare port of the website's block (20010 HTTP, 20012 metrics; see
-[ports.md](ports.md)). opsd exists only for the website, so it lives in the website's block
+[ports.md](https://github.com/openpak/docs/blob/main/ports.md)). opsd exists only for the website, so it lives in the website's block
 rather than taking a service block. The canonical `Openpak/ports.md` should get the same row.
 
 ## Networks
