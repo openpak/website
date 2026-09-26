@@ -653,7 +653,18 @@ type shopLink struct {
 	Product        bool // URL is the game's own page, not a search
 }
 
-// Shops is the title's buy buttons, in shops order.
+// ShopsFor is the buy buttons a reader sees: Micromania stands in for GameStop
+// for a French reader (it is GameStop's French chain), GameStop for everyone else.
+// ponytail: by page language, not country; a French speaker in Canada gets Micromania.
+func (t titleRow) ShopsFor(lang string) []shopLink {
+	skip := "micromania"
+	if lang == "fr" {
+		skip = "gamestop"
+	}
+	return slices.DeleteFunc(t.Shops(), func(l shopLink) bool { return l.Key == skip })
+}
+
+// Shops is every shop's link for the title, in shops order (the admin form edits all).
 func (t titleRow) Shops() []shopLink {
 	out := make([]shopLink, len(shops))
 	for i, sh := range shops {

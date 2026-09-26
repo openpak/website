@@ -3,6 +3,11 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.60.1 — 2026-09-26
+
+- Titles: a French reader gets Micromania where everyone else gets GameStop (chosen by the page
+  language). The admin form still edits all three shops. v0.60.0 was never built; this carries it.
+
 ## v0.60.0 — 2026-09-26
 
 - Titles: buy buttons for CeX, GameStop and Micromania link the game's own product page when one

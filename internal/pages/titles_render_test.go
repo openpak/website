@@ -2,6 +2,7 @@ package pages
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 	"time"
 
@@ -96,10 +97,13 @@ func TestTitlesVoteGating(t *testing.T) {
 	}
 	// Its details dialog: every Switch client, CeX and GameStop, and no report form (reports
 	// are switched off).
+	if bytes.Contains([]byte(beta), []byte(`micromania`)) {
+		t.Error("an English reader gets GameStop, not Micromania")
+	}
 	if bytes.Contains([]byte(beta), []byte(`/titles/report`)) {
 		t.Error("the report form is switched off")
 	}
-	for _, want := range []string{`id="t-8"`, `href="#t-8"`, `title="Ryujinx · Linux: Untested"`, `title="Switch: Untested"`, "https://webuy.com/search?stext=Mario&#43;Kart&#43;8&#43;Deluxe", "/help?category=switch&amp;message=Mario", "Report a problem", "https://www.google.com/search?q=site%3Agamestop.com&#43;%22Mario&#43;Kart&#43;8&#43;Deluxe%22&#43;Switch", "site%3Amicromania.fr"} {
+	for _, want := range []string{`id="t-8"`, `href="#t-8"`, `title="Ryujinx · Linux: Untested"`, `title="Switch: Untested"`, "https://webuy.com/search?stext=Mario&#43;Kart&#43;8&#43;Deluxe", "/help?category=switch&amp;message=Mario", "Report a problem", "https://www.google.com/search?q=site%3Agamestop.com&#43;%22Mario&#43;Kart&#43;8&#43;Deluxe%22&#43;Switch"} {
 		if !bytes.Contains([]byte(beta), []byte(want)) {
 			t.Errorf("beta dialog missing %q", want)
 		}
@@ -182,6 +186,15 @@ func TestShopLinks(t *testing.T) {
 	}
 	if got[1].Product || got[1].URL != "https://www.google.com/search?q=site%3Agamestop.com+%22Mario+Kart+7%22+3DS" {
 		t.Errorf("gamestop fallback: %+v", got[1])
+	}
+	for lang, want := range map[string]string{"en": "CeX GameStop", "de": "CeX GameStop", "fr": "CeX Micromania"} {
+		var names []string
+		for _, l := range rows[0].ShopsFor(lang) {
+			names = append(names, l.Name)
+		}
+		if got := strings.Join(names, " "); got != want {
+			t.Errorf("%s shops: %q, want %q", lang, got, want)
+		}
 	}
 	for _, c := range []struct {
 		shop, url string

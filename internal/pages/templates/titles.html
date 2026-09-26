@@ -83,7 +83,7 @@
 
     <h3 class="mt-5">{{t $.Lang "titles.buy.title"}}</h3>
     <div class="actions">
-      {{range .Shops}}<a class="btn" href="{{.URL}}" target="_blank" rel="noopener noreferrer"{{if not .Product}} title="{{t $.Lang "titles.buy.search"}}"{{end}}>{{.Name}}{{if .Product}}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>{{else}}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>{{end}}</a>
+      {{range .ShopsFor $.Lang}}<a class="btn" href="{{.URL}}" target="_blank" rel="noopener noreferrer"{{if not .Product}} title="{{t $.Lang "titles.buy.search"}}"{{end}}>{{.Name}}{{if .Product}}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>{{else}}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>{{end}}</a>
       {{end}}
     </div>
     {{if $.Admin}}
