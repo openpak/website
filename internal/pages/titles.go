@@ -620,10 +620,10 @@ func playClient(client, os string) (string, string) {
 }
 
 // shop is a used-game retailer the titles dialog links. A title's own product page
-// there (title_shop_links, pasted by an admin in the dialog) wins; until one exists
-// the button searches instead. ponytail: links are by hand because all three shops
-// sit behind Cloudflare, which challenges any lookup from a script after a few
-// requests; a shop with an open catalogue API could be filled automatically.
+// there (title_shop_links: found with a web search when the title was added, or
+// pasted by an admin in the dialog) wins; until one exists the button runs the
+// shop's own search. The shops sit behind Cloudflare, so the links are not looked
+// up live.
 type shop struct {
 	Key, Name, Domain string
 	search            func(name, console string) string
@@ -634,17 +634,13 @@ var shops = []shop{
 	{"cex", "CeX", "webuy.com", func(name, _ string) string {
 		return "https://webuy.com/search?stext=" + url.QueryEscape(name)
 	}},
-	// GameStop (US) and Micromania (its French chain) sit behind a bot wall and
-	// their own searches are poor, so the fallback is a Google site search, which
-	// the visitor's own browser runs.
-	{"gamestop", "GameStop", "gamestop.com", googleSite("gamestop.com")},
-	{"micromania", "Micromania", "micromania.fr", googleSite("micromania.fr")},
-}
-
-func googleSite(domain string) func(name, console string) string {
-	return func(name, console string) string {
-		return "https://www.google.com/search?q=" + url.QueryEscape("site:"+domain+` "`+name+`" `+console)
-	}
+	{"gamestop", "GameStop", "gamestop.com", func(name, _ string) string {
+		return "https://www.gamestop.com/search/?q=" + url.QueryEscape(name)
+	}},
+	// Micromania is GameStop's French chain.
+	{"micromania", "Micromania", "micromania.fr", func(name, _ string) string {
+		return "https://www.micromania.fr/search?q=" + url.QueryEscape(name)
+	}},
 }
 
 // shopLink is one buy button: the product page when known, else the search.

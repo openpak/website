@@ -3,6 +3,12 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.60.3 — 2026-09-26
+
+- Titles: a shop without a stored product page falls back to that shop's own search (GameStop,
+  Micromania), not a Google search. The product pages themselves are being filled from web
+  searches.
+
 ## v0.60.2 — 2026-09-26
 
 - Titles: the compatibility line under the heading is one short sentence ("Coloured: played

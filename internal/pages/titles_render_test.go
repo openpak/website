@@ -103,7 +103,7 @@ func TestTitlesVoteGating(t *testing.T) {
 	if bytes.Contains([]byte(beta), []byte(`/titles/report`)) {
 		t.Error("the report form is switched off")
 	}
-	for _, want := range []string{`id="t-8"`, `href="#t-8"`, `title="Ryujinx · Linux: Untested"`, `title="Switch: Untested"`, "https://webuy.com/search?stext=Mario&#43;Kart&#43;8&#43;Deluxe", "/help?category=switch&amp;message=Mario", "Report a problem", "https://www.google.com/search?q=site%3Agamestop.com&#43;%22Mario&#43;Kart&#43;8&#43;Deluxe%22&#43;Switch"} {
+	for _, want := range []string{`id="t-8"`, `href="#t-8"`, `title="Ryujinx · Linux: Untested"`, `title="Switch: Untested"`, "https://webuy.com/search?stext=Mario&#43;Kart&#43;8&#43;Deluxe", "/help?category=switch&amp;message=Mario", "Report a problem", "https://www.gamestop.com/search/?q=Mario&#43;Kart&#43;8&#43;Deluxe"} {
 		if !bytes.Contains([]byte(beta), []byte(want)) {
 			t.Errorf("beta dialog missing %q", want)
 		}
@@ -184,7 +184,7 @@ func TestShopLinks(t *testing.T) {
 	if len(got) != 3 || !got[0].Product || got[0].URL != "https://uk.webuy.com/product-detail?id=045496521264" {
 		t.Fatalf("cex: %+v", got)
 	}
-	if got[1].Product || got[1].URL != "https://www.google.com/search?q=site%3Agamestop.com+%22Mario+Kart+7%22+3DS" {
+	if got[1].Product || got[1].URL != "https://www.gamestop.com/search/?q=Mario+Kart+7" {
 		t.Errorf("gamestop fallback: %+v", got[1])
 	}
 	for lang, want := range map[string]string{"en": "CeX GameStop", "de": "CeX GameStop", "fr": "CeX Micromania"} {
