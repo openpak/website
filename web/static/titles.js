@@ -81,24 +81,3 @@
   window.addEventListener("hashchange", sync);
   sync();
 })();
-
-// CeX links default to webuy.com, which picks the visitor's country; a chosen storefront is
-// remembered across titles and visits.
-(function () {
-  var links = document.querySelectorAll("a.cex"), picks = document.querySelectorAll("select.cex-region");
-  if (!links.length) return;
-  function set(region) {
-    var host = region ? region + ".webuy.com" : "webuy.com";
-    Array.prototype.forEach.call(links, function (a) { var u = new URL(a.href); u.host = host; a.href = u; });
-    Array.prototype.forEach.call(picks, function (s) { s.value = region; });
-  }
-  Array.prototype.forEach.call(picks, function (s) {
-    s.addEventListener("change", function () {
-      try { localStorage.setItem("cex-region", s.value); } catch (e) {}
-      set(s.value);
-    });
-  });
-  var saved = "";
-  try { saved = localStorage.getItem("cex-region") || ""; } catch (e) {}
-  if (saved && picks[0].querySelector('option[value="' + saved + '"]')) set(saved);
-})();

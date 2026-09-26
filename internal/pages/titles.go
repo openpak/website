@@ -656,17 +656,14 @@ func (s *Server) handleCompatReport(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/titles#t-"+strconv.FormatInt(id, 10), http.StatusSeeOther)
 }
 
-// cexRegions are CeX's storefronts. "" is webuy.com, which sends a visitor to
-// their own country's store, so it is the default.
-var cexRegions = []string{"", "uk", "ie", "es", "pt", "nl", "it", "pl", "mx", "au", "in"}
-
 // gamestopURL is a GameStop search. Only the US store: its other storefronts closed
 // or became other shops (Italy is GameLife now).
 func gamestopURL(name string) string {
 	return "https://www.gamestop.com/search/?q=" + url.QueryEscape(name)
 }
 
-// cexURL is a CeX search for the game, where it can be bought second hand.
+// cexURL is a CeX search for the game, where it can be bought second hand. webuy.com
+// sends a visitor to their own country's store.
 func cexURL(name string) string {
 	return "https://webuy.com/search?stext=" + url.QueryEscape(name)
 }

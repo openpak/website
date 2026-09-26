@@ -97,8 +97,7 @@
 
     <h3 class="mt-5">{{t $.Lang "titles.buy.title"}}</h3>
     <div class="flex flex-wrap items-center gap-2">
-      <a class="btn primary cex" href="{{cexURL .Name}}" target="_blank" rel="noopener noreferrer">{{t $.Lang "titles.buy.cex"}}</a>
-      <select class="field cex-region" aria-label="{{t $.Lang "titles.buy.region"}}">{{range cexRegions}}<option value="{{.}}">{{if .}}{{.}}.webuy.com{{else}}{{t $.Lang "titles.buy.global"}}{{end}}</option>{{end}}</select>
+      <a class="btn" href="{{cexURL .Name}}" target="_blank" rel="noopener noreferrer">{{t $.Lang "titles.buy.cex"}}</a>
       <a class="btn" href="{{gamestopURL .Name}}" target="_blank" rel="noopener noreferrer">{{t $.Lang "titles.buy.gamestop"}}</a>
     </div>
 

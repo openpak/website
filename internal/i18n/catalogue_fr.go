@@ -88,8 +88,6 @@ var catalogueFR = Catalogue{
 	"titles.compat.signin":             "Connectez-vous pour dire comment ça s'est passé",
 	"titles.buy.title":                 "L'acheter",
 	"titles.buy.cex":                   "Trouver sur CeX",
-	"titles.buy.region":                "Boutique CeX",
-	"titles.buy.global":                "CeX (votre pays)",
 	"titles.buy.gamestop":              "Trouver sur GameStop",
 	"titles.problem":                   "Signaler un problème",
 	"requests.votes":                   "votes",

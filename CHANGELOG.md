@@ -3,6 +3,11 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.59.1 — 2026-09-26
+
+- Titles: CeX and GameStop are two plain buttons side by side; the CeX storefront picker is gone
+  (webuy.com already sends a visitor to their own country's store).
+
 ## v0.59.0 — 2026-09-26
 
 - Titles: playtime marks a combination tested. The core (account v0.11.0 `GetPlaytime`) reports

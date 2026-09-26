@@ -88,8 +88,6 @@ var cataloguePTBR = Catalogue{
 	"titles.compat.signin":             "Entre para contar como foi para você",
 	"titles.buy.title":                 "Compre",
 	"titles.buy.cex":                   "Encontrar na CeX",
-	"titles.buy.region":                "Loja CeX",
-	"titles.buy.global":                "CeX (seu país)",
 	"titles.buy.gamestop":              "Encontrar na GameStop",
 	"titles.problem":                   "Relatar um problema",
 	"requests.votes":                   "votos",

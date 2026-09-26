@@ -107,8 +107,6 @@ var languages = map[string]Catalogue{
 		"titles.compat.signin":     "Sign in to report how it ran for you",
 		"titles.buy.title":         "Buy it",
 		"titles.buy.cex":           "Find it on CeX",
-		"titles.buy.region":        "CeX store",
-		"titles.buy.global":        "CeX (your country)",
 		"titles.buy.gamestop":      "Find it on GameStop",
 		"titles.problem":           "Report a problem",
 		"requests.votes":           "votes",
