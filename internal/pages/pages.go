@@ -299,7 +299,6 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /{$}", s.handleLanding)
 	mux.HandleFunc("GET /titles", s.handleTitles)
 	mux.HandleFunc("POST /request/vote", s.handleVote)
-	mux.HandleFunc("POST /titles/report", s.handleCompatReport)
 	mux.HandleFunc("POST /admin/titles/status", s.handleSetTitleStatus)
 	mux.HandleFunc("GET /register", s.handleRegisterForm)
 	mux.HandleFunc("POST /register", s.handleRegisterSubmit)

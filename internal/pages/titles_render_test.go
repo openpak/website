@@ -94,8 +94,12 @@ func TestTitlesVoteGating(t *testing.T) {
 			t.Errorf("non-votable beta title must not show %q", forbidden)
 		}
 	}
-	// Its details dialog: every Switch client, a report form, and a CeX search.
-	for _, want := range []string{`id="t-8"`, `href="#t-8"`, `action="/titles/report"`, `value="Ryujinx|Linux"`, `value="Switch|hardware"`, "Untested", "https://webuy.com/search?stext=Mario&#43;Kart&#43;8&#43;Deluxe", "/help?category=switch&amp;message=Mario", "Report a problem", "https://www.gamestop.com/search/?q=Mario&#43;Kart&#43;8&#43;Deluxe"} {
+	// Its details dialog: every Switch client, CeX and GameStop, and no report form (reports
+	// are switched off).
+	if bytes.Contains([]byte(beta), []byte(`/titles/report`)) {
+		t.Error("the report form is switched off")
+	}
+	for _, want := range []string{`id="t-8"`, `href="#t-8"`, `title="Ryujinx · Linux: Untested"`, `title="Switch: Untested"`, "https://webuy.com/search?stext=Mario&#43;Kart&#43;8&#43;Deluxe", "/help?category=switch&amp;message=Mario", "Report a problem", "https://www.gamestop.com/search/?q=Mario&#43;Kart&#43;8&#43;Deluxe"} {
 		if !bytes.Contains([]byte(beta), []byte(want)) {
 			t.Errorf("beta dialog missing %q", want)
 		}

@@ -231,6 +231,8 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 	}
 	sort.Strings(consoles)
 	sort.Strings(statuses)
+	// ponytail: player reports are switched off (no form, no route); the ledger and any
+	// reports already in it stay, so turning them back on is the form and a handler.
 	tallies, err := s.DB.ListCompat(r.Context())
 	if err != nil {
 		s.log.Error("list compat", "err", err)
@@ -494,9 +496,6 @@ func (t titleRow) Clients() []compatClient {
 	return out
 }
 
-// Combo is the report form's value for the cell, parsed back by parseCombo.
-func (c compatCell) Combo() string { return c.Client + "|" + c.OS }
-
 // hardware is the OS of a console: the game runs on the machine itself.
 const hardware = "hardware"
 
@@ -605,55 +604,6 @@ func playClient(client, os string) (string, string) {
 		return c, oses[os]
 	}
 	return "", ""
-}
-
-// parseCombo checks a report's "client|os" against the title's console, so the
-// ledger only ever holds combinations the page offers.
-func parseCombo(console, combo string) (client, os string, ok bool) {
-	client, os, found := strings.Cut(combo, "|")
-	if !found {
-		return "", "", false
-	}
-	for _, p := range playTargetsOf(console) {
-		if p.Client == client && slices.Contains(p.OSes, os) {
-			return client, os, true
-		}
-	}
-	return "", "", false
-}
-
-// handleCompatReport records "it worked" or "it did not" for one title on one
-// client and OS, then reopens that title's dialog. Only titles with a server
-// take reports: a requestable one cannot be played online yet.
-func (s *Server) handleCompatReport(w http.ResponseWriter, r *http.Request) {
-	v, ok := s.postGuard(w, r)
-	if !ok {
-		return
-	}
-	id, _ := strconv.ParseInt(r.PostFormValue("id"), 10, 64)
-	reqs, err := s.DB.ListRequests(r.Context(), "title", "")
-	if err != nil {
-		s.log.Error("list requests", "err", err)
-		http.Error(w, "could not save the report", http.StatusInternalServerError)
-		return
-	}
-	i := slices.IndexFunc(reqs, func(t store.Request) bool { return t.ID == id })
-	if i < 0 || reqs[i].Votable() {
-		http.Error(w, "no such title", http.StatusBadRequest)
-		return
-	}
-	client, os, ok := parseCombo(reqs[i].Console, r.PostFormValue("combo"))
-	works := r.PostFormValue("works")
-	if !ok || (works != "yes" && works != "no") {
-		http.Error(w, "pick a client and whether it worked", http.StatusBadRequest)
-		return
-	}
-	if err := s.DB.ReportCompat(r.Context(), id, v.AccountID, client, os, works == "yes"); err != nil {
-		s.log.Error("report compat", "id", id, "err", err)
-		http.Error(w, "could not save the report", http.StatusInternalServerError)
-		return
-	}
-	http.Redirect(w, r, "/titles#t-"+strconv.FormatInt(id, 10), http.StatusSeeOther)
 }
 
 // gamestopURL is a GameStop search. Only the US store: its other storefronts closed
