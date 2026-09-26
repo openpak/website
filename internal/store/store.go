@@ -108,6 +108,7 @@ type Store interface {
 	CrashStore
 	OpenPakCodeStore
 	CompatStore
+	ShopStore
 }
 
 // PushToken is one app install that can be notified.

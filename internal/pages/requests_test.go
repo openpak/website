@@ -90,3 +90,37 @@ func TestVoteRejectsBadBackRedirect(t *testing.T) {
 		}
 	}
 }
+
+// The admin form stores product links, refuses one off the shop's site, and is
+// admins only.
+func TestSetShopLinksThroughTheSite(t *testing.T) {
+	s, fc, db := newTestServer(t)
+	emailA, emailB := seedTwoAccounts(fc)
+	s.AdminAccountIDs = []string{"acct-" + emailA}
+	ctx := context.Background()
+	if err := db.SeedRequests(ctx, []store.Request{{Kind: "title", Name: "Mario Kart 7", Console: "3DS", Status: "live", Sort: 1}}); err != nil {
+		t.Fatal(err)
+	}
+	reqs, _ := db.ListRequests(ctx, "title", "")
+	id := strconv.FormatInt(reqs[0].ID, 10)
+	gs := "https://www.gamestop.com/video-games/nintendo-3ds/products/mario-kart-7/10095226.html"
+
+	if got := authedRequest(s, login(t, s, emailB, "password-B-1"), http.MethodPost, "/admin/titles/shops", &url.Values{"id": {id}, "gamestop": {gs}}); got.Code != http.StatusForbidden {
+		t.Fatalf("non-admin: %d", got.Code)
+	}
+	admin := login(t, s, emailA, "password-A-1")
+	if got := authedRequest(s, admin, http.MethodPost, "/admin/titles/shops", &url.Values{"id": {id}, "gamestop": {"https://evil.test/"}}); got.Code != http.StatusBadRequest {
+		t.Fatalf("off-site link: %d", got.Code)
+	}
+	if got := authedRequest(s, admin, http.MethodPost, "/admin/titles/shops", &url.Values{"id": {id}, "gamestop": {gs}}); got.Code != http.StatusSeeOther {
+		t.Fatalf("save: %d %s", got.Code, got.Body.String())
+	}
+	if page := authedRequest(s, admin, http.MethodGet, "/titles", nil).Body.String(); !bytes.Contains([]byte(page), []byte(`href="`+gs+`"`)) {
+		t.Error("the stored GameStop page is not linked")
+	}
+	// Blank clears it again.
+	authedRequest(s, admin, http.MethodPost, "/admin/titles/shops", &url.Values{"id": {id}})
+	if links, _ := db.ListShopLinks(ctx); len(links) != 0 {
+		t.Fatalf("cleared links: %+v", links)
+	}
+}

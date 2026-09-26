@@ -237,6 +237,10 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		s.log.Error("list compat", "err", err)
 	}
+	links, err := s.DB.ListShopLinks(r.Context())
+	if err != nil {
+		s.log.Error("list shop links", "err", err)
+	}
 	var plays []core.PlayTally
 	if s.Playtime != nil {
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
@@ -255,7 +259,7 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 		ByVotes     bool
 		Back        string
 	}
-	s.render(w, http.StatusOK, "titles.html", titlesPage{d, titleRows(reqs, tallies, plays), requestable, consoles, statuses, allStatuses, byVotes, backPath("/titles", byVotes)})
+	s.render(w, http.StatusOK, "titles.html", titlesPage{d, titleRows(reqs, tallies, plays, links), requestable, consoles, statuses, allStatuses, byVotes, backPath("/titles", byVotes)})
 }
 
 // allStatuses is every status the title forms offer, in rank order. The word means the same
@@ -374,6 +378,7 @@ func badgeClass(status string) string {
 type titleRow struct {
 	store.Request
 	Compat []compatCell
+	links  map[string]string // shop key -> product page
 }
 
 // compatCell is one client and OS for a title: what players reported, and how long it has
@@ -541,7 +546,7 @@ func playTargetsOf(console string) []playTarget {
 
 // titleRows pairs every title with its full client×OS grid, reports filled in.
 // ponytail: every title's dialog is rendered into the page; fetch it per title if the list grows into the thousands.
-func titleRows(reqs []store.Request, tallies []store.CompatTally, plays []core.PlayTally) []titleRow {
+func titleRows(reqs []store.Request, tallies []store.CompatTally, plays []core.PlayTally, links []store.ShopLink) []titleRow {
 	type key struct {
 		id         int64
 		client, os string
@@ -574,9 +579,17 @@ func titleRows(reqs []store.Request, tallies []store.CompatTally, plays []core.P
 		cur.longest = max(cur.longest, p.Longest)
 		playedBy[k] = cur
 	}
+	linksOf := map[int64]map[string]string{}
+	for _, l := range links {
+		if linksOf[l.RequestID] == nil {
+			linksOf[l.RequestID] = map[string]string{}
+		}
+		linksOf[l.RequestID][l.Shop] = l.URL
+	}
 	out := make([]titleRow, len(reqs))
 	for i, r := range reqs {
 		out[i].Request = r
+		out[i].links = linksOf[r.ID]
 		for _, p := range playTargetsOf(r.Console) {
 			for _, os := range p.OSes {
 				k := key{r.ID, p.Client, os}
@@ -606,14 +619,104 @@ func playClient(client, os string) (string, string) {
 	return "", ""
 }
 
-// gamestopURL is a GameStop search. Only the US store: its other storefronts closed
-// or became other shops (Italy is GameLife now).
-func gamestopURL(name string) string {
-	return "https://www.gamestop.com/search/?q=" + url.QueryEscape(name)
+// shop is a used-game retailer the titles dialog links. A title's own product page
+// there (title_shop_links, pasted by an admin in the dialog) wins; until one exists
+// the button searches instead. ponytail: links are by hand because all three shops
+// sit behind Cloudflare, which challenges any lookup from a script after a few
+// requests; a shop with an open catalogue API could be filled automatically.
+type shop struct {
+	Key, Name, Domain string
+	search            func(name, console string) string
 }
 
-// cexURL is a CeX search for the game, where it can be bought second hand. webuy.com
-// sends a visitor to their own country's store.
-func cexURL(name string) string {
-	return "https://webuy.com/search?stext=" + url.QueryEscape(name)
+var shops = []shop{
+	// webuy.com sends a visitor to their own country's CeX.
+	{"cex", "CeX", "webuy.com", func(name, _ string) string {
+		return "https://webuy.com/search?stext=" + url.QueryEscape(name)
+	}},
+	// GameStop (US) and Micromania (its French chain) sit behind a bot wall and
+	// their own searches are poor, so the fallback is a Google site search, which
+	// the visitor's own browser runs.
+	{"gamestop", "GameStop", "gamestop.com", googleSite("gamestop.com")},
+	{"micromania", "Micromania", "micromania.fr", googleSite("micromania.fr")},
+}
+
+func googleSite(domain string) func(name, console string) string {
+	return func(name, console string) string {
+		return "https://www.google.com/search?q=" + url.QueryEscape("site:"+domain+` "`+name+`" `+console)
+	}
+}
+
+// shopLink is one buy button: the product page when known, else the search.
+type shopLink struct {
+	Key, Name, URL string
+	Product        bool // URL is the game's own page, not a search
+}
+
+// Shops is the title's buy buttons, in shops order.
+func (t titleRow) Shops() []shopLink {
+	out := make([]shopLink, len(shops))
+	for i, sh := range shops {
+		if u := t.links[sh.Key]; u != "" {
+			out[i] = shopLink{sh.Key, sh.Name, u, true}
+		} else {
+			out[i] = shopLink{sh.Key, sh.Name, sh.search(t.Name, t.Console), false}
+		}
+	}
+	return out
+}
+
+// shopURL accepts a product link for a shop only on that shop's own site, over
+// https, so an admin form cannot put an arbitrary link on a public page.
+func shopURL(key, raw string) (string, bool) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return "", true
+	}
+	i := slices.IndexFunc(shops, func(sh shop) bool { return sh.Key == key })
+	u, err := url.Parse(raw)
+	if i < 0 || err != nil || u.Scheme != "https" || u.User != nil {
+		return "", false
+	}
+	host := strings.ToLower(u.Hostname())
+	if host != shops[i].Domain && !strings.HasSuffix(host, "."+shops[i].Domain) {
+		return "", false
+	}
+	return u.String(), true
+}
+
+// handleSetShopLinks is the admin form in a title's dialog: one product link per
+// shop, blank to fall back to the search.
+func (s *Server) handleSetShopLinks(w http.ResponseWriter, r *http.Request) {
+	v, ok := s.postGuard(w, r)
+	if !ok {
+		return
+	}
+	if !slices.Contains(s.AdminAccountIDs, v.AccountID) {
+		http.Error(w, "admins only", http.StatusForbidden)
+		return
+	}
+	id, _ := strconv.ParseInt(r.PostFormValue("id"), 10, 64)
+	links := map[string]string{}
+	for _, sh := range shops {
+		u, ok := shopURL(sh.Key, r.PostFormValue(sh.Key))
+		if !ok {
+			http.Error(w, sh.Name+": a link on "+sh.Domain+" over https, or blank", http.StatusBadRequest)
+			return
+		}
+		links[sh.Key] = u
+	}
+	for _, sh := range shops {
+		if err := s.DB.SetShopLink(r.Context(), id, sh.Key, links[sh.Key]); err != nil {
+			if errors.Is(err, store.ErrNotFound) {
+				http.Error(w, "no such title", http.StatusBadRequest)
+				return
+			}
+			s.log.Error("set shop link", "id", id, "err", err)
+			http.Error(w, "could not save the links", http.StatusInternalServerError)
+			return
+		}
+	}
+	_ = s.DB.AddAudit(r.Context(), v.AccountID, "title.shops", strconv.FormatInt(id, 10))
+	http.Redirect(w, r, "/titles#t-"+strconv.FormatInt(id, 10), http.StatusSeeOther)
 }

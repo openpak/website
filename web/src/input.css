@@ -600,10 +600,10 @@
   .tdialog .icon { border-radius: 12px; flex: none; }
   .tdialog .field { width: auto; }
   .tdialog h3 { margin: 1.25rem 0 .25rem; }
-  /* Button rows fill the dialog in equal columns and stack once a column would get
-     narrower than its label, so they fit any screen without wrapping unevenly. */
-  .tdialog .actions { display: grid; gap: 8px; margin-top: 8px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); }
-  .tdialog .actions .btn { width: 100%; white-space: normal; text-align: center; }
+  /* Button rows share the dialog's width evenly and wrap once a button would get narrower
+     than its label; a button left alone on a row stretches across it. */
+  .tdialog .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .tdialog .actions > * { flex: 1 1 9rem; white-space: normal; text-align: center; }
   .tdialog .actions svg { flex: none; opacity: .7; }
   .tdialog .actions.foot { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
   /* Compatibility: a row per console or emulator, a mark per OS. Colour means someone

@@ -3,6 +3,14 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.60.0 — 2026-09-26
+
+- Titles: buy buttons for CeX, GameStop and Micromania link the game's own product page when one
+  is stored (table `title_shop_links`, pasted by an admin in the title's dialog — only https links on
+  that shop's own site are accepted) and search until then: CeX's own search, a Google site search
+  for GameStop and Micromania. ↗ marks a product page, a magnifier a search. All three shops sit
+  behind Cloudflare, which challenges scripted lookups, so the links are not filled automatically.
+
 ## v0.59.2 — 2026-09-26
 
 - Titles: the dialog's buttons sit in even columns that fill its width and stack full-width on a
