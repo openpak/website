@@ -22,7 +22,7 @@
     {{range .}}
     <li class="titles-row tcard" data-name="{{.Name}}" data-console="{{.Console}}" data-status="{{.Status}}">
       <span class="console lg"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>
-      <span class="t"><b>{{.Name}}</b><span class="sub">{{.Console}}</span></span>
+      <a class="t" href="#t-{{.ID}}"><b>{{.Name}}</b><span class="sub">{{.Console}}</span></a>
       <span class="end">
         <span class="badge {{badgeClass .Status}}">{{.Status}}</span>
         {{if or (eq .Status "requestable") (eq .Status "planned")}}
@@ -55,6 +55,59 @@
     </li>
     {{end}}
   </ul>
+  {{range .}}
+  <dialog id="t-{{.ID}}" class="card tdialog" aria-labelledby="t-{{.ID}}-h">
+    <div class="flex items-center gap-3">
+      {{if and (eq .Console "Switch") .TitleID}}<img class="icon" src="/titles/icon/{{.TitleID}}" alt="" width="64" height="64" loading="lazy">
+      {{else}}<span class="console lg"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>{{end}}
+      <div class="flex-1 min-w-0"><h2 id="t-{{.ID}}-h" class="m-0">{{.Name}}</h2><span class="text-sm text-muted">{{.Console}}</span></div>
+      <span class="badge {{badgeClass .Status}}">{{.Status}}</span>
+    </div>
+    <dl class="facts">
+      {{with .Category}}<dt>{{t $.Lang "titles.info.category"}}</dt><dd>{{.}}</dd>{{end}}
+      {{with .Backend}}<dt>{{t $.Lang "titles.info.backend"}}</dt><dd>{{.}}</dd>{{end}}
+      {{with .TitleIDs}}<dt>{{t $.Lang "titles.info.ids"}}</dt><dd>{{range $i, $id := .}}{{if $i}}, {{end}}<code>{{$id}}</code>{{end}}</dd>{{end}}
+      {{with .Notes}}<dt>{{t $.Lang "titles.info.notes"}}</dt><dd>{{.}}</dd>{{end}}
+      {{if not .DateAdded.IsZero}}<dt>{{t $.Lang "titles.info.added"}}</dt><dd>{{date $.Lang .DateAdded}}</dd>{{end}}
+      {{if not .LastUpdated.IsZero}}<dt>{{t $.Lang "titles.info.updated"}}</dt><dd>{{date $.Lang .LastUpdated}}</dd>{{end}}
+    </dl>
+
+    <h3>{{t $.Lang "titles.compat.title"}}</h3>
+    <p class="text-sm text-muted">{{t $.Lang "titles.compat.sub"}}</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>{{t $.Lang "titles.compat.client"}}</th><th>{{t $.Lang "titles.compat.os"}}</th><th>{{t $.Lang "titles.compat.result"}}</th></tr></thead>
+      <tbody>{{range .Compat}}
+        <tr><td><span class="cl">{{t $.Lang "titles.compat.client"}}: </span>{{.Client}}</td>
+          <td><span class="cl">{{t $.Lang "titles.compat.os"}}: </span>{{if eq .OS "hardware"}}{{t $.Lang "titles.compat.hardware"}}{{else}}{{.OS}}{{end}}</td>
+          <td>{{if and (eq .Works 0) (eq .Broken 0)}}<span class="badge">{{t $.Lang "titles.compat.untested"}}</span>
+            {{- else if eq .Broken 0}}<span class="badge ok">{{t $.Lang "titles.compat.works"}} · {{.Works}}</span>
+            {{- else if eq .Works 0}}<span class="badge bad">{{t $.Lang "titles.compat.broken"}} · {{.Broken}}</span>
+            {{- else}}<span class="badge warn">{{t $.Lang "titles.compat.works"}} · {{.Works}} / {{t $.Lang "titles.compat.broken"}} · {{.Broken}}</span>{{end}}</td></tr>
+      {{end}}</tbody>
+    </table></div>
+
+    {{if not .Votable}}
+    {{if $.User}}
+    <form method="post" action="/titles/report" class="mt-3 flex flex-wrap items-end gap-2">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <input type="hidden" name="id" value="{{.ID}}">
+      <label class="flex flex-col gap-1 text-sm text-ink-2"><span>{{t $.Lang "titles.compat.report"}}</span>
+        <select name="combo" class="field" required>{{range .Compat}}<option value="{{.Combo}}">{{.Client}} · {{if eq .OS "hardware"}}{{t $.Lang "titles.compat.hardware"}}{{else}}{{.OS}}{{end}}</option>{{end}}</select></label>
+      <button type="submit" name="works" value="yes" class="btn">{{t $.Lang "titles.compat.yes"}}</button>
+      <button type="submit" name="works" value="no" class="btn">{{t $.Lang "titles.compat.no"}}</button>
+    </form>
+    {{else}}<p class="mt-3 text-sm"><a href="/login">{{t $.Lang "titles.compat.signin"}}</a></p>{{end}}
+    {{end}}
+
+    <h3 class="mt-5">{{t $.Lang "titles.buy.title"}}</h3>
+    <div class="flex flex-wrap items-center gap-2">
+      <a class="btn primary cex" href="{{cexURL .Name}}" target="_blank" rel="noopener noreferrer">{{t $.Lang "titles.buy.cex"}}</a>
+      <select class="field cex-region" aria-label="{{t $.Lang "titles.buy.region"}}">{{range cexRegions}}<option value="{{.}}">{{if .}}{{.}}.webuy.com{{else}}{{t $.Lang "titles.buy.global"}}{{end}}</option>{{end}}</select>
+    </div>
+
+    <div class="mt-5 flex justify-end"><button type="button" class="btn" data-close>{{t $.Lang "titles.request.close"}}</button></div>
+  </dialog>
+  {{end}}
   <p id="titles-empty" class="card p-6 text-center text-muted" hidden>{{t $.Lang "titles.none"}}</p>
   {{else}}<p class="card p-4 text-muted">{{t $.Lang "landing.titles.none"}}</p>{{end}}
 

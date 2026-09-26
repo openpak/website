@@ -62,3 +62,43 @@
     b.addEventListener("click", function () { dialog.close(); });
   });
 })();
+
+// A title's details open from its row link (#t-<id>), so the dialog can be linked to and a
+// compatibility report lands back on it. Closing drops the hash.
+(function () {
+  function sync() {
+    var d = /^#t-\d+$/.test(location.hash) && document.getElementById(location.hash.slice(1));
+    if (d && d.showModal && !d.open) d.showModal();
+  }
+  Array.prototype.forEach.call(document.querySelectorAll("dialog.tdialog"), function (d) {
+    d.addEventListener("close", function () {
+      if (location.hash === "#" + d.id) history.replaceState(null, "", location.pathname + location.search);
+    });
+    // A click on the backdrop lands on the dialog itself.
+    d.addEventListener("click", function (e) { if (e.target === d) d.close(); });
+    d.querySelector("[data-close]").addEventListener("click", function () { d.close(); });
+  });
+  window.addEventListener("hashchange", sync);
+  sync();
+})();
+
+// CeX links default to webuy.com, which picks the visitor's country; a chosen storefront is
+// remembered across titles and visits.
+(function () {
+  var links = document.querySelectorAll("a.cex"), picks = document.querySelectorAll("select.cex-region");
+  if (!links.length) return;
+  function set(region) {
+    var host = region ? region + ".webuy.com" : "webuy.com";
+    Array.prototype.forEach.call(links, function (a) { var u = new URL(a.href); u.host = host; a.href = u; });
+    Array.prototype.forEach.call(picks, function (s) { s.value = region; });
+  }
+  Array.prototype.forEach.call(picks, function (s) {
+    s.addEventListener("change", function () {
+      try { localStorage.setItem("cex-region", s.value); } catch (e) {}
+      set(s.value);
+    });
+  });
+  var saved = "";
+  try { saved = localStorage.getItem("cex-region") || ""; } catch (e) {}
+  if (saved && picks[0].querySelector('option[value="' + saved + '"]')) set(saved);
+})();

@@ -3,6 +3,15 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.58.0 — 2026-09-26
+
+- Titles: clicking a title opens its details (category, network, title ids, notes, dates), a
+  compatibility grid of every console, backwards-compatible console and emulator × OS that can
+  play it (untested until someone reports), a signed-in "it worked / it did not" report per
+  combination (one per account, latest wins; table `title_reports`), and a CeX search link —
+  webuy.com by default, which sends a visitor to their own country's store, or a remembered
+  storefront. `#t-<id>` links straight to a title.
+
 ## v0.57.7 — 2026-09-25
 
 - Network status lists Risk of Rain Returns (switch-nexd, 23002). It went live on block 23000

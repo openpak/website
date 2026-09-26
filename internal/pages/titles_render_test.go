@@ -9,7 +9,7 @@ import (
 
 type titlesPage struct {
 	baseData
-	Titles      []store.Request
+	Titles      []titleRow
 	Requestable []store.Request
 	Consoles    []string
 	Statuses    []string
@@ -42,7 +42,7 @@ func TestTitlesVoteGating(t *testing.T) {
 
 	// Signed out, not-started: a Request affordance to sign in, no form, and a
 	// console logo for the row.
-	out := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles"}, votableRow, nil, []string{"Switch"}, []string{"requestable"}, nil, false, "/titles"})
+	out := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles"}, titleRows(votableRow, nil), nil, []string{"Switch"}, []string{"requestable"}, nil, false, "/titles"})
 	for _, want := range []string{"Tetris 99", "/static/titles.js", "Sign in to request", "Request", "/static/consoles/switch.svg"} {
 		if !bytes.Contains([]byte(out), []byte(want)) {
 			t.Errorf("signed-out not-started missing %q", want)
@@ -54,7 +54,7 @@ func TestTitlesVoteGating(t *testing.T) {
 
 	// Signed in, not-started: a request form with the id and CSRF token, the
 	// "Requested" label (Voted), and NO vote count (ranking is admin-only).
-	in := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok"}, votableRow, nil, []string{"Switch"}, []string{"requestable"}, nil, false, "/titles"})
+	in := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok"}, titleRows(votableRow, nil), nil, []string{"Switch"}, []string{"requestable"}, nil, false, "/titles"})
 	for _, want := range []string{`action="/request/vote"`, `name="id" value="7"`, `value="tok"`, "Requested"} {
 		if !bytes.Contains([]byte(in), []byte(want)) {
 			t.Errorf("signed-in not-started missing %q", want)
@@ -66,7 +66,7 @@ func TestTitlesVoteGating(t *testing.T) {
 
 	// Admin, not-started: the vote count rides the button, and the scoreboard
 	// toggle is present.
-	adm := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok", Admin: true}, votableRow, nil, []string{"Switch"}, []string{"requestable"}, nil, false, "/titles"})
+	adm := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok", Admin: true}, titleRows(votableRow, nil), nil, []string{"Switch"}, []string{"requestable"}, nil, false, "/titles"})
 	for _, want := range []string{"· 3", `href="/titles?sort=votes"`} {
 		if !bytes.Contains([]byte(adm), []byte(want)) {
 			t.Errorf("admin view missing %q", want)
@@ -74,7 +74,7 @@ func TestTitlesVoteGating(t *testing.T) {
 	}
 
 	// Signed in, alpha: a status pill, never a request form (alpha is started).
-	al := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok"}, alphaRow, nil, []string{"Switch"}, []string{"alpha"}, nil, false, "/titles"})
+	al := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok"}, titleRows(alphaRow, nil), nil, []string{"Switch"}, []string{"alpha"}, nil, false, "/titles"})
 	if !bytes.Contains([]byte(al), []byte(">alpha<")) {
 		t.Error("alpha row should show its status pill")
 	}
@@ -83,13 +83,19 @@ func TestTitlesVoteGating(t *testing.T) {
 	}
 
 	// Signed in, NON-votable (beta): status shown, but no request UI at all.
-	beta := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok"}, betaRow, nil, []string{"Switch"}, []string{"beta"}, nil, false, "/titles"})
+	beta := renderTitles(t, titlesPage{baseData{Lang: "en", Path: "/titles", User: &viewUser{ID: "acct-a"}, CSRF: "tok"}, titleRows(betaRow, nil), nil, []string{"Switch"}, []string{"beta"}, nil, false, "/titles"})
 	if !bytes.Contains([]byte(beta), []byte("Mario Kart 8 Deluxe")) || !bytes.Contains([]byte(beta), []byte(">beta<")) {
 		t.Error("beta row should still show name and status")
 	}
-	for _, forbidden := range []string{`action="/request/vote"`, "Sign in to request", `value="8"`} {
+	for _, forbidden := range []string{`action="/request/vote"`, "Sign in to request"} {
 		if bytes.Contains([]byte(beta), []byte(forbidden)) {
 			t.Errorf("non-votable beta title must not show %q", forbidden)
+		}
+	}
+	// Its details dialog: every Switch client, a report form, and a CeX search.
+	for _, want := range []string{`id="t-8"`, `href="#t-8"`, `action="/titles/report"`, `value="Ryujinx|Linux"`, `value="Switch|hardware"`, "Untested", "https://webuy.com/search?stext=Mario&#43;Kart&#43;8&#43;Deluxe"} {
+		if !bytes.Contains([]byte(beta), []byte(want)) {
+			t.Errorf("beta dialog missing %q", want)
 		}
 	}
 }

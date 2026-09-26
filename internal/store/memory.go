@@ -17,6 +17,7 @@ type Memory struct {
 	requests    []Request
 	changes     []RequestChange
 	votes       map[int64]map[string]bool // request id -> account id -> voted
+	compat      map[compatKey]bool        // one verdict per account per title, client and OS
 	nextReqID   int64
 	audit       []AuditEntry
 	auditSeq    int64

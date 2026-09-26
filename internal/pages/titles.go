@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"net/url"
 	"slices"
 	"sort"
 	"strconv"
@@ -228,9 +229,13 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 	}
 	sort.Strings(consoles)
 	sort.Strings(statuses)
+	tallies, err := s.DB.ListCompat(r.Context())
+	if err != nil {
+		s.log.Error("list compat", "err", err)
+	}
 	type titlesPage struct {
 		baseData
-		Titles      []store.Request
+		Titles      []titleRow
 		Requestable []store.Request
 		Consoles    []string
 		Statuses    []string
@@ -238,7 +243,7 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 		ByVotes     bool
 		Back        string
 	}
-	s.render(w, http.StatusOK, "titles.html", titlesPage{d, reqs, requestable, consoles, statuses, allStatuses, byVotes, backPath("/titles", byVotes)})
+	s.render(w, http.StatusOK, "titles.html", titlesPage{d, titleRows(reqs, tallies), requestable, consoles, statuses, allStatuses, byVotes, backPath("/titles", byVotes)})
 }
 
 // allStatuses is every status the title forms offer, in rank order. The word means the same
@@ -350,4 +355,146 @@ func badgeClass(status string) string {
 	default:
 		return ""
 	}
+}
+
+// titleRow is one title on the titles page with what its details dialog shows:
+// every way to play it and what players reported for each.
+type titleRow struct {
+	store.Request
+	Compat []compatCell
+}
+
+// compatCell is one client and OS for a title. Works and Broken both zero is untested.
+type compatCell struct {
+	Client, OS    string
+	Works, Broken int
+}
+
+// Combo is the report form's value for the cell, parsed back by parseCombo.
+func (c compatCell) Combo() string { return c.Client + "|" + c.OS }
+
+// hardware is the OS of a console: the game runs on the machine itself.
+const hardware = "hardware"
+
+var (
+	desktop    = []string{"Windows", "Linux", "macOS"}
+	allOSes    = []string{"Windows", "Linux", "macOS", "Android"}
+	noMacOSes  = []string{"Windows", "Linux", "Android"}
+	onHardware = []string{hardware}
+)
+
+// playTarget is one way to run a console's games: the console itself, a console
+// that plays them backwards-compatibly, or an emulator on the OSes it ships for.
+type playTarget struct {
+	Client string
+	OSes   []string
+}
+
+// playTargets lists, per console, every client a player can report on. OpenPak's
+// own emulator forks come first; a console with none here offers only itself.
+// Keep in step with the emulators OpenPak ships (see /downloads).
+var playTargets = map[string][]playTarget{
+	"Switch":        {{"Switch", onHardware}, {"Switch 2", onHardware}, {"Ryujinx", desktop}, {"Eden", allOSes}, {"Citron", noMacOSes}},
+	"Wii U":         {{"Wii U", onHardware}, {"Cemu", desktop}},
+	"3DS":           {{"3DS", onHardware}, {"Azahar", allOSes}},
+	"Wii":           {{"Wii", onHardware}, {"Wii U", onHardware}, {"Dolphin", allOSes}},
+	"DS":            {{"DS", onHardware}, {"3DS", onHardware}, {"melonDS", desktop}},
+	"Xbox":          {{"Xbox", onHardware}, {"Xbox 360", onHardware}, {"xemu", desktop}},
+	"Xbox 360":      {{"Xbox 360", onHardware}, {"Xbox One", onHardware}, {"Xenia", []string{"Windows", "Linux"}}},
+	"PS2":           {{"PS2", onHardware}, {"PCSX2", desktop}},
+	"PS3":           {{"PS3", onHardware}, {"RPCS3", desktop}},
+	"PlayStation 3": {{"PS3", onHardware}, {"RPCS3", desktop}},
+	"PSP":           {{"PSP", onHardware}, {"PPSSPP", allOSes}},
+	"Vita":          {{"Vita", onHardware}, {"Vita3K", allOSes}},
+}
+
+// playTargetsOf is a console's playTargets; a console missing from the table still
+// has the console itself, so its dialog is never empty.
+func playTargetsOf(console string) []playTarget {
+	if p, ok := playTargets[console]; ok {
+		return p
+	}
+	return []playTarget{{console, onHardware}}
+}
+
+// titleRows pairs every title with its full client×OS grid, reports filled in.
+// ponytail: every title's dialog is rendered into the page; fetch it per title if the list grows into the thousands.
+func titleRows(reqs []store.Request, tallies []store.CompatTally) []titleRow {
+	type key struct {
+		id         int64
+		client, os string
+	}
+	byKey := make(map[key]store.CompatTally, len(tallies))
+	for _, t := range tallies {
+		byKey[key{t.RequestID, t.Client, t.OS}] = t
+	}
+	out := make([]titleRow, len(reqs))
+	for i, r := range reqs {
+		out[i].Request = r
+		for _, p := range playTargetsOf(r.Console) {
+			for _, os := range p.OSes {
+				t := byKey[key{r.ID, p.Client, os}]
+				out[i].Compat = append(out[i].Compat, compatCell{p.Client, os, t.Works, t.Broken})
+			}
+		}
+	}
+	return out
+}
+
+// parseCombo checks a report's "client|os" against the title's console, so the
+// ledger only ever holds combinations the page offers.
+func parseCombo(console, combo string) (client, os string, ok bool) {
+	client, os, found := strings.Cut(combo, "|")
+	if !found {
+		return "", "", false
+	}
+	for _, p := range playTargetsOf(console) {
+		if p.Client == client && slices.Contains(p.OSes, os) {
+			return client, os, true
+		}
+	}
+	return "", "", false
+}
+
+// handleCompatReport records "it worked" or "it did not" for one title on one
+// client and OS, then reopens that title's dialog. Only titles with a server
+// take reports: a requestable one cannot be played online yet.
+func (s *Server) handleCompatReport(w http.ResponseWriter, r *http.Request) {
+	v, ok := s.postGuard(w, r)
+	if !ok {
+		return
+	}
+	id, _ := strconv.ParseInt(r.PostFormValue("id"), 10, 64)
+	reqs, err := s.DB.ListRequests(r.Context(), "title", "")
+	if err != nil {
+		s.log.Error("list requests", "err", err)
+		http.Error(w, "could not save the report", http.StatusInternalServerError)
+		return
+	}
+	i := slices.IndexFunc(reqs, func(t store.Request) bool { return t.ID == id })
+	if i < 0 || reqs[i].Votable() {
+		http.Error(w, "no such title", http.StatusBadRequest)
+		return
+	}
+	client, os, ok := parseCombo(reqs[i].Console, r.PostFormValue("combo"))
+	works := r.PostFormValue("works")
+	if !ok || (works != "yes" && works != "no") {
+		http.Error(w, "pick a client and whether it worked", http.StatusBadRequest)
+		return
+	}
+	if err := s.DB.ReportCompat(r.Context(), id, v.AccountID, client, os, works == "yes"); err != nil {
+		s.log.Error("report compat", "id", id, "err", err)
+		http.Error(w, "could not save the report", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/titles#t-"+strconv.FormatInt(id, 10), http.StatusSeeOther)
+}
+
+// cexRegions are CeX's storefronts. "" is webuy.com, which sends a visitor to
+// their own country's store, so it is the default.
+var cexRegions = []string{"", "uk", "ie", "es", "pt", "nl", "it", "pl", "mx", "au", "in"}
+
+// cexURL is a CeX search for the game, where it can be bought second hand.
+func cexURL(name string) string {
+	return "https://webuy.com/search?stext=" + url.QueryEscape(name)
 }

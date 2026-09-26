@@ -90,3 +90,44 @@ func TestVoteRejectsBadBackRedirect(t *testing.T) {
 		}
 	}
 }
+
+// A compatibility report end to end: a valid combination is stored and shows on the
+// page as a tally; one the title's console does not offer, or a requestable title, is refused.
+func TestCompatReportThroughTheSite(t *testing.T) {
+	s, fc, db := newTestServer(t)
+	emailA, _ := seedTwoAccounts(fc)
+	ctx := context.Background()
+	if err := db.SeedRequests(ctx, []store.Request{
+		{Kind: "title", Name: "Splatoon 3", Console: "Switch", Status: "beta", Sort: 1},
+		{Kind: "title", Name: "Tetris 99", Console: "Switch", Status: "requestable", Sort: 2},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	reqs, _ := db.ListRequests(ctx, "title", "")
+	id := func(i int) string { return strconv.FormatInt(reqs[i].ID, 10) }
+	rec := login(t, s, emailA, "password-A-1")
+
+	for _, c := range []struct {
+		id, combo, works string
+		code             int
+	}{
+		{id(0), "Eden|Android", "yes", http.StatusSeeOther},
+		{id(0), "Eden|Android", "no", http.StatusSeeOther}, // replaces the first
+		{id(0), "Cemu|Linux", "yes", http.StatusBadRequest},
+		{id(0), "Ryujinx|Android", "yes", http.StatusBadRequest},
+		{id(0), "Eden|Linux", "maybe", http.StatusBadRequest},
+		{id(1), "Eden|Linux", "yes", http.StatusBadRequest},
+	} {
+		got := authedRequest(s, rec, http.MethodPost, "/titles/report", &url.Values{"id": {c.id}, "combo": {c.combo}, "works": {c.works}})
+		if got.Code != c.code {
+			t.Errorf("%s %s %s: status %d, want %d", c.id, c.combo, c.works, got.Code, c.code)
+		}
+	}
+	tallies, _ := db.ListCompat(ctx)
+	if len(tallies) != 1 || tallies[0].Client != "Eden" || tallies[0].OS != "Android" || tallies[0].Works != 0 || tallies[0].Broken != 1 {
+		t.Fatalf("tallies = %+v, want one Eden/Android broken", tallies)
+	}
+	if page := authedRequest(s, rec, http.MethodGet, "/titles", nil).Body.String(); !bytes.Contains([]byte(page), []byte("Broken · 1")) {
+		t.Error("titles page does not show the report")
+	}
+}
