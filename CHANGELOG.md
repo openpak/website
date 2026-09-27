@@ -3,6 +3,21 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.64.0 — 2026-09-27
+
+- **Parental controls: a parent names each console** (nx-baas v0.48.0), so two under one account
+  can be told apart; the console never sends a name of its own. `PUT
+  /api/v1/me/parental-controls/{moonID}/name {"name"}` answers 204, 400 `invalid_name` over 32
+  characters (characters, not bytes) or with control characters, or 404. Surrounding whitespace
+  is trimmed and an empty name clears it. Until nx-baas stores names it answers 502
+  `service_unavailable` for a console the caller does manage.
+- `GET /api/v1/me/parental-controls`: `nickname` is now the name to show (the parent's, else
+  "Switch ···" and the last four of the serial number, else empty), and each console adds `named`
+  (the parent chose it), `serial_number` and `firmware` (either may be empty).
+- The page: a Rename button on each console (a form post, no password: a name is not a secret),
+  and the serial number and system version in the console's status panel when known. The wording
+  is the app's, in all six languages.
+
 ## v0.63.1 — 2026-09-27
 
 - Parental controls page: removing a console asks for the account password again (and the

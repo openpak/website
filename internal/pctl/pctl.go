@@ -15,9 +15,12 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 )
 
 type Client struct {
@@ -58,8 +61,12 @@ type Device struct {
 	UpdatedAt   int64    `json:"updated_at,omitempty"`
 	Owners      []string `json:"owners,omitempty"`
 	HasSetting  bool     `json:"has_setting"`
-	// Nickname is what the console calls itself; it may be empty.
-	Nickname string `json:"nickname"`
+	// Nickname is the name to show: the parent's (Named), else the end of the
+	// console's serial number, else "". The console never sends a name.
+	Nickname     string `json:"nickname"`
+	Named        bool   `json:"named"`
+	SerialNumber string `json:"serial_number"`
+	Firmware     string `json:"firmware"`
 	// Setting is the document as nx-baas serves it to the console.
 	Setting map[string]any `json:"setting,omitempty"`
 	Players []Player       `json:"players"`
@@ -182,6 +189,37 @@ func ValidPin(code string) bool {
 	return true
 }
 
+// ErrNameUnsupported is a nx-baas that cannot store a console's name yet: it
+// answers 404 for a console this account does manage.
+var ErrNameUnsupported = fmt.Errorf("naming a console is not available yet")
+
+// SetName names the console for its parent; "" clears it. The name never goes
+// to the console.
+func (c *Client) SetName(ctx context.Context, accountID, moonID, name string) error {
+	err := c.doJSON(ctx, http.MethodPut, devicePath(accountID, moonID, "/name"), map[string]string{"name": name}, nil)
+	var e *Error
+	if errors.As(err, &e) && e.Status == http.StatusNotFound {
+		if mine, lerr := c.manages(ctx, accountID, moonID); lerr != nil {
+			return lerr
+		} else if mine {
+			return ErrNameUnsupported
+		}
+	}
+	return err
+}
+
+// manages says whether moonID is one of this account's consoles.
+func (c *Client) manages(ctx context.Context, accountID, moonID string) (bool, error) {
+	devices, err := c.Devices(ctx, accountID)
+	return slices.ContainsFunc(devices, func(d Device) bool { return d.MoonID == moonID }), err
+}
+
+// ValidName is at most 32 characters and no control characters, as nx-baas
+// takes it; the caller trims it first.
+func ValidName(name string) bool {
+	return utf8.RuneCountInString(name) <= 32 && !strings.ContainsFunc(name, unicode.IsControl)
+}
+
 // Remove takes the console off this account's list. The console is not told.
 func (c *Client) Remove(ctx context.Context, accountID, moonID string) error {
 	return c.doJSON(ctx, http.MethodDelete, devicePath(accountID, moonID, ""), nil, nil)
@@ -211,14 +249,10 @@ func (c *Client) Activity(ctx context.Context, accountID, moonID string, days in
 	err := c.doJSON(ctx, http.MethodGet, devicePath(accountID, moonID, "/activity")+"&days="+strconv.Itoa(days), nil, &out)
 	var e *Error
 	if errors.As(err, &e) && e.Status == http.StatusNotFound {
-		devices, lerr := c.Devices(ctx, accountID)
-		if lerr != nil {
+		if mine, lerr := c.manages(ctx, accountID, moonID); lerr != nil {
 			return nil, lerr
-		}
-		for _, d := range devices {
-			if d.MoonID == moonID {
-				return []Day{}, nil
-			}
+		} else if mine {
+			return []Day{}, nil
 		}
 	}
 	if out.Days == nil {

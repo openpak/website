@@ -47,6 +47,9 @@ type parentalView struct {
 	PinSaved    string // the console that was just given a new PIN
 	RemoveOpen  string // the console whose removal is being confirmed
 	RemoveError string
+	RenameOpen  string // the console whose name form is open
+	RenameError string
+	Renamed     string // the console that was just named
 	Removed     bool
 }
 
@@ -74,7 +77,7 @@ func (s *Server) handleParental(w http.ResponseWriter, r *http.Request) {
 	}
 	q := r.URL.Query()
 	s.renderParental(w, r, v, parentalView{PinOpen: q.Get("pin"), NewPinOpen: q.Get("newpin"), RemoveOpen: q.Get("remove"),
-		Saved: q.Get("saved"), PinSaved: q.Get("pinset"), Removed: q.Has("removed")})
+		Saved: q.Get("saved"), PinSaved: q.Get("pinset"), Removed: q.Has("removed"), RenameOpen: q.Get("rename"), Renamed: q.Get("named")})
 }
 
 func (s *Server) renderParental(w http.ResponseWriter, r *http.Request, v *viewer, view parentalView) {
@@ -300,6 +303,38 @@ func (s *Server) handleParentalRemove(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, "/account/parental?removed=1", http.StatusSeeOther)
+}
+
+// handleParentalName names a console. No password: a name is not a secret and
+// cannot lock anyone out of anything.
+func (s *Server) handleParentalName(w http.ResponseWriter, r *http.Request) {
+	v, ok := s.postGuard(w, r)
+	if !ok {
+		return
+	}
+	lang := i18n.FromRequest(r)
+	moon, name := r.PostFormValue("moon_id"), strings.TrimSpace(r.PostFormValue("name"))
+	view := parentalView{RenameOpen: moon}
+	if !pctl.ValidName(name) {
+		view.RenameError = i18n.T(lang, "parental.name.invalid")
+		s.renderParental(w, r, v, view)
+		return
+	}
+	err := s.Parental.SetName(r.Context(), v.AccountID, moon, name)
+	var pe *pctl.Error
+	switch {
+	case errors.Is(err, pctl.ErrNameUnsupported):
+		view.RenameError = i18n.T(lang, "parental.name.unavailable")
+	case errors.As(err, &pe) && pe.Status == http.StatusBadRequest:
+		view.RenameError = i18n.T(lang, "parental.name.invalid")
+	case err != nil:
+		parentalWriteErr(w, r, s, err)
+		return
+	default:
+		http.Redirect(w, r, "/account/parental?named="+url.QueryEscape(moon)+"#c-"+url.QueryEscape(moon), http.StatusSeeOther)
+		return
+	}
+	s.renderParental(w, r, v, view)
 }
 
 // parentalWriteErr answers a write nx-baas did not take: a console that is not

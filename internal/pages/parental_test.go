@@ -128,7 +128,7 @@ func nxParentalWrites(t *testing.T, writes *[]string) *httptest.Server {
 				w.Write([]byte(`{"devices":[]}`))
 				return
 			}
-			w.Write([]byte(`{"devices":[{"moon_id":"00000000000000aa","paired":true,"synced":false,
+			w.Write([]byte(`{"devices":[{"moon_id":"00000000000000aa","paired":true,"synced":false,"nickname":"Switch ···0001","serial_number":"XAW10000000001","firmware":"22.5.0",
 				"setting":{"functionalRestrictionLevel":"NONE","customSettings":{"ugcRestriction":{"applications":{"0100E65002BB8000":{"restriction":"RESTRICTED"}}}}}}]}`))
 		case r.URL.Path == "/internal/pctl/devices/00000000000000aa/activity" && mine:
 			w.Write([]byte(`{"days":[{"date":"2026-09-27","total_minutes":95,"titles":[{"title_id":"0100e65002bb8000","minutes":60}]}]}`))
@@ -214,6 +214,19 @@ func TestParentalWritesNeedThePasswordAndTheConsole(t *testing.T) {
 		t.Fatalf("remove: %d %v", rec.Code, writes)
 	}
 
+	if !strings.Contains(page, "Switch ···0001") || !strings.Contains(page, "Serial number XAW10000000001") || !strings.Contains(page, "System version 22.5.0") {
+		t.Fatal("page lacks the console's name, serial or version")
+	}
+	name := func(n string) *httptest.ResponseRecorder {
+		return authedRequest(s, a, http.MethodPost, "/account/parental/name", &url.Values{"moon_id": {"00000000000000aa"}, "name": {n}})
+	}
+	if rec := name(strings.Repeat("a", 33)); !strings.Contains(rec.Body.String(), "A name can be up to 32 characters") || len(writes) != 3 {
+		t.Fatalf("33 characters: %v", writes)
+	}
+	if rec := name(" Living room "); rec.Code != http.StatusSeeOther || len(writes) != 4 || writes[3] != `PUT {"name":"Living room"}` {
+		t.Fatalf("rename without a password: %d %v", rec.Code, writes)
+	}
+
 	b := login(t, s, emailB, "password-B-1")
 	for _, c := range []struct {
 		path string
@@ -222,12 +235,13 @@ func TestParentalWritesNeedThePasswordAndTheConsole(t *testing.T) {
 		{"/account/parental/setting", url.Values{"moon_id": {"00000000000000aa"}, "was": {was}, "level": {"NONE"}, "password": {"password-B-1"}}},
 		{"/account/parental/pin/set", url.Values{"moon_id": {"00000000000000aa"}, "new_pin": {"1111"}, "new_pin_again": {"1111"}, "password": {"password-B-1"}}},
 		{"/account/parental/remove", url.Values{"moon_id": {"00000000000000aa"}, "password": {"password-B-1"}}},
+		{"/account/parental/name", url.Values{"moon_id": {"00000000000000aa"}, "name": {"Mine now"}}},
 	} {
 		if rec := authedRequest(s, b, http.MethodPost, c.path, &c.form); rec.Code != http.StatusNotFound {
 			t.Errorf("%s as another account: %d", c.path, rec.Code)
 		}
 	}
-	if len(writes) != 3 {
+	if len(writes) != 4 {
 		t.Fatalf("another account wrote: %v", writes)
 	}
 }

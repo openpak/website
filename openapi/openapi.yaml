@@ -450,6 +450,32 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { description: not a console this account manages }
         "503": { description: parental controls are not configured on this deployment }
+  /me/parental-controls/{moonID}/name:
+    put:
+      summary: Name a console
+      description: |
+        The parent's name for a console, so two under one account can be told
+        apart. It stays with OpenPak: the console never sends or receives a
+        name. Surrounding whitespace is trimmed; an empty name clears it, and
+        the list then shows the console by the end of its serial number.
+      parameters:
+        - { name: moonID, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, description: At most 32 characters (not bytes), no control characters. }
+      responses:
+        "204": { description: stored }
+        "400": { description: "over 32 characters or with control characters (code `invalid_name`)" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { description: not a console this account manages }
+        "502": { description: "the parental-controls service cannot store names yet (code `service_unavailable`)" }
+        "503": { description: parental controls are not configured on this deployment }
   /me/parental-controls/{moonID}/activity:
     get:
       summary: Time used per day and per title
@@ -2772,7 +2798,15 @@ components:
         has_setting:
           type: boolean
           description: Whether a parental_control_setting document has been stored yet.
-        nickname: { type: string, description: What the console calls itself; may be empty. }
+        nickname:
+          type: string
+          description: |
+            The name to show: the parent's (`named`), else "Switch ···" and the
+            last four of the serial number, else empty. The console never sends
+            a name.
+        named: { type: boolean, description: True when the parent chose the name. }
+        serial_number: { type: string, description: As the console reported it at pairing; may be empty. }
+        firmware: { type: string, description: The console's system version at pairing; may be empty. }
         setting:
           type: object
           additionalProperties: true

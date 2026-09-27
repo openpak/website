@@ -161,7 +161,7 @@ func nxParentalWrites(t *testing.T, account string, live *bool, got *map[string]
 		switch {
 		case r.URL.Path == "/internal/pctl/devices":
 			if mine {
-				w.Write([]byte(`{"devices":[{"moon_id":"00000000000000aa","paired":true}]}`))
+				w.Write([]byte(`{"devices":[{"moon_id":"00000000000000aa","paired":true,"nickname":"Switch ···0001","named":false,"serial_number":"XAW10000000001","firmware":"22.5.0"}]}`))
 				return
 			}
 			w.Write([]byte(`{"devices":[]}`))
@@ -176,6 +176,11 @@ func nxParentalWrites(t *testing.T, account string, live *bool, got *map[string]
 				return
 			}
 			w.Write([]byte(`{"etag":"e1","updated_at":1790514636}`))
+			return
+		case r.Method == http.MethodPut && r.URL.Path == dev+"/name" && *live:
+			*got = nil
+			json.NewDecoder(r.Body).Decode(got)
+			w.WriteHeader(http.StatusNoContent)
 			return
 		case r.Method == http.MethodDelete && r.URL.Path == dev:
 			w.WriteHeader(http.StatusNoContent)
@@ -209,6 +214,7 @@ func TestParentalWritesAreTheCallersOnly(t *testing.T) {
 		{http.MethodPut, "/api/v1/me/parental-controls/00000000000000aa/pin", map[string]string{"unlock_code": "1234"}},
 		{http.MethodDelete, "/api/v1/me/parental-controls/00000000000000aa", nil},
 		{http.MethodGet, "/api/v1/me/parental-controls/00000000000000aa/activity", nil},
+		{http.MethodPut, "/api/v1/me/parental-controls/00000000000000aa/name", map[string]string{"name": "Mine now"}},
 	} {
 		if rec := do(t, s, c.method, c.path, tok, c.body); rec.Code != http.StatusNotFound {
 			t.Errorf("%s %s: %d %s", c.method, c.path, rec.Code, rec.Body.String())
@@ -282,5 +288,35 @@ func TestParentalActivityNamesTitles(t *testing.T) {
 	live = false
 	if rec := do(t, s, http.MethodGet, "/api/v1/me/parental-controls/00000000000000aa/activity", tok, nil); rec.Code != http.StatusOK || rec.Body.String() != "{\"days\":[]}\n" {
 		t.Fatalf("no activity route yet: %d %s", rec.Code, rec.Body.String())
+	}
+}
+
+// A name is trimmed and counted in characters; a nx-baas that cannot store
+// one yet is a 502 for the caller's own console, and still a 404 for anyone
+// else's.
+func TestParentalNameIsTheCallersToSet(t *testing.T) {
+	s, _, _ := newTestAPI(t)
+	live, got := true, map[string]any{}
+	s.Parental = pctl.New(nxParentalWrites(t, "acct-a@x.test", &live, &got).URL, "k")
+	tok := signIn(t, s)
+	rec := do(t, s, http.MethodGet, "/api/v1/me/parental-controls", tok, nil)
+	if !strings.Contains(rec.Body.String(), `"nickname":"Switch ···0001","named":false,"serial_number":"XAW10000000001","firmware":"22.5.0"`) {
+		t.Fatalf("list: %s", rec.Body.String())
+	}
+	const path = "/api/v1/me/parental-controls/00000000000000aa/name"
+	if rec := do(t, s, http.MethodPut, path, tok, map[string]string{"name": "  Sala de estar ÷ ☺☺☺☺☺☺☺☺☺☺☺☺☺☺☺☺  "}); rec.Code != http.StatusNoContent || got["name"] != "Sala de estar ÷ ☺☺☺☺☺☺☺☺☺☺☺☺☺☺☺☺" {
+		t.Fatalf("32 characters, trimmed: %d %v", rec.Code, got)
+	}
+	for _, bad := range []string{strings.Repeat("a", 33), "Living\nroom"} {
+		if rec := do(t, s, http.MethodPut, path, tok, map[string]string{"name": bad}); rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), `"code":"invalid_name"`) {
+			t.Errorf("%q: %d %s", bad, rec.Code, rec.Body.String())
+		}
+	}
+	live = false
+	if rec := do(t, s, http.MethodPut, path, tok, map[string]string{"name": ""}); rec.Code != http.StatusBadGateway {
+		t.Fatalf("nx-baas without names: %d %s", rec.Code, rec.Body.String())
+	}
+	if rec := do(t, s, http.MethodPut, "/api/v1/me/parental-controls/00000000000000bb/name", tok, map[string]string{"name": "x"}); rec.Code != http.StatusNotFound {
+		t.Fatalf("a console that is not the caller's: %d", rec.Code)
 	}
 }

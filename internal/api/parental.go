@@ -14,6 +14,7 @@ package api
 //	PUT  /api/v1/me/parental-controls/{moonID}/pin                     a new PIN for the console
 //	DELETE /api/v1/me/parental-controls/{moonID}                       take a console off the list
 //	GET  /api/v1/me/parental-controls/{moonID}/activity?days=7         time played per day and per title
+//	PUT  /api/v1/me/parental-controls/{moonID}/name                    the parent's name for a console
 //
 // Nintendo's own parent surface is a smartphone app talking to the same moon API;
 // ours is the OpenPak app talking to this.
@@ -23,6 +24,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/openpak/website/internal/core"
@@ -46,6 +48,7 @@ func (s *Server) registerParental(mux *http.ServeMux) {
 	mux.HandleFunc("PUT /api/v1/me/parental-controls/{moonID}/pin", s.auth(s.handleParentalSetPin))
 	mux.HandleFunc("DELETE /api/v1/me/parental-controls/{moonID}", s.auth(s.handleParentalRemove))
 	mux.HandleFunc("GET /api/v1/me/parental-controls/{moonID}/activity", s.auth(s.handleParentalActivity))
+	mux.HandleFunc("PUT /api/v1/me/parental-controls/{moonID}/name", s.auth(s.handleParentalName))
 }
 
 // notFound says whether nx-baas answered 404: no such console, or not this
@@ -118,6 +121,36 @@ func (s *Server) handleParentalRemove(w http.ResponseWriter, r *http.Request, to
 	switch {
 	case notFound(err):
 		writeError(w, http.StatusNotFound, "not found")
+	case err != nil:
+		parentalErr(w, err)
+	default:
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+// handleParentalName names a console so a parent with two can tell them apart.
+// The name stays with us: the console never sends or receives one.
+func (s *Server) handleParentalName(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	var req struct {
+		Name string `json:"name"`
+	}
+	if !decodeSmall(w, r, &req) {
+		return
+	}
+	name := strings.TrimSpace(req.Name)
+	if !pctl.ValidName(name) {
+		writeError(w, http.StatusBadRequest, "a console name is at most 32 characters, with no control characters")
+		return
+	}
+	err := s.Parental.SetName(r.Context(), tok.AccountID, r.PathValue("moonID"), name)
+	var pe *pctl.Error
+	switch {
+	case notFound(err):
+		writeError(w, http.StatusNotFound, "not found")
+	case errors.As(err, &pe) && pe.Status == http.StatusBadRequest:
+		writeError(w, http.StatusBadRequest, "a console name is at most 32 characters, with no control characters")
+	case errors.Is(err, pctl.ErrNameUnsupported):
+		writeError(w, http.StatusBadGateway, "naming a console is not available yet")
 	case err != nil:
 		parentalErr(w, err)
 	default:

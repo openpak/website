@@ -350,6 +350,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /account/parental/pin/set", s.handleParentalSetPin)
 	mux.HandleFunc("POST /account/parental/setting", s.handleParentalSetting)
 	mux.HandleFunc("POST /account/parental/remove", s.handleParentalRemove)
+	mux.HandleFunc("POST /account/parental/name", s.handleParentalName)
 	mux.HandleFunc("GET /account/parental/{moonID}/players/{playerID}/image", s.handleParentalPlayerImage)
 	mux.HandleFunc("GET /titles/icon/{id}", s.handleSwitchIcon)
 	mux.HandleFunc("POST /account/saves/storage", s.handleSavesStorage)

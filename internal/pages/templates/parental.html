@@ -36,6 +36,23 @@
       <span class="pill">{{if .Synced}}{{t $.Lang "parental.synced"}}{{else}}{{t $.Lang "parental.waiting"}}{{end}}</span>
     </div>
     <p class="hint">{{.LastSynced}}</p>
+    {{with .SerialNumber}}<p class="hint m-0">{{printf (t $.Lang "parental.serial") .}}</p>{{end}}
+    {{with .Firmware}}<p class="hint m-0">{{printf (t $.Lang "parental.firmware") .}}</p>{{end}}
+    {{if eq $.Renamed .MoonID}}<p class="badge ok" role="status">{{t $.Lang "parental.name.saved"}}</p>{{end}}
+    {{if eq $.RenameOpen .MoonID}}
+    <form method="post" action="/account/parental/name#c-{{.MoonID}}" class="form-stack max-w-md mt-4">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <input type="hidden" name="moon_id" value="{{.MoonID}}">
+      {{with $.RenameError}}<p class="badge bad" role="alert">{{.}}</p>{{end}}
+      <label for="{{.MoonID}}-name">{{t $.Lang "parental.name"}}</label>
+      <input id="{{.MoonID}}-name" type="text" name="name" maxlength="32" value="{{if .Named}}{{.Nickname}}{{end}}" autocomplete="off">
+      <p class="hint">{{t $.Lang "parental.name.hint"}}</p>
+      <button type="submit" class="primary">{{t $.Lang "parental.edit.save"}}</button>
+      <a class="btn" href="/account/parental#c-{{.MoonID}}">{{t $.Lang "parental.cancel"}}</a>
+    </form>
+    {{else}}
+    <a class="btn mt-4" href="/account/parental?rename={{.MoonID}}#c-{{.MoonID}}">{{t $.Lang "parental.rename"}}</a>
+    {{end}}
     {{if eq $.Saved .MoonID}}<p class="badge ok" role="status">{{t $.Lang "parental.edit.saved"}}</p>{{end}}
     {{if not .Synced}}<p class="hint">{{t $.Lang "parental.edit.pickup"}}</p>{{end}}
 
