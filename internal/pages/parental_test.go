@@ -151,7 +151,7 @@ func nxParentalWrites(t *testing.T, writes *[]string) *httptest.Server {
 	return nx
 }
 
-// Saving and changing the PIN ask for the password; nothing is written
+// Saving, changing the PIN and removing ask for the password; nothing is written
 // without it, for another account's console, or over a document changed
 // since the form was drawn.
 func TestParentalWritesNeedThePasswordAndTheConsole(t *testing.T) {
@@ -202,7 +202,15 @@ func TestParentalWritesNeedThePasswordAndTheConsole(t *testing.T) {
 	if rec := pin("0427", "0427"); rec.Code != http.StatusSeeOther || len(writes) != 2 || writes[1] != `PUT {"unlock_code":"0427"}` {
 		t.Fatalf("pin: %d %v", rec.Code, writes)
 	}
-	if rec := authedRequest(s, a, http.MethodPost, "/account/parental/remove", &url.Values{"moon_id": {"00000000000000aa"}}); rec.Code != http.StatusSeeOther || len(writes) != 3 {
+	remove := func(password string) *httptest.ResponseRecorder {
+		return authedRequest(s, a, http.MethodPost, "/account/parental/remove", &url.Values{"moon_id": {"00000000000000aa"}, "password": {password}})
+	}
+	for _, password := range []string{"", "wrong"} {
+		if rec := remove(password); !strings.Contains(rec.Body.String(), "That password is not right.") || len(writes) != 2 {
+			t.Fatalf("remove with password %q: %d %v", password, rec.Code, writes)
+		}
+	}
+	if rec := remove("password-A-1"); rec.Code != http.StatusSeeOther || len(writes) != 3 || writes[2] != "DELETE {}" {
 		t.Fatalf("remove: %d %v", rec.Code, writes)
 	}
 
@@ -213,7 +221,7 @@ func TestParentalWritesNeedThePasswordAndTheConsole(t *testing.T) {
 	}{
 		{"/account/parental/setting", url.Values{"moon_id": {"00000000000000aa"}, "was": {was}, "level": {"NONE"}, "password": {"password-B-1"}}},
 		{"/account/parental/pin/set", url.Values{"moon_id": {"00000000000000aa"}, "new_pin": {"1111"}, "new_pin_again": {"1111"}, "password": {"password-B-1"}}},
-		{"/account/parental/remove", url.Values{"moon_id": {"00000000000000aa"}}},
+		{"/account/parental/remove", url.Values{"moon_id": {"00000000000000aa"}, "password": {"password-B-1"}}},
 	} {
 		if rec := authedRequest(s, b, http.MethodPost, c.path, &c.form); rec.Code != http.StatusNotFound {
 			t.Errorf("%s as another account: %d", c.path, rec.Code)

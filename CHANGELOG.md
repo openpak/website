@@ -3,6 +3,14 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.63.1 — 2026-09-27
+
+- Parental controls page: removing a console asks for the account password again (and the
+  second factor where there is one), like revealing or changing the PIN and saving restrictions
+  (owner decision). The confirmation's wording is unchanged. `DELETE
+  /api/v1/me/parental-controls/{moonID}` is unchanged: on the app, the phone's own unlock is the
+  gate.
+
 ## v0.63.0 — 2026-09-27
 
 - **Parental controls: what the parent changes** (nx-baas v0.46.0). `PUT

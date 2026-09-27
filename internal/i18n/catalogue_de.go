@@ -519,6 +519,7 @@ var catalogueDE = Catalogue{
 	"parental.remove.title":               "Diese Konsole entfernen?",
 	"parental.remove.detail":              "Damit wird die Konsole nur aus deiner Liste entfernt. Die Konsole selbst bleibt verknüpft, bis die Verknüpfung dort unter Systemeinstellungen → Jugendschutzeinstellungen mit der PIN aufgehoben wird.",
 	"parental.remove.shown":               "Ihre PIN, Beschränkungen und Spielaktivität werden hier nicht mehr angezeigt.",
+	"parental.remove.password":            "Gib dein Passwort ein, um die Konsole zu entfernen.",
 	"parental.remove.confirm":             "Entfernen",
 	"parental.cancel":                     "Abbrechen",
 	"parental.removed":                    "Die Konsole wurde aus deiner Liste entfernt.",

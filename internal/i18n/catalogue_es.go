@@ -519,6 +519,7 @@ var catalogueES = Catalogue{
 	"parental.remove.title":               "¿Quitar esta consola?",
 	"parental.remove.detail":              "Esto solo quita la consola de tu lista. La consola sigue vinculada hasta que se desvincule en ella, en Configuración de la consola → Control parental, con el PIN.",
 	"parental.remove.shown":               "Su PIN, sus restricciones y su actividad de juego dejarán de mostrarse aquí.",
+	"parental.remove.password":            "Introduce tu contraseña para quitar la consola.",
 	"parental.remove.confirm":             "Quitar",
 	"parental.cancel":                     "Cancelar",
 	"parental.removed":                    "La consola se quitó de tu lista.",

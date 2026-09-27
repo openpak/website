@@ -2,8 +2,8 @@
 {{/* The app's parental-controls screen, field for field and in its order:
      the code while one is live, then each console with its sync state,
      restrictions and their editor, players, PIN, wrong-PIN attempts and play
-     activity. The PIN is revealed or changed, and restrictions saved, only by
-     a POST that asks for the password again. The editor hides what does not
+     activity. The PIN is revealed or changed, restrictions saved and a
+     console removed only by a POST that asks for the password again. The editor hides what does not
      apply with CSS (.pctl-editor in input.css), not a script. */}}
 <div class="page-head">
   <h1>{{t .Lang "parental.title"}}</h1>
@@ -187,9 +187,18 @@
     {{if eq $.RemoveOpen .MoonID}}
       <h3>{{t $.Lang "parental.remove.title"}}</h3>
       <p>{{t $.Lang "parental.remove.detail"}} {{t $.Lang "parental.remove.shown"}}</p>
-      <form method="post" action="/account/parental/remove" class="flex flex-wrap gap-3">
+      <form method="post" action="/account/parental/remove#remove-{{.MoonID}}" class="form-stack max-w-md">
         <input type="hidden" name="csrf" value="{{$.CSRF}}">
         <input type="hidden" name="moon_id" value="{{.MoonID}}">
+        {{with $.RemoveError}}<p class="badge bad" role="alert">{{.}}</p>{{end}}
+        <p class="hint m-0">{{t $.Lang "parental.remove.password"}}</p>
+        <label for="{{.MoonID}}-remove-password">{{t $.Lang "account.password.current"}}</label>
+        <input id="{{.MoonID}}-remove-password" type="password" name="password" autocomplete="current-password" required>
+        {{if $.TwoFactor}}
+        <label for="{{.MoonID}}-remove-code">{{t $.Lang "auth.2fa.code"}}</label>
+        <input id="{{.MoonID}}-remove-code" type="text" name="code" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" required>
+        <p class="hint">{{t $.Lang "auth.2fa.recovery"}}</p>
+        {{end}}
         <button type="submit" class="danger">{{t $.Lang "parental.remove.confirm"}}</button>
         <a class="btn" href="/account/parental#c-{{.MoonID}}">{{t $.Lang "parental.cancel"}}</a>
       </form>

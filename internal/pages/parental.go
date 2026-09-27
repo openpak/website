@@ -46,6 +46,7 @@ type parentalView struct {
 	NewPinError string
 	PinSaved    string // the console that was just given a new PIN
 	RemoveOpen  string // the console whose removal is being confirmed
+	RemoveError string
 	Removed     bool
 }
 
@@ -279,13 +280,22 @@ func (s *Server) handleParentalSetting(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleParentalRemove takes a console off this account's list, once the
-// parent has read what that does and does not do.
+// parent has read what that does and does not do and given the password again.
 func (s *Server) handleParentalRemove(w http.ResponseWriter, r *http.Request) {
 	v, ok := s.postGuard(w, r)
 	if !ok {
 		return
 	}
-	if err := s.Parental.Remove(r.Context(), v.AccountID, r.PostFormValue("moon_id")); err != nil {
+	moon := r.PostFormValue("moon_id")
+	msg, ok := s.stepUp(w, r, v)
+	if !ok {
+		return
+	}
+	if msg != "" {
+		s.renderParental(w, r, v, parentalView{RemoveOpen: moon, RemoveError: msg})
+		return
+	}
+	if err := s.Parental.Remove(r.Context(), v.AccountID, moon); err != nil {
 		parentalWriteErr(w, r, s, err)
 		return
 	}

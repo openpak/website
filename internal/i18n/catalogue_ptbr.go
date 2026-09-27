@@ -519,6 +519,7 @@ var cataloguePTBR = Catalogue{
 	"parental.remove.title":               "Remover este console?",
 	"parental.remove.detail":              "Isto remove o console apenas da sua lista. O console continua vinculado até ser desvinculado nele, em Configurações do console → Controle parental, com o PIN.",
 	"parental.remove.shown":               "O PIN, as restrições e a atividade de jogo dele não serão mais mostrados aqui.",
+	"parental.remove.password":            "Digite sua senha para remover o console.",
 	"parental.remove.confirm":             "Remover",
 	"parental.cancel":                     "Cancelar",
 	"parental.removed":                    "O console foi removido da sua lista.",

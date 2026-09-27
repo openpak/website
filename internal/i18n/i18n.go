@@ -925,6 +925,7 @@ var languages = map[string]Catalogue{
 		"parental.remove.title":               "Remove this console?",
 		"parental.remove.detail":              "This removes the console from your list only. The console itself stays linked until it is unlinked there, in System Settings → Parental Controls, with the PIN.",
 		"parental.remove.shown":               "Its PIN, restrictions and play activity will no longer be shown here.",
+		"parental.remove.password":            "Enter your password to remove the console.",
 		"parental.remove.confirm":             "Remove",
 		"parental.cancel":                     "Cancel",
 		"parental.removed":                    "The console was removed from your list.",

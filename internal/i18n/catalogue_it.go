@@ -519,6 +519,7 @@ var catalogueIT = Catalogue{
 	"parental.remove.title":               "Rimuovere questa console?",
 	"parental.remove.detail":              "Così la console viene rimossa solo dal tuo elenco. La console resta collegata finché non viene scollegata lì, in Impostazioni di sistema → Filtro famiglia, con il PIN.",
 	"parental.remove.shown":               "Il suo PIN, le restrizioni e l'attività di gioco non saranno più mostrati qui.",
+	"parental.remove.password":            "Inserisci la password per rimuovere la console.",
 	"parental.remove.confirm":             "Rimuovi",
 	"parental.cancel":                     "Annulla",
 	"parental.removed":                    "La console è stata rimossa dal tuo elenco.",

@@ -519,6 +519,7 @@ var catalogueFR = Catalogue{
 	"parental.remove.title":               "Retirer cette console ?",
 	"parental.remove.detail":              "Cela retire seulement la console de ta liste. La console elle-même reste liée jusqu'à ce qu'elle soit déliée sur place, dans Paramètres de la console → Contrôle parental, avec le code PIN.",
 	"parental.remove.shown":               "Son code PIN, ses restrictions et son activité de jeu ne seront plus affichés ici.",
+	"parental.remove.password":            "Saisis ton mot de passe pour retirer la console.",
 	"parental.remove.confirm":             "Retirer",
 	"parental.cancel":                     "Annuler",
 	"parental.removed":                    "La console a été retirée de ta liste.",
