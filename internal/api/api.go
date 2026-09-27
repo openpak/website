@@ -249,6 +249,7 @@ var errorCodes = map[string]string{
 	"the attachment is larger than 20 MB":                       "attachment_too_large",
 	"attachments are not available on this deployment":          "attachments_unavailable",
 	"session not found":                                         "not_found",
+	"the PIN must be four digits":                               "invalid_pin",
 }
 
 var statusCodes = map[int]string{

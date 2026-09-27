@@ -628,6 +628,12 @@
   .facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 16px; margin: 16px 0 0; font-size: .9rem; }
   .facts dt { color: var(--muted); }
   .facts dd { margin: 0; overflow-wrap: anywhere; }
+  /* The parental editor shows only what applies, without a script: the custom
+     controls under the Custom level, and one play-timer block per timer mode.
+     Hidden controls still post, unchanged, so they change nothing. */
+  .pctl-editor:not(:has(select[name="level"] option[value="CUSTOM"]:checked)) .custom-only,
+  .pctl-editor:has(select[name="timer"] option[value="EACH_DAY_OF_THE_WEEK"]:checked) .daily-only,
+  .pctl-editor:not(:has(select[name="timer"] option[value="EACH_DAY_OF_THE_WEEK"]:checked)) .weekly-only { display: none; }
 
   /* Status: one summary banner, then panels of rows. */
   .banner { display: grid; gap: 20px; padding: 24px; border-radius: 20px; border: 1px solid var(--ok-line);

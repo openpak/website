@@ -10,10 +10,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -142,6 +145,105 @@ func (c *Client) Pair(ctx context.Context, accountID, displayName string) (Pairi
 	err := c.doJSON(ctx, http.MethodPost, "/internal/pctl/pairing",
 		map[string]string{"account_id": accountID, "display_name": displayName}, &out)
 	return out, err
+}
+
+// Saved is nx-baas's answer to a parent's write: the ETag the console will be
+// served, and when the record changed (unix seconds).
+type Saved struct {
+	ETag      string `json:"etag"`
+	UpdatedAt int64  `json:"updated_at"`
+}
+
+// SetSetting stores the whole setting document for the console. nx-baas refuses
+// anything the console's parse table would not take with a 400 naming its path
+// (Error.Path); nothing is stored then.
+func (c *Client) SetSetting(ctx context.Context, accountID, moonID string, setting map[string]any) (Saved, error) {
+	var out Saved
+	err := c.doJSON(ctx, http.MethodPut, devicePath(accountID, moonID, "/setting"), map[string]any{"setting": setting}, &out)
+	return out, err
+}
+
+// SetUnlockCode gives the console a new PIN at its next sync. Never logged.
+func (c *Client) SetUnlockCode(ctx context.Context, accountID, moonID, code string) error {
+	return c.doJSON(ctx, http.MethodPut, devicePath(accountID, moonID, "/setting"), map[string]string{"unlock_code": code}, &Saved{})
+}
+
+// ValidPin is exactly four ASCII digits: the console's parser takes up to
+// eight, but its entry field has four places (hardware, 2026-09-27).
+func ValidPin(code string) bool {
+	if len(code) != 4 {
+		return false
+	}
+	for _, c := range code {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+// Remove takes the console off this account's list. The console is not told.
+func (c *Client) Remove(ctx context.Context, accountID, moonID string) error {
+	return c.doJSON(ctx, http.MethodDelete, devicePath(accountID, moonID, ""), nil, nil)
+}
+
+// Day is one day's play on a console, as nx-baas totals it from the console's
+// events. Name is filled in by the caller from the titles catalogue.
+type Day struct {
+	Date         string      `json:"date"`
+	TotalMinutes int         `json:"total_minutes"`
+	Titles       []TitleTime `json:"titles"`
+}
+
+type TitleTime struct {
+	TitleID string `json:"title_id"`
+	Name    string `json:"name,omitempty"`
+	Minutes int    `json:"minutes"`
+}
+
+// Activity is the last days of play, newest first, empty days left out. A
+// nx-baas that does not serve activity yet answers 404 for every console, so a
+// 404 for a console this account does manage reads as no activity.
+func (c *Client) Activity(ctx context.Context, accountID, moonID string, days int) ([]Day, error) {
+	var out struct {
+		Days []Day `json:"days"`
+	}
+	err := c.doJSON(ctx, http.MethodGet, devicePath(accountID, moonID, "/activity")+"&days="+strconv.Itoa(days), nil, &out)
+	var e *Error
+	if errors.As(err, &e) && e.Status == http.StatusNotFound {
+		devices, lerr := c.Devices(ctx, accountID)
+		if lerr != nil {
+			return nil, lerr
+		}
+		for _, d := range devices {
+			if d.MoonID == moonID {
+				return []Day{}, nil
+			}
+		}
+	}
+	if out.Days == nil {
+		out.Days = []Day{}
+	}
+	return out.Days, err
+}
+
+// Path is the key of the setting document nx-baas refused, dotted from the
+// document's root, or "" when the error is not such a refusal.
+func (e *Error) Path() string {
+	if e.Status != http.StatusBadRequest {
+		return ""
+	}
+	if p, ok := strings.CutPrefix(e.Code, "not in the console's parse table: "); ok {
+		return p
+	}
+	if p, ok := strings.CutPrefix(e.Code, "setting."); ok {
+		return strings.TrimSuffix(p, " required")
+	}
+	return ""
+}
+
+func devicePath(accountID, moonID, rest string) string {
+	return "/internal/pctl/devices/" + url.PathEscape(moonID) + rest + "?account_id=" + url.QueryEscape(accountID)
 }
 
 func (c *Client) doJSON(ctx context.Context, method, path string, in, out any) error {

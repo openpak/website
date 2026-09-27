@@ -3,6 +3,39 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.63.0 — 2026-09-27
+
+- **Parental controls: what the parent changes** (nx-baas v0.46.0). `PUT
+  /api/v1/me/parental-controls/{moonID}/setting {"setting"}` stores the whole document the console
+  is served and answers `{"etag", "updated_at"}`. The client sends back what it was served with its
+  changes applied, so keys it does not edit (the per-title entries a console reports) survive.
+  Anything the console's parse table would not take is refused, not thinned: 400
+  `{"error", "code": "invalid_setting", "path"}`, `path` naming the key, e.g.
+  `customSettings.ageRestriction.ratingAge`.
+- `PUT …/{moonID}/pin {"unlock_code"}` gives the console a new PIN at its next sync: 204, or 400
+  `invalid_pin` unless it is exactly four digits (the console's entry field has four places).
+  `Cache-Control: no-store`; the body is never logged.
+- `DELETE …/{moonID}` takes a console off the account's list (204). The console is not told: it
+  stays linked until it is unlinked there, with the PIN.
+- `GET …/{moonID}/activity?days=7` (1 to 30, else 400) is the time used per day, newest first,
+  and per title, named from the titles catalogue (`name` absent for a title it does not know).
+  A day's `total_minutes` is the console's own count, HOME menu included, so it can be more than
+  its titles add up to.
+- Every new route answers 404 for a console another account manages, the same as for one that
+  does not exist.
+- **The page edits too.** `/account/parental` gains, per console, a "Change restrictions" editor
+  with the parse table's fields only (level; under Custom, the age limit, rating system,
+  communication, social media and VR; the play timer, every day or each day of the week, with
+  minutes a day up to 360, bedtime and what happens when time is up), the per-title exceptions
+  and always-allowed games read-only by name, "Change PIN" (asked twice), "Remove console" behind
+  a confirmation, and play activity for the last 7 days. The editor writes only the controls the
+  parent changed into the served document, refuses a form drawn before the document changed
+  elsewhere, and after a save says "Saved. Waiting for the console." until the console's receipt
+  names it — never "applied". Saving and changing the PIN ask for the password again (and the
+  second factor where there is one), like revealing it. Every write is a form post with the
+  site's CSRF token; the Custom and per-day controls are shown and hidden by CSS, with no script.
+  The wording is the app's, in all six languages; the PIN note now says it is changed here.
+
 ## v0.62.0 — 2026-09-27
 
 - **Parental controls: what the parent reads** (nx-baas v0.45.0). `GET /api/v1/me/parental-controls`

@@ -328,6 +328,30 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { description: the console has not reported its PIN, or it is not one this account manages }
         "503": { description: parental controls are not configured on this deployment }
+    put:
+      summary: Give the console a new PIN
+      description: |
+        Exactly four digits: the console's entry field has four places. The
+        console takes it at its next sync; until then the old PIN is the one
+        that works on it. Answered with `Cache-Control: no-store`; the body is
+        never logged.
+      parameters:
+        - { name: moonID, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [unlock_code]
+              properties:
+                unlock_code: { type: string, pattern: "^[0-9]{4}$" }
+      responses:
+        "204": { description: stored }
+        "400": { description: "not four digits (code `invalid_pin`)" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { description: not a console this account manages }
+        "503": { description: parental controls are not configured on this deployment }
   /me/parental-controls/{moonID}/players/{playerID}/image:
     get:
       summary: A player's picture
@@ -364,6 +388,110 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { description: "wrong password (code `wrong_password`)" }
         "429": { description: "too many tries (code `rate_limited`)" }
+  /me/parental-controls/{moonID}:
+    delete:
+      summary: Remove a console from this account's list
+      description: |
+        The console is not told: it stays linked on its own side until it is
+        unlinked there, in System Settings → Parental Controls, with the PIN.
+      parameters:
+        - { name: moonID, in: path, required: true, schema: { type: string } }
+      responses:
+        "204": { description: removed }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { description: not a console this account manages }
+        "503": { description: parental controls are not configured on this deployment }
+  /me/parental-controls/{moonID}/setting:
+    put:
+      summary: Replace the setting document the console is served
+      description: |
+        The whole document, as `GET /me/parental-controls` served it with the
+        parent's changes applied: keys the client does not edit (the per-title
+        entries a console reports, for one) must be sent back as they came, or
+        they are gone. Anything the console's parse table would not take is
+        refused with the key it names, and nothing is stored. The console picks
+        the document up at its next sync; `synced` in the list turns true when
+        its receipt names the new ETag.
+      parameters:
+        - { name: moonID, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [setting]
+              properties:
+                setting: { type: object, additionalProperties: true }
+      responses:
+        "200":
+          description: stored
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [etag, updated_at]
+                properties:
+                  etag: { type: string, description: The ETag the console will be served. }
+                  updated_at: { type: integer, format: int64, description: Unix seconds. }
+        "400":
+          description: "the console could not take it (code `invalid_setting`)"
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error, code, path]
+                properties:
+                  error: { type: string }
+                  code: { type: string, enum: [invalid_setting] }
+                  path:
+                    type: string
+                    description: The refused key, dotted from the document's root, e.g. `customSettings.ageRestriction.ratingAge`; empty when the body had no setting.
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { description: not a console this account manages }
+        "503": { description: parental controls are not configured on this deployment }
+  /me/parental-controls/{moonID}/activity:
+    get:
+      summary: Time used per day and per title
+      description: |
+        The console's own play-timer count, newest day first; a day with no
+        time used is left out. `total_minutes` includes the HOME menu, so it
+        can be more than the titles add up to, and `titles` can be empty.
+        `name` comes from the titles catalogue and is absent for a title it
+        does not know.
+      parameters:
+        - { name: moonID, in: path, required: true, schema: { type: string } }
+        - { name: days, in: query, schema: { type: integer, minimum: 1, maximum: 30, default: 7 } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [days]
+                properties:
+                  days:
+                    type: array
+                    items:
+                      type: object
+                      required: [date, total_minutes, titles]
+                      properties:
+                        date: { type: string, format: date }
+                        total_minutes: { type: integer }
+                        titles:
+                          type: array
+                          items:
+                            type: object
+                            required: [title_id, minutes]
+                            properties:
+                              title_id: { type: string }
+                              name: { type: string }
+                              minutes: { type: integer }
+        "400": { description: "days outside 1 to 30 (code `bad_request`)" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { description: not a console this account manages }
+        "503": { description: parental controls are not configured on this deployment }
   /me/invitations/decline:
     post:
       summary: Decline an invitation

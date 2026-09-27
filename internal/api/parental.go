@@ -10,16 +10,23 @@ package api
 //	GET  /api/v1/me/parental-controls/{moonID}/pin                     one console's PIN
 //	GET  /api/v1/me/parental-controls/{moonID}/players/{playerID}/image a player's picture
 //	POST /api/v1/me/parental-controls/unlock                           check the password before the app opens its screens
+//	PUT  /api/v1/me/parental-controls/{moonID}/setting                 the whole setting document the console is served
+//	PUT  /api/v1/me/parental-controls/{moonID}/pin                     a new PIN for the console
+//	DELETE /api/v1/me/parental-controls/{moonID}                       take a console off the list
+//	GET  /api/v1/me/parental-controls/{moonID}/activity?days=7         time played per day and per title
 //
 // Nintendo's own parent surface is a smartphone app talking to the same moon API;
 // ours is the OpenPak app talking to this.
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/openpak/website/internal/core"
+	"github.com/openpak/website/internal/pages"
 	"github.com/openpak/website/internal/pctl"
 	"github.com/openpak/website/internal/ratelimit"
 	"github.com/openpak/website/internal/store"
@@ -35,6 +42,112 @@ func (s *Server) registerParental(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/me/parental-controls/{moonID}/pin", s.auth(s.handleParentalPin))
 	mux.HandleFunc("GET /api/v1/me/parental-controls/{moonID}/players/{playerID}/image", s.auth(s.handleParentalPlayerImage))
 	mux.HandleFunc("POST /api/v1/me/parental-controls/unlock", s.auth(s.handleParentalUnlock))
+	mux.HandleFunc("PUT /api/v1/me/parental-controls/{moonID}/setting", s.auth(s.handleParentalSetting))
+	mux.HandleFunc("PUT /api/v1/me/parental-controls/{moonID}/pin", s.auth(s.handleParentalSetPin))
+	mux.HandleFunc("DELETE /api/v1/me/parental-controls/{moonID}", s.auth(s.handleParentalRemove))
+	mux.HandleFunc("GET /api/v1/me/parental-controls/{moonID}/activity", s.auth(s.handleParentalActivity))
+}
+
+// notFound says whether nx-baas answered 404: no such console, or not this
+// account's, which the caller must not be able to tell apart.
+func notFound(err error) bool {
+	var pe *pctl.Error
+	return errors.As(err, &pe) && pe.Status == http.StatusNotFound
+}
+
+// handleParentalSetting stores the whole document the console is served. The
+// app sends back what it was given with its changes applied; nx-baas refuses,
+// rather than thins, anything the console's parse table would not take, and
+// the refusal is passed on with the key it names.
+func (s *Server) handleParentalSetting(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	var req struct {
+		Setting map[string]any `json:"setting"`
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 256<<10)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Setting == nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "setting required", "code": "invalid_setting", "path": ""})
+		return
+	}
+	saved, err := s.Parental.SetSetting(r.Context(), tok.AccountID, r.PathValue("moonID"), req.Setting)
+	var pe *pctl.Error
+	switch {
+	case notFound(err):
+		writeError(w, http.StatusNotFound, "not found")
+	case errors.As(err, &pe) && pe.Status == http.StatusBadRequest:
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": pe.Code, "code": "invalid_setting", "path": pe.Path()})
+	case err != nil:
+		parentalErr(w, err)
+	default:
+		writeJSON(w, http.StatusOK, saved)
+	}
+}
+
+// handleParentalSetPin gives the console a new PIN at its next sync. Exactly
+// four digits: the console's entry field has four places. The body is never
+// logged and the code is never in a URL.
+func (s *Server) handleParentalSetPin(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	w.Header().Set("Cache-Control", "no-store")
+	var req struct {
+		UnlockCode string `json:"unlock_code"`
+	}
+	if !decodeSmall(w, r, &req) {
+		return
+	}
+	if !pctl.ValidPin(req.UnlockCode) {
+		writeError(w, http.StatusBadRequest, "the PIN must be four digits")
+		return
+	}
+	err := s.Parental.SetUnlockCode(r.Context(), tok.AccountID, r.PathValue("moonID"), req.UnlockCode)
+	var pe *pctl.Error
+	switch {
+	case notFound(err):
+		writeError(w, http.StatusNotFound, "not found")
+	case errors.As(err, &pe) && pe.Status == http.StatusBadRequest:
+		writeError(w, http.StatusBadRequest, "the PIN must be four digits")
+	case err != nil:
+		parentalErr(w, err)
+	default:
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+// handleParentalRemove takes a console off the account's list. The console is
+// not told: it stays linked on its side until it is unlinked there.
+func (s *Server) handleParentalRemove(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	err := s.Parental.Remove(r.Context(), tok.AccountID, r.PathValue("moonID"))
+	switch {
+	case notFound(err):
+		writeError(w, http.StatusNotFound, "not found")
+	case err != nil:
+		parentalErr(w, err)
+	default:
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+// handleParentalActivity is the time used per day and per title, named from the
+// titles catalogue; a title it does not know has no name.
+func (s *Server) handleParentalActivity(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	days := 7
+	if q := r.URL.Query().Get("days"); q != "" {
+		n, err := strconv.Atoi(q)
+		if err != nil || n < 1 || n > 30 {
+			writeError(w, http.StatusBadRequest, "days must be 1 to 30")
+			return
+		}
+		days = n
+	}
+	out, err := s.Parental.Activity(r.Context(), tok.AccountID, r.PathValue("moonID"), days)
+	switch {
+	case notFound(err):
+		writeError(w, http.StatusNotFound, "not found")
+		return
+	case err != nil:
+		parentalErr(w, err)
+		return
+	}
+	pages.NameTitles(r.Context(), s.DB, out)
+	writeJSON(w, http.StatusOK, map[string]any{"days": out})
 }
 
 // parentalErr: an unconfigured deployment is not a failure the app can act on,

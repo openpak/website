@@ -1,8 +1,10 @@
 {{template "header" .}}
 {{/* The app's parental-controls screen, field for field and in its order:
      the code while one is live, then each console with its sync state,
-     restrictions, players, PIN and wrong-PIN attempts. The PIN is revealed
-     only by a POST that asks for the password again. */}}
+     restrictions and their editor, players, PIN, wrong-PIN attempts and play
+     activity. The PIN is revealed or changed, and restrictions saved, only by
+     a POST that asks for the password again. The editor hides what does not
+     apply with CSS (.pctl-editor in input.css), not a script. */}}
 <div class="page-head">
   <h1>{{t .Lang "parental.title"}}</h1>
   <p>{{t .Lang "parental.howto"}}</p>
@@ -22,6 +24,8 @@
 </section>
 {{end}}
 
+{{if .Removed}}<p class="badge ok" role="status">{{t .Lang "parental.removed"}}</p>{{end}}
+
 <section aria-labelledby="consoles-h" class="mb-9">
   <div class="section-head"><h2 id="consoles-h">{{t .Lang "parental.consoles"}} <span class="text-muted">{{len .Consoles}}</span></h2></div>
   {{if not .Consoles}}<p class="empty">{{t .Lang "parental.none"}}</p>{{end}}
@@ -32,16 +36,83 @@
       <span class="pill">{{if .Synced}}{{t $.Lang "parental.synced"}}{{else}}{{t $.Lang "parental.waiting"}}{{end}}</span>
     </div>
     <p class="hint">{{.LastSynced}}</p>
+    {{if eq $.Saved .MoonID}}<p class="badge ok" role="status">{{t $.Lang "parental.edit.saved"}}</p>{{end}}
+    {{if not .Synced}}<p class="hint">{{t $.Lang "parental.edit.pickup"}}</p>{{end}}
 
     <h3>{{t $.Lang "parental.restrictions"}}</h3>
     <dl class="facts">
       {{range .Restrictions}}<dt>{{.Label}}</dt><dd>{{.Value}}{{with .Note}}<br><span class="hint">{{.}}</span>{{end}}</dd>{{end}}
     </dl>
 
+    {{$moon := .MoonID}}{{$e := .Editor}}
+    <details class="mt-4 mb-5"{{if eq $.EditFor .MoonID}} open{{end}}>
+      <summary class="btn primary">{{t $.Lang "parental.edit"}}</summary>
+      <form method="post" action="/account/parental/setting#c-{{.MoonID}}" class="form-stack max-w-md pctl-editor mt-4">
+        <input type="hidden" name="csrf" value="{{$.CSRF}}">
+        <input type="hidden" name="moon_id" value="{{.MoonID}}">
+        <input type="hidden" name="was" value="{{$e.Was}}">
+        {{if eq $.EditFor .MoonID}}{{with $.EditError}}<p class="badge bad" role="alert">{{.}}</p>{{end}}{{end}}
+        <label for="{{$moon}}-level">{{t $.Lang "parental.level"}}</label>
+        <select id="{{$moon}}-level" name="level">{{range index $e.Opts "level"}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}</select>
+        <div class="custom-only form-stack">
+          <input type="hidden" name="age_on" value="0">
+          <label class="flex items-center gap-2"><input type="checkbox" class="w-auto" name="age_on" value="1"{{if eq (index $e.V "age_on") "1"}} checked{{end}}> {{t $.Lang "parental.edit.agelimit"}}</label>
+          <label for="{{$moon}}-age">{{t $.Lang "parental.edit.upto"}}</label>
+          <input id="{{$moon}}-age" type="number" name="age" min="0" max="255" step="1" inputmode="numeric" value="{{index $e.V "age"}}">
+          <label for="{{$moon}}-org">{{t $.Lang "parental.rating"}}</label>
+          <select id="{{$moon}}-org" name="org">{{range index $e.Opts "org"}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}</select>
+          <label for="{{$moon}}-ugc">{{t $.Lang "parental.ugc"}}</label>
+          <select id="{{$moon}}-ugc" name="ugc">{{range index $e.Opts "ugc"}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}</select>
+          {{with $e.Exceptions}}
+          <details class="hint">
+            <summary>{{t $.Lang "parental.ugc.list"}} ({{len .}})</summary>
+            <ul class="list-none p-0 m-0">{{range .}}<li>{{.Label}}: {{.Value}}</li>{{end}}</ul>
+          </details>
+          {{end}}
+          <label for="{{$moon}}-sns">{{t $.Lang "parental.sns"}}</label>
+          <select id="{{$moon}}-sns" name="sns">{{range index $e.Opts "sns"}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}</select>
+          <label for="{{$moon}}-vr">{{t $.Lang "parental.vr"}}</label>
+          <select id="{{$moon}}-vr" name="vr">{{range index $e.Opts "vr"}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}</select>
+          {{with $e.Whitelist}}
+          <details class="hint">
+            <summary>{{t $.Lang "parental.whitelist"}} ({{len .}})</summary>
+            <ul class="list-none p-0 m-0">{{range .}}<li>{{.Label}}: {{.Value}}</li>{{end}}</ul>
+          </details>
+          {{end}}
+        </div>
+        <label for="{{$moon}}-timer">{{t $.Lang "parental.edit.timer"}}</label>
+        <select id="{{$moon}}-timer" name="timer">{{range index $e.Opts "timer"}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}</select>
+        {{range $e.Days}}{{$d := .Value}}
+        <fieldset class="form-stack border-0 p-0 m-0 mt-4 {{if eq $d "daily"}}daily-only{{else}}weekly-only{{end}}">
+          {{if ne $d "daily"}}<legend class="font-semibold">{{.Label}}</legend>{{end}}
+          <input type="hidden" name="{{$d}}.limit_on" value="0">
+          <label class="flex items-center gap-2"><input type="checkbox" class="w-auto" name="{{$d}}.limit_on" value="1"{{if eq (index $e.V (print $d ".limit_on")) "1"}} checked{{end}}> {{t $.Lang "parental.edit.limit"}}</label>
+          <label for="{{$moon}}-{{$d}}-limit">{{t $.Lang "parental.edit.minutes"}}</label>
+          <input id="{{$moon}}-{{$d}}-limit" type="number" name="{{$d}}.limit" min="0" max="360" step="1" inputmode="numeric" value="{{index $e.V (print $d ".limit")}}">
+          <input type="hidden" name="{{$d}}.bed_on" value="0">
+          <label class="flex items-center gap-2"><input type="checkbox" class="w-auto" name="{{$d}}.bed_on" value="1"{{if eq (index $e.V (print $d ".bed_on")) "1"}} checked{{end}}> {{t $.Lang "parental.edit.bedalarm"}}</label>
+          <label for="{{$moon}}-{{$d}}-bed">{{t $.Lang "parental.bedtime"}}</label>
+          <input id="{{$moon}}-{{$d}}-bed" type="time" name="{{$d}}.bed" value="{{index $e.V (print $d ".bed")}}">
+        </fieldset>
+        {{end}}
+        <label for="{{$moon}}-mode">{{t $.Lang "parental.timeup"}}</label>
+        <select id="{{$moon}}-mode" name="mode">{{range index $e.Opts "mode"}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}</select>
+        <p class="hint">{{t $.Lang "parental.edit.password"}}</p>
+        <label for="{{$moon}}-edit-password">{{t $.Lang "account.password.current"}}</label>
+        <input id="{{$moon}}-edit-password" type="password" name="password" autocomplete="current-password" required>
+        {{if $.TwoFactor}}
+        <label for="{{$moon}}-edit-code">{{t $.Lang "auth.2fa.code"}}</label>
+        <input id="{{$moon}}-edit-code" type="text" name="code" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" required>
+        <p class="hint">{{t $.Lang "auth.2fa.recovery"}}</p>
+        {{end}}
+        <button type="submit" class="primary">{{t $.Lang "parental.edit.save"}}</button>
+      </form>
+    </details>
+
     <h3>{{t $.Lang "parental.players"}}</h3>
     {{if .Players}}
     <ul class="list-none p-0 flex flex-wrap gap-3">
-      {{$moon := .MoonID}}{{range .Players}}
+      {{range .Players}}
       <li class="flex items-center gap-2"><img class="avatar" src="/account/parental/{{$moon}}/players/{{.ID}}/image" alt="" width="48" height="48" loading="lazy">{{.Nickname}}</li>
       {{end}}
     </ul>
@@ -69,14 +140,63 @@
     {{else}}
     {{if eq $.PinFor .MoonID}}{{with $.PinError}}<p class="badge warn" role="status">{{.}}</p>{{end}}{{end}}
     <p><span class="code tracking-widest" aria-hidden="true">••••</span></p>
-    <a class="btn" href="/account/parental?pin={{.MoonID}}#pin-{{.MoonID}}">{{t $.Lang "parental.pin.show"}}</a>
+    <div class="flex flex-wrap gap-3">
+      <a class="btn" href="/account/parental?pin={{.MoonID}}#pin-{{.MoonID}}">{{t $.Lang "parental.pin.show"}}</a>
+      {{if ne $.NewPinOpen .MoonID}}<a class="btn" href="/account/parental?newpin={{.MoonID}}#pin-{{.MoonID}}">{{t $.Lang "parental.pin.change"}}</a>{{end}}
+    </div>
     {{end}}
     <p class="hint">{{t $.Lang "parental.pin.hint"}}</p>
+    {{if eq $.PinSaved .MoonID}}<p class="badge ok" role="status">{{t $.Lang "parental.pin.saved"}}</p>
+    {{if not .Synced}}<p class="hint">{{t $.Lang "parental.pin.old"}}</p>{{end}}{{end}}
+    {{if eq $.NewPinOpen .MoonID}}
+    <form method="post" action="/account/parental/pin/set#pin-{{.MoonID}}" class="form-stack max-w-md">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <input type="hidden" name="moon_id" value="{{.MoonID}}">
+      {{with $.NewPinError}}<p class="badge bad" role="alert">{{.}}</p>{{end}}
+      <label for="{{.MoonID}}-new-pin">{{t $.Lang "parental.pin.new"}}</label>
+      <input id="{{.MoonID}}-new-pin" type="text" name="new_pin" inputmode="numeric" pattern="[0-9]{4}" minlength="4" maxlength="4" autocomplete="off" required>
+      <p class="hint">{{t $.Lang "parental.pin.digits"}}</p>
+      <label for="{{.MoonID}}-new-pin-again">{{t $.Lang "parental.pin.again"}}</label>
+      <input id="{{.MoonID}}-new-pin-again" type="text" name="new_pin_again" inputmode="numeric" pattern="[0-9]{4}" minlength="4" maxlength="4" autocomplete="off" required>
+      <p class="hint">{{t $.Lang "parental.pin.changepw"}}</p>
+      <label for="{{.MoonID}}-new-pin-password">{{t $.Lang "account.password.current"}}</label>
+      <input id="{{.MoonID}}-new-pin-password" type="password" name="password" autocomplete="current-password" required>
+      {{if $.TwoFactor}}
+      <label for="{{.MoonID}}-new-pin-code">{{t $.Lang "auth.2fa.code"}}</label>
+      <input id="{{.MoonID}}-new-pin-code" type="text" name="code" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" required>
+      <p class="hint">{{t $.Lang "auth.2fa.recovery"}}</p>
+      {{end}}
+      <button type="submit" class="primary">{{t $.Lang "parental.pin.change"}}</button>
+    </form>
+    {{end}}
 
     {{if .WrongPins}}
     <h3>{{t $.Lang "parental.wrongpin"}}</h3>
     <ul class="list-none p-0">{{range .WrongPins}}<li>{{.}}</li>{{end}}</ul>
     {{end}}
+
+    <h3>{{t $.Lang "parental.activity"}} <span class="text-muted">{{t $.Lang "parental.activity.days"}}</span></h3>
+    {{with .Activity}}
+    <dl class="facts">
+      {{range .}}<dt>{{.Date}}<br><span class="hint">{{t $.Lang "parental.activity.used"}}</span></dt><dd>{{.Total}}</dd>
+      {{range .Titles}}<dt class="pl-4">{{.Label}}</dt><dd>{{.Value}}</dd>{{end}}{{end}}
+    </dl>
+    {{else}}<p class="empty">{{t $.Lang "parental.activity.none"}}</p>{{end}}
+
+    <div id="remove-{{.MoonID}}" class="mt-4">
+    {{if eq $.RemoveOpen .MoonID}}
+      <h3>{{t $.Lang "parental.remove.title"}}</h3>
+      <p>{{t $.Lang "parental.remove.detail"}} {{t $.Lang "parental.remove.shown"}}</p>
+      <form method="post" action="/account/parental/remove" class="flex flex-wrap gap-3">
+        <input type="hidden" name="csrf" value="{{$.CSRF}}">
+        <input type="hidden" name="moon_id" value="{{.MoonID}}">
+        <button type="submit" class="danger">{{t $.Lang "parental.remove.confirm"}}</button>
+        <a class="btn" href="/account/parental#c-{{.MoonID}}">{{t $.Lang "parental.cancel"}}</a>
+      </form>
+    {{else}}
+      <a class="btn danger" href="/account/parental?remove={{.MoonID}}#remove-{{.MoonID}}">{{t $.Lang "parental.remove"}}</a>
+    {{end}}
+    </div>
   </article>
   {{end}}
 </section>
