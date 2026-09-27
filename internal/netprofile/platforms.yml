@@ -67,6 +67,11 @@ platforms:
       - ".live.com"
       - ".mojang.com"
       - ".microsoft.com"
+      # Klei's own stack: Don't Starve Together reaches no Nintendo service beyond its BAAS
+      # account, and servers/klei answers the login and the lobby browser. The content tier
+      # (galette) is in `never` below -- it serves the game's own data and it works.
+      - ".klei.com"
+      - ".kleientertainment.com"
     exact: []                  # every name this platform claims is inside a family above
     overrides:
       # The NAT check probes two addresses from one socket and decides the
@@ -74,7 +79,11 @@ platforms:
       # onto the server address is a NAT type it cannot determine, so the
       # second responder is named its own box here.
       "nncs2-lp1.n.n.srv.nintendo.net": "145.241.228.207"
-    never: []                  # a console on OpenPak reaches OpenPak, conntest included
+    never:
+      # Klei's content delivery. Redirecting it would take the game's own patch data away from
+      # it for no gain: it needs no account, and it answers an OpenPak console today.
+      - "galette.klei.com"
+      - "cdn-galette.klei.com"
     services: {}               # Switch clients resolve names; nothing addresses a URL
 
   wiiu:

@@ -49,4 +49,6 @@ var Universe = []string{
 	".live.com",
 	".mojang.com",
 	".microsoft.com",
+	".klei.com",
+	".kleientertainment.com",
 }

@@ -70,8 +70,8 @@ func TestSwitchProfileIsGeneratedFromTheLiveRouting(t *testing.T) {
 	// still no DS-era family: a Wii's .gamespy.com is not a name this console
 	// ever resolves.
 	want := ".among.us,.battle.net,.demonware.net,.ea.com,.epicgames.dev,.exitgames.com," +
-		".live.com,.microsoft.com,.mojang.com,.nintendo.com,.nintendo.net,.nintendowifi.net," +
-		".photonengine.io,.xboxlive.com"
+		".klei.com,.kleientertainment.com,.live.com,.microsoft.com,.mojang.com,.nintendo.com," +
+		".nintendo.net,.nintendowifi.net,.photonengine.io,.xboxlive.com"
 	if strings.Join(p.Redirect.Suffixes, ",") != want {
 		t.Fatalf("suffixes: %v", p.Redirect.Suffixes)
 	}
@@ -88,10 +88,11 @@ func TestSwitchProfileIsGeneratedFromTheLiveRouting(t *testing.T) {
 			t.Errorf("no family covers %s: %v", name, p.Redirect.Suffixes)
 		}
 	}
-	// The connection test reaches OpenPak too: OpenPak answers that probe as a
-	// service, so there is nothing a Switch is left to send to the real internet.
-	if len(p.Redirect.Never) != 0 {
-		t.Errorf("never still holds something: %v", p.Redirect.Never)
+	// The connection test reaches OpenPak too -- OpenPak answers that probe as a service. The
+	// only names a Switch still sends to the real internet are Klei's content delivery, which
+	// carries no account and serves the game its own data.
+	if strings.Join(p.Redirect.Never, ",") != "cdn-galette.klei.com,galette.klei.com" {
+		t.Errorf("never holds %v", p.Redirect.Never)
 	}
 	if !coveredByAny("conntest.nintendowifi.net", p.Redirect.Suffixes) {
 		t.Errorf("conntest is not covered: %v", p.Redirect.Suffixes)
