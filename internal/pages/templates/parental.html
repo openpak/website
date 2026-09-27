@@ -196,7 +196,8 @@
     {{with .Activity}}
     <dl class="facts">
       {{range .}}<dt>{{.Date}}<br><span class="hint">{{t $.Lang "parental.activity.used"}}</span></dt><dd>{{.Total}}</dd>
-      {{range .Titles}}<dt class="pl-4">{{.Label}}</dt><dd>{{.Value}}</dd>{{end}}{{end}}
+      {{range .Titles}}<dt class="pl-4">{{.Label}}</dt><dd>{{.Value}}</dd>
+        {{range .Players}}<dt class="pl-8 flex items-center gap-2">{{if .Known}}<img class="avatar size-5" src="/account/parental/{{$moon}}/players/{{.ID}}/image" alt="" width="20" height="20" loading="lazy">{{else if .ID}}<span class="avatar blank size-5 text-xs" aria-hidden="true">?</span>{{end}}{{.Label}}</dt><dd>{{.Value}}</dd>{{end}}{{end}}{{end}}
     </dl>
     {{else}}<p class="empty">{{t $.Lang "parental.activity.none"}}</p>{{end}}
 

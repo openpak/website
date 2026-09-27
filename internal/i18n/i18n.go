@@ -941,6 +941,8 @@ var languages = map[string]Catalogue{
 		"parental.activity.days":              "Last 7 days",
 		"parental.activity.used":              "Time used",
 		"parental.activity.none":              "No play time recorded yet.",
+		"parental.player.gone":                "A user no longer on this console",
+		"parental.player.none":                "No user selected",
 		"parental.minutes.one":                "1 minute",
 		"parental.minutes":                    "%d minutes",
 	},

@@ -535,6 +535,8 @@ var cataloguePTBR = Catalogue{
 	"parental.activity.days":              "Últimos 7 dias",
 	"parental.activity.used":              "Tempo de uso",
 	"parental.activity.none":              "Ainda não há tempo de jogo registrado.",
+	"parental.player.gone":                "Um usuário que não está mais neste console",
+	"parental.player.none":                "Nenhum usuário selecionado",
 	"parental.minutes.one":                "1 minuto",
 	"parental.minutes":                    "%d minutos",
 }

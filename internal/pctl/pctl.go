@@ -237,6 +237,34 @@ type TitleTime struct {
 	TitleID string `json:"title_id"`
 	Name    string `json:"name,omitempty"`
 	Minutes int    `json:"minutes"`
+	// Players split the title's time by the console's own user ids, most
+	// first; AnonymousMinutes is time played with no user selected.
+	Players          []PlayerTime `json:"players"`
+	AnonymousMinutes int          `json:"anonymous_minutes"`
+}
+
+// PlayerTime is one user's share of a title. Nickname is filled in by
+// NamePlayers, and stays empty for a user the console no longer lists.
+type PlayerTime struct {
+	ID       string `json:"id"`
+	Nickname string `json:"nickname,omitempty"`
+	Minutes  int    `json:"minutes"`
+}
+
+// NamePlayers names each player in the activity from the console's own list
+// of its users.
+func NamePlayers(days []Day, players []Player) {
+	names := map[string]string{}
+	for _, p := range players {
+		names[p.ID] = p.Nickname
+	}
+	for i := range days {
+		for j := range days[i].Titles {
+			for k, p := range days[i].Titles[j].Players {
+				days[i].Titles[j].Players[k].Nickname = names[p.ID]
+			}
+		}
+	}
 }
 
 // Activity is the last days of play, newest first, empty days left out. A
@@ -257,6 +285,14 @@ func (c *Client) Activity(ctx context.Context, accountID, moonID string, days in
 	}
 	if out.Days == nil {
 		out.Days = []Day{}
+	}
+	// An nx-baas before v0.48.0 does not split a title's time by player.
+	for i := range out.Days {
+		for j := range out.Days[i].Titles {
+			if out.Days[i].Titles[j].Players == nil {
+				out.Days[i].Titles[j].Players = []PlayerTime{}
+			}
+		}
 	}
 	return out.Days, err
 }

@@ -65,7 +65,20 @@ type consoleView struct {
 
 type dayView struct {
 	Date, Total string
-	Titles      []fact
+	Titles      []titleView
+}
+
+// titleView is one title's time and who played it; a player with no ID is the
+// time with no user selected, and one with an ID but no name is a user the
+// console no longer lists, shown without a picture.
+type titleView struct {
+	Label, Value string
+	Players      []playerView
+}
+
+type playerView struct {
+	ID, Label, Value string
+	Known            bool
 }
 
 type fact struct{ Label, Value, Note string }
@@ -115,6 +128,7 @@ func (s *Server) renderParental(w http.ResponseWriter, r *http.Request, v *viewe
 			s.log.Error("parental activity", "err", err)
 		}
 		nameTitles(catalogue, days)
+		pctl.NamePlayers(days, d.Players)
 		c.Activity = activityOf(lang, days)
 		view.Consoles = append(view.Consoles, c)
 	}
@@ -768,7 +782,18 @@ func activityOf(lang string, days []pctl.Day) []dayView {
 			if name == "" {
 				name = t.TitleID
 			}
-			dv.Titles = append(dv.Titles, fact{Label: name, Value: count(lang, "parental.minutes", t.Minutes)})
+			tv := titleView{Label: name, Value: count(lang, "parental.minutes", t.Minutes)}
+			for _, p := range t.Players {
+				pv := playerView{ID: p.ID, Label: p.Nickname, Value: count(lang, "parental.minutes", p.Minutes), Known: p.Nickname != ""}
+				if !pv.Known {
+					pv.Label = i18n.T(lang, "parental.player.gone")
+				}
+				tv.Players = append(tv.Players, pv)
+			}
+			if t.AnonymousMinutes > 0 {
+				tv.Players = append(tv.Players, playerView{Label: i18n.T(lang, "parental.player.none"), Value: count(lang, "parental.minutes", t.AnonymousMinutes)})
+			}
+			dv.Titles = append(dv.Titles, tv)
 		}
 		out = append(out, dv)
 	}

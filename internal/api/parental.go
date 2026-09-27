@@ -158,8 +158,9 @@ func (s *Server) handleParentalName(w http.ResponseWriter, r *http.Request, tok 
 	}
 }
 
-// handleParentalActivity is the time used per day and per title, named from the
-// titles catalogue; a title it does not know has no name.
+// handleParentalActivity is the time used per day, per title and per player.
+// Titles are named from the titles catalogue and players from the console's
+// own list; one either does not know has no name.
 func (s *Server) handleParentalActivity(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
 	days := 7
 	if q := r.URL.Query().Get("days"); q != "" {
@@ -180,6 +181,13 @@ func (s *Server) handleParentalActivity(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 	pages.NameTitles(r.Context(), s.DB, out)
+	// A failed lookup costs the players' names, not the activity.
+	devices, _ := s.Parental.Devices(r.Context(), tok.AccountID)
+	for _, d := range devices {
+		if d.MoonID == r.PathValue("moonID") {
+			pctl.NamePlayers(out, d.Players)
+		}
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"days": out})
 }
 

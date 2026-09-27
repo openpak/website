@@ -128,10 +128,11 @@ func nxParentalWrites(t *testing.T, writes *[]string) *httptest.Server {
 				w.Write([]byte(`{"devices":[]}`))
 				return
 			}
-			w.Write([]byte(`{"devices":[{"moon_id":"00000000000000aa","paired":true,"synced":false,"nickname":"Switch ···0001","serial_number":"XAW10000000001","firmware":"22.5.0",
+			w.Write([]byte(`{"devices":[{"moon_id":"00000000000000aa","paired":true,"synced":false,"nickname":"Switch ···0001","serial_number":"XAW10000000001","firmware":"22.5.0","players":[{"id":"p1","nickname":"Leia"}],
 				"setting":{"functionalRestrictionLevel":"NONE","customSettings":{"ugcRestriction":{"applications":{"0100E65002BB8000":{"restriction":"RESTRICTED"}}}}}}]}`))
 		case r.URL.Path == "/internal/pctl/devices/00000000000000aa/activity" && mine:
-			w.Write([]byte(`{"days":[{"date":"2026-09-27","total_minutes":95,"titles":[{"title_id":"0100e65002bb8000","minutes":60}]}]}`))
+			w.Write([]byte(`{"days":[{"date":"2026-09-27","total_minutes":95,"titles":[{"title_id":"0100e65002bb8000","minutes":60,
+				"players":[{"id":"p1","minutes":42},{"id":"gone","minutes":11}],"anonymous_minutes":7}]}]}`))
 		case strings.HasPrefix(r.URL.Path, "/internal/pctl/devices/00000000000000aa") && mine && r.Method != http.MethodGet:
 			body := map[string]any{}
 			json.NewDecoder(r.Body).Decode(&body)
@@ -162,7 +163,9 @@ func TestParentalWritesNeedThePasswordAndTheConsole(t *testing.T) {
 	a := login(t, s, emailA, "password-A-1")
 
 	page := authedRequest(s, a, http.MethodGet, "/account/parental", nil).Body.String()
-	for _, want := range []string{"Change restrictions", "Stardew Valley: Restricted", "Time used", "60 minutes", "Remove console"} {
+	for _, want := range []string{"Change restrictions", "Stardew Valley: Restricted", "Time used", "60 minutes", "Remove console",
+		`players/p1/image" alt="" width="20" height="20" loading="lazy">Leia</dt><dd>42 minutes`,
+		`A user no longer on this console</dt><dd>11 minutes`, `No user selected</dt><dd>7 minutes`} {
 		if !strings.Contains(page, want) {
 			t.Fatalf("page lacks %q", want)
 		}
@@ -243,5 +246,14 @@ func TestParentalWritesNeedThePasswordAndTheConsole(t *testing.T) {
 	}
 	if len(writes) != 4 {
 		t.Fatalf("another account wrote: %v", writes)
+	}
+}
+
+// Time with no user selected is a line of its own only when there was some.
+func TestParentalNoUserLineOnlyWhenPlayed(t *testing.T) {
+	days := []pctl.Day{{Date: "2026-09-27", TotalMinutes: 13, Titles: []pctl.TitleTime{
+		{TitleID: "a", Minutes: 13, Players: []pctl.PlayerTime{{ID: "p1", Nickname: "Leia", Minutes: 13}}}}}}
+	if got := activityOf("en", days)[0].Titles[0].Players; len(got) != 1 || got[0].Label != "Leia" {
+		t.Fatalf("players %+v", got)
 	}
 }

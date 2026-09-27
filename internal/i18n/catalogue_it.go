@@ -535,6 +535,8 @@ var catalogueIT = Catalogue{
 	"parental.activity.days":              "Ultimi 7 giorni",
 	"parental.activity.used":              "Tempo di utilizzo",
 	"parental.activity.none":              "Ancora nessun tempo di gioco registrato.",
+	"parental.player.gone":                "Un utente non più presente su questa console",
+	"parental.player.none":                "Nessun utente selezionato",
 	"parental.minutes.one":                "1 minuto",
 	"parental.minutes":                    "%d minuti",
 }

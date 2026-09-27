@@ -161,7 +161,7 @@ func nxParentalWrites(t *testing.T, account string, live *bool, got *map[string]
 		switch {
 		case r.URL.Path == "/internal/pctl/devices":
 			if mine {
-				w.Write([]byte(`{"devices":[{"moon_id":"00000000000000aa","paired":true,"nickname":"Switch ···0001","named":false,"serial_number":"XAW10000000001","firmware":"22.5.0"}]}`))
+				w.Write([]byte(`{"devices":[{"moon_id":"00000000000000aa","paired":true,"nickname":"Switch ···0001","named":false,"serial_number":"XAW10000000001","firmware":"22.5.0","players":[{"id":"p1","nickname":"Leia"}]}]}`))
 				return
 			}
 			w.Write([]byte(`{"devices":[]}`))
@@ -189,7 +189,7 @@ func nxParentalWrites(t *testing.T, account string, live *bool, got *map[string]
 			if r.URL.Query().Get("days") != "7" {
 				t.Errorf("days %q", r.URL.Query().Get("days"))
 			}
-			w.Write([]byte(`{"days":[{"date":"2026-09-27","total_minutes":95,"titles":[{"title_id":"0100e65002bb8000","minutes":60},{"title_id":"01000000000000ff","minutes":5}]},{"date":"2026-09-26","total_minutes":10,"titles":[]}]}`))
+			w.Write([]byte(`{"days":[{"date":"2026-09-27","total_minutes":95,"titles":[{"title_id":"0100e65002bb8000","minutes":60,"players":[{"id":"p1","minutes":40},{"id":"gone","minutes":15}],"anonymous_minutes":5},{"title_id":"01000000000000ff","minutes":5}]},{"date":"2026-09-26","total_minutes":10,"titles":[]}]}`))
 			return
 		}
 		w.WriteHeader(http.StatusNotFound)
@@ -268,15 +268,17 @@ func TestParentalPinIsFourDigits(t *testing.T) {
 	}
 }
 
-// Activity names what the catalogue knows, leaves the rest nameless, reads a
-// nx-baas without the route as no activity, and bounds days itself.
+// Activity names the titles the catalogue knows and the players the console
+// lists, leaves the rest nameless, reads a title from an older nx-baas as
+// played by nobody in particular, reads one without the route as no activity,
+// and bounds days itself.
 func TestParentalActivityNamesTitles(t *testing.T) {
 	s, _, _ := newTestAPI(t)
 	live, got := true, map[string]any{}
 	s.Parental = pctl.New(nxParentalWrites(t, "acct-a@x.test", &live, &got).URL, "k")
 	tok := signIn(t, s)
 	rec := do(t, s, http.MethodGet, "/api/v1/me/parental-controls/00000000000000aa/activity?days=7", tok, nil)
-	want := `{"days":[{"date":"2026-09-27","total_minutes":95,"titles":[{"title_id":"0100e65002bb8000","name":"Stardew Valley","minutes":60},{"title_id":"01000000000000ff","minutes":5}]},{"date":"2026-09-26","total_minutes":10,"titles":[]}]}` + "\n"
+	want := `{"days":[{"date":"2026-09-27","total_minutes":95,"titles":[{"title_id":"0100e65002bb8000","name":"Stardew Valley","minutes":60,"players":[{"id":"p1","nickname":"Leia","minutes":40},{"id":"gone","minutes":15}],"anonymous_minutes":5},{"title_id":"01000000000000ff","minutes":5,"players":[],"anonymous_minutes":0}]},{"date":"2026-09-26","total_minutes":10,"titles":[]}]}` + "\n"
 	if rec.Code != http.StatusOK || rec.Body.String() != want {
 		t.Fatalf("activity: %d %s", rec.Code, rec.Body.String())
 	}

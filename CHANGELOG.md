@@ -3,6 +3,17 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.65.0 — 2026-09-27
+
+- **Parental controls: play activity says who played** (nx-baas v0.48.0). In `GET
+  /api/v1/me/parental-controls/{moonID}/activity` each title gains `players` `[{id, nickname,
+  minutes}]`, most first, and `anonymous_minutes`, the time played with no user selected. The
+  nickname comes from the console's own player list and is left out for a user it no longer
+  lists; a title from an older nx-baas reads as `[]` and 0.
+- The page shows, under each title, who played it and for how long, with the player's picture
+  ("A user no longer on this console" for one it no longer lists), and "No user selected" as its
+  own line only when there was such time. The wording is the app's, in all six languages.
+
 ## v0.64.0 — 2026-09-27
 
 - **Parental controls: a parent names each console** (nx-baas v0.48.0), so two under one account

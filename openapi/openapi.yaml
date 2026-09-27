@@ -484,7 +484,7 @@ paths:
         time used is left out. `total_minutes` includes the HOME menu, so it
         can be more than the titles add up to, and `titles` can be empty.
         `name` comes from the titles catalogue and is absent for a title it
-        does not know.
+        does not know. Each title also says who played it.
       parameters:
         - { name: moonID, in: path, required: true, schema: { type: string } }
         - { name: days, in: query, schema: { type: integer, minimum: 1, maximum: 30, default: 7 } }
@@ -509,11 +509,26 @@ paths:
                           type: array
                           items:
                             type: object
-                            required: [title_id, minutes]
+                            required: [title_id, minutes, players, anonymous_minutes]
                             properties:
                               title_id: { type: string }
                               name: { type: string }
                               minutes: { type: integer }
+                              players:
+                                type: array
+                                description: |
+                                  The title's time by the console's own users, most first; empty
+                                  when the console did not split it. `nickname` comes from the
+                                  console's player list and is absent for a user it no longer
+                                  lists. A picture is `…/players/{id}/image`.
+                                items:
+                                  type: object
+                                  required: [id, minutes]
+                                  properties:
+                                    id: { type: string }
+                                    nickname: { type: string }
+                                    minutes: { type: integer }
+                              anonymous_minutes: { type: integer, description: Time played with no user selected. }
         "400": { description: "days outside 1 to 30 (code `bad_request`)" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { description: not a console this account manages }
