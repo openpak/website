@@ -67,14 +67,10 @@ func StorageOAuthCallback(scheme, host, provider string) string {
 	return scheme + "://" + host + "/account/saves/storage/oauth/" + provider + "/callback"
 }
 
-// Delete starts deleting an account once its password has been given again: a signed-in
-// session alone, or a bearer lifted off a phone, must not be enough to end an account. A wrong
-// password is core.ErrInvalidCredentials. An account with two-factor authentication also needs
-// a current code or a recovery code (secondFactor): none is core.ErrSecondFactorRequired, a
-// wrong one core.ErrInvalidCode. The core revokes every core session itself; the website's own
-// session rows and bearers are dropped here so none of them outlives the account until its
-// next use.
-func Delete(ctx context.Context, id core.Identity, db store.Store, accountID, password, secondFactor string) error {
+// Reauthenticate asks a signed-in account for its password again, and for a
+// current code or a recovery code when it has two-factor authentication. The
+// errors are Delete's.
+func Reauthenticate(ctx context.Context, id core.Identity, accountID, password, secondFactor string) error {
 	twoFactor, err := id.VerifyPasswordByID(ctx, accountID, password)
 	if err != nil && !errors.Is(err, core.ErrSecondFactorRequired) {
 		return err
@@ -84,9 +80,21 @@ func Delete(ctx context.Context, id core.Identity, db store.Store, accountID, pa
 			return core.ErrSecondFactorRequired
 		}
 		code, recovery := SplitSecondFactor(secondFactor)
-		if err := id.VerifySecondFactor(ctx, accountID, code, recovery); err != nil {
-			return err
-		}
+		return id.VerifySecondFactor(ctx, accountID, code, recovery)
+	}
+	return nil
+}
+
+// Delete starts deleting an account once its password has been given again: a signed-in
+// session alone, or a bearer lifted off a phone, must not be enough to end an account. A wrong
+// password is core.ErrInvalidCredentials. An account with two-factor authentication also needs
+// a current code or a recovery code (secondFactor): none is core.ErrSecondFactorRequired, a
+// wrong one core.ErrInvalidCode. The core revokes every core session itself; the website's own
+// session rows and bearers are dropped here so none of them outlives the account until its
+// next use.
+func Delete(ctx context.Context, id core.Identity, db store.Store, accountID, password, secondFactor string) error {
+	if err := Reauthenticate(ctx, id, accountID, password, secondFactor); err != nil {
+		return err
 	}
 	if err := id.RequestDeletion(ctx, accountID); err != nil {
 		return err

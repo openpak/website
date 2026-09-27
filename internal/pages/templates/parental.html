@@ -1,0 +1,90 @@
+{{template "header" .}}
+{{/* The app's parental-controls screen, field for field and in its order:
+     the code while one is live, then each console with its sync state,
+     restrictions, players, PIN and wrong-PIN attempts. The PIN is revealed
+     only by a POST that asks for the password again. */}}
+<div class="page-head">
+  <h1>{{t .Lang "parental.title"}}</h1>
+  <p>{{t .Lang "parental.howto"}}</p>
+</div>
+
+{{if not .Available}}
+<p class="empty">{{t .Lang "parental.unavailable"}}</p>
+{{else}}
+
+{{with .Code}}
+<section aria-labelledby="code-h" class="mb-9">
+  <div class="section-head"><h2 id="code-h">{{t $.Lang "parental.code.label"}}</h2></div>
+  <div class="card pad">
+    <p class="m-0"><span class="code tracking-widest">{{.PairingCode}}</span></p>
+    <p class="hint m-0">{{t $.Lang "parental.code.valid"}}</p>
+  </div>
+</section>
+{{end}}
+
+<section aria-labelledby="consoles-h" class="mb-9">
+  <div class="section-head"><h2 id="consoles-h">{{t .Lang "parental.consoles"}} <span class="text-muted">{{len .Consoles}}</span></h2></div>
+  {{if not .Consoles}}<p class="empty">{{t .Lang "parental.none"}}</p>{{end}}
+  {{range .Consoles}}
+  <article class="card pad mb-5" id="c-{{.MoonID}}" aria-labelledby="c-{{.MoonID}}-h">
+    <div class="state-row {{if .Synced}}ok{{else}}warn{{end}}">
+      <span class="name" id="c-{{.MoonID}}-h">{{.Name}}</span>
+      <span class="pill">{{if .Synced}}{{t $.Lang "parental.synced"}}{{else}}{{t $.Lang "parental.waiting"}}{{end}}</span>
+    </div>
+    <p class="hint">{{.LastSynced}}</p>
+
+    <h3>{{t $.Lang "parental.restrictions"}}</h3>
+    <dl class="facts">
+      {{range .Restrictions}}<dt>{{.Label}}</dt><dd>{{.Value}}{{with .Note}}<br><span class="hint">{{.}}</span>{{end}}</dd>{{end}}
+    </dl>
+
+    <h3>{{t $.Lang "parental.players"}}</h3>
+    {{if .Players}}
+    <ul class="list-none p-0 flex flex-wrap gap-3">
+      {{$moon := .MoonID}}{{range .Players}}
+      <li class="flex items-center gap-2"><img class="avatar" src="/account/parental/{{$moon}}/players/{{.ID}}/image" alt="" width="48" height="48" loading="lazy">{{.Nickname}}</li>
+      {{end}}
+    </ul>
+    {{else}}<p class="empty">{{t $.Lang "parental.players.none"}}</p>{{end}}
+
+    <h3 id="pin-{{.MoonID}}">{{t $.Lang "parental.pin"}}</h3>
+    {{if and (eq $.PinFor .MoonID) $.Pin}}
+    <p><span class="code tracking-widest">{{$.Pin}}</span></p>
+    <a class="btn" href="/account/parental#c-{{.MoonID}}">{{t $.Lang "parental.pin.hide"}}</a>
+    {{else if eq $.PinOpen .MoonID}}
+    <form method="post" action="/account/parental/pin#pin-{{.MoonID}}" class="form-stack max-w-md">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <input type="hidden" name="moon_id" value="{{.MoonID}}">
+      <p class="hint m-0">{{t $.Lang "parental.pin.password"}}</p>
+      {{with $.PinError}}<p class="badge bad" role="alert">{{.}}</p>{{end}}
+      <label for="pin-password-{{.MoonID}}">{{t $.Lang "account.password.current"}}</label>
+      <input id="pin-password-{{.MoonID}}" type="password" name="password" autocomplete="current-password" required>
+      {{if $.TwoFactor}}
+      <label for="pin-code-{{.MoonID}}">{{t $.Lang "auth.2fa.code"}}</label>
+      <input id="pin-code-{{.MoonID}}" type="text" name="code" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" required>
+      <p class="hint">{{t $.Lang "auth.2fa.recovery"}}</p>
+      {{end}}
+      <button type="submit" class="primary">{{t $.Lang "parental.pin.show"}}</button>
+    </form>
+    {{else}}
+    {{if eq $.PinFor .MoonID}}{{with $.PinError}}<p class="badge warn" role="status">{{.}}</p>{{end}}{{end}}
+    <p><span class="code tracking-widest" aria-hidden="true">••••</span></p>
+    <a class="btn" href="/account/parental?pin={{.MoonID}}#pin-{{.MoonID}}">{{t $.Lang "parental.pin.show"}}</a>
+    {{end}}
+    <p class="hint">{{t $.Lang "parental.pin.hint"}}</p>
+
+    {{if .WrongPins}}
+    <h3>{{t $.Lang "parental.wrongpin"}}</h3>
+    <ul class="list-none p-0">{{range .WrongPins}}<li>{{.}}</li>{{end}}</ul>
+    {{end}}
+  </article>
+  {{end}}
+</section>
+
+<form method="post" action="/account/parental/pair" class="mb-5">
+  <input type="hidden" name="csrf" value="{{.CSRF}}">
+  <button type="submit" class="primary">{{t .Lang "parental.pair"}}</button>
+</form>
+<p class="hint">{{t .Lang "parental.note"}}</p>
+{{end}}
+{{template "footer" .}}

@@ -3,6 +3,27 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.62.0 — 2026-09-27
+
+- **Parental controls: what the parent reads** (nx-baas v0.45.0). `GET /api/v1/me/parental-controls`
+  adds per console `nickname`, `setting` (the document as served to the console), `players`
+  `[{id, nickname}]`, `synced_at` and `synced` (the console's last receipt names the document now
+  served), and `wrong_pin_attempts` (unix seconds, newest first, at most 20). The PIN is not in
+  the list.
+- `GET /api/v1/me/parental-controls/{moonID}/pin` answers `{"unlock_code"}` with
+  `Cache-Control: no-store`, and 404 until the console has reported its PIN.
+  `GET …/{moonID}/players/{playerID}/image` relays a player's JPEG. Both answer 404 for a console
+  another account manages, the same as for one that does not exist.
+- `POST /api/v1/me/parental-controls/unlock {"password"}` answers 204 or 403 (`wrong_password`)
+  for a phone that cannot ask for its own unlock: it checks the password the way every step-up
+  here does, returns no token and changes nothing. Five tries per account per minute, then 429.
+- **A parental-controls page**, `/account/parental`, linked from the account menu: the app's
+  screen with the same fields, words and order. The code while one is live, then each console
+  with its sync state, restrictions, players, PIN and wrong-PIN attempts, and the pair button.
+  The PIN is shown only after the account password is given again (and a code, where the account
+  has two-factor authentication), by a form post whose answer is the page itself, so it is never
+  in a URL. The strings are the app's, in all six languages.
+
 ## v0.61.1 — 2026-09-27
 
 - Parental controls: minting a pairing code sends the account's display name to nx-baas, so the

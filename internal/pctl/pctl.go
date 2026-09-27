@@ -44,7 +44,8 @@ type Error struct {
 func (e *Error) Error() string { return e.Code }
 
 // Device is one console's record as the app reads it. PairingCode is set only
-// while it is still live.
+// while it is still live. The PIN is not here: it travels only through
+// UnlockCode, one console at a time, so a list can never leak it.
 type Device struct {
 	MoonID      string   `json:"moon_id"`
 	Paired      bool     `json:"paired"`
@@ -54,6 +55,25 @@ type Device struct {
 	UpdatedAt   int64    `json:"updated_at,omitempty"`
 	Owners      []string `json:"owners,omitempty"`
 	HasSetting  bool     `json:"has_setting"`
+	// Nickname is what the console calls itself; it may be empty.
+	Nickname string `json:"nickname"`
+	// Setting is the document as nx-baas serves it to the console.
+	Setting map[string]any `json:"setting,omitempty"`
+	Players []Player       `json:"players"`
+	// SyncedAt is the console's last receipt, 0 if none; Synced says that
+	// receipt names the document currently served.
+	SyncedAt int64 `json:"synced_at"`
+	Synced   bool  `json:"synced"`
+	// WrongPinAttempts are when a wrong PIN was typed on the console, unix
+	// seconds, newest first.
+	WrongPinAttempts []int64 `json:"wrong_pin_attempts"`
+}
+
+// Player is one user on a paired console, by the console's own id. Its picture
+// is PlayerImage.
+type Player struct {
+	ID       string `json:"id"`
+	Nickname string `json:"nickname"`
 }
 
 // Pairing is a freshly minted code and the record behind it.
@@ -71,6 +91,48 @@ func (c *Client) Devices(ctx context.Context, accountID string) ([]Device, error
 	err := c.doJSON(ctx, http.MethodGet,
 		"/internal/pctl/devices?account_id="+url.QueryEscape(accountID), nil, &out)
 	return out.Devices, err
+}
+
+// UnlockCode is the PIN of one console this account manages, "" when the
+// console has not named it or the console is not this account's.
+func (c *Client) UnlockCode(ctx context.Context, accountID, moonID string) (string, error) {
+	var out struct {
+		Devices []struct {
+			MoonID     string `json:"moon_id"`
+			UnlockCode string `json:"unlock_code"`
+		} `json:"devices"`
+	}
+	err := c.doJSON(ctx, http.MethodGet,
+		"/internal/pctl/devices?account_id="+url.QueryEscape(accountID), nil, &out)
+	for _, d := range out.Devices {
+		if d.MoonID == moonID {
+			return d.UnlockCode, err
+		}
+	}
+	return "", err
+}
+
+// PlayerImage is a player's JPEG. nx-baas answers 404 for a console another
+// account manages, the same as for one that does not exist.
+func (c *Client) PlayerImage(ctx context.Context, accountID, moonID, playerID string) ([]byte, error) {
+	if c == nil {
+		return nil, ErrUnavailable
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"/internal/pctl/devices/"+
+		url.PathEscape(moonID)+"/players/"+url.PathEscape(playerID)+"/image?account_id="+url.QueryEscape(accountID), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("X-Internal-Key", c.Key)
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, &Error{Status: resp.StatusCode, Code: resp.Status}
+	}
+	return io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 }
 
 // Pair mints the code to type on the console. displayName is what the console

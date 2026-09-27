@@ -31,6 +31,7 @@ import (
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/news"
+	"github.com/openpak/website/internal/pctl"
 	"github.com/openpak/website/internal/ratelimit"
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/session"
@@ -59,6 +60,9 @@ type Server struct {
 	WFC *wfc.Client
 	// Saves is the cloud saves service; nil renders the page as "not available".
 	Saves *saves.Client
+	// Parental relays to nx-baas's parental-controls records; nil renders the
+	// page as "not available".
+	Parental *pctl.Client
 	// Chat is the neutral chat service; nil renders the page as "not available".
 	Chat *chat.Client
 	// Support is the help-ticket service; nil says tickets are not available.
@@ -340,6 +344,10 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /account/chat", s.handleChat)
 	mux.HandleFunc("POST /account/chat/send", s.handleChatSend)
 	mux.HandleFunc("GET /account/saves", s.handleSaves)
+	mux.HandleFunc("GET /account/parental", s.handleParental)
+	mux.HandleFunc("POST /account/parental/pair", s.handleParentalPair)
+	mux.HandleFunc("POST /account/parental/pin", s.handleParentalPin)
+	mux.HandleFunc("GET /account/parental/{moonID}/players/{playerID}/image", s.handleParentalPlayerImage)
 	mux.HandleFunc("GET /titles/icon/{id}", s.handleSwitchIcon)
 	mux.HandleFunc("POST /account/saves/storage", s.handleSavesStorage)
 	mux.HandleFunc("POST /account/saves/storage/disconnect", s.handleSavesDisconnect)

@@ -125,9 +125,10 @@ func run(log *slog.Logger) error {
 	// asks it for them; the app reaches them through /api/v1/me/parental-*.
 	parentalCli := pctl.New(os.Getenv("NX_BAAS_URL"), os.Getenv("NX_BAAS_INTERNAL_KEY"))
 	if parentalCli == nil {
-		log.Info("parental controls: NX_BAAS_URL not set; the API answers 503")
+		log.Info("parental controls: NX_BAAS_URL not set; the page says so and the API answers 503")
 	}
 	apiSrv.Parental = parentalCli
+	pageSrv.Parental = parentalCli
 	apiSrv.SaveTitle = pages.SaveTitle
 	apiSrv.Chat = chatCli
 	apiSrv.AdminIDs = cfg.AdminAccountIDs

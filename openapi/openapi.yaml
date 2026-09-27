@@ -305,6 +305,65 @@ paths:
               schema: { $ref: "#/components/schemas/ParentalPairing" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "503": { description: parental controls are not configured on this deployment }
+  /me/parental-controls/{moonID}/pin:
+    get:
+      summary: One console's PIN
+      description: |
+        The PIN the console asks for. It is never in the device list: the app
+        fetches it only when it is shown, behind the phone's own unlock. Present
+        once the console has reported it (at pairing, or in a sync receipt).
+        Answered with `Cache-Control: no-store`, and never logged.
+      parameters:
+        - { name: moonID, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [unlock_code]
+                properties:
+                  unlock_code: { type: string, description: Four to eight digits. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { description: the console has not reported its PIN, or it is not one this account manages }
+        "503": { description: parental controls are not configured on this deployment }
+  /me/parental-controls/{moonID}/players/{playerID}/image:
+    get:
+      summary: A player's picture
+      description: The JPEG the console uploaded for one of its users.
+      parameters:
+        - { name: moonID, in: path, required: true, schema: { type: string } }
+        - { name: playerID, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: OK
+          content:
+            image/jpeg: {}
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { description: no such picture, or the console is not one this account manages }
+        "503": { description: parental controls are not configured on this deployment }
+  /me/parental-controls/unlock:
+    post:
+      summary: Check the account password before opening the parental screens
+      description: |
+        For a device that cannot ask for its own unlock. Answers whether the
+        password is this account's, and nothing else: no token, no state. A
+        second factor is not asked for. Five tries per account per minute.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password: { type: string }
+      responses:
+        "204": { description: the password is this account's }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { description: "wrong password (code `wrong_password`)" }
+        "429": { description: "too many tries (code `rate_limited`)" }
   /me/invitations/decline:
     post:
       summary: Decline an invitation
@@ -2585,6 +2644,28 @@ components:
         has_setting:
           type: boolean
           description: Whether a parental_control_setting document has been stored yet.
+        nickname: { type: string, description: What the console calls itself; may be empty. }
+        setting:
+          type: object
+          additionalProperties: true
+          description: |
+            The parental_control_setting document as it is served to the console,
+            in the console's parse-table shape (docs repo,
+            switch/parental-controls-firmware-2026-09-26.md §5b).
+        players:
+          type: array
+          items:
+            type: object
+            required: [id, nickname]
+            properties:
+              id: { type: string }
+              nickname: { type: string }
+        synced_at: { type: integer, format: int64, description: Unix seconds of the console's last sync receipt; 0 if none. }
+        synced: { type: boolean, description: True when that receipt names the document currently served. }
+        wrong_pin_attempts:
+          type: array
+          items: { type: integer, format: int64 }
+          description: When a wrong PIN was typed on the console, unix seconds, newest first, at most 20.
     ParentalPairing:
       type: object
       required: [moon_id, pairing_code, expires_at]
