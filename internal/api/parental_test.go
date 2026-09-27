@@ -44,14 +44,14 @@ func TestParentalPairReturnsTheCode(t *testing.T) {
 		}
 		var in map[string]string
 		json.NewDecoder(r.Body).Decode(&in)
-		if in["account_id"] != "acct-parent" {
+		if in["account_id"] != "acct-parent" || in["display_name"] != "Alexis" {
 			t.Errorf("body %v", in)
 		}
 		w.Write([]byte(`{"moon_id":"00000000000000ff","pairing_code":"ABC234","expires_at":9}`))
 	}))
 	defer nx.Close()
 
-	p, err := pctl.New(nx.URL, "k").Pair(t.Context(), "acct-parent")
+	p, err := pctl.New(nx.URL, "k").Pair(t.Context(), "acct-parent", "Alexis")
 	if err != nil || p.PairingCode != "ABC234" {
 		t.Fatalf("pair: %+v %v", p, err)
 	}

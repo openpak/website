@@ -3,6 +3,12 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.61.1 — 2026-09-27
+
+- Parental controls: minting a pairing code sends the account's display name to nx-baas, so the
+  console's confirmation screen names the parent instead of showing "OpenPak". A failed name
+  lookup costs the name, not the pairing.
+
 ## v0.61.0 — 2026-09-26
 
 - **Parental controls for the app** (app v0.15.0): `GET /api/v1/me/parental-controls` lists the

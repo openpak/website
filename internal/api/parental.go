@@ -51,7 +51,13 @@ func (s *Server) handleParentalDevices(w http.ResponseWriter, r *http.Request, t
 // again is how someone who walked away from the console gets a fresh code, and
 // the old one stops being typed the moment it expires.
 func (s *Server) handleParentalPair(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
-	p, err := s.Parental.Pair(r.Context(), tok.AccountID)
+	// The console names the parent on its confirmation screen. A failed lookup
+	// costs the name, not the pairing.
+	name := ""
+	if acct, err := s.Identity.GetAccount(r.Context(), tok.AccountID); err == nil {
+		name = acct.DisplayName
+	}
+	p, err := s.Parental.Pair(r.Context(), tok.AccountID, name)
 	if err != nil {
 		parentalErr(w, err)
 		return

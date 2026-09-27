@@ -73,11 +73,12 @@ func (c *Client) Devices(ctx context.Context, accountID string) ([]Device, error
 	return out.Devices, err
 }
 
-// Pair mints the code to type on the console.
-func (c *Client) Pair(ctx context.Context, accountID string) (Pairing, error) {
+// Pair mints the code to type on the console. displayName is what the console
+// shows as the parent before it is linked; it may be empty.
+func (c *Client) Pair(ctx context.Context, accountID, displayName string) (Pairing, error) {
 	var out Pairing
 	err := c.doJSON(ctx, http.MethodPost, "/internal/pctl/pairing",
-		map[string]string{"account_id": accountID}, &out)
+		map[string]string{"account_id": accountID, "display_name": displayName}, &out)
 	return out, err
 }
 
