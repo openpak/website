@@ -981,11 +981,19 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
+	play, err := s.DB.ListPlayability(r.Context())
+	if err != nil {
+		s.log.Error("api: list playability", "err", err)
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	idx := playabilityIndex(play)
 	titles := make([]map[string]any, 0, len(reqs))
 	for _, t := range store.CatalogOrder(reqs) {
 		titles = append(titles, map[string]any{
 			"id": t.ID, "name": t.Name, "console": t.Console, "category": t.Category, "title_id": t.TitleID,
 			"title_ids": titleIDs(t), "status": t.Status, "notes": t.Notes, "requestable": t.Votable(),
+			"playability": playabilityOf(idx, t.ID),
 		})
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"titles": titles})

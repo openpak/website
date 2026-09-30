@@ -305,6 +305,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /request/vote", s.handleVote)
 	mux.HandleFunc("POST /admin/titles/status", s.handleSetTitleStatus)
 	mux.HandleFunc("POST /admin/titles/shops", s.handleSetShopLinks)
+	mux.HandleFunc("POST /admin/titles/playability", s.handleSetPlayability)
 	mux.HandleFunc("GET /register", s.handleRegisterForm)
 	mux.HandleFunc("POST /register", s.handleRegisterSubmit)
 	mux.HandleFunc("GET /verify", s.handleVerify)

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"regexp"
 	"slices"
 	"sort"
@@ -191,6 +192,9 @@ type RequestPatch struct {
 	Name, Console, Category, Backend, Status, Notes, TitleID *string
 	TitleIDs                                                 *[]string
 	Sort                                                     *int
+	// Playability merges into title_playability: only the named clients change, an empty
+	// status deletes that client's row, and a client left out keeps what it had.
+	Playability map[string]string
 }
 
 // RequestChange is one row of request_changes: who created, updated or deleted a request,
@@ -394,6 +398,11 @@ func (s *PG) UpdateRequest(ctx context.Context, id int64, p RequestPatch, actor 
 		return old, err
 	}
 	ch := diff(fields(old), fields(r))
+	pch, err := applyPlayability(ctx, tx, id, p.Playability)
+	if err != nil {
+		return old, err
+	}
+	maps.Copy(ch, pch)
 	if len(ch) == 0 {
 		return old, nil
 	}

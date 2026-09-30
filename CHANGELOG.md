@@ -3,6 +3,23 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.66.0 — 2026-09-30
+
+- **Playability: how far a game itself runs, per client.** A second axis beside `status`, which
+  says how far OpenPak serves a title's online play. Every title row in `GET
+  /api/v1/catalog.json` and in the `titles` array of `GET /api/v1/titles` gains `playability`,
+  always present and `{}` when nothing is known: `{"Ryujinx": "playable", "Citron": "ingame"}`.
+  The five words are `playable`, `ingame`, `menus`, `boots`, `nothing` — the ones Ryujinx, Eden
+  and Citron already localize — and the client is named the way the /titles grid spells it.
+- `PATCH /api/v1/admin/titles/{id}` takes `{"playability": {"Citron": "ingame", "Eden": ""}}`.
+  It merges: only the named clients change, an empty status deletes that client's row, and a
+  client left out keeps what it had. It goes through `store.UpdateRequest` like every other
+  title edit, so the `request_changes` line and the `last_updated` bump come from one place.
+  Anything but the five words, or a client the grid does not name, is a 400.
+- The title dialog on /titles has an admin control per client, next to the product links.
+- Ryujinx's own compatibility list seeds the `Ryujinx` column (`scripts/seed-playability`);
+  Eden and Citron start empty, since neither ships a working list today.
+
 ## v0.65.0 — 2026-09-27
 
 - **Parental controls: play activity says who played** (nx-baas v0.48.0). In `GET

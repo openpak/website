@@ -241,6 +241,10 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		s.log.Error("list shop links", "err", err)
 	}
+	playability, err := s.DB.ListPlayability(r.Context())
+	if err != nil {
+		s.log.Error("list playability", "err", err)
+	}
 	var plays []core.PlayTally
 	if s.Playtime != nil {
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
@@ -259,7 +263,7 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 		ByVotes     bool
 		Back        string
 	}
-	s.render(w, http.StatusOK, "titles.html", titlesPage{d, titleRows(reqs, tallies, plays, links), requestable, consoles, statuses, allStatuses, byVotes, backPath("/titles", byVotes)})
+	s.render(w, http.StatusOK, "titles.html", titlesPage{d, titleRows(reqs, tallies, plays, links, playability), requestable, consoles, statuses, allStatuses, byVotes, backPath("/titles", byVotes)})
 }
 
 // allStatuses is every status the title forms offer, in rank order. The word means the same
@@ -379,7 +383,25 @@ type titleRow struct {
 	store.Request
 	Compat []compatCell
 	links  map[string]string // shop key -> product page
+	play   map[string]string // client -> playability
 }
+
+// playabilityPick is one line of the admin playability form: a client the title can run on,
+// and what it is set to today ("" = unknown).
+type playabilityPick struct{ Client, Status string }
+
+// Playability lists the title's clients in the grid's order with their current state, so the
+// admin form offers the same names the compatibility table shows.
+func (t titleRow) Playability() []playabilityPick {
+	var out []playabilityPick
+	for _, p := range playTargetsOf(t.Console) {
+		out = append(out, playabilityPick{p.Client, t.play[p.Client]})
+	}
+	return out
+}
+
+// PlayabilityStates is store.PlayabilityStates for the form's dropdown.
+func (titleRow) PlayabilityStates() []string { return store.PlayabilityStates }
 
 // compatCell is one client and OS for a title: what players reported, and how long it has
 // been played online there. No reports and not Verified is untested.
@@ -546,7 +568,7 @@ func playTargetsOf(console string) []playTarget {
 
 // titleRows pairs every title with its full client×OS grid, reports filled in.
 // ponytail: every title's dialog is rendered into the page; fetch it per title if the list grows into the thousands.
-func titleRows(reqs []store.Request, tallies []store.CompatTally, plays []core.PlayTally, links []store.ShopLink) []titleRow {
+func titleRows(reqs []store.Request, tallies []store.CompatTally, plays []core.PlayTally, links []store.ShopLink, playability []store.Playability) []titleRow {
 	type key struct {
 		id         int64
 		client, os string
@@ -586,10 +608,18 @@ func titleRows(reqs []store.Request, tallies []store.CompatTally, plays []core.P
 		}
 		linksOf[l.RequestID][l.Shop] = l.URL
 	}
+	playOf := map[int64]map[string]string{}
+	for _, p := range playability {
+		if playOf[p.RequestID] == nil {
+			playOf[p.RequestID] = map[string]string{}
+		}
+		playOf[p.RequestID][p.Client] = p.Status
+	}
 	out := make([]titleRow, len(reqs))
 	for i, r := range reqs {
 		out[i].Request = r
 		out[i].links = linksOf[r.ID]
+		out[i].play = playOf[r.ID]
 		for _, p := range playTargetsOf(r.Console) {
 			for _, os := range p.OSes {
 				k := key{r.ID, p.Client, os}
@@ -690,6 +720,35 @@ func shopURL(key, raw string) (string, bool) {
 		return "", false
 	}
 	return u.String(), true
+}
+
+// handleSetPlayability is the admin form in a title's dialog: how far the game itself runs in
+// each client. It goes through store.UpdateRequest like the status form, so the change log and
+// last_updated come from one place; a client left blank deletes its row.
+func (s *Server) handleSetPlayability(w http.ResponseWriter, r *http.Request) {
+	v, ok := s.postGuard(w, r)
+	if !ok {
+		return
+	}
+	if !slices.Contains(s.AdminAccountIDs, v.AccountID) {
+		http.Error(w, "admins only", http.StatusForbidden)
+		return
+	}
+	id, _ := strconv.ParseInt(r.PostFormValue("id"), 10, 64)
+	patch := map[string]string{}
+	for _, client := range r.PostForm["client"] {
+		patch[client] = r.PostFormValue("s:" + client)
+	}
+	if _, err := s.DB.UpdateRequest(r.Context(), id, store.RequestPatch{Playability: patch}, v.AccountID); err != nil {
+		if BadTitleEdit(err) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		s.log.Error("set playability", "id", id, "err", err)
+		http.Error(w, "could not save the playability", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/titles#t-"+strconv.FormatInt(id, 10), http.StatusSeeOther)
 }
 
 // handleSetShopLinks is the admin form in a title's dialog: one product link per

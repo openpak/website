@@ -69,6 +69,9 @@ type titleBody struct {
 	TitleID  *string `json:"title_id"`
 	// TitleIDs is every id the game has, primary first; it replaces the list.
 	TitleIDs *[]string `json:"title_ids"`
+	// Playability is how far the game itself runs per client — a different axis from
+	// Status. It merges: only the named clients change, "" deletes that client's row.
+	Playability map[string]string `json:"playability"`
 }
 
 // decodeStrict reads a small JSON body and refuses unknown fields: a misspelt "stauts" must
@@ -101,6 +104,10 @@ func (s *Server) handleCreateTitle(w http.ResponseWriter, r *http.Request, actor
 		if req.TitleID != "" {
 			req.TitleIDs = append([]string{req.TitleID}, req.TitleIDs...)
 		}
+	}
+	if b.Playability != nil {
+		writeError(w, http.StatusBadRequest, "playability is set with PATCH, not at creation")
+		return
 	}
 	if b.Sort != nil {
 		if *b.Sort < 0 {
@@ -137,7 +144,7 @@ func (s *Server) handleUpdateTitle(w http.ResponseWriter, r *http.Request, actor
 	}
 	updated, err := s.DB.UpdateRequest(r.Context(), id, store.RequestPatch{Name: b.Name, Console: b.Console,
 		Category: b.Category, Backend: b.Backend, Status: b.Status, Notes: b.Notes, Sort: b.Sort,
-		TitleID: b.TitleID, TitleIDs: b.TitleIDs}, actor)
+		TitleID: b.TitleID, TitleIDs: b.TitleIDs, Playability: b.Playability}, actor)
 	if err != nil {
 		s.catalogError(w, err)
 		return
@@ -193,6 +200,28 @@ func titleIDs(q store.Request) []string {
 	return q.TitleIDs
 }
 
+// playabilityIndex groups one ListPlayability read by title, so a catalogue export is two
+// queries rather than one per row.
+func playabilityIndex(rows []store.Playability) map[int64]map[string]string {
+	out := make(map[int64]map[string]string, len(rows))
+	for _, p := range rows {
+		if out[p.RequestID] == nil {
+			out[p.RequestID] = map[string]string{}
+		}
+		out[p.RequestID][p.Client] = p.Status
+	}
+	return out
+}
+
+// playabilityOf is one title's object: always present, {} when nothing is known, so a client
+// never has to tell "absent" from "untested".
+func playabilityOf(idx map[int64]map[string]string, id int64) map[string]string {
+	if m := idx[id]; m != nil {
+		return m
+	}
+	return map[string]string{}
+}
+
 // handleCatalogExport: GET /api/v1/catalog.json → every title and feature in the old
 // catalog.json shape (a bare array, catalog order) plus the two dates, for anything that still
 // reads the file.
@@ -207,11 +236,19 @@ func (s *Server) handleCatalogExport(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
+	play, err := s.DB.ListPlayability(r.Context())
+	if err != nil {
+		s.log.Error("api: catalog playability", "err", err)
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	idx := playabilityIndex(play)
 	out := make([]map[string]any, 0, len(reqs))
 	for _, q := range reqs {
 		m := requestJSON(q)
 		delete(m, "id")
 		delete(m, "sort")
+		m["playability"] = playabilityOf(idx, q.ID)
 		out = append(out, m)
 	}
 	writeJSON(w, http.StatusOK, out)

@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"maps"
 	"slices"
 	"sort"
 	"sync"
@@ -18,7 +19,8 @@ type Memory struct {
 	changes     []RequestChange
 	votes       map[int64]map[string]bool // request id -> account id -> voted
 	shopLinks   []ShopLink
-	compat      map[compatKey]bool // one verdict per account per title, client and OS
+	compat      map[compatKey]bool          // one verdict per account per title, client and OS
+	playability map[int64]map[string]string // request id -> client -> playability
 	nextReqID   int64
 	audit       []AuditEntry
 	auditSeq    int64
@@ -278,6 +280,11 @@ func (m *Memory) UpdateRequest(_ context.Context, id int64, p RequestPatch, acto
 		return old, err
 	}
 	ch := diff(fields(old), fields(r))
+	pch, err := m.applyPlayability(id, p.Playability)
+	if err != nil {
+		return old, err
+	}
+	maps.Copy(ch, pch)
 	if len(ch) == 0 {
 		return old, nil
 	}

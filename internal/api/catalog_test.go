@@ -237,3 +237,80 @@ func TestCatalogTitleIDs(t *testing.T) {
 		t.Errorf("export: %+v", got)
 	}
 }
+
+// Playability rides the same PATCH as the other title edits and shows up on every catalogue
+// read: always an object, {} when nothing is known, and a bad word is a 400 that writes nothing.
+func TestCatalogPlayability(t *testing.T) {
+	t.Setenv("WEBSITE_CATALOG_KEY", "k3y")
+	s, _, db := newTestAPI(t)
+	const key = "Bearer k3y"
+	rec := catalogDo(t, s, "POST", "/api/v1/admin/titles", key, map[string]any{
+		"kind": "title", "name": "Outbound", "console": "Switch", "status": "live", "title_id": "0100ED9024EB8000"})
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("create: %d %s", rec.Code, rec.Body)
+	}
+	var e entry
+	_ = json.Unmarshal(rec.Body.Bytes(), &e)
+	id := strconv.FormatInt(e.ID, 10)
+
+	// Nothing known yet: the field is there and empty.
+	if got := catalogPlayability(t, s); len(got) != 1 || got[0] == nil || len(got[0]) != 0 {
+		t.Fatalf("an unknown title must export {}: %v", got)
+	}
+	// Two clients, then a merge that deletes one and leaves the other alone.
+	if rec := catalogDo(t, s, "PATCH", "/api/v1/admin/titles/"+id, key,
+		map[string]any{"playability": map[string]string{"Ryujinx": "playable", "Citron": "ingame"}}); rec.Code != http.StatusOK {
+		t.Fatalf("patch: %d %s", rec.Code, rec.Body)
+	}
+	if rec := catalogDo(t, s, "PATCH", "/api/v1/admin/titles/"+id, key,
+		map[string]any{"playability": map[string]string{"Citron": ""}}); rec.Code != http.StatusOK {
+		t.Fatalf("delete patch: %d %s", rec.Code, rec.Body)
+	}
+	want := map[string]string{"Ryujinx": "playable"}
+	if got := catalogPlayability(t, s); len(got) != 1 || got[0]["Ryujinx"] != want["Ryujinx"] || len(got[0]) != 1 {
+		t.Fatalf("catalog.json: %v, want %v", got, want)
+	}
+	// The same object on GET /api/v1/titles.
+	var titles struct {
+		Titles []struct {
+			Playability map[string]string `json:"playability"`
+		} `json:"titles"`
+	}
+	rec = catalogDo(t, s, "GET", "/api/v1/titles", "", nil)
+	if err := json.Unmarshal(rec.Body.Bytes(), &titles); err != nil || len(titles.Titles) != 1 ||
+		titles.Titles[0].Playability["Ryujinx"] != "playable" {
+		t.Fatalf("/api/v1/titles: %s %v", rec.Body, err)
+	}
+	// A word outside the five is a 400 and changes nothing.
+	for _, bad := range []map[string]string{{"Ryujinx": "perfect"}, {"Ryujinx": "Playable"}, {"Rujinx": "playable"}} {
+		if rec := catalogDo(t, s, "PATCH", "/api/v1/admin/titles/"+id, key, map[string]any{"playability": bad}); rec.Code != http.StatusBadRequest {
+			t.Errorf("patch %v: %d, want 400", bad, rec.Code)
+		}
+	}
+	rows, _ := db.ListPlayability(context.Background())
+	if len(rows) != 1 || rows[0].Status != "playable" {
+		t.Fatalf("a refused patch wrote something: %+v", rows)
+	}
+	// Creation does not take it: a client that sends it there must hear so, not lose it.
+	if rec := catalogDo(t, s, "POST", "/api/v1/admin/titles", key, map[string]any{
+		"kind": "title", "name": "Risk of Rain", "playability": map[string]string{"Ryujinx": "playable"}}); rec.Code != http.StatusBadRequest {
+		t.Errorf("create with playability: %d, want 400", rec.Code)
+	}
+}
+
+// catalogPlayability is every catalog.json row's playability object, in export order.
+func catalogPlayability(t *testing.T, s *Server) []map[string]string {
+	t.Helper()
+	rec := catalogDo(t, s, "GET", "/api/v1/catalog.json", "", nil)
+	var out []struct {
+		Playability map[string]string `json:"playability"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
+		t.Fatalf("catalog.json: %s %v", rec.Body, err)
+	}
+	got := make([]map[string]string, len(out))
+	for i, r := range out {
+		got[i] = r.Playability
+	}
+	return got
+}

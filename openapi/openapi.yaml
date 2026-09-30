@@ -1108,7 +1108,8 @@ paths:
       security: []
       description: |
         Public, read-only. A bare array in catalog order; each entry has kind, name,
-        console, category, backend, status, notes, date_added and last_updated. The
+        console, category, backend, status, notes, playability, date_added and
+        last_updated. The
         database is the source; this replaces openpak/catalog's catalog.json.
         Rate limited per client address.
       responses:
@@ -1219,6 +1220,11 @@ paths:
                         status: { type: string, examples: ["live"] }
                         notes: { type: string }
                         requestable: { type: boolean }
+                        playability:
+                          type: object
+                          additionalProperties: { type: string, enum: [playable, ingame, menus, boots, nothing] }
+                          description: "How far the game itself runs per client, keyed by the grid's client name. Always present; {} when nothing is known."
+                          examples: [{ "Ryujinx": "playable", "Citron": "ingame" }]
         "429": { $ref: "#/components/responses/RateLimited" }
   /requests/{id}/vote:
     post:
@@ -2352,6 +2358,10 @@ components:
           type: array
           items: { type: string, pattern: "^[0-9A-Fa-f]{16}$" }
           description: "Every id the title has, one per region; replaces the list. title_id becomes the first. On PATCH, title_id alone replaces only the primary and \"\" clears them all. Each id names one title only."
+        playability:
+          type: object
+          additionalProperties: { type: string, enum: [playable, ingame, menus, boots, nothing] }
+          description: "PATCH only, and a merge: only the named clients change, an empty status deletes that client, and a client left out keeps what it had. The key is the client's name as the /titles grid spells it (Ryujinx, Eden, Citron, Cemu, Switch, \u2026); the lower-case form clients send in X-OpenPak-Client is accepted too. Any other word is 400."
     CatalogEntry:
       type: object
       properties:
@@ -2368,6 +2378,10 @@ components:
         title_ids: { type: array, items: { type: string }, description: "Every id the title has (one per region), title_id first." }
         date_added: { type: string, format: date-time }
         last_updated: { type: string, format: date-time }
+        playability:
+          type: object
+          additionalProperties: { type: string, enum: [playable, ingame, menus, boots, nothing] }
+          description: "How far the game itself runs per client \u2014 a different axis from status, which is how far OpenPak serves its online play. Always present; {} when nothing is known. Only in GET /catalog.json and GET /titles."
     ConsoleIdentity:
       type: object
       required: [account_id, pid, username, nex_password, mii_name, mii_data, device_type]
