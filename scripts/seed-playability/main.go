@@ -58,7 +58,7 @@ func run(base, key, path, client string, dry bool) error {
 		return err
 	}
 	hc := &http.Client{Timeout: 30 * time.Second}
-	var wrote, skipped int
+	var wrote, skipped, failed int
 	for _, t := range titles {
 		best := ""
 		for _, id := range append([]string{t.TitleID}, t.TitleIDs...) {
@@ -75,12 +75,16 @@ func run(base, key, path, client string, dry bool) error {
 			wrote++
 			continue
 		}
+		// A title the catalogue itself cannot save (two rows sharing a title id, say) is
+		// reported and stepped over: one bad row must not stop the other three thousand.
 		if err := patch(hc, base, key, t.ID, client, best); err != nil {
-			return fmt.Errorf("%s (%d): %w", t.Name, t.ID, err)
+			fmt.Fprintf(os.Stderr, "%s (%d): %v\n", t.Name, t.ID, err)
+			failed++
+			continue
 		}
 		wrote++
 	}
-	fmt.Fprintf(os.Stderr, "%d titles written, %d not in the list\n", wrote, skipped)
+	fmt.Fprintf(os.Stderr, "%d titles written, %d not in the list, %d refused\n", wrote, skipped, failed)
 	return nil
 }
 
