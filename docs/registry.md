@@ -105,3 +105,13 @@ The website container's command is unchanged (`/app/app` is the image's
 default). The image now declares it as `CMD` rather than `ENTRYPOINT`, so the
 registry container's command replaces it instead of being passed to it as an
 argument.
+
+## Keeping the TUF timestamp fresh
+
+The signed `timestamp.json` lives 7 days (`timestampTTL` in `internal/registry/sign.go`) and
+only a publication renews it. A week without a policy change used to leave every certified
+fetch failing with `registry: timestamp metadata expired` (2026-10-04: all ten channels had
+lapsed since 2026-09-30). `openpak-policy refresh [--older-than 72h]` re-signs each channel's
+current content at a higher sequence (what `rollback` does, for every channel). The box runs
+it daily from `openpak-registry-refresh.timer`:
+`podman exec openpak-registry /app/openpak-policy refresh`.

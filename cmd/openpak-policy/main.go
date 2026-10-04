@@ -60,6 +60,8 @@ func run(args []string, getenv func(string) string, stdout, stderr io.Writer) in
 	switch cmd {
 	case "publish":
 		err = cmdPublish(rest, getenv, stdout)
+	case "refresh":
+		err = cmdRefresh(rest, getenv, stdout)
 	case "rollback":
 		err = cmdRollback(rest, getenv, stdout)
 	case "withdraw":
@@ -99,6 +101,7 @@ func usage(w io.Writer) {
                          [--ceiling PLATFORM=REV]... [--platform NAME]...
                          [--channel stable] [--promote=true]
   openpak-policy rollback --platform NAME --channel NAME
+  openpak-policy refresh [--older-than 72h]
   openpak-policy withdraw --bundle-sha256 HEX
   openpak-policy status --platform NAME --channel NAME
   openpak-policy keygen --root PATH --online PATH [--root-metadata PATH]
@@ -335,6 +338,46 @@ func cmdRollback(args []string, getenv func(string) string, stdout io.Writer) er
 	}
 	fmt.Fprintf(stdout, "%s %s: rolled back to content sha256:%s as sequence %d\n",
 		*platform, *channel, res.Revision.BundleSHA256, res.Sequence)
+	return nil
+}
+
+// cmdRefresh re-signs every channel's current content whose last publication is older than
+// --older-than: the same content at a higher sequence, exactly what rollback does. The TUF
+// timestamp lives 7 days (registry timestampTTL) and only a publication renews it; nothing
+// else does, so the box runs this daily (openpak-registry-refresh.timer). Without it every
+// certified fetch fails "timestamp metadata expired" a week after the last policy change.
+func cmdRefresh(args []string, getenv func(string) string, stdout io.Writer) error {
+	fs := flag.NewFlagSet("refresh", flag.ExitOnError)
+	olderThan := fs.Duration("older-than", 72*time.Hour, "re-sign channels last published longer ago than this")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	svc, closer, err := newService(getenv)
+	if err != nil {
+		return err
+	}
+	defer closer()
+	ctx := context.Background()
+	channels, err := svc.Store.ListChannels(ctx)
+	if err != nil {
+		return err
+	}
+	var failed []string
+	for _, c := range channels {
+		if time.Since(c.UpdatedAt) < *olderThan {
+			continue
+		}
+		res, err := svc.Rollback(ctx, c.Platform, c.Channel)
+		if err != nil {
+			failed = append(failed, fmt.Sprintf("%s/%s: %v", c.Platform, c.Channel, err))
+			continue
+		}
+		fmt.Fprintf(stdout, "%s %s: re-signed content sha256:%s as sequence %d\n",
+			c.Platform, c.Channel, res.Revision.BundleSHA256, res.Sequence)
+	}
+	if len(failed) > 0 {
+		return fmt.Errorf("refresh failed for %s", strings.Join(failed, "; "))
+	}
 	return nil
 }
 

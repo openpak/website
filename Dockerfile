@@ -10,6 +10,9 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags=
 # The v2 network registry ships in the same image but runs as its own container
 # (command /app/openpak-registry; docs/registry.md): its keys never reach the website.
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w" -o /out/openpak-registry ./cmd/openpak-registry
+# The registry's operator console runs in the registry container (it needs that container's
+# REGISTRY_* configuration); the box's refresh timer calls `openpak-policy refresh` there.
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w" -o /out/openpak-policy ./cmd/openpak-policy
 
 FROM alpine:3.20
 RUN apk add --no-cache ca-certificates tzdata \
@@ -17,6 +20,7 @@ RUN apk add --no-cache ca-certificates tzdata \
 WORKDIR /app
 COPY --from=build /out/app /app/app
 COPY --from=build /out/openpak-registry /app/openpak-registry
+COPY --from=build /out/openpak-policy /app/openpak-policy
 COPY --from=build /src/web ./web
 RUN mkdir -p /app/storage/media && chown -R 65532:65532 /app
 # Runs unprivileged: rootless podman maps this uid into the host's subuid range, and every

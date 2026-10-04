@@ -441,3 +441,34 @@ func TestCommandRefusals(t *testing.T) {
 		t.Fatal("a refused command constructed the registry service")
 	}
 }
+
+// refresh re-signs the current content of every channel past the threshold and leaves a
+// freshly published one alone.
+func TestRefreshResignsStaleChannels(t *testing.T) {
+	svc := newTestService(t)
+	newService = func(func(string) string) (*registry.Service, func(), error) {
+		return svc, func() {}, nil
+	}
+	defer func() { newService = openService }()
+	mapPath, transportsPath, caPath := writeTestInputs(t)
+	if res := runCLI(t, "publish", "--map", mapPath, "--transports", transportsPath, "--ca", caPath,
+		"--ceiling", "switch=unified-1", "--ceiling", "wiiu=unified-1", "--channel", "stable"); res.code != 0 {
+		t.Fatalf("publish: code %d stderr %s", res.code, res.stderr)
+	}
+	ctx := context.Background()
+	before, err := svc.ResolveChannel(ctx, "switch", "stable")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res := runCLI(t, "refresh"); res.code != 0 || strings.Contains(res.stdout, "re-signed") {
+		t.Fatalf("a fresh channel was re-signed: code %d out %s err %s", res.code, res.stdout, res.stderr)
+	}
+	res := runCLI(t, "refresh", "--older-than", "0s")
+	if res.code != 0 || !strings.Contains(res.stdout, "switch stable: re-signed") || !strings.Contains(res.stdout, "wiiu stable: re-signed") {
+		t.Fatalf("refresh: code %d out %s err %s", res.code, res.stdout, res.stderr)
+	}
+	after, err := svc.ResolveChannel(ctx, "switch", "stable")
+	if err != nil || after.Sequence <= before.Sequence {
+		t.Fatalf("switch stable after refresh: %+v err=%v (was sequence %d)", after, err, before.Sequence)
+	}
+}
