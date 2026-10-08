@@ -55,7 +55,7 @@ type Version struct {
 	Pinned    bool       `json:"pinned"`
 	Size      int64      `json:"size"`
 	SHA256    string     `json:"sha256,omitempty"`
-	Device    string     `json:"device,omitempty"`
+	Console   string     `json:"console,omitempty"` // "Harbor" or "Switch"; the service never sends a device id
 	Backend   string     `json:"backend"`
 	Parts     int        `json:"parts"`
 	SavedAt   *time.Time `json:"saved_at,omitempty"`
@@ -246,27 +246,13 @@ func (c *Client) Download(ctx context.Context, account string, id int64) (*http.
 	return c.do(ctx, http.MethodGet, acct(account)+"/versions/"+strconv.FormatInt(id, 10), nil, -1)
 }
 
-// Newest streams the current save of a title, or a 204 response when there is none.
-func (c *Client) Newest(ctx context.Context, account, platform, title string) (*http.Response, error) {
-	return c.do(ctx, http.MethodGet, acct(account)+"/saves/"+url.PathEscape(platform)+"/"+url.PathEscape(title), nil, -1)
-}
-
-// Upload streams a new version. base is the version number the client loaded from ("" for none).
-func (c *Client) Upload(ctx context.Context, account, platform, title, base, device string, body io.Reader, size int64) (Version, error) {
-	q := url.Values{}
-	if base != "" {
-		q.Set("base", base)
+// DeleteTitle deletes every backup of one title; the number deleted comes back.
+func (c *Client) DeleteTitle(ctx context.Context, account, platform, title string) (int, error) {
+	var out struct {
+		Deleted int `json:"deleted"`
 	}
-	if device != "" {
-		q.Set("device", device)
-	}
-	var v Version
-	resp, err := c.do(ctx, http.MethodPut, acct(account)+"/saves/"+url.PathEscape(platform)+"/"+url.PathEscape(title)+"?"+q.Encode(), body, size)
-	if err != nil {
-		return v, err
-	}
-	defer resp.Body.Close()
-	return v, json.NewDecoder(resp.Body).Decode(&v)
+	err := c.doJSON(ctx, http.MethodDelete, acct(account)+"/saves/"+url.PathEscape(platform)+"/"+url.PathEscape(title), nil, &out)
+	return out.Deleted, err
 }
 
 // Healthy asks the service's /healthz, for the admin monitor. A short deadline of its own:

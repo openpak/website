@@ -203,6 +203,8 @@ func flashText(lang, code string) string {
 		return i18n.T(lang, "saves.restored")
 	case "saves-deleted":
 		return i18n.T(lang, "saves.deleted")
+	case "saves-deleted-all":
+		return i18n.T(lang, "saves.deleted.all")
 	case "ticket-opened":
 		return i18n.T(lang, "help.opened")
 	case "ticket-replied":
@@ -360,7 +362,10 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /account/saves/storage/oauth/{provider}/start", s.handleSavesOAuthStart)
 	mux.HandleFunc("GET /account/saves/storage/oauth/{provider}/callback", s.handleSavesOAuthCallback)
 	mux.HandleFunc("POST /account/saves/restore", s.handleSavesRestore)
+	mux.HandleFunc("GET /account/saves/delete", s.handleSavesConfirm)
 	mux.HandleFunc("POST /account/saves/delete", s.handleSavesDelete)
+	mux.HandleFunc("POST /account/saves/delete-title", s.handleSavesDeleteTitle)
+	mux.HandleFunc("GET /account/saves/manage", s.handleSavesManage)
 	mux.HandleFunc("GET /account/saves/download/{id}", s.handleSavesDownload)
 	mux.HandleFunc("POST /account/saves/download", s.handleSavesDownloadPost)
 	mux.HandleFunc("GET /features", s.handleFeatures)

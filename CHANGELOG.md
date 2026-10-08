@@ -3,6 +3,12 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.68.0 — 2026-10-08
+
+- **Save Data Cloud management.** `/account/saves` lists the account's console backups per game (name and icon from the catalogue) with date, size and which console made each (`Harbor` or `Switch`; never a device id). A game's "Manage backups" page deletes one backup or all of them. Deleting is two steps: a confirmation page, then a POST carrying `confirm=yes` and the CSRF token, for the signed-in account only. A deleted backup leaves the console's own list at once.
+- API: `DELETE /api/v1/me/saves/{platform}/{title}` deletes every backup of a title (`{"deleted": n}`, 404 when none); each version in `GET /api/v1/me/saves` carries `console` instead of `device`, and the list's `usage` is the account's use against its quota.
+- breaking: the emulator save routes `GET`/`PUT /api/v1/me/saves/{platform}/{title}` answer 410 Gone; the cloud is console archives only (saves v0.4.0).
+
 ## v0.66.0 — 2026-09-30
 
 - **Playability: how far a game itself runs, per client.** A second axis beside `status`, which

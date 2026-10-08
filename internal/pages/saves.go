@@ -74,6 +74,22 @@ func sizeText(n int64) string {
 	return fmt.Sprintf("%d B", n)
 }
 
+// buildSaveRow is one title's backups as the pages show them: name and icon from the
+// catalogue, each version with its date, size and console (never a device id).
+func buildSaveRow(ctx context.Context, sv saves.Save) saveRow {
+	row := saveRow{Platform: sv.Platform, Console: platformConsole(sv.Platform), TitleID: sv.TitleID}
+	row.Name, row.Icon = SaveTitle(ctx, sv.Platform, sv.TitleID)
+	for _, ver := range sv.Versions {
+		when := ver.CreatedAt
+		if ver.SavedAt != nil && !ver.SavedAt.IsZero() && ver.SavedAt.Unix() > 0 {
+			when = *ver.SavedAt
+		}
+		row.Versions = append(row.Versions, versionRow{Version: ver, SizeText: sizeText(ver.Size), When: when.UTC().Format("2006-01-02 15:04"), Single: ver.Parts == 1})
+		row.Conflict = row.Conflict || ver.Conflict
+	}
+	return row
+}
+
 func (s *Server) handleSaves(w http.ResponseWriter, r *http.Request) {
 	v := s.requireViewer(w, r)
 	if v == nil {
@@ -96,16 +112,7 @@ func (s *Server) handleSaves(w http.ResponseWriter, r *http.Request) {
 		view.Percent = int(usage.AllowanceUsed * 100 / usage.Allowance)
 	}
 	for _, sv := range list {
-		row := saveRow{Platform: sv.Platform, Console: platformConsole(sv.Platform), TitleID: sv.TitleID}
-		row.Name, row.Icon = SaveTitle(ctx, sv.Platform, sv.TitleID)
-		for _, ver := range sv.Versions {
-			when := ver.CreatedAt
-			if ver.SavedAt != nil && !ver.SavedAt.IsZero() && ver.SavedAt.Unix() > 0 {
-				when = *ver.SavedAt
-			}
-			row.Versions = append(row.Versions, versionRow{Version: ver, SizeText: sizeText(ver.Size), When: when.UTC().Format("2006-01-02 15:04"), Single: ver.Parts == 1})
-			row.Conflict = row.Conflict || ver.Conflict
-		}
+		row := buildSaveRow(ctx, sv)
 		if len(row.Versions) == 0 {
 			continue // nothing to pick in the dropdown
 		}
@@ -254,6 +261,9 @@ func (s *Server) handleSavesRestore(w http.ResponseWriter, r *http.Request) {
 	back(w, r, "saves-restored", nil)
 }
 
+// Deleting is two steps. The buttons on the saves pages lead to a confirmation page (GET
+// /account/saves/delete); only its form, which carries confirm=yes and the CSRF token, deletes.
+// A POST without confirm=yes goes back to the confirmation page instead of deleting.
 func (s *Server) handleSavesDelete(w http.ResponseWriter, r *http.Request) {
 	v, ok := s.postGuard(w, r)
 	if !ok {
@@ -264,11 +274,105 @@ func (s *Server) handleSavesDelete(w http.ResponseWriter, r *http.Request) {
 		back(w, r, "saves-failed", nil)
 		return
 	}
+	if r.PostFormValue("confirm") != "yes" {
+		http.Redirect(w, r, "/account/saves/delete?version="+strconv.FormatInt(id, 10), http.StatusSeeOther)
+		return
+	}
 	if err := s.Saves.Delete(r.Context(), v.AccountID, id); err != nil {
 		back(w, r, "saves-failed", err)
 		return
 	}
 	back(w, r, "saves-deleted", nil)
+}
+
+// handleSavesDeleteTitle deletes every backup of one title, after the same confirmation.
+func (s *Server) handleSavesDeleteTitle(w http.ResponseWriter, r *http.Request) {
+	v, ok := s.postGuard(w, r)
+	if !ok {
+		return
+	}
+	platform, title := r.PostFormValue("platform"), r.PostFormValue("title")
+	if platform == "" || title == "" {
+		back(w, r, "saves-failed", nil)
+		return
+	}
+	if r.PostFormValue("confirm") != "yes" {
+		http.Redirect(w, r, "/account/saves/delete?platform="+url.QueryEscape(platform)+"&title="+url.QueryEscape(title), http.StatusSeeOther)
+		return
+	}
+	if _, err := s.Saves.DeleteTitle(r.Context(), v.AccountID, platform, title); err != nil {
+		back(w, r, "saves-failed", err)
+		return
+	}
+	back(w, r, "saves-deleted-all", nil)
+}
+
+// savesManageView is one title's backups with a delete button on each, and one for all.
+type savesManageView struct {
+	baseData
+	Row saveRow
+}
+
+// handleSavesManage lists one title's backups: date, size and console, never a device id.
+func (s *Server) handleSavesManage(w http.ResponseWriter, r *http.Request) {
+	v := s.requireViewer(w, r)
+	if v == nil {
+		return
+	}
+	row, ok := s.findSave(r, v.AccountID, r.URL.Query().Get("platform"), r.URL.Query().Get("title"))
+	if !ok {
+		back(w, r, "saves-failed", nil)
+		return
+	}
+	s.render(w, http.StatusOK, "saves_manage.html", savesManageView{baseData: s.data(r, v, row.Name), Row: row})
+}
+
+// savesConfirmView is the confirmation page: what is about to go, and the form that does it.
+type savesConfirmView struct {
+	baseData
+	Row     saveRow
+	Version *versionRow // nil: every backup of the title
+}
+
+func (s *Server) handleSavesConfirm(w http.ResponseWriter, r *http.Request) {
+	v := s.requireViewer(w, r)
+	if v == nil {
+		return
+	}
+	q := r.URL.Query()
+	list, _, err := s.Saves.List(r.Context(), v.AccountID)
+	if err != nil {
+		back(w, r, "saves-failed", err)
+		return
+	}
+	for _, sv := range list {
+		row := buildSaveRow(r.Context(), sv)
+		if id, err := strconv.ParseInt(q.Get("version"), 10, 64); err == nil {
+			for i := range row.Versions {
+				if row.Versions[i].ID == id {
+					s.render(w, http.StatusOK, "saves_delete.html", savesConfirmView{baseData: s.data(r, v, row.Name), Row: row, Version: &row.Versions[i]})
+					return
+				}
+			}
+		} else if row.Platform == q.Get("platform") && row.TitleID == q.Get("title") && len(row.Versions) > 0 {
+			s.render(w, http.StatusOK, "saves_delete.html", savesConfirmView{baseData: s.data(r, v, row.Name), Row: row})
+			return
+		}
+	}
+	back(w, r, "saves-failed", nil)
+}
+
+func (s *Server) findSave(r *http.Request, account, platform, title string) (saveRow, bool) {
+	list, _, err := s.Saves.List(r.Context(), account)
+	if err != nil {
+		return saveRow{}, false
+	}
+	for _, sv := range list {
+		if sv.Platform == platform && sv.TitleID == title && len(sv.Versions) > 0 {
+			return buildSaveRow(r.Context(), sv), true
+		}
+	}
+	return saveRow{}, false
 }
 
 func (s *Server) handleSavesDownload(w http.ResponseWriter, r *http.Request) {

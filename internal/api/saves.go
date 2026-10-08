@@ -12,14 +12,13 @@ import (
 	"github.com/openpak/website/internal/store"
 )
 
-// The saves surface of the mobile and emulator API. An emulator pulls the newest save of a
-// title on launch and pushes it on exit; the app lists. Bodies are the raw save bytes.
+// The saves surface of the app: the account's Save Data Cloud, which holds console backups
+// made by a real Switch or by Harbor. The emulator save routes are retired (410 Gone).
 //
-//	GET /api/v1/me/saves                                 list, with usage
-//	GET /api/v1/me/saves/{platform}/{title}              newest bytes; 204 when none;
-//	                                                     X-Save-Version, X-Save-Sha256, X-Save-Conflict
-//	PUT /api/v1/me/saves/{platform}/{title}              body = the save; X-Save-Base = version loaded
-//	                                                     from, X-Save-Device = a name for the machine
+//	GET /api/v1/me/saves                                 list, with usage against the quota; each version
+//	                                                     has date, size and console ("Harbor" or "Switch")
+//	DELETE /api/v1/me/saves/{platform}/{title}           delete every backup of a title ({"deleted":n}; 404: none)
+//	GET|PUT /api/v1/me/saves/{platform}/{title}          410 Gone
 //	GET    /api/v1/me/saves/versions/{id}               one version's bytes (single-part versions)
 //	POST   /api/v1/me/saves/versions/{id}/restore       make it the current one; the old stays
 //	DELETE /api/v1/me/saves/versions/{id}               delete it
@@ -28,8 +27,9 @@ func (s *Server) registerSaves(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/me/saves/versions/{id}", s.auth(s.handleSaveDownload))
 	mux.HandleFunc("POST /api/v1/me/saves/versions/{id}/restore", s.auth(s.handleSaveRestore))
 	mux.HandleFunc("DELETE /api/v1/me/saves/versions/{id}", s.auth(s.handleSaveDelete))
-	mux.HandleFunc("GET /api/v1/me/saves/{platform}/{title}", s.auth(s.handleSaveNewest))
-	mux.HandleFunc("PUT /api/v1/me/saves/{platform}/{title}", s.auth(s.handleSaveUpload))
+	mux.HandleFunc("GET /api/v1/me/saves/{platform}/{title}", s.auth(savesRetired))
+	mux.HandleFunc("PUT /api/v1/me/saves/{platform}/{title}", s.auth(savesRetired))
+	mux.HandleFunc("DELETE /api/v1/me/saves/{platform}/{title}", s.auth(s.handleSaveDeleteTitle))
 	s.registerSavesStorage(mux)
 }
 
@@ -121,38 +121,25 @@ func (s *Server) handleSaveDelete(w http.ResponseWriter, r *http.Request, tok st
 	}
 }
 
-func (s *Server) handleSaveNewest(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
-	resp, err := s.Saves.Newest(r.Context(), tok.AccountID, r.PathValue("platform"), r.PathValue("title"))
-	if err != nil {
-		savesErr(w, err)
-		return
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusNoContent {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	for _, h := range []string{"Content-Length", "X-Save-Version", "X-Save-Sha256", "X-Save-Conflict"} {
-		if v := resp.Header.Get(h); v != "" {
-			w.Header().Set(h, v)
-		}
-	}
-	w.Header().Set("Content-Type", "application/octet-stream")
-	_, _ = io.Copy(w, resp.Body)
+// savesRetired answers the emulator save routes: the cloud is console archives only.
+func savesRetired(w http.ResponseWriter, _ *http.Request, _ store.APIToken) {
+	writeError(w, http.StatusGone, "emulator saves are retired; OpenPak's Save Data Cloud is console archives only")
 }
 
-func (s *Server) handleSaveUpload(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
-	if r.ContentLength < 0 {
-		writeError(w, http.StatusLengthRequired, "Content-Length required")
-		return
-	}
-	v, err := s.Saves.Upload(r.Context(), tok.AccountID, r.PathValue("platform"), r.PathValue("title"),
-		r.Header.Get("X-Save-Base"), r.Header.Get("X-Save-Device"), r.Body, r.ContentLength)
+// handleSaveDeleteTitle deletes every backup of a title for the token's own account. The app
+// asks the player to confirm first; the token is the authentication.
+func (s *Server) handleSaveDeleteTitle(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	n, err := s.Saves.DeleteTitle(r.Context(), tok.AccountID, r.PathValue("platform"), r.PathValue("title"))
 	if err != nil {
+		var se *saves.Error
+		if errors.As(err, &se) && se.Status == http.StatusNotFound {
+			writeError(w, http.StatusNotFound, "no backups for this title")
+			return
+		}
 		savesErr(w, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, v)
+	writeJSON(w, http.StatusOK, map[string]int{"deleted": n})
 }
 
 // The storage settings, for the app: the same operations the website's saves page offers.

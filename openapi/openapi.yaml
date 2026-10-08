@@ -1918,52 +1918,30 @@ paths:
       - { name: platform, in: path, required: true, schema: { type: string, examples: ["switch"] } }
       - { name: title, in: path, required: true, schema: { type: string } }
     get:
-      summary: The newest save of a title, for an emulator on launch
+      summary: Retired. The emulator save routes are gone; the cloud is console backups only.
+      deprecated: true
+      responses:
+        "410": { description: "Gone: emulator saves are retired; OpenPak's Save Data Cloud is console archives only." }
+    put:
+      summary: Retired. See GET.
+      deprecated: true
+      responses:
+        "410": { description: Gone. }
+    delete:
+      summary: Delete every backup of a title (pinned ones too). Ask the player to confirm first.
       responses:
         "200":
-          description: The save
-          headers:
-            X-Save-Version: { schema: { type: integer } }
-            X-Save-Sha256: { schema: { type: string } }
-            X-Save-Conflict: { schema: { type: boolean } }
-          content:
-            application/octet-stream:
-              schema: { type: string, format: binary }
-        "204": { description: No save for this title yet. }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "502": { $ref: "#/components/responses/SavesError" }
-        "503": { $ref: "#/components/responses/SavesUnavailable" }
-    put:
-      summary: Store a new version of a title's save, for an emulator on exit
-      parameters:
-        - { name: X-Save-Base, in: header, required: false, schema: { type: string }, description: The version this save was loaded from; a mismatch marks a conflict. }
-        - { name: X-Save-Device, in: header, required: false, schema: { type: string }, description: A name for the machine. }
-      requestBody:
-        required: true
-        content:
-          application/octet-stream:
-            schema: { type: string, format: binary }
-      responses:
-        "201":
-          description: Stored
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/SaveVersion" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "411": { description: Content-Length is required. }
-        "502": { $ref: "#/components/responses/SavesError" }
-        "503": { $ref: "#/components/responses/SavesUnavailable" }
-        "507":
-          description: Over the allowance; connect your own storage.
+          description: Deleted
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  error: { type: string, examples: ["quota_exceeded"] }
-                  used: { type: integer, format: int64 }
-                  limit: { type: integer, format: int64 }
-                  hint: { type: string }
+                  deleted: { type: integer, description: How many backups were deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "502": { $ref: "#/components/responses/SavesError" }
+        "503": { $ref: "#/components/responses/SavesUnavailable" }
   /me/saves/storage:
     get:
       summary: The account's storage settings, test result, move state and usage
@@ -2675,7 +2653,7 @@ components:
         pinned: { type: boolean }
         size: { type: integer, format: int64 }
         sha256: { type: string }
-        device: { type: string }
+        console: { type: string, enum: [Harbor, Switch], description: Which console made the backup. Never a device id. }
         backend: { type: string }
         parts: { type: integer }
         saved_at: { type: string, format: date-time }

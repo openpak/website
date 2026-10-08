@@ -1,0 +1,19 @@
+{{template "header" .}}
+<div class="page-head">
+  <h1>{{.Row.Name}}</h1>
+  <p>{{t .Lang "saves.manage.sub"}}</p>
+</div>
+<p class="mb-5"><a class="btn" href="/account/saves">{{t .Lang "saves.back"}}</a></p>
+<ul class="card list-none divide-y divide-line p-0">
+  {{range .Row.Versions}}
+  <li class="flex flex-wrap items-center gap-3 p-4">
+    <span class="flex min-w-0 flex-1 flex-col">
+      <span class="font-semibold">{{.When}}</span>
+      <span class="text-sm text-muted">{{.SizeText}}{{if .Console}} · {{.Console}}{{end}}{{if .Conflict}} · {{t $.Lang "saves.conflict"}}{{end}}</span>
+    </span>
+    <a class="btn danger" href="/account/saves/delete?version={{.ID}}">{{t $.Lang "saves.delete"}}</a>
+  </li>
+  {{end}}
+</ul>
+<p class="mt-6"><a class="btn danger" href="/account/saves/delete?platform={{urlquery .Row.Platform}}&amp;title={{urlquery .Row.TitleID}}">{{t .Lang "saves.delete.all"}} ({{len .Row.Versions}})</a></p>
+{{template "footer" .}}

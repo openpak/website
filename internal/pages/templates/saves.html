@@ -63,13 +63,13 @@
       <form method="post" action="/account/saves/restore" class="save-actions flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
         <input type="hidden" name="csrf" value="{{$.CSRF}}">
         <select name="version" class="field min-w-0 flex-1 text-sm sm:w-72 sm:flex-none" aria-label="{{t $.Lang "saves.version"}} · {{.Name}}">
-          {{range .Versions}}<option value="{{.ID}}" data-single="{{.Single}}">{{t $.Lang "saves.version"}} {{.Number}} · {{.When}} · {{.SizeText}}{{if .Device}} · {{.Device}}{{end}}{{if ne .Backend "local"}} · {{t $.Lang "saves.own"}}{{end}}{{if .Conflict}} · {{t $.Lang "saves.conflict"}}{{end}}</option>{{end}}
+          {{range .Versions}}<option value="{{.ID}}" data-single="{{.Single}}">{{t $.Lang "saves.version"}} {{.Number}} · {{.When}} · {{.SizeText}}{{if .Console}} · {{.Console}}{{end}}{{if ne .Backend "local"}} · {{t $.Lang "saves.own"}}{{end}}{{if .Conflict}} · {{t $.Lang "saves.conflict"}}{{end}}</option>{{end}}
         </select>
         <noscript><button type="submit" class="small">{{t $.Lang "saves.restore"}}</button></noscript>
         <button type="submit" class="size-11 !p-0" formaction="/account/saves/download" data-download {{if not $cur.Single}}disabled{{end}} aria-label="{{t $.Lang "saves.download"}}" title="{{t $.Lang "saves.download"}}">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg></button>
-        <button type="submit" class="danger size-11 !p-0" formaction="/account/saves/delete" data-confirm="{{t $.Lang "saves.delete.confirm"}}" aria-label="{{t $.Lang "saves.delete"}}" title="{{t $.Lang "saves.delete"}}">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
+        <a class="btn size-11 !p-0 flex items-center justify-center" href="/account/saves/manage?platform={{urlquery .Platform}}&amp;title={{urlquery .TitleID}}" aria-label="{{t $.Lang "saves.manage"}}" title="{{t $.Lang "saves.manage"}}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg></a>
       </form>
     </li>
     {{end}}

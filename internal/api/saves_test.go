@@ -72,3 +72,36 @@ func TestSaveVersionActions(t *testing.T) {
 		t.Fatalf("calls: %v", got)
 	}
 }
+
+// The emulator save routes are retired and a whole title's backups can be deleted for the
+// token's own account.
+func TestSaveRetiredAndDeleteTitle(t *testing.T) {
+	s, _, _ := newTestAPI(t)
+	var got []string
+	stub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = append(got, r.Method+" "+r.URL.Path)
+		w.Write([]byte(`{"deleted":3}`))
+	}))
+	defer stub.Close()
+	s.Saves = saves.New(stub.URL, "k")
+	tok := mintTokenForTest(t, s)
+	for _, m := range []string{http.MethodGet, http.MethodPut} {
+		rec := do(t, s, m, "/api/v1/me/saves/switch/0100abcd", tok, nil)
+		if rec.Code != http.StatusGone || !strings.Contains(rec.Body.String(), "retired") {
+			t.Fatalf("%s: %d %s", m, rec.Code, rec.Body)
+		}
+	}
+	if len(got) != 0 {
+		t.Fatalf("a retired route reached the service: %v", got)
+	}
+	rec := do(t, s, http.MethodDelete, "/api/v1/me/saves/switch/0100abcd", tok, nil)
+	if rec.Code != 200 || !strings.Contains(rec.Body.String(), `"deleted":3`) {
+		t.Fatalf("delete title: %d %s", rec.Code, rec.Body)
+	}
+	if len(got) != 1 || !strings.HasPrefix(got[0], "DELETE /internal/accounts/") || !strings.HasSuffix(got[0], "/saves/switch/0100abcd") {
+		t.Fatalf("calls: %v", got)
+	}
+	if rec := do(t, s, http.MethodDelete, "/api/v1/me/saves/switch/0100abcd", "", nil); rec.Code != http.StatusUnauthorized {
+		t.Fatalf("unauthenticated delete: %d", rec.Code)
+	}
+}
