@@ -17,8 +17,8 @@
   {{template "list-filters" .}}
 
   {{with .Titles}}
-  {{/* Game tiles, as on the HOME shelf: the art is the title's icon (Switch) or its
-       console's mark, and the tile opens the title's details. A title the network
+  {{/* Game tiles, as on the HOME shelf: the art is the title's icon (Switch), its
+       cover tile (web/static/art/titles) or its console's mark, and the tile opens the title's details. A title the network
        does not serve yet is drawn dimmed, the way a console shows archived software. */}}
   <ul id="titles-list" class="gtiles">
     {{range .}}
@@ -27,6 +27,7 @@
       <a class="t" href="#t-{{.ID}}">
         <span class="art">
           {{if and (eq .Console "Switch") .TitleID}}<img src="/titles/icon/{{.TitleID}}" alt="" width="256" height="256" loading="lazy">
+          {{else if titleArt .Console .Name}}<img src="{{titleArt .Console .Name}}" alt="" width="256" height="256" loading="lazy">
           {{else}}<span class="mark"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="96" height="64" loading="lazy"></picture></span>{{end}}
           <span class="badge {{badgeClass .Status}}">{{.Status}}</span>
         </span>
@@ -67,6 +68,7 @@
   <dialog id="t-{{.ID}}" class="card tdialog" aria-labelledby="t-{{.ID}}-h">
     <div class="flex items-center gap-3">
       {{if and (eq .Console "Switch") .TitleID}}<img class="icon" src="/titles/icon/{{.TitleID}}" alt="" width="64" height="64" loading="lazy">
+      {{else if titleArt .Console .Name}}<img class="icon" src="{{titleArt .Console .Name}}" alt="" width="64" height="64" loading="lazy">
       {{else}}<span class="console lg"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>{{end}}
       <div class="flex-1 min-w-0"><h2 id="t-{{.ID}}-h" class="m-0">{{.Name}}</h2><span class="text-sm text-muted">{{.Console}}</span></div>
       <span class="badge {{badgeClass .Status}}">{{.Status}}</span>

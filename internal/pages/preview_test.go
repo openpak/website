@@ -26,6 +26,7 @@ func TestWritePreview(t *testing.T) {
 	if dir == "" {
 		t.Skip("set PREVIEW_DIR to write the page previews")
 	}
+	t.Chdir("../..") // the repository root, as in production: web/static (cover tiles) resolves there
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -39,6 +40,10 @@ func TestWritePreview(t *testing.T) {
 		{Kind: "title", Name: "Splatoon 3", Console: "Switch", Status: "planned", TitleID: "0100C2500FC20000", TitleIDs: []string{"0100C2500FC20000"}},
 		{Kind: "title", Name: "Mario Kart 7", Console: "3DS", Status: "beta"},
 		{Kind: "title", Name: "Mario Kart Wii", Console: "Wii", Status: "live"},
+		{Kind: "title", Name: "Halo 3", Console: "Xbox 360", Status: "beta"},
+		{Kind: "title", Name: "Killzone 2", Console: "PS3", Status: "live"},
+		{Kind: "title", Name: "Monster Hunter Freedom Unite", Console: "PSP", Status: "beta"},
+		{Kind: "title", Name: "Wii U Chat", Console: "Wii U", Status: "beta"}, // no tile: keeps the console mark
 		{Kind: "title", Name: "Super Smash Bros. Ultimate", Console: "Switch", Status: "planned", TitleID: "01006A800016E000", TitleIDs: []string{"01006A800016E000"}},
 	})
 	fc.friends = append(fc.friends, friendRow{

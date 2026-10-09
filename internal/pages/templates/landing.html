@@ -30,7 +30,7 @@
     <ul class="shelf {{if not .CountsOK}}mt-10{{end}}" aria-label="{{t .Lang "nav.titles"}}">
       {{range $i, $t := .Shelf}}
       <li><a class="tile sel {{if eq $i 0}}is-selected{{end}}" href="{{.Href}}">
-        {{if .Icon}}<img src="/titles/icon/{{.Icon}}" alt="" width="184" height="184" loading="lazy">
+        {{if .Art}}<img src="{{.Art}}" alt="" width="184" height="184" loading="lazy">
         {{else}}<span class="mark"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="96" height="64" loading="lazy"></picture></span>{{end}}
         <span class="cap"><b>{{.Name}}</b>
           <span>{{if .Players}}<span class="dot ok" aria-hidden="true"></span>{{if eq .Players 1}}{{t $.Lang "status.pill.one"}}{{else}}{{.Players}} {{t $.Lang "status.pill.many"}}{{end}}{{else}}{{.Console}}{{end}}</span>

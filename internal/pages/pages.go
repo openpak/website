@@ -37,6 +37,7 @@ import (
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/store"
 	"github.com/openpak/website/internal/support"
+	"github.com/openpak/website/internal/titleart"
 	"github.com/openpak/website/internal/wfc"
 )
 
@@ -407,7 +408,7 @@ func (s *Server) handleLanding(w http.ResponseWriter, r *http.Request) {
 	// few, as tiles. Players 0 is a featured title nobody is in at the moment.
 	type tile struct {
 		Name, Console, Href string
-		Icon                string // a Switch title id /titles/icon/{id} can draw; "" draws the console mark
+		Art                 string // the tile's art: a Switch icon or a cover tile; "" draws the console mark
 		Players             int
 	}
 	type landing struct {
@@ -444,10 +445,13 @@ func (s *Server) handleLanding(w http.ResponseWriter, r *http.Request) {
 				}
 				tl := tile{Name: titleName(c.TitleID), Console: namespaceConsole(c.Namespace), Href: "/titles", Players: c.Players}
 				if c.Namespace == "switch" && switchID.MatchString(c.TitleID) {
-					tl.Icon = c.TitleID
+					tl.Art = "/titles/icon/" + c.TitleID
 				}
 				if t, ok := byID[strings.ToUpper(c.TitleID)]; ok {
 					tl.Name, tl.Href, seen[t.Name] = t.Name, href(t), true
+					if tl.Art == "" {
+						tl.Art = artPath(t.Console, t.Name)
+					}
 				} else if tl.Name == c.TitleID {
 					continue // a tile never shows a raw title id
 				}
@@ -461,9 +465,9 @@ func (s *Server) handleLanding(w http.ResponseWriter, r *http.Request) {
 		if len(view.Shelf) == shelfMax || seen[t.Name] {
 			continue
 		}
-		tl := tile{Name: t.Name, Console: t.Console, Href: href(t)}
+		tl := tile{Name: t.Name, Console: t.Console, Href: href(t), Art: artPath(t.Console, t.Name)}
 		if t.Console == "Switch" && t.TitleID != "" {
-			tl.Icon = t.TitleID
+			tl.Art = "/titles/icon/" + t.TitleID
 		}
 		view.Shelf = append(view.Shelf, tl)
 	}
@@ -894,6 +898,21 @@ var assetVersion = sync.OnceValue(func() string {
 	})
 	return hex.EncodeToString(h.Sum(nil))[:10]
 })
+
+// titleArt is the cover tiles in web/static/art/titles (scripts/title-art), listed once
+// per process like assetVersion: a deploy that adds tiles is a new process.
+var titleArt = sync.OnceValue(func() titleart.Set {
+	return titleart.Load(filepath.Join("web/static", titleart.Dir))
+})
+
+// artPath is the URL of a non-Switch title's cover tile, fingerprinted like every static
+// file, or "" when it has none and draws its console's mark.
+func artPath(console, name string) string {
+	if p := titleArt().Path(console, name); p != "" {
+		return p + "?v=" + assetVersion()
+	}
+	return ""
+}
 
 // adapterProxy forwards the console-link pages to the Switch adapter, so they are served under
 // openpak.org's certificate. Only /link is proxied: nothing else of the adapter is exposed.
