@@ -33,7 +33,7 @@ var playabilityClients = map[string]string{
 	"switch": "Switch", "wii u": "Wii U", "wiiu": "Wii U", "wii": "Wii", "3ds": "3DS", "ds": "DS",
 	"xbox": "Xbox", "xbox 360": "Xbox 360", "xbox one": "Xbox One", "ps2": "PS2", "ps3": "PS3",
 	"psp": "PSP", "vita": "Vita",
-	"ryujinx": "Ryujinx", "eden": "Eden", "citron": "Citron", "cemu": "Cemu", "azahar": "Azahar",
+	"harbor": "Harbor", "ryujinx": "Ryujinx", "eden": "Eden", "citron": "Citron", "cemu": "Cemu", "azahar": "Azahar",
 	"dolphin": "Dolphin", "melonds": "melonDS", "xemu": "xemu", "xenia": "Xenia",
 	"pcsx2": "PCSX2", "rpcs3": "RPCS3", "ppsspp": "PPSSPP", "vita3k": "Vita3K",
 }

@@ -103,7 +103,7 @@ func TestTitlesVoteGating(t *testing.T) {
 	if bytes.Contains([]byte(beta), []byte(`/titles/report`)) {
 		t.Error("the report form is switched off")
 	}
-	for _, want := range []string{`id="t-8"`, `href="#t-8"`, `title="Ryujinx · Linux: Untested"`, `title="Switch: Untested"`, "https://webuy.com/search?stext=Mario&#43;Kart&#43;8&#43;Deluxe", "/help?category=switch&amp;message=Mario", "Report a problem", "https://www.gamestop.com/search/?q=Mario&#43;Kart&#43;8&#43;Deluxe"} {
+	for _, want := range []string{`id="t-8"`, `href="#t-8"`, `title="Harbor · Linux: Untested"`, `title="Switch: Untested"`, "https://webuy.com/search?stext=Mario&#43;Kart&#43;8&#43;Deluxe", "/help?category=switch&amp;message=Mario", "Report a problem", "https://www.gamestop.com/search/?q=Mario&#43;Kart&#43;8&#43;Deluxe"} {
 		if !bytes.Contains([]byte(beta), []byte(want)) {
 			t.Errorf("beta dialog missing %q", want)
 		}
@@ -135,15 +135,16 @@ func TestTitleRowsPlaytime(t *testing.T) {
 	}
 	m := time.Minute
 	plays := []core.PlayTally{
-		{Namespace: "switch", TitleID: "0100c2500fc21000", Client: "ryujinx", OS: "macos", Total: 16 * m, Longest: 16 * m}, // one long session
-		{Namespace: "switch", TitleID: "0100C2500FC20000", Client: "eden", OS: "android", Total: 20 * m, Longest: 10 * m},  // short
-		{Namespace: "switch", TitleID: "0100C2500FC21000", Client: "eden", OS: "android", Total: 12 * m, Longest: 5 * m},   // other region: 32 in total
-		{Namespace: "switch", TitleID: "0100C2500FC20000", Client: "citron", OS: "linux", Total: 40 * m, Longest: 40 * m},  // conflicts with a report
-		{Namespace: "switch", TitleID: "0100C2500FC20000", Client: "eden", OS: "", Total: 60 * m, Longest: 60 * m},         // no OS: nowhere to put it
-		{Namespace: "switch", TitleID: "0100C2500FC20000", Client: "switch", OS: "", Total: 9 * m, Longest: 9 * m},         // console, too short
-		{Namespace: "wiiu", TitleID: "0005000E1010EC00", Client: "cemu", OS: "windows", Total: 31 * m, Longest: 31 * m},    // an update's id
+		{Namespace: "switch", TitleID: "0100c2500fc21000", Client: "harbor", OS: "macos", Total: 16 * m, Longest: 16 * m},    // one long session
+		{Namespace: "switch", TitleID: "0100C2500FC20000", Client: "harbor", OS: "android", Total: 20 * m, Longest: 10 * m},  // short
+		{Namespace: "switch", TitleID: "0100C2500FC21000", Client: "harbor", OS: "android", Total: 12 * m, Longest: 5 * m},   // other region: 32 in total
+		{Namespace: "switch", TitleID: "0100C2500FC20000", Client: "harbor", OS: "linux", Total: 40 * m, Longest: 40 * m},    // conflicts with a report
+		{Namespace: "switch", TitleID: "0100C2500FC20000", Client: "harbor", OS: "", Total: 60 * m, Longest: 60 * m},         // no OS: nowhere to put it
+		{Namespace: "switch", TitleID: "0100C2500FC20000", Client: "ryujinx", OS: "windows", Total: 60 * m, Longest: 60 * m}, // a retired emulator: not in the grid
+		{Namespace: "switch", TitleID: "0100C2500FC20000", Client: "switch", OS: "", Total: 9 * m, Longest: 9 * m},           // console, too short
+		{Namespace: "wiiu", TitleID: "0005000E1010EC00", Client: "wiiu", OS: "", Total: 31 * m, Longest: 31 * m},             // an update's id
 	}
-	reports := []store.CompatTally{{RequestID: 1, Client: "Citron", OS: "Linux", Broken: 1}}
+	reports := []store.CompatTally{{RequestID: 1, Client: "Harbor", OS: "Linux", Broken: 1}}
 	rows := titleRows(reqs, reports, plays, nil, nil)
 	cell := func(r int, client, os string) compatCell {
 		for _, c := range rows[r].Compat {
@@ -159,15 +160,20 @@ func TestTitleRowsPlaytime(t *testing.T) {
 		client, os string
 		state      string
 	}{
-		{0, "Ryujinx", "macOS", "ok"},
-		{0, "Eden", "Android", "ok"},
-		{0, "Citron", "Linux", "warn"},
-		{0, "Eden", "Linux", ""},
+		{0, "Harbor", "macOS", "ok"},
+		{0, "Harbor", "Android", "ok"},
+		{0, "Harbor", "Linux", "warn"},
+		{0, "Harbor", "Windows", ""},
 		{0, "Switch", "hardware", ""},
-		{1, "Cemu", "Windows", "ok"},
+		{1, "Wii U", "hardware", "ok"},
 	} {
 		if got := cell(c.row, c.client, c.os).State(); got != c.state {
 			t.Errorf("%s/%s: state %q, want %q", c.client, c.os, got, c.state)
+		}
+	}
+	for _, c := range rows[0].Compat {
+		if c.Client == "Ryujinx" {
+			t.Error("a retired emulator must not have a row")
 		}
 	}
 	if got := cell(0, "Switch", "hardware").Minutes(); got != 9 {

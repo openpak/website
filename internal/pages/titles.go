@@ -500,11 +500,8 @@ func (c compatClient) State() string {
 	return ""
 }
 
-// clientIcons are the emulators with a mark in web/static/clients.
-var clientIcons = map[string]string{
-	"Ryujinx": "ryujinx.png", "Eden": "eden.png", "Citron": "citron.png", "Cemu": "cemu.png",
-	"Azahar": "azahar.png", "Dolphin": "dolphin.png", "melonDS": "melonds.png",
-}
+// clientIcons are the marks of the non-console rows: Harbor is OpenPak's own.
+var clientIcons = map[string]string{"Harbor": "/static/icon.svg"}
 
 // Clients groups the title's cells by client, in the grid's order.
 func (t titleRow) Clients() []compatClient {
@@ -514,11 +511,7 @@ func (t titleRow) Clients() []compatClient {
 			out[n-1].Cells = append(out[n-1].Cells, c)
 			continue
 		}
-		icon := ""
-		if f, ok := clientIcons[c.Client]; ok {
-			icon = "/static/clients/" + f
-		}
-		out = append(out, compatClient{c.Client, icon, []compatCell{c}})
+		out = append(out, compatClient{c.Client, clientIcons[c.Client], []compatCell{c}})
 	}
 	return out
 }
@@ -526,35 +519,31 @@ func (t titleRow) Clients() []compatClient {
 // hardware is the OS of a console: the game runs on the machine itself.
 const hardware = "hardware"
 
-var (
-	desktop    = []string{"Windows", "Linux", "macOS"}
-	allOSes    = []string{"Windows", "Linux", "macOS", "Android"}
-	onHardware = []string{hardware}
-)
+var onHardware = []string{hardware}
 
 // playTarget is one way to run a console's games: the console itself, a console
-// that plays them backwards-compatibly, or an emulator on the OSes it ships for.
+// that plays them backwards-compatibly, or Harbor on the OSes it ships for.
 type playTarget struct {
 	Client string
 	OSes   []string
 }
 
-// playTargets lists, per console, every client a player can report on. OpenPak's
-// own emulator forks come first; a console with none here offers only itself.
-// Keep in step with the emulators OpenPak ships (see /downloads).
+// playTargets lists, per console, every client a player can report on. OpenPak
+// is a real console or Harbor, OpenPak's own Switch HOME emulator, which ships on
+// every OS; the emulator forks are retired, so no other console has a software row.
 var playTargets = map[string][]playTarget{
-	"Switch":        {{"Switch", onHardware}, {"Ryujinx", desktop}, {"Eden", allOSes}, {"Citron", []string{"Windows", "Linux", "Android", "iOS"}}},
-	"Wii U":         {{"Wii U", onHardware}, {"Cemu", desktop}},
-	"3DS":           {{"3DS", onHardware}, {"Azahar", []string{"Windows", "macOS", "Linux", "Android", "iOS"}}},
-	"Wii":           {{"Wii", onHardware}, {"Wii U", onHardware}, {"Dolphin", allOSes}},
-	"DS":            {{"DS", onHardware}, {"3DS", onHardware}, {"melonDS", desktop}},
-	"Xbox":          {{"Xbox", onHardware}, {"Xbox 360", onHardware}, {"xemu", desktop}},
-	"Xbox 360":      {{"Xbox 360", onHardware}, {"Xbox One", onHardware}, {"Xenia", []string{"Windows", "Linux"}}},
-	"PS2":           {{"PS2", onHardware}, {"PCSX2", desktop}},
-	"PS3":           {{"PS3", onHardware}, {"RPCS3", desktop}},
-	"PlayStation 3": {{"PS3", onHardware}, {"RPCS3", desktop}},
-	"PSP":           {{"PSP", onHardware}, {"PPSSPP", []string{"Windows", "macOS", "Linux", "Android", "iOS"}}},
-	"Vita":          {{"Vita", onHardware}, {"Vita3K", allOSes}},
+	"Switch":        {{"Switch", onHardware}, {"Harbor", osColumns}},
+	"Wii U":         {{"Wii U", onHardware}},
+	"3DS":           {{"3DS", onHardware}},
+	"Wii":           {{"Wii", onHardware}, {"Wii U", onHardware}},
+	"DS":            {{"DS", onHardware}, {"3DS", onHardware}},
+	"Xbox":          {{"Xbox", onHardware}, {"Xbox 360", onHardware}},
+	"Xbox 360":      {{"Xbox 360", onHardware}, {"Xbox One", onHardware}},
+	"PS2":           {{"PS2", onHardware}},
+	"PS3":           {{"PS3", onHardware}},
+	"PlayStation 3": {{"PS3", onHardware}},
+	"PSP":           {{"PSP", onHardware}},
+	"Vita":          {{"Vita", onHardware}},
 }
 
 // playTargetsOf is a console's playTargets; a console missing from the table still
@@ -637,8 +626,7 @@ func titleRows(reqs []store.Request, tallies []store.CompatTally, plays []core.P
 // placed in a column, so it is left out ("" client).
 func playClient(client, os string) (string, string) {
 	consoles := map[string]string{"switch": "Switch", "wiiu": "Wii U", "3ds": "3DS"}
-	emulators := map[string]string{"ryujinx": "Ryujinx", "eden": "Eden", "citron": "Citron",
-		"cemu": "Cemu", "azahar": "Azahar", "dolphin": "Dolphin", "melonds": "melonDS"}
+	emulators := map[string]string{"harbor": "Harbor"}
 	oses := map[string]string{"windows": "Windows", "macos": "macOS", "linux": "Linux", "android": "Android", "ios": "iOS"}
 	if c, ok := consoles[client]; ok && os == "" {
 		return c, hardware
