@@ -501,7 +501,7 @@ func (c compatClient) State() string {
 }
 
 // clientIcons are the marks of the non-console rows: Harbor is OpenPak's own.
-var clientIcons = map[string]string{"Harbor": "/static/icon.svg"}
+var clientIcons = map[string]string{"Harbor": "/static/clients/harbor.svg"}
 
 // Clients groups the title's cells by client, in the grid's order.
 func (t titleRow) Clients() []compatClient {

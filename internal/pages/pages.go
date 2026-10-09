@@ -537,22 +537,21 @@ func safeBack(back string) string {
 	}
 }
 
-// download is one client on the downloads page. URL empty means it is not public yet.
+// download is one client on the downloads page. URL empty means it is not public yet;
+// Icon, when set, stands in for the console's mark.
 type download struct {
-	Name, Console, Kind, Status, URL string
+	Name, Console, Kind, Status, URL, Icon string
 }
 
-// downloads are the clients pointed at OpenPak, in the same row shape as the titles list.
-// Only public repositories are linked: a private one would be a 404 for every visitor.
+// downloads are the ways onto OpenPak: a real console with its patch, or Harbor, OpenPak's
+// own Switch HOME emulator (the emulator forks are retired). Only public repositories are
+// linked: a private one would be a 404 for every visitor.
 var downloads = []download{
-	{"Inkay", "Wii U", "downloads.kind.patch", "alpha", "https://github.com/openpak/nn-inkay/releases/latest"},
-	{"nimbus", "3DS", "downloads.kind.patch", "alpha", "https://github.com/openpak/nn-nimbus/releases/latest"},
-	{"Azahar", "3DS", "downloads.kind.emulator", "beta", "https://github.com/openpak/azahar/releases/latest"},
-	{"WFC patcher", "Wii", "downloads.kind.patch", "alpha", "https://github.com/openpak/nn-wfc-patcher-wii/releases/latest"},
-	{"Dolphin", "Wii", "downloads.kind.emulator", "beta", "https://github.com/openpak/dolphin/releases/latest"},
-	{"melonDS", "DS", "downloads.kind.emulator", "beta", "https://github.com/openpak/melonds/releases/latest"},
-	{"Ryujinx · Eden · Citron", "Switch", "downloads.kind.emulator", "", ""},
-	{"OpenPak setup", "Switch", "downloads.kind.setup", "", ""},
+	{"Harbor", "Switch", "downloads.kind.emulator", "alpha", "", "/static/clients/harbor.svg"},
+	{"OpenPak setup", "Switch", "downloads.kind.setup", "", "", ""},
+	{"Inkay", "Wii U", "downloads.kind.patch", "alpha", "https://github.com/openpak/nn-inkay/releases/latest", ""},
+	{"nimbus", "3DS", "downloads.kind.patch", "alpha", "https://github.com/openpak/nn-nimbus/releases/latest", ""},
+	{"WFC patcher", "Wii", "downloads.kind.patch", "alpha", "https://github.com/openpak/nn-wfc-patcher-wii/releases/latest", ""},
 }
 
 // platform is one console family and how far OpenPak is with it; the status words and

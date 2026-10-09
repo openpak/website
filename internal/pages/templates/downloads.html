@@ -10,7 +10,8 @@
     {{range .Downloads}}
     <li class="card dl">
       <div class="flex items-center gap-3">
-        <span class="console lg"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>
+        {{if .Icon}}<img class="size-[42px] shrink-0 rounded-[10px]" src="{{.Icon}}" alt="" width="42" height="42">
+        {{else}}<span class="console lg"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>{{end}}
         <div class="min-w-0"><div class="kind">{{.Console}} · {{t $.Lang .Kind}}</div><h3 class="break-anywhere">{{.Name}}</h3></div>
       </div>
       <div class="foot">
