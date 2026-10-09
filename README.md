@@ -63,12 +63,17 @@ session, and the moderation link appears only for accounts in
 allowlist for display only; `/admin` authorization stays in `internal/admin`
 and remains fail-closed).
 
-`web/static/site.css` is the whole design system. It is deliberately plain:
-near-black text on white, hairline rules instead of shadows, one accent used
-only for links and focus, ink-filled primary buttons, and a `--col` reading
-column so a list row keeps its actions beside the row. All UI copy lives in
-`internal/i18n`, and the render CSP is `style-src 'self'`, so templates carry
-no inline `style` attributes.
+`web/static/site.css` is the whole design system, built from `web/src/input.css`.
+The site behaves like a console's own system UI: the landing page is a HOME
+screen (a shelf of title tiles, a row of round system buttons), the account is a
+user page, and `/admin` is laid out like System Settings (`adminnav` opens that
+shell, `adminend` closes it). One element carries the personality: the
+selection cursor, a cyan ring that breathes around whatever is hovered or
+focused, which is also the keyboard focus indicator. Cyan only ever means "you
+are here"; indigo is links, primary actions and beta. Headings and UI text use
+M PLUS Rounded 1c (self-hosted in `web/static/fonts`, OFL), reading text the
+system face. All UI copy lives in `internal/i18n`, and the render CSP is
+`style-src 'self'`, so templates carry no inline `style` attributes.
 
 ## Building
 
@@ -139,12 +144,13 @@ with the console tool and the app.
 To look at a page at a phone's width without deploying:
 
 ```sh
-PREVIEW_DIR=/tmp/preview go test -count=1 ./internal/pages/ -run WritePreview
-cp web/static/site.css web/static/icon.svg /tmp/preview/
-chromium --headless --window-size=390,900 --screenshot=/tmp/shot.png file:///tmp/preview/status.html
+mkdir -p .preview && ln -sfn "$PWD/web/static" .preview/static
+PREVIEW_DIR=$PWD/.preview go test -count=1 ./internal/pages/ ./internal/admin/ -run WritePreview
+chromium --headless --window-size=390,900 --screenshot=$PWD/.preview/shot.png file://$PWD/.preview/status.html
 ```
 
-That renders every page, signed-in ones included, from the test harness.
+That renders the public, signed-in and admin pages from the test harness
+(`--blink-settings=preferredColorScheme=1` forces the light palette).
 
 ## Status page
 

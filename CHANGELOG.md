@@ -3,6 +3,14 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.69.0 — 2026-10-09
+
+- **Redesign: the site is a console's system UI.** The landing page is a HOME screen: a shelf of title tiles (what is being played right now first, with real Switch icons, then the featured titles, then "See all supported titles") and a row of round system buttons. The account page is a user page with a large round user icon and the friend codes, and `/admin` is laid out like System Settings, with the sections on the left and the page on the right.
+- The selection cursor, a cyan ring that breathes around whatever is hovered or focused, is the site-wide keyboard focus indicator. Cyan only marks where you are; indigo stays for links, primary actions and beta.
+- New palette: a cool console-shell grey with white tiles in light mode, charcoal in dark mode. The gradients, glass effects and all-caps labels are gone. Headings and UI text use M PLUS Rounded 1c, self-hosted under `/static/fonts` (OFL).
+- Switch title icons are fetched at 256 px instead of 128, so tiles stay sharp.
+- The page preview harness also renders the titles, saves, parental and admin pages.
+
 ## v0.68.0 — 2026-10-08
 
 - **Save Data Cloud management.** `/account/saves` lists the account's console backups per game (name and icon from the catalogue) with date, size and which console made each (`Harbor` or `Switch`; never a device id). A game's "Manage backups" page deletes one backup or all of them. Deleting is two steps: a confirmation page, then a POST carrying `confirm=yes` and the CSRF token, for the signed-in account only. A deleted backup leaves the console's own list at once.

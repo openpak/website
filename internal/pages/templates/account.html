@@ -23,7 +23,6 @@
 
 <div class="acct-main" id="top">
 <section class="card profile" aria-labelledby="codes-h">
-  <div class="cover"></div>
   <div class="inner">
     <div class="who">
       {{/* The avatar is the control: clicking it opens the picker. */}}
@@ -57,9 +56,9 @@
 </section>
 
 <div class="minis">
-  <a class="card mini" href="#friends"><b>{{len .Friends}}</b><span>{{t .Lang "friends.title"}}</span></a>
-  <a class="card mini" href="#devices"><b>{{len .Links}}</b><span>{{t .Lang "account.links"}}</span></a>
-  <a class="card mini" href="#requests"><b>{{len .Incoming}}</b><span>{{t .Lang "friends.requests"}}</span></a>
+  <a class="card mini sel" href="#friends"><b>{{len .Friends}}</b><span>{{t .Lang "friends.title"}}</span></a>
+  <a class="card mini sel" href="#devices"><b>{{len .Links}}</b><span>{{t .Lang "account.links"}}</span></a>
+  <a class="card mini sel" href="#requests"><b>{{len .Incoming}}</b><span>{{t .Lang "friends.requests"}}</span></a>
 </div>
 
 <section class="card pad" aria-labelledby="fr-h" id="friends">

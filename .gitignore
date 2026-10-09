@@ -13,3 +13,4 @@
 
 # Local media storage
 /storage
+.preview/

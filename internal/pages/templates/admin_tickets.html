@@ -21,4 +21,5 @@
   {{end}}
 </ul>
 {{else if not .Error}}<p class="card p-4 text-muted">{{t .Lang "admin.tickets.none"}}</p>{{end}}
+{{template "adminend"}}
 {{template "footer" .}}

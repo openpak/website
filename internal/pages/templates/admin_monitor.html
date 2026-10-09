@@ -4,7 +4,7 @@
      pill the fact. Grey is "not configured here", never an outage. */}}
 <div class="page-head"><h1>{{t .Lang "admin.monitor"}}</h1><p>{{t .Lang "admin.monitor.sub"}}</p></div>
 
-<h2 class="mb-3 text-xs font-bold uppercase tracking-widest text-muted">{{t .Lang "status.services"}}</h2>
+<h2 class="mb-3 text-base">{{t .Lang "status.services"}}</h2>
 <div class="mb-9">
   {{range .Services}}
   <div class="state-row {{.State}}"><span class="name">{{.Name}}</span><span class="pill break-anywhere">{{.Detail}}</span></div>
@@ -12,7 +12,7 @@
   <div class="state-row {{.Push.State}}"><span class="name">{{.Push.Name}}</span><span class="pill">{{.Push.Detail}}</span></div>
 </div>
 
-<h2 class="mb-3 text-xs font-bold uppercase tracking-widest text-muted">{{t .Lang "status.servers"}}</h2>
+<h2 class="mb-3 text-base">{{t .Lang "status.servers"}}</h2>
 <div class="mb-9">
   {{range .Servers}}
   <div class="state-row {{if not .Checkable}}idle{{else if .Up}}ok{{else}}bad{{end}}">
@@ -22,7 +22,7 @@
   {{end}}
 </div>
 
-<h2 class="mb-3 text-xs font-bold uppercase tracking-widest text-muted">{{t .Lang "status.playing"}}</h2>
+<h2 class="mb-3 text-base">{{t .Lang "status.playing"}}</h2>
 <div class="mb-9">
   {{if not .CountsOK}}
   <div class="state-row idle"><span class="name font-normal text-muted">{{t .Lang "admin.monitor.counts.none"}}</span></div>
@@ -34,10 +34,11 @@
   {{end}}
 </div>
 
-<h2 class="mb-3 text-xs font-bold uppercase tracking-widest text-muted">{{t .Lang "admin.monitor.external"}}</h2>
+<h2 class="mb-3 text-base">{{t .Lang "admin.monitor.external"}}</h2>
 <div>
   {{range .External}}
   <div class="state-row {{.State}}"><span class="name">{{.Name}}</span><span class="pill break-anywhere">{{.Detail}}</span></div>
   {{end}}
 </div>
+{{template "adminend"}}
 {{template "footer" .}}

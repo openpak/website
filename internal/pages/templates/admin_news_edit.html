@@ -28,4 +28,5 @@
   <button type="submit" class="btn text-sm">{{if .Published}}{{t .Lang "admin.news.unpublish"}}{{else}}{{t .Lang "admin.news.publish"}}{{end}}</button>
 </form>
 {{end}}
+{{template "adminend"}}
 {{template "footer" .}}

@@ -403,39 +403,69 @@ func (s *Server) handleLanding(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		s.log.Error("list requests", "err", err)
 	}
-	type playing struct {
-		Name    string
-		Players int
-		Pct     int
+	// The HOME shelf: what is being played right now first, then the featured
+	// few, as tiles. Players 0 is a featured title nobody is in at the moment.
+	type tile struct {
+		Name, Console, Href string
+		Icon                string // a Switch title id /titles/icon/{id} can draw; "" draws the console mark
+		Players             int
 	}
 	type landing struct {
 		baseData
-		Titles      []store.Request
+		Shelf       []tile
 		TitlesTotal int
 		News        []news.Article
 		Platforms   []platform
-		// The live card: who is on right now. CountsOK false hides it rather
+		// The live readout: who is on right now. CountsOK false hides it rather
 		// than showing zeros that would read as an empty network.
 		CountsOK       bool
 		Online, InGame int
-		Playing        []playing
 	}
 	// News is a nice-to-have on this page: unset or failing, the section is
 	// simply not drawn.
-	view := landing{baseData: d, Titles: popularTitles(titles), TitlesTotal: len(titles), News: s.News.Latest(r.Context(), 3), Platforms: platforms[:7]}
+	view := landing{baseData: d, TitlesTotal: len(titles), News: s.News.Latest(r.Context(), 3), Platforms: platforms[:7]}
+	byID := map[string]store.Request{}
+	for _, t := range titles {
+		for _, id := range t.TitleIDs {
+			byID[strings.ToUpper(id)] = t
+		}
+	}
+	href := func(t store.Request) string { return "/titles#t-" + strconv.FormatInt(t.ID, 10) }
+	const shelfMax = 5
+	seen := map[string]bool{}
 	if s.Invites != nil {
 		if counts, _, total, err := s.Invites.PlayerCounts(r.Context()); err == nil {
 			view.CountsOK, view.Online = true, total
 			sort.Slice(counts, func(i, j int) bool { return counts[i].Players > counts[j].Players })
-			for i, t := range counts {
-				view.InGame += t.Players
-				if i < 3 {
-					view.Playing = append(view.Playing, playing{Name: titleName(t.TitleID), Players: t.Players, Pct: t.Players * 100 / counts[0].Players})
+			for _, c := range counts {
+				view.InGame += c.Players
+				if len(view.Shelf) == shelfMax {
+					continue
 				}
+				tl := tile{Name: titleName(c.TitleID), Console: namespaceConsole(c.Namespace), Href: "/titles", Players: c.Players}
+				if c.Namespace == "switch" && switchID.MatchString(c.TitleID) {
+					tl.Icon = c.TitleID
+				}
+				if t, ok := byID[strings.ToUpper(c.TitleID)]; ok {
+					tl.Name, tl.Href, seen[t.Name] = t.Name, href(t), true
+				} else if tl.Name == c.TitleID {
+					continue // a tile never shows a raw title id
+				}
+				view.Shelf = append(view.Shelf, tl)
 			}
 		} else {
 			s.log.Error("player counts", "err", err)
 		}
+	}
+	for _, t := range popularTitles(titles) {
+		if len(view.Shelf) == shelfMax || seen[t.Name] {
+			continue
+		}
+		tl := tile{Name: t.Name, Console: t.Console, Href: href(t)}
+		if t.Console == "Switch" && t.TitleID != "" {
+			tl.Icon = t.TitleID
+		}
+		view.Shelf = append(view.Shelf, tl)
 	}
 	s.render(w, http.StatusOK, "landing.html", view)
 }

@@ -58,7 +58,7 @@ func (s *Server) handleSwitchIcon(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, nlibBase+strings.ToUpper(id)+"/icon/128/128", nil)
+	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, nlibBase+strings.ToUpper(id)+"/icon/256/256", nil)
 	if err != nil {
 		http.NotFound(w, r)
 		return

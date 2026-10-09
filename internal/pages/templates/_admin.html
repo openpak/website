@@ -1,8 +1,16 @@
-{{/* The admin sub-nav. The list lives in internal/admin (adminNav), so a new
-     page is one line of Go; this only draws it. It wraps rather than scrolls:
-     on a phone every section stays one tap away. */}}
+{{/* The admin shell, laid out like a console's System Settings: the section
+     list on the left with the cursor's bar on the current one, the page on the
+     right. The list lives in internal/admin (adminNav), so a new page is one
+     line of Go; this only draws it. On a phone the list is a row that scrolls
+     sideways above the page. "adminnav" opens the shell, "adminend" closes it. */}}
 {{define "adminnav"}}
-<nav aria-label="{{t .Lang "admin.nav"}}" class="mb-7 flex flex-wrap gap-1 border-b border-line pb-3">
-  {{range .Nav}}<a class="rounded-lg px-3 py-2 text-sm text-ink-2 no-underline hover:bg-paper-2 hover:text-ink {{if .Current}}bg-paper-2 font-semibold text-ink{{end}}" href="{{.Href}}" {{if .Current}}aria-current="page"{{end}}>{{.Label}}{{if and (eq .Href "/admin/services") $.Updates}} <span class="badge warn">{{$.Updates}} {{if eq $.Updates 1}}{{t $.Lang "admin.services.updates.one"}}{{else}}{{t $.Lang "admin.services.updates"}}{{end}}</span>{{end}}</a>{{end}}
+<div class="settings">
+<nav aria-label="{{t .Lang "admin.nav"}}" class="settings-nav">
+  {{range .Nav}}<a href="{{.Href}}" {{if .Current}}aria-current="page"{{end}}>{{.Label}}{{if and (eq .Href "/admin/services") $.Updates}} <span class="badge warn">{{$.Updates}} {{if eq $.Updates 1}}{{t $.Lang "admin.services.updates.one"}}{{else}}{{t $.Lang "admin.services.updates"}}{{end}}</span>{{end}}</a>{{end}}
 </nav>
+<div class="settings-main">
+{{end}}
+{{define "adminend"}}
+</div>
+</div>
 {{end}}
