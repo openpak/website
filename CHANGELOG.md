@@ -3,6 +3,12 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.70.0 — 2026-10-09
+
+- **Game tiles on /titles.** Every title is a square tile as on the HOME shelf: the art, then the name, console and status underneath (nothing sits on the art). A title not served yet is dimmed, like archived software on a console.
+- **Real cover tiles for the other consoles.** 276 of the 296 non-Switch titles get a 256 px tile cut from the game's real art: a SteamGridDB square grid that is only the game's own art and title logo, otherwise the published cover cropped past its platform band and badges. Sources and SteamGridDB authors are in `web/static/art/titles/SOURCES.tsv`; `scripts/title-art` rebuilds them and makes pick sheets for new titles. The titles grid, the title dialog and the HOME shelf use them; a title without one keeps its console's mark.
+- **OpenPak is a real console or Harbor.** A Switch title's compatibility grid is the Switch and Harbor (Windows, macOS, Linux, Android, iOS); other consoles list only the consoles that play them. Playability accepts `Harbor`. The downloads page lists Harbor (not public yet) in place of the retired emulator forks, with Harbor's own mark.
+
 ## v0.69.0 — 2026-10-09
 
 - **Redesign: the site is a console's system UI.** The landing page is a HOME screen: a shelf of title tiles (what is being played right now first, with real Switch icons, then the featured titles, then "See all supported titles") and a row of round system buttons. The account page is a user page with a large round user icon and the friend codes, and `/admin` is laid out like System Settings, with the sections on the left and the page on the right.

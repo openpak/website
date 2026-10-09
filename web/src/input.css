@@ -676,8 +676,11 @@
   .gtile .art > img { width: 100%; height: 100%; object-fit: cover; }
   .gtile .art .mark img { width: 64%; height: auto; max-height: 50%; object-fit: contain; display: block; margin: auto; }
   .gtile .art .mark { display: grid; place-items: center; width: 100%; height: 100%; }
-  .gtile .art .badge { position: absolute; top: 8px; left: 8px; box-shadow: var(--shadow-sm); }
-  .gtile .cap { display: grid; gap: 1px; padding: 10px 12px 12px; }
+  /* Nothing sits on the art: the status is in the caption, beside the name. */
+  .gtile .cap { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; row-gap: 1px; align-items: start; padding: 10px 12px 12px; }
+  .gtile .cap b { grid-column: 1 / -1; }
+  .gtile .cap .sub { grid-column: 1; align-self: center; }
+  .gtile .cap .badge { grid-column: 2; align-self: center; margin-top: 4px; }
   .gtile .cap b { font-family: var(--font-ui); font-weight: 800; font-size: .95rem; line-height: 1.25; overflow-wrap: anywhere;
                   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
   .gtile .cap .sub { font-family: var(--font-ui); font-weight: 700; font-size: .8rem; color: var(--muted); }
