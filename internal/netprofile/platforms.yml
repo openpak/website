@@ -72,6 +72,10 @@ platforms:
       # (galette) is in `never` below -- it serves the game's own data and it works.
       - ".klei.com"
       - ".kleientertainment.com"
+      # Microsoft PlayFab (<titleid>.playfabapi.com): We Were Here (title 3F284) and Minecraft
+      # Dungeons log in there. Nothing of ours serves it yet; nx-baas answers every call with
+      # PlayFab's own ServiceUnavailable (playfab.go), so the console never reaches Microsoft.
+      - ".playfabapi.com"
     exact: []                  # every name this platform claims is inside a family above
     overrides:
       # The NAT check probes two addresses from one socket and decides the
