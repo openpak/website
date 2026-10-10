@@ -84,6 +84,7 @@ var languages = map[string]Catalogue{
 		"titles.status":            "Status",
 		"titles.all":               "All",
 		"titles.none":              "No titles match your filters.",
+		"titles.art.soon":          "Picture coming soon",
 		"titles.showing":           "Showing",
 		"titles.request.open":      "Request a game",
 		"titles.request.title":     "Which game should OpenPak build next?",

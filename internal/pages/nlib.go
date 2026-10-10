@@ -22,13 +22,23 @@ var (
 	switchID  = regexp.MustCompile(`^[0-9A-Fa-f]{16}$`)
 )
 
+// nlibTitleID maps an update title to its base game, where nlib stores the
+// name and icon. Catalogue entries can identify the installed update instead.
+func nlibTitleID(id string) string {
+	id = strings.ToUpper(id)
+	if strings.HasSuffix(id, "800") {
+		return strings.TrimSuffix(id, "800") + "000"
+	}
+	return id
+}
+
 // switchTitleName is the game's name from nlib, or "" when it has none or is unreachable.
 // ponytail: an in-process cache that lives as long as the process; a restart refetches.
 func switchTitleName(ctx context.Context, id string) string {
 	if !switchID.MatchString(id) {
 		return ""
 	}
-	id = strings.ToUpper(id)
+	id = nlibTitleID(id)
 	if n, ok := nlibNames.Load(id); ok {
 		return n.(string)
 	}
@@ -51,14 +61,14 @@ func switchTitleName(ctx context.Context, id string) string {
 	return t.Name
 }
 
-// handleSwitchIcon relays a 128px icon for a Switch title id.
+// handleSwitchIcon relays a 256px icon for a Switch title id.
 func (s *Server) handleSwitchIcon(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	if !switchID.MatchString(id) {
 		http.NotFound(w, r)
 		return
 	}
-	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, nlibBase+strings.ToUpper(id)+"/icon/256/256", nil)
+	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, nlibBase+nlibTitleID(id)+"/icon/256/256", nil)
 	if err != nil {
 		http.NotFound(w, r)
 		return

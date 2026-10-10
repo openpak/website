@@ -65,6 +65,7 @@ var cataloguePTBR = Catalogue{
 	"titles.status":                    "Status",
 	"titles.all":                       "Todos",
 	"titles.none":                      "Nenhum título corresponde aos seus filtros.",
+	"titles.art.soon":                  "Imagem em breve",
 	"titles.showing":                   "Mostrando",
 	"titles.request.open":              "Pedir um jogo",
 	"titles.request.title":             "Qual jogo o OpenPak deve fazer a seguir?",

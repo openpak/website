@@ -676,6 +676,18 @@
   .gtile .art > img { width: 100%; height: 100%; object-fit: cover; }
   .gtile .art .mark img { width: 64%; height: auto; max-height: 50%; object-fit: contain; display: block; margin: auto; }
   .gtile .art .mark { display: grid; place-items: center; width: 100%; height: 100%; }
+  .art-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 18px; color: var(--muted); text-align: center; font-size: .8rem; font-weight: 700; line-height: 1.3; }
+  .gtile .art .art-placeholder { display: flex; }
+  .art-placeholder picture { display: grid; place-items: center; width: 100%; }
+  .gtile .art .art-placeholder img { width: 64%; height: 64px; max-height: none; }
+  .gtile .art > img[hidden], .gtile .art .art-placeholder[hidden], .tdialog .art-placeholder[hidden] { display: none; }
+  .tdialog .title-art { display: grid; place-items: center; width: 64px; height: 64px; overflow: hidden; background: var(--paper-2); }
+  .tdialog .title-art > img { width: 100%; height: 100%; object-fit: cover; }
+  .tdialog .title-art > img[hidden] { display: none; }
+  .tdialog .art-placeholder { padding: 8px; }
+  .tdialog .art-placeholder img { width: 48px; height: 40px; object-fit: contain; }
+  .tdialog .art-placeholder > span { display: none; }
+
   /* Nothing sits on the art: the status is in the caption, beside the name. */
   .gtile .cap { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; row-gap: 1px; align-items: start; padding: 10px 12px 12px; }
   .gtile .cap b { grid-column: 1 / -1; }

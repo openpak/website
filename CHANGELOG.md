@@ -3,6 +3,11 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.70.1 — 2026-10-10
+
+- **Risk of Rain has its picture again.** The catalogue names an update title (`…800`) for some games, and the icon source only knows the base game (`…000`); the icon relay and the name lookup now map an update to its base title.
+- **"Picture coming soon" placeholder.** A title without art, or whose icon fails to load, shows its console's logo with "Picture coming soon" (translated) on the tile; the dialog shows the logo alone.
+
 ## v0.70.0 — 2026-10-09
 
 - **Game tiles on /titles.** Every title is a square tile as on the HOME shelf: the art, then the name, console and status underneath (nothing sits on the art). A title not served yet is dimmed, like archived software on a console.

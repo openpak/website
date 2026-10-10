@@ -1,3 +1,16 @@
+// Replace unavailable game artwork with the console logo and coming-soon copy.
+// Register before checking complete to also catch failures before this script ran.
+(function () {
+  document.querySelectorAll("[data-title-image]").forEach(function (img) {
+    function fallback() {
+      img.hidden = true;
+      img.parentNode.querySelector(".art-placeholder").hidden = false;
+    }
+    img.addEventListener("error", fallback);
+    if (img.complete && !img.naturalWidth) fallback();
+  });
+})();
+
 // Client-side filter for the supported-titles page. The set is small, so
 // filtering is a DOM pass rather than a server round-trip. No inline script:
 // the CSP is default-src 'self', so this is loaded from /static.

@@ -65,6 +65,7 @@ var catalogueFR = Catalogue{
 	"titles.status":                    "État",
 	"titles.all":                       "Tous",
 	"titles.none":                      "Aucun titre ne correspond à vos filtres.",
+	"titles.art.soon":                  "Image à venir",
 	"titles.showing":                   "Affichage",
 	"titles.request.open":              "Demander un jeu",
 	"titles.request.title":             "Quel jeu OpenPak doit-il développer ensuite ?",

@@ -26,9 +26,7 @@
     <li class="titles-row gtile {{if $later}}archived{{end}}" data-name="{{.Name}}" data-console="{{.Console}}" data-status="{{.Status}}">
       <a class="t" href="#t-{{.ID}}">
         <span class="art">
-          {{if and (eq .Console "Switch") .TitleID}}<img src="/titles/icon/{{.TitleID}}" alt="" width="256" height="256" loading="lazy">
-          {{else if titleArt .Console .Name}}<img src="{{titleArt .Console .Name}}" alt="" width="256" height="256" loading="lazy">
-          {{else}}<span class="mark"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="96" height="64" loading="lazy"></picture></span>{{end}}
+          {{template "title-art" (arr $.Lang .Console .Name .TitleID)}}
         </span>
         <span class="cap"><b>{{.Name}}</b><span class="sub">{{.Console}}</span><span class="badge {{badgeClass .Status}}">{{.Status}}</span></span>
       </a>
@@ -66,9 +64,7 @@
   {{range .}}
   <dialog id="t-{{.ID}}" class="card tdialog" aria-labelledby="t-{{.ID}}-h">
     <div class="flex items-center gap-3">
-      {{if and (eq .Console "Switch") .TitleID}}<img class="icon" src="/titles/icon/{{.TitleID}}" alt="" width="64" height="64" loading="lazy">
-      {{else if titleArt .Console .Name}}<img class="icon" src="{{titleArt .Console .Name}}" alt="" width="64" height="64" loading="lazy">
-      {{else}}<span class="console lg"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>{{end}}
+      <span class="icon title-art">{{template "title-art" (arr $.Lang .Console .Name .TitleID)}}</span>
       <div class="flex-1 min-w-0"><h2 id="t-{{.ID}}-h" class="m-0">{{.Name}}</h2><span class="text-sm text-muted">{{.Console}}</span></div>
       <span class="badge {{badgeClass .Status}}">{{.Status}}</span>
     </div>
@@ -168,3 +164,15 @@
 {{template "footer" .}}
 
 {{define "compat-tip"}}{{$l := index . 0}}{{with index . 1}}{{.Client}}{{if ne .OS "hardware"}} · {{.OS}}{{end}}: {{if or .Works .Broken}}{{t $l "titles.compat.works"}} {{.Works}} · {{t $l "titles.compat.broken"}} {{.Broken}}{{else if not .Played}}{{t $l "titles.compat.untested"}}{{end}}{{if .Played}}{{if or .Works .Broken}} · {{end}}{{.Minutes}} {{t $l "titles.compat.minutes"}}{{end}}{{end}}{{end}}
+
+{{/* Keep the fallback in the DOM so a failed icon or cover can reveal it under CSP. */}}
+{{define "title-art"}}
+  {{$lang := index . 0}}{{$console := index . 1}}{{$name := index . 2}}{{$id := index . 3}}
+  {{$art := titleArt $console $name}}
+  {{if and (eq $console "Switch") $id}}{{$art = printf "/titles/icon/%s" $id}}{{end}}
+  {{with $art}}<img data-title-image src="{{.}}" alt="" width="256" height="256" loading="lazy">{{end}}
+  <span class="mark art-placeholder"{{if $art}} hidden{{end}}>
+    <picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug $console}}-dark.svg"><img src="/static/consoles/{{consoleSlug $console}}.svg" alt="" width="96" height="64" loading="lazy"></picture>
+    <span>{{t $lang "titles.art.soon"}}</span>
+  </span>
+{{end}}

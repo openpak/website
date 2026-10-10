@@ -222,3 +222,31 @@ func TestShopLinks(t *testing.T) {
 		}
 	}
 }
+
+// Missing covers have a visible placeholder; remote icons keep the same fallback
+// hidden in the DOM so an error can reveal it without an inline CSP handler.
+func TestTitlesArtworkFallback(t *testing.T) {
+	requests := []store.Request{
+		{ID: 101, Kind: "title", Name: "Missing cover", Console: "Wii U", Status: "beta"},
+		{ID: 102, Kind: "title", Name: "Risk of Rain", Console: "Switch", Status: "beta", TitleID: "0100AAA00ACBE800"},
+	}
+	out := renderTitles(t, titlesPage{
+		baseData: baseData{Lang: "en", Path: "/titles"},
+		Titles:   titleRows(requests, nil, nil, nil, nil),
+	})
+	for _, want := range []string{
+		`class="mark art-placeholder">`,
+		`class="mark art-placeholder" hidden>`,
+		`data-title-image src="/titles/icon/0100AAA00ACBE800"`,
+		`/static/consoles/wii-u.svg`,
+		`/static/consoles/switch-dark.svg`,
+		`Picture coming soon`,
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("artwork fallback missing %q", want)
+		}
+	}
+	if strings.Contains(out, "onerror=") {
+		t.Error("artwork fallback must work with the site's CSP")
+	}
+}

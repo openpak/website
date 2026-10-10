@@ -65,6 +65,7 @@ var catalogueDE = Catalogue{
 	"titles.status":                    "Status",
 	"titles.all":                       "Alle",
 	"titles.none":                      "Keine Titel entsprechen deinen Filtern.",
+	"titles.art.soon":                  "Bild folgt bald",
 	"titles.showing":                   "Angezeigt:",
 	"titles.request.open":              "Spiel wünschen",
 	"titles.request.title":             "Welches Spiel soll OpenPak als Nächstes umsetzen?",
