@@ -166,6 +166,10 @@ not answering turns the banner red.
 is the same counts as JSON, with no bearer, because the people most likely to
 check status are the ones who cannot sign in.
 
+The playing lists and the homepage's "In a game" count include only titles in
+the website's database. Unknown games and apps, such as DBI, still count toward
+the online total and their console network's online count.
+
 ## Push notifications
 
 Set `FCM_CREDENTIALS_FILE` to a Firebase service-account JSON and the notifier

@@ -128,9 +128,12 @@ paths:
         whose sign-in is the part that is broken.
 
         Counts are distinct accounts, taken from the same live session leases a
-        friends list reads, so this can never disagree with presence. Someone
+        friends list reads. Someone
         playing two titles is one player in `players_online` and one player on
         their network, while appearing under both titles.
+
+        Only titles in the website's database appear in `titles`. Unknown apps
+        still count toward `players_online` and their network's online count.
       responses:
         "200":
           description: OK

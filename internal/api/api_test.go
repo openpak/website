@@ -658,20 +658,31 @@ func TestAvatarChoicesAreListedAndSettable(t *testing.T) {
 // The status endpoint is public: an account is exactly what a person checking
 // status may be unable to use.
 func TestStatusNeedsNoToken(t *testing.T) {
-	s, fc, _ := newTestAPI(t)
-	fc.players = []core.TitlePlayers{{TitleID: "0100ED9024EB8000", Namespace: "switch", Players: 2}}
-	fc.networkPlayers = map[string]int{"switch": 2}
-	fc.totalPlayers = 2
+	s, fc, db := newTestAPI(t)
+	if err := db.SeedRequests(context.Background(), []store.Request{
+		{Kind: "title", Name: "Outbound", TitleID: "0100ED9024EB8000"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	fc.players = []core.TitlePlayers{
+		{TitleID: "0100ED9024EB8000", Namespace: "switch", Players: 2},
+		{TitleID: "010025901a268000", Namespace: "switch", Players: 1},
+	}
+	fc.networkPlayers = map[string]int{"switch": 3}
+	fc.totalPlayers = 3
 
 	rec := do(t, s, http.MethodGet, "/api/v1/status", "", nil)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status: %d %s", rec.Code, rec.Body.String())
 	}
 	body := rec.Body.String()
-	for _, want := range []string{`"players_online":2`, "0100ED9024EB8000", `"networks"`} {
+	for _, want := range []string{`"players_online":3`, "0100ED9024EB8000", `"networks":[{"namespace":"switch","players":3}]`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("%s missing from %s", want, body)
 		}
+	}
+	if strings.Contains(strings.ToUpper(body), "010025901A268000") {
+		t.Error("unknown titles must not appear in the status API")
 	}
 }
 

@@ -17,9 +17,8 @@ import (
 )
 
 // titleNames maps title ids to names, for the titles OpenPak actually serves.
-// Used by the account page's "being played" list, which knows only the id.
-// An id with no name here is printed as the id — honest, and how a new title
-// announces itself the first time somebody plays it.
+// Callers that need a fallback label can use the id when no name is known.
+// Live playing lists use the database catalogue instead.
 var titleNames = map[string]string{
 	"0100ED9024EB8000": "Outbound",
 	"0100E65002BB8000": "Stardew Valley",
@@ -61,6 +60,15 @@ func TitleCatalogue(ctx context.Context, db store.Store) map[string]string {
 		}
 	}
 	return out
+}
+
+// CatalogueTitleName resolves only titles in the database. An unknown title
+// counts as online, but does not belong in the website's playing lists.
+func CatalogueTitleName(catalogue map[string]string, id string) string {
+	if name := catalogue[strings.ToUpper(id)]; name != "" {
+		return name
+	}
+	return catalogue[baseTitleID(id)]
 }
 
 // baseTitleID maps a Wii U or 3DS update's title id to its game's: an update shares the

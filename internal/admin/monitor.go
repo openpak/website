@@ -114,8 +114,11 @@ func (s *Server) playerCounts(ctx context.Context) (bool, int, []titleCount) {
 		return false, 0, nil
 	}
 	out := make([]titleCount, 0, len(titles))
+	catalogue := pages.TitleCatalogue(ctx, s.DB)
 	for _, t := range titles {
-		out = append(out, titleCount{pages.TitleName(t.TitleID), t.Players})
+		if name := pages.CatalogueTitleName(catalogue, t.TitleID); name != "" {
+			out = append(out, titleCount{name, t.Players})
+		}
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Players > out[j].Players })
 	return true, total, out

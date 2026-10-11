@@ -437,15 +437,22 @@ func TestProfileCountryAndBirthdayCanBeSaved(t *testing.T) {
 }
 
 // The status page answers "is my game up and is anyone on", so the counts have
-// to reach the page and an unknown title id must not be dressed up as a name.
+// to reach the page; unknown titles count as online without a playing row.
 func TestStatusPageShowsWhoIsPlaying(t *testing.T) {
-	s, fc, _ := newTestServer(t)
-	fc.players = []core.TitlePlayers{
-		{TitleID: "0100ED9024EB8000", Players: 2},
-		{TitleID: "0100DEADBEEF0000", Players: 1},
+	s, fc, db := newTestServer(t)
+	if err := db.SeedRequests(context.Background(), []store.Request{
+		{Kind: "title", Name: "Outbound", TitleID: "0100ED9024EB8000"},
+		{Kind: "title", Name: "ARMS", TitleIDs: []string{"01009B500007C000"}},
+	}); err != nil {
+		t.Fatal(err)
 	}
-	fc.totalPlayers = 3
-	fc.networkPlayers = map[string]int{"switch": 3}
+	fc.players = []core.TitlePlayers{
+		{TitleID: "0100ed9024eb8000", Players: 2},
+		{TitleID: "01009b500007c000", Players: 1},
+		{TitleID: "010025901a268000", Players: 1},
+	}
+	fc.totalPlayers = 4
+	fc.networkPlayers = map[string]int{"switch": 4}
 
 	rec := httptest.NewRecorder()
 	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/status", nil))
@@ -456,15 +463,19 @@ func TestStatusPageShowsWhoIsPlaying(t *testing.T) {
 	if !strings.Contains(body, "Outbound") {
 		t.Error("a known title should read as its name")
 	}
-	// An unknown id is shown as the id: inventing a name would be a lie, and
-	// hiding the row would make players vanish from the total.
-	if !strings.Contains(body, "0100DEADBEEF0000") {
-		t.Error("an unknown title should still be listed, by id")
+	if !strings.Contains(body, "ARMS") {
+		t.Error("a catalogue title outside the static name map should be named")
+	}
+	if strings.Contains(strings.ToUpper(body), "010025901A268000") {
+		t.Error("an unknown title must not be listed")
+	}
+	if !strings.Contains(body, `<b>2</b><span>Being played right now</span>`) {
+		t.Error("only catalogue titles should count as being played")
 	}
 	// The headline total is who is *online*, which includes anyone signed in
 	// with nothing running. Who is *playing* is the section further down, and
 	// calling both "players" would overstate the busier of the two every time.
-	if !strings.Contains(body, "3 online") {
+	if !strings.Contains(body, "4 online") {
 		t.Errorf("the online total is missing from the page")
 	}
 	if !strings.Contains(body, "players") {

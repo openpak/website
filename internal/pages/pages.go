@@ -427,8 +427,13 @@ func (s *Server) handleLanding(w http.ResponseWriter, r *http.Request) {
 	view := landing{baseData: d, TitlesTotal: len(titles), News: s.News.Latest(r.Context(), 3), Platforms: platforms[:7]}
 	byID := map[string]store.Request{}
 	for _, t := range titles {
-		for _, id := range t.TitleIDs {
-			byID[strings.ToUpper(id)] = t
+		if t.Name == "" {
+			continue
+		}
+		for _, id := range append([]string{t.TitleID}, t.TitleIDs...) {
+			if id != "" {
+				byID[strings.ToUpper(id)] = t
+			}
 		}
 	}
 	href := func(t store.Request) string { return "/titles#t-" + strconv.FormatInt(t.ID, 10) }
@@ -439,21 +444,24 @@ func (s *Server) handleLanding(w http.ResponseWriter, r *http.Request) {
 			view.CountsOK, view.Online = true, total
 			sort.Slice(counts, func(i, j int) bool { return counts[i].Players > counts[j].Players })
 			for _, c := range counts {
+				t, ok := byID[strings.ToUpper(c.TitleID)]
+				if !ok {
+					t, ok = byID[baseTitleID(c.TitleID)]
+				}
+				if !ok {
+					continue
+				}
 				view.InGame += c.Players
 				if len(view.Shelf) == shelfMax {
 					continue
 				}
-				tl := tile{Name: titleName(c.TitleID), Console: namespaceConsole(c.Namespace), Href: "/titles", Players: c.Players}
+				tl := tile{Name: t.Name, Console: namespaceConsole(c.Namespace), Href: href(t), Players: c.Players}
 				if c.Namespace == "switch" && switchID.MatchString(c.TitleID) {
 					tl.Art = "/titles/icon/" + c.TitleID
 				}
-				if t, ok := byID[strings.ToUpper(c.TitleID)]; ok {
-					tl.Name, tl.Href, seen[t.Name] = t.Name, href(t), true
-					if tl.Art == "" {
-						tl.Art = artPath(t.Console, t.Name)
-					}
-				} else if tl.Name == c.TitleID {
-					continue // a tile never shows a raw title id
+				seen[t.Name] = true
+				if tl.Art == "" {
+					tl.Art = artPath(t.Console, t.Name)
 				}
 				view.Shelf = append(view.Shelf, tl)
 			}

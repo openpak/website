@@ -727,12 +727,15 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	// read them is shown as its own thing, not as an outage.
 	var perNetwork map[string]int
 	var titlesRaw []core.TitlePlayers
+	catalogue := TitleCatalogue(ctx, s.DB)
 	if s.Invites != nil {
 		if titles, nets, total, err := s.Invites.PlayerCounts(ctx); err == nil {
 			titlesRaw = titles
 			view.CountsOK, view.TotalPlayers, perNetwork = true, total, nets
 			for _, t := range titles {
-				view.Titles = append(view.Titles, titleRow{Name: titleName(t.TitleID), Players: t.Players})
+				if name := CatalogueTitleName(catalogue, t.TitleID); name != "" {
+					view.Titles = append(view.Titles, titleRow{Name: name, Players: t.Players})
+				}
 			}
 		} else {
 			s.log.Error("player counts", "err", err)
@@ -749,7 +752,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		byTitle[strings.ToUpper(t.TitleID)] = t.Players
 	}
 	serversOK := true
-	for _, g := range CheckGameServers(ctx, TitleCatalogue(ctx, s.DB)) {
+	for _, g := range CheckGameServers(ctx, catalogue) {
 		row := serverRow{Name: g.Name, Players: byTitle[strings.ToUpper(g.TitleID)], Checkable: g.Checkable, Up: g.Up}
 		view.Servers = append(view.Servers, row)
 		if row.Checkable && !row.Up {

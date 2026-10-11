@@ -7,9 +7,33 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/store"
 )
+
+type monitorPlayers struct{}
+
+func (monitorPlayers) PlayerCounts(context.Context) ([]core.TitlePlayers, map[string]int, int, error) {
+	return []core.TitlePlayers{
+		{TitleID: "01009b500007c000", Namespace: "switch", Players: 2},
+		{TitleID: "010025901a268000", Namespace: "switch", Players: 1},
+	}, map[string]int{"switch": 3}, 3, nil
+}
+
+func TestMonitorUnknownTitleCountsOnlyAsOnline(t *testing.T) {
+	s, db, _ := adminMux(t)
+	s.Players = monitorPlayers{}
+	if err := db.SeedRequests(context.Background(), []store.Request{
+		{Kind: "title", Name: "ARMS", TitleID: "01009B500007C000"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	ok, total, titles := s.playerCounts(context.Background())
+	if !ok || total != 3 || len(titles) != 1 || titles[0] != (titleCount{"ARMS", 2}) {
+		t.Fatalf("monitor counts = %t, %d, %+v", ok, total, titles)
+	}
+}
 
 // adminMux is an admin server with a signed-in admin, ready to serve.
 func adminMux(t *testing.T) (*Server, *store.Memory, *http.ServeMux) {

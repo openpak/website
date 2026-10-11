@@ -23,6 +23,29 @@ func TestTitleNamesAreFoundWhateverTheCase(t *testing.T) {
 	}
 }
 
+func TestCatalogueTitleNameRequiresDatabaseEntry(t *testing.T) {
+	catalogue := map[string]string{
+		"01009B500007C000": "ARMS",
+		"000500001010ED00": "Mario Kart 8",
+		"0004000000030800": "Mario Kart 7",
+	}
+	for id, want := range map[string]string{
+		"01009b500007c000": "ARMS",
+		"0005000e1010ed00": "Mario Kart 8",
+		"0004000e00030800": "Mario Kart 7",
+		"010025901a268000": "",
+		"0100E65002BB8000": "", // A static name alone does not put a title in the database.
+		"":                 "",
+	} {
+		if got := CatalogueTitleName(catalogue, id); got != want {
+			t.Errorf("CatalogueTitleName(%q) = %q, want %q", id, got, want)
+		}
+	}
+	if got := CatalogueTitleName(nil, "01009b500007c000"); got != "" {
+		t.Errorf("an unavailable catalogue resolved %q", got)
+	}
+}
+
 func TestHasGameServer(t *testing.T) {
 	if !hasGameServer(store.Request{TitleID: "010047700D540000"}) {
 		t.Error("Clubhouse Games has a game server")

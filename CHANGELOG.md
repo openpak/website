@@ -3,6 +3,10 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.71.1 — 2026-10-11
+
+- **Unknown apps count as online.** Titles absent from the website's database, such as DBI, no longer appear under "Being played right now" or increase the homepage's "In a game" count. They still count toward online totals. The status page, status API and admin monitor use the database's title names.
+
 ## v0.71.0 — 2026-10-11
 
 - **Tiles without the name.** On /titles and the landing shelf the art carries the game's name, so the tile shows none: console and status sit on the bottom of the art, as on the HOME shelf (the shelf shows the players online instead of the console while someone is playing). The name stays for screen readers and as the tile's tooltip, and a tile with no picture shows it under "Picture coming soon".

@@ -1052,7 +1052,11 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	rows := make([]map[string]any, 0, len(titles))
+	catalogue := pages.TitleCatalogue(r.Context(), s.DB)
 	for _, t := range titles {
+		if pages.CatalogueTitleName(catalogue, t.TitleID) == "" {
+			continue
+		}
 		rows = append(rows, map[string]any{
 			"title_id": t.TitleID, "namespace": t.Namespace, "players": t.Players,
 		})
