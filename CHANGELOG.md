@@ -3,6 +3,10 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.71.2 — 2026-10-11
+
+- **Don't Starve Together is listed as a game server.** Its Switch title (`010090100E334000`) now has a health probe in the status page and admin monitor. The status page shows its live player count under Game servers as well as Being played right now.
+
 ## v0.71.1 — 2026-10-11
 
 - **Unknown apps count as online.** Titles absent from the website's database, such as DBI, no longer appear under "Being played right now" or increase the homepage's "In a game" count. They still count toward online totals. The status page, status API and admin monitor use the database's title names.
