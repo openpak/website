@@ -3,6 +3,10 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.70.2 — 2026-10-11
+
+- **Titles with a game server are listed.** Clubhouse Games: 51 Worldwide Classics and Super Mario 3D World + Bowser's Fury are alpha, which put them behind "Request a game" even though players were on them (the landing page counted them). A title OpenPak runs a server for now sits in the grid whatever its status.
+
 ## v0.70.1 — 2026-10-10
 
 - **Risk of Rain has its picture again.** The catalogue names an update title (`…800`) for some games, and the icon source only knows the base game (`…000`); the icon relay and the name lookup now map an update to its base title.

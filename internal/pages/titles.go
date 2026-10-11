@@ -186,6 +186,18 @@ func mostRequested(reqs []store.Request) []store.Request {
 // client-side by console and status and searched by name. `?sort=votes` turns it
 // into the scoreboard — most requested first — which is the point of the
 // requestable long tail.
+// hasGameServer is true for a title OpenPak runs a game server for. Alpha is votable, but a
+// title with a server has players on it (the landing page counts them), so it is listed.
+func hasGameServer(t store.Request) bool {
+	health := gameServerHealth()
+	for _, id := range append([]string{t.TitleID}, t.TitleIDs...) {
+		if _, ok := health[strings.ToUpper(id)]; ok {
+			return true
+		}
+	}
+	return false
+}
+
 func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 	v := s.viewerOf(w, r)
 	d := s.data(r, v, i18n.T(i18n.FromRequest(r), "titles.title"))
@@ -208,7 +220,7 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 		reqs = store.CatalogOrder(reqs)
 		var served []store.Request
 		for _, t := range reqs {
-			if t.Votable() {
+			if t.Votable() && !hasGameServer(t) {
 				requestable = append(requestable, t)
 			} else {
 				served = append(served, t)
