@@ -89,7 +89,7 @@
     });
     // A click on the backdrop lands on the dialog itself.
     d.addEventListener("click", function (e) { if (e.target === d) d.close(); });
-    d.querySelector("[data-close]").addEventListener("click", function () { d.close(); });
+    Array.prototype.forEach.call(d.querySelectorAll("[data-close]"), function (b) { b.addEventListener("click", function () { d.close(); }); });
   });
   window.addEventListener("hashchange", sync);
   sync();

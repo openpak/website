@@ -24,11 +24,11 @@
     {{range .}}
     {{$later := or (eq .Status "requestable") (eq .Status "planned")}}
     <li class="titles-row gtile {{if $later}}archived{{end}}" data-name="{{.Name}}" data-console="{{.Console}}" data-status="{{.Status}}">
-      <a class="t" href="#t-{{.ID}}">
+      <a class="t" href="#t-{{.ID}}" aria-label="{{.Name}}, {{.Console}}, {{.Status}}" title="{{.Name}}">
         <span class="art">
-          {{template "title-art" (arr $.Lang .Console .Name .TitleID)}}
+          {{template "title-art" (arr $.Lang .Console .Name .TitleID .Name)}}
+          <span class="cap"><span class="sub">{{.Console}}</span><span class="badge {{badgeClass .Status}}">{{.Status}}</span></span>
         </span>
-        <span class="cap"><b>{{.Name}}</b><span class="sub">{{.Console}}</span><span class="badge {{badgeClass .Status}}">{{.Status}}</span></span>
       </a>
       {{if $later}}
       <div class="foot">
@@ -63,16 +63,19 @@
   </ul>
   {{range .}}
   <dialog id="t-{{.ID}}" class="card tdialog" aria-labelledby="t-{{.ID}}-h">
-    <div class="flex items-center gap-3">
-      <span class="icon title-art">{{template "title-art" (arr $.Lang .Console .Name .TitleID)}}</span>
-      <div class="flex-1 min-w-0"><h2 id="t-{{.ID}}-h" class="m-0">{{.Name}}</h2><span class="text-sm text-muted">{{.Console}}</span></div>
-      <span class="badge {{badgeClass .Status}}">{{.Status}}</span>
-    </div>
-    <dl class="facts">
-      {{if not .DateAdded.IsZero}}<dt>{{t $.Lang "titles.info.added"}}</dt><dd>{{date $.Lang .DateAdded}}</dd>{{end}}
-      {{if not .LastUpdated.IsZero}}<dt>{{t $.Lang "titles.info.updated"}}</dt><dd>{{date $.Lang .LastUpdated}}</dd>{{end}}
-    </dl>
-
+    <header class="thero">
+      <span class="tart title-art">{{template "title-art" (arr $.Lang .Console .Name .TitleID "")}}</span>
+      <div class="tinfo">
+        <h2 id="t-{{.ID}}-h">{{.Name}}</h2>
+        <p class="tmeta"><span>{{.Console}}</span><span class="badge {{badgeClass .Status}}">{{.Status}}</span></p>
+        <dl class="facts">
+          {{if not .DateAdded.IsZero}}<dt>{{t $.Lang "titles.info.added"}}</dt><dd>{{date $.Lang .DateAdded}}</dd>{{end}}
+          {{if not .LastUpdated.IsZero}}<dt>{{t $.Lang "titles.info.updated"}}</dt><dd>{{date $.Lang .LastUpdated}}</dd>{{end}}
+        </dl>
+      </div>
+      <button type="button" class="tclose" data-close aria-label="{{t $.Lang "titles.request.close"}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </header>
+    <div class="tbody">
     <h3>{{t $.Lang "titles.compat.title"}}</h3>
     <p class="text-sm text-muted">{{t $.Lang "titles.compat.sub"}}</p>
     <div class="table-wrap"><table class="compat">
@@ -114,6 +117,7 @@
     </details>
     {{end}}
 
+    </div>
     <div class="actions foot"><a class="btn" href="{{.ProblemURL}}">{{t $.Lang "titles.problem"}}</a><button type="button" class="btn primary" data-close>{{t $.Lang "titles.request.close"}}</button></div>
   </dialog>
   {{end}}
@@ -167,12 +171,13 @@
 
 {{/* Keep the fallback in the DOM so a failed icon or cover can reveal it under CSP. */}}
 {{define "title-art"}}
-  {{$lang := index . 0}}{{$console := index . 1}}{{$name := index . 2}}{{$id := index . 3}}
+  {{$lang := index . 0}}{{$console := index . 1}}{{$name := index . 2}}{{$id := index . 3}}{{$label := index . 4}}
   {{$art := titleArt $console $name}}
   {{if and (eq $console "Switch") $id}}{{$art = printf "/titles/icon/%s" $id}}{{end}}
   {{with $art}}<img data-title-image src="{{.}}" alt="" width="256" height="256" loading="lazy">{{end}}
   <span class="mark art-placeholder"{{if $art}} hidden{{end}}>
     <picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug $console}}-dark.svg"><img src="/static/consoles/{{consoleSlug $console}}.svg" alt="" width="96" height="64" loading="lazy"></picture>
+    {{with $label}}<b>{{.}}</b>{{end}}
     <span>{{t $lang "titles.art.soon"}}</span>
   </span>
 {{end}}

@@ -3,6 +3,11 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.71.0 — 2026-10-11
+
+- **Tiles without the name.** On /titles and the landing shelf the art carries the game's name, so the tile shows none: console and status sit on the bottom of the art, as on the HOME shelf (the shelf shows the players online instead of the console while someone is playing). The name stays for screen readers and as the tile's tooltip, and a tile with no picture shows it under "Picture coming soon".
+- **A new title dialog.** A header with a larger picture, the name, console, status and dates; a close button; the body scrolls under it and the footer sticks. On a phone it is a sheet that rises from the bottom.
+
 ## v0.70.2 — 2026-10-11
 
 - **Titles with a game server are listed.** Clubhouse Games: 51 Worldwide Classics and Super Mario 3D World + Bowser's Fury are alpha, which put them behind "Request a game" even though players were on them (the landing page counted them). A title OpenPak runs a server for now sits in the grid whatever its status.
