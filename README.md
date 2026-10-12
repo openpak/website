@@ -54,6 +54,11 @@ web/static/             built site.css (committed), icon.svg, consoles/ icons,
 scripts/                css.sh — rebuilds web/static/site.css with Tailwind
 ```
 
+Switch tiles use `/titles/icon/{title_id}`. Published icons for games missing from the
+upstream database can be placed in `web/static/art/switch/{BASE_TITLE_ID}.jpg` (uppercase),
+with their source recorded in that directory's `SOURCES.tsv`. The icon route serves these
+files before querying nlib, including when a caller supplies an update title ID.
+
 ### UI
 
 One shell for every page — public and signed-in alike (`header`/`footer` in

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
@@ -20,6 +22,8 @@ var (
 	nlibHTTP  = &http.Client{Timeout: 3 * time.Second}
 	nlibNames sync.Map // title id -> name; "" is a known miss
 	switchID  = regexp.MustCompile(`^[0-9A-Fa-f]{16}$`)
+	// Published icons for titles the upstream database does not carry yet.
+	switchIconDir = filepath.Join("web", "static", "art", "switch")
 )
 
 // nlibTitleID maps an update title to its base game, where nlib stores the
@@ -68,7 +72,18 @@ func (s *Server) handleSwitchIcon(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, nlibBase+nlibTitleID(id)+"/icon/256/256", nil)
+	id = nlibTitleID(id)
+	if f, err := os.Open(filepath.Join(switchIconDir, id+".jpg")); err == nil {
+		defer f.Close()
+		if info, err := f.Stat(); err == nil && info.Mode().IsRegular() {
+			w.Header().Set("Content-Type", "image/jpeg")
+			w.Header().Set("Cache-Control", "public, max-age=2592000")
+			w.Header().Set("X-Content-Type-Options", "nosniff")
+			http.ServeContent(w, r, info.Name(), info.ModTime(), f)
+			return
+		}
+	}
+	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, nlibBase+id+"/icon/256/256", nil)
 	if err != nil {
 		http.NotFound(w, r)
 		return

@@ -5,8 +5,48 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 )
+
+func TestSwitchLocalIcon(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "0100A7C01B792000.jpg"), []byte("published game icon"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	hits := 0
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits++
+		http.NotFound(w, r)
+	}))
+	defer upstream.Close()
+	oldDir, oldBase := switchIconDir, nlibBase
+	switchIconDir, nlibBase = dir, upstream.URL+"/"
+	defer func() { switchIconDir, nlibBase = oldDir, oldBase }()
+	for _, id := range []string{"0100a7c01b792000", "0100A7C01B792800"} {
+		req := httptest.NewRequest(http.MethodGet, "/titles/icon/"+id, nil)
+		req.SetPathValue("id", id)
+		w := httptest.NewRecorder()
+		(&Server{}).handleSwitchIcon(w, req)
+		if w.Code != http.StatusOK || w.Body.String() != "published game icon" || w.Header().Get("Content-Type") != "image/jpeg" {
+			t.Fatalf("local icon for %s: status %d, headers %v, body %q", id, w.Code, w.Header(), w.Body.String())
+		}
+		if w.Header().Get("Cache-Control") != "public, max-age=2592000" || w.Header().Get("X-Content-Type-Options") != "nosniff" {
+			t.Fatalf("missing icon cache/security headers: %v", w.Header())
+		}
+	}
+	if hits != 0 {
+		t.Fatalf("local icon fetched upstream %d times", hits)
+	}
+	req := httptest.NewRequest(http.MethodGet, "/titles/icon/0100000000000000", nil)
+	req.SetPathValue("id", "0100000000000000")
+	w := httptest.NewRecorder()
+	(&Server{}).handleSwitchIcon(w, req)
+	if w.Code != http.StatusNotFound || hits != 1 {
+		t.Fatalf("uncached icon: status %d, upstream hits %d", w.Code, hits)
+	}
+}
 
 func TestSwitchTitleName(t *testing.T) {
 	hits := 0
