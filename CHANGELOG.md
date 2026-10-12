@@ -3,9 +3,9 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
-## v0.71.3 — 2026-10-12
+## v0.71.3 — 2026-10-12 (release cancelled)
 
-- **Switch artwork for newly listed games.** The catalogue's 17 missing title IDs are now filled, checked against the local games and title database. All 32 requested games remain beta. Minecraft Dungeons 2 (`0100A7C01B792000`) is absent from the icon service, so its official Nintendo artwork ships locally; the Switch icon route serves a local icon when available.
+- **Switch artwork for newly listed games.** The catalogue's 17 missing title IDs are now filled, checked against the local games and title database. The 31 remaining requested beta games have working image endpoints. Minecraft Dungeons 2 (`0100A7C01B792000`) was moved to requestable by the owner; its official Nintendo artwork and support for serving local Switch icons are prepared in source, but the release was cancelled before deployment.
 
 ## v0.71.2 — 2026-10-11
 
