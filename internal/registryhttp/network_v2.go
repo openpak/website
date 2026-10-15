@@ -459,6 +459,12 @@ func isSHA256Hex(s string) bool {
 	return true
 }
 
+// The store is retried for about a minute at startup (see Configure).
+const (
+	openStoreAttempts = 30
+	openStoreWait     = 2 * time.Second
+)
+
 // Configure builds the registry service from REGISTRY_* variables. Absent
 // configuration leaves the surface answering 503. The returned closer
 // releases the store; a nil service means not configured.
@@ -492,7 +498,19 @@ func Configure(log *slog.Logger) (*registry.Service, registry.CIVerifier, func()
 		policyID = "openpak-production"
 	}
 	ctx := context.Background()
-	store, err := registry.OpenPG(ctx, databaseURL)
+	// After a box reboot the registry can start before Postgres accepts
+	// connections; systemd ordering is not readiness. Retry for a minute
+	// instead of answering 503 until someone restarts the service.
+	var store *registry.PG
+	var err error
+	for attempt := 1; ; attempt++ {
+		store, err = registry.OpenPG(ctx, databaseURL)
+		if err == nil || attempt == openStoreAttempts {
+			break
+		}
+		log.Warn("v2 registry: store not ready; retrying", "attempt", attempt, "err", err)
+		time.Sleep(openStoreWait)
+	}
 	if err != nil {
 		log.Error("v2 registry: open store", "err", err)
 		return nil, nil, func() {}
