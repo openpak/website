@@ -126,3 +126,8 @@ platforms:
     families: [".nintendowifi.net", ".gamespy.com", ".openpak.org"]
     never: ["conntest.nintendowifi.net"]
     services: {}
+  ps3:
+    # PS3 firmware and games, real console or Pier: every Sony network name
+    # goes to OpenPak (np-account behind Traefik's PS3 SNI passthrough).
+    families: [".playstation.net", ".playstation.org", ".playstation.com", ".sonyentertainmentnetwork.com"]
+    services: {}
