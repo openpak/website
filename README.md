@@ -110,6 +110,16 @@ go run ./cmd/website
   `/metrics` is Prometheus text; `/debug/pprof/` is mounted on the same port.
   Keep both off the public internet (port plan rule 4).
 
+For Harbor's per-title BCAT schedules, set `BCAT_URL` to the internal
+HTTP origin serving OpenPak's dataset renderer, for example
+`http://openpak-bcat:20044`. The website relays the public index,
+manifest and file routes under `/api/emulator/v1/bcat/titles`, preserving
+paths and cache validators. Unset configuration returns 503, upstream
+connection failures return 502, and a reachable service's missing-title
+404 is preserved. No player session is needed for these downloads. See
+the [BCAT delivery runbook](../news/docs/emulator-bcat-delivery.md) for
+dataset validation and the separate native Switch requirements.
+
 ### The internal surface
 
 `POST /internal/avatar` is service-to-service, never a browser, and deliberately

@@ -1,5 +1,13 @@
 # The v2 network registry (`openpak-registry`)
 
+> **Current Switch client (2026-10-13): Harbor**, at
+> `~/REPOS/Openpak/emulators/harbor`. Harbor is an independent
+> OpenPak project based on Eden. Citron, Ryujinx (desktop and Android), and
+> the former OpenPak Eden checkouts have been removed. References to those
+> forks below record historical evidence only: do not run their commands,
+> reinstall them, or select them for current work. Use Harbor's README and
+> current handoff for builds and testing; old results do not establish Harbor parity.
+
 `cmd/openpak-registry` serves the protected v2 distribution surface
 (`/api/v2/network/*`, PRD `emulators/prds/universal-tls-forwarding/01`): build
 sessions, channel/digest resolution, signed TUF metadata, bundle manifests,

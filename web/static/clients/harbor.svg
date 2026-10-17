@@ -1,20 +1,98 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Harbor: a lighthouse between two controllers">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Harbor: a ship's helm framing a lighthouse at night">
 <!-- SPDX-FileCopyrightText: 2026 tobagin -->
 <!-- SPDX-License-Identifier: AGPL-3.0-only -->
   <!-- Original Harbor artwork. Regenerate Android assets with scripts/harbor/generate-android-icons.py. -->
-  <defs><linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#213b61"/><stop offset="1" stop-color="#09172c"/></linearGradient></defs>
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <path d="M158,142 H196 V354 H158 A52,52 0 0 1 106,302 V194 A52,52 0 0 1 158,142 Z" fill="#42decb"/>
-  <path d="M316,142 H354 A52,52 0 0 1 406,194 V302 A52,52 0 0 1 354,354 H316 Z" fill="#ff7b78"/>
-  <path d="M137,208 a17,17 0 1 0 34,0 a17,17 0 1 0 -34,0 Z" fill="#16304b"/>
-  <path d="M341,286 a17,17 0 1 0 34,0 a17,17 0 1 0 -34,0 Z" fill="#16304b"/>
-  <path d="M148,260 a6,6 0 1 0 12,0 a6,6 0 1 0 -12,0 Z M148,290 a6,6 0 1 0 12,0 a6,6 0 1 0 -12,0 Z M133,275 a6,6 0 1 0 12,0 a6,6 0 1 0 -12,0 Z M163,275 a6,6 0 1 0 12,0 a6,6 0 1 0 -12,0 Z" fill="#16304b"/>
-  <path d="M352,188 a6,6 0 1 0 12,0 a6,6 0 1 0 -12,0 Z M352,218 a6,6 0 1 0 12,0 a6,6 0 1 0 -12,0 Z M337,203 a6,6 0 1 0 12,0 a6,6 0 1 0 -12,0 Z M367,203 a6,6 0 1 0 12,0 a6,6 0 1 0 -12,0 Z" fill="#16304b"/>
-  <path d="M228,153 L256,119 L284,153 Z" fill="#f4f7ff"/>
-  <path d="M235,164 H277 V198 H235 Z" fill="#ffda88"/>
-  <path d="M249,164 H263 V198 H249 Z" fill="#fff4cf"/>
-  <path d="M228,206 H284 A6,6 0 0 1 284,218 H228 A6,6 0 0 1 228,206 Z" fill="#f4f7ff"/>
-  <path d="M239,229 H273 L294,355 H218 Z" fill="#f4f7ff"/>
-  <path d="M235,253 H277 L280,271 H232 Z M227,304 H285 L288,322 H224 Z" fill="#193251"/>
-  <path d="M130,377 Q161,354 192,377 T254,377 T316,377 T378,377 L378,393 Q347,416 316,393 T254,393 T192,393 T130,393 Z" fill="#59decf"/>
+  <defs>
+    <linearGradient id="wood" x1="0" y1="40" x2="0" y2="472" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#b47a4f"/>
+      <stop offset="1" stop-color="#7a4a2c"/>
+    </linearGradient>
+    <radialGradient id="rimshade" cx="256" cy="256" r="180" gradientUnits="userSpaceOnUse">
+      <stop offset="0.83" stop-color="#2a140a" stop-opacity="0.35"/>
+      <stop offset="0.9" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#2a140a" stop-opacity="0.3"/>
+    </radialGradient>
+    <linearGradient id="brass" x1="0" y1="152" x2="0" y2="360" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffe08a"/>
+      <stop offset="1" stop-color="#c98a2e"/>
+    </linearGradient>
+    <linearGradient id="sky" x1="0" y1="166" x2="0" y2="330" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0d1b40"/>
+      <stop offset="0.65" stop-color="#22457c"/>
+      <stop offset="1" stop-color="#4f93c2"/>
+    </linearGradient>
+    <linearGradient id="beam" x1="256" y1="214" x2="440" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffe9ad" stop-opacity="0.95"/>
+      <stop offset="0.55" stop-color="#ffd36e" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#ffc44d" stop-opacity="0.25"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="256" cy="214" r="34" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffe29a" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#ffd36e" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="window"><circle cx="256" cy="256" r="90"/></clipPath>
+    <clipPath id="wheel"><circle cx="256" cy="256" r="181"/></clipPath>
+    <g id="spoke">
+      <rect x="248" y="54" width="16" height="104" fill="url(#wood)"/>
+      <path d="M246,30 C246,22 266,22 266,30 L268,40 C272,44 272,52 268,56 H244 C240,52 240,44 244,40 Z" fill="#b47a4f"/>
+      <rect x="244" y="56" width="24" height="10" rx="4" fill="#7a4a2c"/>
+      <rect x="249" y="26" width="5" height="26" rx="2.5" fill="#ffffff" opacity="0.22"/>
+    </g>
+  </defs>
+
+  <!-- soft shadow -->
+  <circle cx="256" cy="266" r="165" fill="none" stroke="#140a05" stroke-opacity="0.18" stroke-width="36"/>
+  <circle cx="256" cy="266" r="104" fill="#140a05" opacity="0.18"/>
+
+  <!-- spokes and handles -->
+  <use href="#spoke"/>
+  <use href="#spoke" transform="rotate(45 256 256)"/>
+  <use href="#spoke" transform="rotate(90 256 256)"/>
+  <use href="#spoke" transform="rotate(135 256 256)"/>
+  <use href="#spoke" transform="rotate(180 256 256)"/>
+  <use href="#spoke" transform="rotate(225 256 256)"/>
+  <use href="#spoke" transform="rotate(270 256 256)"/>
+  <use href="#spoke" transform="rotate(315 256 256)"/>
+
+  <!-- rim -->
+  <circle cx="256" cy="256" r="165" fill="none" stroke="url(#wood)" stroke-width="32"/>
+  <circle cx="256" cy="256" r="165" fill="none" stroke="url(#rimshade)" stroke-width="32"/>
+  <circle cx="256" cy="256" r="165" fill="none" stroke="#5e351c" stroke-opacity="0.35" stroke-width="2"/>
+
+  <!-- brass hub -->
+  <circle cx="256" cy="256" r="104" fill="url(#brass)"/>
+  <circle cx="256" cy="256" r="104" fill="none" stroke="#9a6420" stroke-width="3"/>
+  <g fill="#9a6420">
+    <circle cx="256" cy="158" r="4"/><circle cx="354" cy="256" r="4"/>
+    <circle cx="256" cy="354" r="4"/><circle cx="158" cy="256" r="4"/>
+  </g>
+
+  <!-- the view: a lighthouse at night -->
+  <g clip-path="url(#window)">
+    <rect x="166" y="166" width="180" height="180" fill="url(#sky)"/>
+    <circle cx="214" cy="196" r="9" fill="#fff4cf"/>
+    <circle cx="300" cy="250" r="1.6" fill="#f4f7ff" opacity="0.7"/>
+    <circle cx="200" cy="240" r="1.4" fill="#f4f7ff" opacity="0.5"/>
+    <circle cx="236" cy="180" r="1.3" fill="#f4f7ff" opacity="0.6"/>
+    <circle cx="256" cy="214" r="34" fill="url(#glow)"/>
+    <path d="M206,314 C212,302 224,294 238,292 H274 C288,294 300,302 306,314 Z" fill="#2b3f5e"/>
+    <path d="M238,292 H274 C283,293 290,296 296,300 C278,298 258,298 238,292 Z" fill="#4a6489"/>
+    <path d="M247,232 H265 L274,294 H238 Z" fill="#f4f7ff"/>
+    <path d="M243.4,254 H268.6 L270.6,268 H241.4 Z" fill="#ff6f61"/>
+    <path d="M261,232 H265 L274,294 H267 Z" fill="#c9d4e8" opacity="0.6"/>
+    <path d="M252,294 V284 A4,4 0 0 1 260,284 V294 Z" fill="#13233d"/>
+    <rect x="240" y="225" width="32" height="7" rx="3.5" fill="#f4f7ff"/>
+    <rect x="247" y="205" width="18" height="20" rx="3" fill="#ffd36e"/>
+    <rect x="254" y="205" width="4" height="20" fill="#fff4cf"/>
+    <path d="M242,207 L256,190 L270,207 Z" fill="#f4f7ff"/>
+    <path d="M166,308 Q181,300 196,308 T226,308 T256,308 T286,308 T316,308 T346,308 V346 H166 Z" fill="#2a9db3"/>
+    <path d="M166,316 Q181,308 196,316 T226,316 T256,316 T286,316 T316,316 T346,316 V346 H166 Z" fill="#59decf"/>
+  </g>
+  <circle cx="256" cy="256" r="90" fill="none" stroke="#7a4a1a" stroke-opacity="0.5" stroke-width="3"/>
+
+  <!-- beam: from the lantern, across the hub, spokes and rim, stopping at the wheel's edge -->
+  <g clip-path="url(#window)">
+    <path d="M262,212 L560,40 L560,150 Z" fill="url(#beam)"/>
+  </g>
+  <circle cx="256" cy="214" r="6" fill="#fff4cf" opacity="0.9"/>
 </svg>

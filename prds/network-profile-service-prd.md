@@ -1,5 +1,13 @@
 # OpenPak network profile PRD (one source of truth for what a client redirects, and where)
 
+> **Current Switch client (2026-10-13): Harbor**, at
+> `~/REPOS/Openpak/emulators/harbor`. Harbor is an independent
+> OpenPak project based on Eden. Citron, Ryujinx (desktop and Android), and
+> the former OpenPak Eden checkouts have been removed. References to those
+> forks below record historical evidence only: do not run their commands,
+> reinstall them, or select them for current work. Use Harbor's README and
+> current handoff for builds and testing; old results do not establish Harbor parity.
+
 > **V2 planning, 2026-09-14:** The [Universal TLS forwarding PRD suite](../../emulators/prds/universal-tls-forwarding/README.md) defines the proposed migration to certified build-time distribution, signed bundles and console setup integration. This document remains the historical v1 implementation/transition contract. Its public per-launch fetch requirements do not govern v2; endpoint withdrawal happens only at the new rollout gate.
 
 Status: v1, 2026-09-12. Server side. **NP-0 through NP-4 implemented 2026-09-12** — the

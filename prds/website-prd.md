@@ -49,10 +49,7 @@ save browsing (saves PRD, link only), any console-facing hostname.
 
 ## 6. Independent implementation rules (apply verbatim)
 
-- Every earlier network repository is source-available; its noncompete clause forbids
-  using that code in a competing product. earlier code, routes, schemas and prose are
-  **evidence of observable behaviour only**, never implementation input. Do not copy,
-  translate, or structurally mirror them. Cite them as evidence, then design from scratch.
+- OpenPak servers are AGPL-3.0-only and OpenPak-authored.
 - Go 1.27, module `github.com/openpak/<repo>`, AGPL-3.0-only, `LICENSE` verbatim from
   gnu.org. Server-rendered templates and minimal browser JavaScript for web surfaces.
   Native mobile code is the recorded non-Go exception.
