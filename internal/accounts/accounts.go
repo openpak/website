@@ -134,6 +134,9 @@ const (
 	Code3DS     = "3ds"
 	CodeWiiU    = "wiiu"
 	CodeEmail   = "email"
+	CodeXbox    = "xbox"
+	CodeX360    = "x360"
+	CodePSN     = "np"
 )
 
 // AccountByEmail is the account signed in with exactly this address, compared
@@ -252,6 +255,16 @@ func FriendCodes(ctx context.Context, codes store.OpenPakCodeStore, links core.L
 		}
 		if c != "" {
 			out = append(out, Code{Code3DS, "3DS", "3DS", c})
+		}
+	}
+	// Xbox, Xbox 360 and PS3 show the name their adapter published on the link.
+	for _, p := range []struct{ ns, console, label string }{
+		{CodeXbox, "Xbox", "Xbox · Gamertag"},
+		{CodeX360, "Xbox 360", "Xbox 360 · Gamertag"},
+		{CodePSN, "PS3", "PS3 · PSN ID"},
+	} {
+		if link, err := links.ActiveLinkByAccount(ctx, p.ns, accountID); err == nil && link.PublicCode != "" {
+			out = append(out, Code{p.ns, p.console, p.label, link.PublicCode})
 		}
 	}
 	// Wii and DS have none: a Wii friend code belongs to a game, not the console.

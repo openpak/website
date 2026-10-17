@@ -11,6 +11,10 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.72.1 — 2026-10-17
+
+- Account page and `/me` friend codes now also list the Xbox gamertag, Xbox 360 gamertag and PS3 PSN ID.
+
 ## v0.72.0 — 2026-10-17
 
 - **Networks area and one Xbox gamertag.** `/account` has a Networks section built from a table (`internal/pages/netsections.go`); the Xbox gamertag is its first entry. The edit goes to xb-account over mTLS (`XB_ACCOUNT_URL`, `XB_ACCOUNT_CLIENT_CERT_FILE`, `XB_ACCOUNT_CLIENT_KEY_FILE`, `XB_ACCOUNT_CA_FILE`, `XB_ACCOUNT_SERVER_NAME`; the certificate carries `spiffe://openpak/xb-provisioner`). The Xbox 360 target is skipped until its backend exists. A partial failure names the networks changed and not changed, and a retry reuses the request id.
