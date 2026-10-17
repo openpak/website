@@ -220,25 +220,6 @@
   {{end}}
 </section>
 
-{{if .XboxEnabled}}
-<section class="card pad" aria-labelledby="xbox-h" id="xbox">
-  <div class="section-head">
-    <h2 id="xbox-h">{{t .Lang "account.xbox.title"}}</h2>
-    <p>{{t .Lang "account.xbox.hint"}}</p>
-  </div>
-  {{if .XboxGamertag}}
-  <form method="post" action="/account/xbox/gamertag" class="form-stack max-w-md">
-    <input type="hidden" name="csrf" value="{{.CSRF}}">
-    <input type="hidden" name="request_id" value="{{.XboxRequestID}}">
-    <label for="gamertag">{{t .Lang "account.xbox.label"}}</label>
-    <input id="gamertag" name="gamertag" value="{{.XboxGamertag}}" maxlength="15" pattern="[A-Za-z0-9]+( [A-Za-z0-9]+)*" autocomplete="off" spellcheck="false" required>
-    <p class="hint">{{t .Lang "account.xbox.rules"}}</p>
-    <button type="submit">{{t .Lang "account.xbox.submit"}}</button>
-  </form>
-  {{else}}<p class="empty">{{t .Lang "account.xbox.noidentity"}}</p>{{end}}
-</section>
-{{end}}
-
 <section class="card pad" aria-labelledby="profile-h" id="profile">
   <div class="section-head">
     <h2 id="profile-h">{{t .Lang "account.profile.title"}}</h2>
@@ -258,6 +239,30 @@
     <button type="submit">{{t .Lang "account.profile.submit"}}</button>
   </form>
 </section>
+
+{{if .Networks}}
+<section class="card pad" aria-labelledby="networks-h" id="networks">
+  <div class="section-head">
+    <h2 id="networks-h">{{t .Lang "account.net.title"}}</h2>
+    <p>{{t .Lang "account.net.hint"}}</p>
+  </div>
+  {{range .Networks}}
+  <form method="post" action="/account/networks/{{.ID}}/{{.FieldName}}" class="form-stack max-w-md" id="net-{{.ID}}">
+    <h3>{{t $.Lang .TitleKey}}</h3>
+    <p class="hint">{{t $.Lang .HintKey}}</p>
+    <input type="hidden" name="csrf" value="{{$.CSRF}}">
+    <input type="hidden" name="request_id" value="{{.RequestID}}">
+    {{if .Current}}
+    <label for="net-{{.ID}}-{{.FieldName}}">{{t $.Lang .LabelKey}}</label>
+    <input id="net-{{.ID}}-{{.FieldName}}" name="{{.FieldName}}" value="{{.Current}}" maxlength="{{.MaxLen}}" pattern="{{.Pattern}}" autocomplete="off" spellcheck="false" required>
+    <p class="hint">{{t $.Lang .RulesKey}}</p>
+    <p class="hint">{{t $.Lang "account.net.appliesto"}} {{range $i, $k := .Targets}}{{if $i}}, {{end}}{{t $.Lang $k}}{{end}}</p>
+    <button type="submit">{{t $.Lang .SubmitKey}}</button>
+    {{else}}<p class="empty">{{t $.Lang "account.xbox.noidentity"}}</p>{{end}}
+  </form>
+  {{end}}
+</section>
+{{end}}
 
 <section class="card pad" aria-labelledby="pw-h" id="password">
   <div class="section-head">

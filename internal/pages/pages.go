@@ -62,6 +62,9 @@ type Server struct {
 	WFC *wfc.Client
 	// XB changes the original-Xbox gamertag in xb-account over mTLS; nil hides the form.
 	XB *xbaccount.Client
+	// X360 is the Xbox 360 gamertag backend. Nil until its contract exists (the Xbox
+	// gamertag then applies to the original Xbox only); no constructor reads the environment.
+	X360 gamertagSetter
 	// Saves is the cloud saves service; nil renders the page as "not available".
 	Saves *saves.Client
 	// Parental relays to nx-baas's parental-controls records; nil renders the
@@ -143,6 +146,9 @@ func (s *Server) data(r *http.Request, v *viewer, title string) baseData {
 
 // flashText maps short redirect codes to catalogue strings.
 func flashText(lang, code string) string {
+	if msg, ok := networkFlash(lang, code); ok {
+		return msg
+	}
 	switch code {
 	case "saved":
 		return i18n.T(lang, "msg.saved")
@@ -162,24 +168,6 @@ func flashText(lang, code string) string {
 		return i18n.T(lang, "account.links.wfc.notfound")
 	case "wfc-taken":
 		return i18n.T(lang, "account.links.wfc.taken")
-	case "xbox-saved":
-		return i18n.T(lang, "account.xbox.ok")
-	case "xbox-same":
-		return i18n.T(lang, "account.xbox.same")
-	case "xbox-invalid":
-		return i18n.T(lang, "account.xbox.invalid")
-	case "xbox-reserved":
-		return i18n.T(lang, "account.xbox.reserved")
-	case "xbox-taken":
-		return i18n.T(lang, "account.xbox.taken")
-	case "xbox-console-bound":
-		return i18n.T(lang, "account.xbox.consolebound")
-	case "xbox-stale":
-		return i18n.T(lang, "account.xbox.stale")
-	case "xbox-noidentity":
-		return i18n.T(lang, "account.xbox.noidentity")
-	case "xbox-unavailable":
-		return i18n.T(lang, "account.xbox.unavailable")
 	case "password-changed":
 		return i18n.T(lang, "account.password.ok")
 	case "password-mismatch":
@@ -360,7 +348,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /account/sessions/revoke", s.handleRevokeSession)
 	mux.HandleFunc("POST /account/link/revoke", s.handleUnlink)
 	mux.HandleFunc("POST /account/link/wfc", s.handleLinkWFC)
-	mux.HandleFunc("POST /account/xbox/gamertag", s.handleXboxGamertag)
+	mux.HandleFunc("POST /account/networks/{network}/{field}", s.handleNetworkField)
 	mux.HandleFunc("POST /account/avatar", s.handleAvatarUpload)
 	mux.HandleFunc("GET /media/avatars/{accountID}/{size}", s.handleAvatarServe)
 	mux.HandleFunc("GET /account/friends", s.handleFriends)

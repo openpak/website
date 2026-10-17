@@ -26,10 +26,8 @@ type accountView struct {
 	// family, shown together in the profile banner.
 	Codes          []accounts.Code
 	Links          []linkRow
-	CanLinkWFC     bool // a Wii/DS server is configured, so the friend-code form is shown
-	XboxEnabled    bool // xb-account is configured, so the gamertag section is shown
-	XboxGamertag   string
-	XboxRequestID  string
+	CanLinkWFC     bool      // a Wii/DS server is configured, so the friend-code form is shown
+	Networks       []netView // network-specific sections; the common profile stays separate
 	Sessions       []core.Session
 	CurrentSession string
 	AvatarURL      string
@@ -97,10 +95,7 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 		view.Links = append(view.Links, linkRow{Namespace: "Wii / DS", Subject: link.SubjectID, LinkID: link.LinkID, Revocable: true})
 	}
 	view.CanLinkWFC = s.WFC != nil
-	if view.XboxEnabled = s.XB != nil; view.XboxEnabled {
-		view.XboxGamertag = s.xboxGamertag(ctx, v.AccountID)
-		view.XboxRequestID = newRequestID()
-	}
+	view.Networks = s.networkViews(ctx, v.AccountID, r.URL.Query().Get("rid"))
 
 	sessions, err := s.Core.ListSessions(ctx, v.CoreSessionID)
 	if err != nil {
