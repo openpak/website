@@ -38,6 +38,8 @@ func (f *fakeXB) serve(t *testing.T) *xbaccount.Client {
 			fail(503, "unavailable")
 		case "Garbage":
 			_, _ = w.Write([]byte("<html>"))
+		case "Same Tag":
+			_, _ = w.Write([]byte(`{"xuid":"0009abc","gamertag":"Same Tag","previous":"Same Tag","changed":false}`))
 		default:
 			_, _ = w.Write([]byte(`{"xuid":"0009abc","gamertag":"` + body["gamertag"].(string) + `","previous":"Old","changed":true}`))
 		}
@@ -114,6 +116,10 @@ func TestXboxGamertag(t *testing.T) {
 	postTag(s, a, "New Tag", strings.Repeat("x", 500))
 	if id, _ := fx.calls[0]["request_id"].(string); !requestIDRe.MatchString(id) {
 		t.Errorf("forwarded request id %q", id)
+	}
+	// A name xb-account reports unchanged is "already your gamertag", not "changed".
+	if rec := postTag(s, a, "Same Tag", rid1); !strings.Contains(rec.Header().Get("Location"), "net-same") {
+		t.Errorf("unchanged: %s", rec.Header().Get("Location"))
 	}
 	// Unknown network or field: nothing is served.
 	if rec := authedRequest(s, a, http.MethodPost, "/account/networks/psn/gamertag", &url.Values{"gamertag": {"X"}}); rec.Code != http.StatusNotFound {

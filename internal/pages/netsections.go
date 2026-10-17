@@ -28,7 +28,7 @@ type netBackend struct {
 	// Apply writes the value for the account. It must be idempotent for a repeated requestID.
 	// nil Apply or Enabled == false means the backend is skipped (not configured).
 	Enabled func(*Server) bool
-	Apply   func(ctx context.Context, s *Server, accountID, value, requestID, actor string) error
+	Apply   func(ctx context.Context, s *Server, accountID, value, requestID, actor string) (changed bool, err error)
 }
 
 // netSection is one network family.
@@ -98,15 +98,15 @@ func xboxSection() netSection {
 	sec.Backends = []netBackend{
 		{ID: "xbox", NameKey: "account.net.name.xbox",
 			Enabled: func(s *Server) bool { return s.XB != nil },
-			Apply: func(ctx context.Context, s *Server, id, v, rid, actor string) error {
-				_, err := s.XB.SetGamertag(ctx, id, v, rid, actor)
-				return err
+			Apply: func(ctx context.Context, s *Server, id, v, rid, actor string) (bool, error) {
+				res, err := s.XB.SetGamertag(ctx, id, v, rid, actor)
+				return res.Changed, err
 			}},
 		{ID: "x360", NameKey: "account.net.name.x360",
 			Enabled: func(s *Server) bool { return s.X360 != nil },
-			Apply: func(ctx context.Context, s *Server, id, v, rid, actor string) error {
-				_, err := s.X360.SetGamertag(ctx, id, v, rid, actor)
-				return err
+			Apply: func(ctx context.Context, s *Server, id, v, rid, actor string) (bool, error) {
+				res, err := s.X360.SetGamertag(ctx, id, v, rid, actor)
+				return res.Changed, err
 			}},
 	}
 	return sec
@@ -207,9 +207,11 @@ func (s *Server) handleNetworkField(w http.ResponseWriter, r *http.Request) {
 		reqID = newRequestID()
 	}
 	var done []string
+	anyChanged := false
 	for _, b := range backends {
 		// The account is the session's; the form names no account.
-		if err := b.Apply(r.Context(), s, v.AccountID, value, reqID, "website:"+v.AccountID); err != nil {
+		changed, err := b.Apply(r.Context(), s, v.AccountID, value, reqID, "website:"+v.AccountID)
+		if err != nil {
 			why := sec.Classify(err)
 			if why == "unavailable" {
 				s.log.Error("network field", "network", sec.ID, "backend", b.ID, "err", err)
@@ -224,6 +226,11 @@ func (s *Server) handleNetworkField(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		done = append(done, b.ID)
+		anyChanged = anyChanged || changed
+	}
+	if !anyChanged {
+		redirectMsg(w, r, "/account", "net-same:"+sec.ID)
+		return
 	}
 	redirectMsg(w, r, "/account", "net-saved:"+sec.ID)
 }
@@ -232,10 +239,13 @@ func (s *Server) handleNetworkField(w http.ResponseWriter, r *http.Request) {
 func networkFlash(lang, code string) (string, bool) {
 	parts := strings.Split(code, ":")
 	switch parts[0] {
-	case "net-saved":
+	case "net-saved", "net-same":
 		if len(parts) == 2 {
 			for i := range networkSections {
 				if networkSections[i].ID == parts[1] {
+					if parts[0] == "net-same" {
+						return i18n.T(lang, networkSections[i].SameKey), true
+					}
 					return i18n.T(lang, networkSections[i].OKKey), true
 				}
 			}
