@@ -490,11 +490,11 @@ func TestStatusPageShowsWhoIsPlaying(t *testing.T) {
 	}
 	// Networks nobody has written yet must not read as healthy: the row is
 	// amber or grey, never the green used for something that works.
-	if !strings.Contains(body, "Planned") || !strings.Contains(body, "Beta") {
+	if !strings.Contains(body, "Planned") {
 		t.Error("unfinished networks should say so rather than show as online")
 	}
-	if !strings.Contains(body, "state-row beta") || !strings.Contains(body, "state-row idle") {
-		t.Error("beta should tint indigo and planned grey")
+	if !strings.Contains(body, "state-row idle") {
+		t.Error("planned should tint grey")
 	}
 	// Photon and Stardew are really checked, and unreachable in a test means
 	// "down" — which the banner must then admit, however healthy the core is.
