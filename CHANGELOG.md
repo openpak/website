@@ -11,6 +11,11 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.72.0 — 2026-10-17
+
+- **Networks area and one Xbox gamertag.** `/account` has a Networks section built from a table (`internal/pages/netsections.go`); the Xbox gamertag is its first entry. The edit goes to xb-account over mTLS (`XB_ACCOUNT_URL`, `XB_ACCOUNT_CLIENT_CERT_FILE`, `XB_ACCOUNT_CLIENT_KEY_FILE`, `XB_ACCOUNT_CA_FILE`, `XB_ACCOUNT_SERVER_NAME`; the certificate carries `spiffe://openpak/xb-provisioner`). The Xbox 360 target is skipped until its backend exists. A partial failure names the networks changed and not changed, and a retry reuses the request id.
+- **BCAT relay** to the dataset service (`BCAT_URL`) for emulator delivery, previously only in the local image.
+
 ## v0.71.3 — 2026-10-12 (release cancelled)
 
 - **Switch artwork for newly listed games.** The catalogue's 17 missing title IDs are now filled, checked against the local games and title database. The 31 remaining requested beta games have working image endpoints. Minecraft Dungeons 2 (`0100A7C01B792000`) was moved to requestable by the owner; its official Nintendo artwork and support for serving local Switch icons are prepared in source, but the release was cancelled before deployment.
