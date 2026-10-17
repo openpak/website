@@ -11,6 +11,10 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.72.2 — 2026-10-17
+
+- Status page: Wii U, 3DS, Wii, DS now live with online counts; Xbox, Xbox 360 and PlayStation 3 added as live.
+
 ## v0.72.1 — 2026-10-17
 
 - Account page and `/me` friend codes now also list the Xbox gamertag, Xbox 360 gamertag and PS3 PSN ID.
