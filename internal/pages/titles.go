@@ -346,6 +346,17 @@ func backPath(base string, byVotes bool) string {
 // /static/consoles. Unknown consoles fall back to a generic gamepad glyph so a
 // row is never a broken image. Keep in step with the app's consoleAsset and
 // with the svg files actually present.
+// consoleSlugs is the logos for a row: Wii / DS and Wii U / 3DS show both.
+func consoleSlugs(name string) []string {
+	if name == "Wii / DS" {
+		return []string{"wii", "ds"}
+	}
+	if name == "Wii U / 3DS" {
+		return []string{"wii-u", "3ds"}
+	}
+	return []string{consoleSlug(name)}
+}
+
 func consoleSlug(console string) string {
 	switch console {
 	case "Switch":

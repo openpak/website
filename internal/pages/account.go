@@ -771,8 +771,8 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	// must not tell.
 	for _, n := range networks {
 		row := networkRow{Name: n.Name, State: n.State, Live: n.State == "live"}
-		if n.Namespace != "" {
-			row.Players = perNetwork[n.Namespace]
+		for _, ns := range n.Namespaces {
+			row.Players += perNetwork[ns]
 		}
 		view.Networks = append(view.Networks, row)
 	}

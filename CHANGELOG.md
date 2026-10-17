@@ -11,6 +11,12 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.72.4 — 2026-10-17
+
+- Status page: "Wii U / 3DS" share one row too, each row with both logos and a summed count.
+
+- Status page: Wii and DS share one "Wii / DS" row (one online count).
+
 ## v0.72.3 — 2026-10-17
 
 - Status page: Wii U, 3DS, Wii, DS now live with online counts; Xbox, Xbox 360 and PlayStation 3 added as live.
