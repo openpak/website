@@ -229,6 +229,10 @@ func run(log *slog.Logger) error {
 	// section and the admin page says the service is not configured.
 	pageSrv.News = news.NewFeed(os.Getenv("NEWS_URL"))
 	apiSrv.News = pageSrv.News // GET /api/v1/news, for the app
+	apiSrv.BCAT, err = news.NewBCATProxy(os.Getenv("BCAT_URL"))
+	if err != nil {
+		return err
+	}
 	if addr, key := os.Getenv("NEWS_GRPC_ADDR"), os.Getenv("NEWS_OPERATOR_KEY"); addr != "" && key != "" {
 		newsCli, conn, err := news.DialOperator(addr, key)
 		if err != nil {

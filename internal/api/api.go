@@ -84,7 +84,9 @@ type Server struct {
 	// Support is the help-ticket service; nil answers 503 on /me/tickets.
 	Support *support.Service
 	// News is the public news feed; nil answers an empty list on /news.
-	News       *news.Feed
+	News *news.Feed
+	// BCAT relays public emulator delivery to the dataset service; nil returns 503.
+	BCAT       http.Handler
 	MediaLimit *ratelimit.Limiter
 	DB         store.Store
 	Sessions   *session.Manager
@@ -131,6 +133,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	s.registerVoice(mux)
 	s.registerParental(mux)
 	s.registerEmulator(mux)
+	s.registerBCAT(mux)
 	g("/me/friends/requests", s.auth(s.handleRequests))
 	h("/me/friends/requests", s.auth(s.handleSendRequest)) // POST: add by friend code
 	h("/me/friends/requests/accept", s.auth(s.handleAccept))
