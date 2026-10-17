@@ -27,6 +27,9 @@ type accountView struct {
 	Codes          []accounts.Code
 	Links          []linkRow
 	CanLinkWFC     bool // a Wii/DS server is configured, so the friend-code form is shown
+	XboxEnabled    bool // xb-account is configured, so the gamertag section is shown
+	XboxGamertag   string
+	XboxRequestID  string
 	Sessions       []core.Session
 	CurrentSession string
 	AvatarURL      string
@@ -94,6 +97,10 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 		view.Links = append(view.Links, linkRow{Namespace: "Wii / DS", Subject: link.SubjectID, LinkID: link.LinkID, Revocable: true})
 	}
 	view.CanLinkWFC = s.WFC != nil
+	if view.XboxEnabled = s.XB != nil; view.XboxEnabled {
+		view.XboxGamertag = s.xboxGamertag(ctx, v.AccountID)
+		view.XboxRequestID = newRequestID()
+	}
 
 	sessions, err := s.Core.ListSessions(ctx, v.CoreSessionID)
 	if err != nil {

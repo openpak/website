@@ -39,6 +39,7 @@ import (
 	"github.com/openpak/website/internal/support"
 	"github.com/openpak/website/internal/titleart"
 	"github.com/openpak/website/internal/wfc"
+	"github.com/openpak/website/internal/xbaccount"
 )
 
 // Server wires the page handlers.
@@ -59,6 +60,8 @@ type Server struct {
 	Adapter *adapter.Client
 	// WFC resolves Wii/DS friend codes for the link flow; nil hides the form.
 	WFC *wfc.Client
+	// XB changes the original-Xbox gamertag in xb-account over mTLS; nil hides the form.
+	XB *xbaccount.Client
 	// Saves is the cloud saves service; nil renders the page as "not available".
 	Saves *saves.Client
 	// Parental relays to nx-baas's parental-controls records; nil renders the
@@ -83,9 +86,14 @@ type Server struct {
 
 // New compiles templates and returns the server.
 func New(tpl *template.Template, log *slog.Logger) *Server {
+	xb, err := xbaccount.FromEnv()
+	if err != nil {
+		log.Error("xb-account client disabled", "err", err)
+	}
 	return &Server{tmpl: tpl, log: log,
 		Adapter: adapter.New(os.Getenv("ADAPTER_INTERNAL_URL"), os.Getenv("NX_INTERNAL_KEY")),
-		WFC:     wfc.New(os.Getenv("WFC_API_URL"), os.Getenv("WFC_API_SECRET"))}
+		WFC:     wfc.New(os.Getenv("WFC_API_URL"), os.Getenv("WFC_API_SECRET")),
+		XB:      xb}
 }
 
 // viewer is the signed-in identity for one request.
@@ -154,6 +162,24 @@ func flashText(lang, code string) string {
 		return i18n.T(lang, "account.links.wfc.notfound")
 	case "wfc-taken":
 		return i18n.T(lang, "account.links.wfc.taken")
+	case "xbox-saved":
+		return i18n.T(lang, "account.xbox.ok")
+	case "xbox-same":
+		return i18n.T(lang, "account.xbox.same")
+	case "xbox-invalid":
+		return i18n.T(lang, "account.xbox.invalid")
+	case "xbox-reserved":
+		return i18n.T(lang, "account.xbox.reserved")
+	case "xbox-taken":
+		return i18n.T(lang, "account.xbox.taken")
+	case "xbox-console-bound":
+		return i18n.T(lang, "account.xbox.consolebound")
+	case "xbox-stale":
+		return i18n.T(lang, "account.xbox.stale")
+	case "xbox-noidentity":
+		return i18n.T(lang, "account.xbox.noidentity")
+	case "xbox-unavailable":
+		return i18n.T(lang, "account.xbox.unavailable")
 	case "password-changed":
 		return i18n.T(lang, "account.password.ok")
 	case "password-mismatch":
@@ -334,6 +360,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /account/sessions/revoke", s.handleRevokeSession)
 	mux.HandleFunc("POST /account/link/revoke", s.handleUnlink)
 	mux.HandleFunc("POST /account/link/wfc", s.handleLinkWFC)
+	mux.HandleFunc("POST /account/xbox/gamertag", s.handleXboxGamertag)
 	mux.HandleFunc("POST /account/avatar", s.handleAvatarUpload)
 	mux.HandleFunc("GET /media/avatars/{accountID}/{size}", s.handleAvatarServe)
 	mux.HandleFunc("GET /account/friends", s.handleFriends)

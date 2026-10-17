@@ -220,6 +220,25 @@
   {{end}}
 </section>
 
+{{if .XboxEnabled}}
+<section class="card pad" aria-labelledby="xbox-h" id="xbox">
+  <div class="section-head">
+    <h2 id="xbox-h">{{t .Lang "account.xbox.title"}}</h2>
+    <p>{{t .Lang "account.xbox.hint"}}</p>
+  </div>
+  {{if .XboxGamertag}}
+  <form method="post" action="/account/xbox/gamertag" class="form-stack max-w-md">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <input type="hidden" name="request_id" value="{{.XboxRequestID}}">
+    <label for="gamertag">{{t .Lang "account.xbox.label"}}</label>
+    <input id="gamertag" name="gamertag" value="{{.XboxGamertag}}" maxlength="15" pattern="[A-Za-z0-9]+( [A-Za-z0-9]+)*" autocomplete="off" spellcheck="false" required>
+    <p class="hint">{{t .Lang "account.xbox.rules"}}</p>
+    <button type="submit">{{t .Lang "account.xbox.submit"}}</button>
+  </form>
+  {{else}}<p class="empty">{{t .Lang "account.xbox.noidentity"}}</p>{{end}}
+</section>
+{{end}}
+
 <section class="card pad" aria-labelledby="profile-h" id="profile">
   <div class="section-head">
     <h2 id="profile-h">{{t .Lang "account.profile.title"}}</h2>

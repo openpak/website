@@ -32,6 +32,7 @@ type fakeCore struct {
 	totalPlayers   int
 	links          map[string]string // accountID -> subject (switch)
 	wfcLinks       map[string]string // accountID -> subject (wfc, linked from the website)
+	xboxTags       map[string]string // accountID -> gamertag (public code of the xbox link)
 	subjectToAc    map[string]string // subject -> accountID
 	publicCodes    map[string]string // published friend code -> accountID
 	deleted        []string          // accounts whose deletion was requested
@@ -62,6 +63,7 @@ func newFakeCore() *fakeCore {
 		sessions:    map[string]string{},
 		links:       map[string]string{},
 		wfcLinks:    map[string]string{},
+		xboxTags:    map[string]string{},
 		subjectToAc: map[string]string{},
 		publicCodes: map[string]string{},
 		names:       map[string]string{},
@@ -418,6 +420,13 @@ func (f *fakeCore) CanMessage(_ context.Context, actorID, targetID string) error
 }
 
 func (f *fakeCore) ActiveLinkByAccount(_ context.Context, namespace, accountID string) (core.Link, error) {
+	if namespace == "xbox" {
+		tag, ok := f.xboxTags[accountID]
+		if !ok {
+			return core.Link{}, core.ErrNotFound
+		}
+		return core.Link{LinkID: "xlink-" + accountID, Namespace: namespace, SubjectID: "0009abc", PublicCode: tag}, nil
+	}
 	if namespace == "wfc" {
 		sub, ok := f.wfcLinks[accountID]
 		if !ok {
