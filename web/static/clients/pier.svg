@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Pier: a brass porthole looking out on a moonlit pier">
+<!-- SPDX-FileCopyrightText: 2026 tobagin -->
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+  <!-- Original Pier artwork, sibling of the Harbor and Wharf icons. -->
+  <defs>
+    <linearGradient id="brass" x1="0" y1="56" x2="0" y2="456" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffe08a"/>
+      <stop offset="0.5" stop-color="#e0a845"/>
+      <stop offset="1" stop-color="#a86a22"/>
+    </linearGradient>
+    <linearGradient id="brassDark" x1="0" y1="56" x2="0" y2="456" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#a86a22"/>
+      <stop offset="1" stop-color="#ffd36e"/>
+    </linearGradient>
+    <linearGradient id="sky" x1="0" y1="126" x2="0" y2="278" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0b1235"/>
+      <stop offset="0.6" stop-color="#2e2f72"/>
+      <stop offset="1" stop-color="#7a5aa8"/>
+    </linearGradient>
+    <linearGradient id="sea" x1="0" y1="278" x2="0" y2="386" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2b2f78"/>
+      <stop offset="1" stop-color="#121640"/>
+    </linearGradient>
+    <linearGradient id="moon" x1="0" y1="226" x2="0" y2="278" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fbf8ff"/>
+      <stop offset="1" stop-color="#d9cdfa"/>
+    </linearGradient>
+    <linearGradient id="deck" x1="0" y1="278" x2="0" y2="390" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4a3d5e"/>
+      <stop offset="1" stop-color="#b48a6e"/>
+    </linearGradient>
+    <radialGradient id="moonlight" cx="256" cy="270" r="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#efe9ff" stop-opacity="0.6"/>
+      <stop offset="0.45" stop-color="#c9bcff" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#c9bcff" stop-opacity="0.05"/>
+    </radialGradient>
+    <radialGradient id="lamp" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffd36e" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#ffd36e" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="glass"><circle cx="256" cy="256" r="128"/></clipPath>
+    <clipPath id="outline"><circle cx="256" cy="256" r="200"/></clipPath>
+    <g id="bolt">
+      <circle cx="256" cy="80" r="11" fill="#8a5418"/>
+      <circle cx="256" cy="78" r="10" fill="#ffe7a6"/>
+      <circle cx="256" cy="78" r="10" fill="none" stroke="#b07a2a" stroke-width="2"/>
+      <rect x="250" y="76.5" width="12" height="3" rx="1.5" fill="#a86a22"/>
+    </g>
+  </defs>
+
+  <!-- soft shadow -->
+  <circle cx="256" cy="268" r="200" fill="#120a02" opacity="0.18"/>
+
+  <!-- hinge lug (left) and latch (right) -->
+  <rect x="26" y="226" width="46" height="60" rx="12" fill="#a86a22"/>
+  <rect x="32" y="232" width="34" height="48" rx="9" fill="#e0a845"/>
+  <rect x="440" y="234" width="48" height="44" rx="12" fill="#a86a22"/>
+  <rect x="446" y="240" width="36" height="32" rx="9" fill="#e0a845"/>
+
+  <!-- brass flange with bolts -->
+  <circle cx="256" cy="256" r="200" fill="url(#brass)"/>
+  <circle cx="256" cy="256" r="198" fill="none" stroke="#fff3c4" stroke-opacity="0.45" stroke-width="3"/>
+  <use href="#bolt"/>
+  <use href="#bolt" transform="rotate(45 256 256)"/>
+  <use href="#bolt" transform="rotate(90 256 256)"/>
+  <use href="#bolt" transform="rotate(135 256 256)"/>
+  <use href="#bolt" transform="rotate(180 256 256)"/>
+  <use href="#bolt" transform="rotate(225 256 256)"/>
+  <use href="#bolt" transform="rotate(270 256 256)"/>
+  <use href="#bolt" transform="rotate(315 256 256)"/>
+
+  <!-- inner rim -->
+  <circle cx="256" cy="256" r="146" fill="url(#brassDark)"/>
+  <circle cx="256" cy="256" r="146" fill="none" stroke="#8a5418" stroke-width="3"/>
+
+  <!-- the view: a pier leading out to the rising moon -->
+  <g clip-path="url(#glass)">
+    <rect x="128" y="126" width="256" height="152" fill="url(#sky)"/>
+    <g fill="#f4f7ff">
+      <circle cx="196" cy="168" r="2" opacity="0.8"/>
+      <circle cx="312" cy="160" r="1.8" opacity="0.7"/>
+      <circle cx="236" cy="150" r="1.5" opacity="0.5"/>
+      <circle cx="338" cy="206" r="1.5" opacity="0.5"/>
+      <circle cx="170" cy="222" r="1.4" opacity="0.45"/>
+    </g>
+    <circle cx="256" cy="278" r="54" fill="url(#moon)"/>
+    <circle cx="236" cy="252" r="7" fill="#cbbdf2" opacity="0.6"/>
+    <circle cx="276" cy="244" r="4.5" fill="#cbbdf2" opacity="0.5"/>
+    <circle cx="284" cy="266" r="5.5" fill="#cbbdf2" opacity="0.45"/>
+    <rect x="128" y="278" width="256" height="112" fill="url(#sea)"/>
+    <g fill="#e9e2ff">
+      <rect x="190" y="284" width="40" height="3" rx="1.5" opacity="0.7"/>
+      <rect x="282" y="284" width="40" height="3" rx="1.5" opacity="0.7"/>
+      <rect x="200" y="293" width="22" height="3" rx="1.5" opacity="0.45"/>
+      <rect x="292" y="293" width="22" height="3" rx="1.5" opacity="0.45"/>
+    </g>
+    <!-- pier -->
+    <g fill="#1a1530">
+      <path d="M251,278 L253,278 L206,386 L194,386 Z"/>
+      <path d="M259,278 L261,278 L318,386 L306,386 Z"/>
+    </g>
+    <path d="M250,278 H262 L332,392 H180 Z" fill="url(#deck)"/>
+    <g fill="#2a1f36" opacity="0.55">
+      <rect x="245" y="288" width="22" height="1.6"/>
+      <rect x="239" y="300" width="34" height="2"/>
+      <rect x="230" y="317" width="52" height="2.4"/>
+      <rect x="218" y="339" width="76" height="2.8"/>
+      <rect x="203" y="366" width="106" height="3.2"/>
+    </g>
+    <g fill="none" stroke="#1a1530" stroke-linecap="round" stroke-width="3">
+      <path d="M249,272 L176,384"/>
+      <path d="M263,272 L336,384"/>
+    </g>
+    <g fill="url(#lamp)">
+      <circle cx="238" cy="276" r="9"/>
+      <circle cx="274" cy="276" r="9"/>
+      <circle cx="217" cy="292" r="15"/>
+      <circle cx="295" cy="292" r="15"/>
+      <circle cx="183" cy="320" r="24"/>
+      <circle cx="329" cy="320" r="24"/>
+    </g>
+    <g fill="#1a1530">
+      <rect x="237.2" y="276" width="1.6" height="16"/>
+      <rect x="273.2" y="276" width="1.6" height="16"/>
+      <rect x="216" y="292" width="2.4" height="30"/>
+      <rect x="294" y="292" width="2.4" height="30"/>
+      <rect x="181" y="320" width="4" height="58"/>
+      <rect x="327" y="320" width="4" height="58"/>
+    </g>
+    <g fill="#ffd36e">
+      <circle cx="238" cy="275" r="2.4"/>
+      <circle cx="274" cy="275" r="2.4"/>
+      <circle cx="217.2" cy="290.5" r="3.8"/>
+      <circle cx="295.2" cy="290.5" r="3.8"/>
+      <circle cx="183" cy="317" r="6"/>
+      <circle cx="329" cy="317" r="6"/>
+    </g>
+    <!-- glass sheen -->
+    <path d="M159,214 A106,106 0 0 1 218,157" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" opacity="0.22"/>
+    <path d="M150,248 A106,106 0 0 1 153,232" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" opacity="0.22"/>
+  </g>
+  <circle cx="256" cy="256" r="128" fill="none" stroke="#5e3a0e" stroke-opacity="0.5" stroke-width="3"/>
+
+</svg>

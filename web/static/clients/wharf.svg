@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Wharf: a lifebuoy framing a sunset over a wharf">
+<!-- SPDX-FileCopyrightText: 2026 tobagin -->
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+  <!-- Original Wharf artwork, sibling of the Harbor icon. -->
+  <defs>
+    <radialGradient id="torus" cx="256" cy="256" r="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0.46" stop-color="#2a0f14" stop-opacity="0.35"/>
+      <stop offset="0.56" stop-color="#2a0f14" stop-opacity="0"/>
+      <stop offset="0.7" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="0.86" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#2a0f14" stop-opacity="0.3"/>
+    </radialGradient>
+    <linearGradient id="sky" x1="0" y1="164" x2="0" y2="276" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3b2a5c"/>
+      <stop offset="0.55" stop-color="#d9706a"/>
+      <stop offset="1" stop-color="#ffc77a"/>
+    </linearGradient>
+    <radialGradient id="rays" cx="256" cy="276" r="230" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff1c4" stop-opacity="0.75"/>
+      <stop offset="0.5" stop-color="#ffd36e" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#ffd36e" stop-opacity="0.12"/>
+    </radialGradient>
+    <radialGradient id="sunglow" cx="256" cy="276" r="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff1c4" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#ffd36e" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="hole"><circle cx="256" cy="256" r="92"/></clipPath>
+    <clipPath id="outline"><circle cx="256" cy="256" r="206"/></clipPath>
+  </defs>
+
+  <!-- soft shadow -->
+  <circle cx="256" cy="268" r="204" fill="#1a0a0a" opacity="0.16"/>
+
+  <!-- ring: eight alternating coral / cream segments -->
+  <circle cx="256" cy="256" r="146" fill="none" stroke="#ff6f61" stroke-width="108"/>
+  <circle cx="256" cy="256" r="146" fill="none" stroke="#fff6ea" stroke-width="108" stroke-dasharray="114.668 114.668" transform="rotate(-112.5 256 256)"/>
+  <circle cx="256" cy="256" r="146" fill="none" stroke="url(#torus)" stroke-width="108"/>
+
+  <!-- view through the ring: sunset over a wharf -->
+  <g clip-path="url(#hole)">
+    <rect x="160" y="160" width="192" height="116" fill="url(#sky)"/>
+    <circle cx="256" cy="276" r="60" fill="url(#sunglow)"/>
+    <circle cx="256" cy="276" r="26" fill="#fff1c4"/>
+    <rect x="160" y="276" width="192" height="80" fill="#2f5b86"/>
+    <rect x="236" y="282" width="40" height="4" rx="2" fill="#ffe3a3" opacity="0.85"/>
+    <rect x="243" y="290" width="26" height="4" rx="2" fill="#ffe3a3" opacity="0.6"/>
+    <rect x="249" y="298" width="14" height="4" rx="2" fill="#ffe3a3" opacity="0.4"/>
+    <!-- distant crane -->
+    <g fill="#3a2741">
+      <rect x="300" y="226" width="5" height="50"/>
+      <rect x="282" y="224" width="52" height="4"/>
+      <rect x="282" y="228" width="8" height="6"/>
+      <rect x="324" y="228" width="1.6" height="18"/>
+      <path d="M302.5,212 L306,226 H299 Z"/>
+    </g>
+    <!-- wharf pilings in the foreground -->
+    <g fill="#4f3428">
+      <rect x="186" y="236" width="14" height="120" rx="3"/>
+      <rect x="208" y="252" width="12" height="104" rx="3"/>
+    </g>
+    <rect x="186" y="236" width="14" height="5" rx="2" fill="#7a5240"/>
+    <rect x="208" y="252" width="12" height="5" rx="2" fill="#7a5240"/>
+    <rect x="182" y="262" width="44" height="7" rx="2" fill="#7a5240"/>
+    <rect x="182" y="262" width="44" height="2.5" fill="#a57458"/>
+    <path d="M200,272 Q210,284 208,292" fill="none" stroke="#e3c79a" stroke-width="2.5"/>
+    <!-- front wave -->
+    <path d="M150,318 Q166,309 182,318 T214,318 T246,318 T278,318 T310,318 T342,318 T374,318 V360 H150 Z" fill="#59decf"/>
+  </g>
+  <!-- inner rim -->
+  <circle cx="256" cy="256" r="92" fill="none" stroke="#7a2b2b" stroke-opacity="0.35" stroke-width="4"/>
+
+  <!-- sun rays: from the sun across the ring, stopping at its outer edge -->
+  <g clip-path="url(#hole)" fill="url(#rays)">
+    <path d="M256,276 L150,-20 L210,-20 Z"/>
+    <path d="M256,276 L300,-20 L362,-20 Z"/>
+    <path d="M256,276 L540,40 L540,120 Z"/>
+    <path d="M256,276 L-28,40 L-28,120 Z"/>
+  </g>
+
+  <!-- rope: outer line and four grips -->
+  <circle cx="256" cy="256" r="203" fill="none" stroke="#e3c79a" stroke-width="7"/>
+  <circle cx="256" cy="256" r="203" fill="none" stroke="#b8915e" stroke-width="7" stroke-dasharray="4 7"/>
+  <g id="grip">
+    <rect x="243" y="46" width="26" height="124" rx="8" fill="#e3c79a"/>
+    <g fill="#b8915e">
+      <rect x="243" y="60" width="26" height="3"/>
+      <rect x="243" y="74" width="26" height="3"/>
+      <rect x="243" y="88" width="26" height="3"/>
+      <rect x="243" y="102" width="26" height="3"/>
+      <rect x="243" y="116" width="26" height="3"/>
+      <rect x="243" y="130" width="26" height="3"/>
+      <rect x="243" y="144" width="26" height="3"/>
+      <rect x="243" y="158" width="26" height="3"/>
+    </g>
+  </g>
+  <use href="#grip" transform="rotate(90 256 256)"/>
+  <use href="#grip" transform="rotate(180 256 256)"/>
+  <use href="#grip" transform="rotate(270 256 256)"/>
+</svg>

@@ -798,6 +798,7 @@
   @media (min-width: 64rem) { .dlgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
   .dl { display: flex; flex-direction: column; gap: 14px; padding: 20px; border-radius: 16px; }
   .dl h3 { margin: 0; }
+  .dl .client-mark { width: 64px; height: 64px; flex-shrink: 0; object-fit: contain; border-radius: 14px; }
   .dl .foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line); }
   .kind { font-family: var(--font-ui); font-size: .8rem; font-weight: 700; color: var(--muted); }
 

@@ -560,13 +560,13 @@ type download struct {
 // builds remain visible without sending visitors to a missing release page.
 var emulators = []download{
 	{"Harbor", "Switch", "downloads.kind.emulator", "", "", "/static/clients/harbor.svg"},
-	{"Quay", "Wii U", "downloads.kind.emulator", "", "", ""},
-	{"Azahar", "3DS", "downloads.kind.emulator", "", "", ""},
-	{"Marina", "Wii", "downloads.kind.emulator", "", "", ""},
-	{"melonDS", "DS", "downloads.kind.emulator", "", "", ""},
-	{"Berth", "Xbox", "downloads.kind.emulator", "", "", ""},
-	{"Wharf", "Xbox 360", "downloads.kind.emulator", "", "", ""},
-	{"Pier", "PS3", "downloads.kind.emulator", "", "", ""},
+	{"Quay", "Wii U", "downloads.kind.emulator", "", "", "/static/clients/quay.svg"},
+	{"Azahar", "3DS", "downloads.kind.emulator", "", "", "/static/clients/azahar.png"},
+	{"Marina", "Wii", "downloads.kind.emulator", "", "", "/static/clients/marina.svg"},
+	{"melonDS", "DS", "downloads.kind.emulator", "", "", "/static/clients/melonds.png"},
+	{"Berth", "Xbox", "downloads.kind.emulator", "", "", "/static/clients/berth.svg"},
+	{"Wharf", "Xbox 360", "downloads.kind.emulator", "", "", "/static/clients/wharf.svg"},
+	{"Pier", "PS3", "downloads.kind.emulator", "", "", "/static/clients/pier.svg"},
 }
 
 var downloads = []download{

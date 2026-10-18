@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Marina: a compass rose framing sailboats in a sunny marina">
+<!-- SPDX-FileCopyrightText: 2026 tobagin -->
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+  <!-- Original Marina artwork, sibling of the Harbor, Wharf, Pier and Berth icons. -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="158" x2="0" y2="272" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2f9ddc"/>
+      <stop offset="1" stop-color="#c4ecff"/>
+    </linearGradient>
+    <linearGradient id="sea" x1="0" y1="272" x2="0" y2="354" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2fc4c9"/>
+      <stop offset="1" stop-color="#1a8fb0"/>
+    </linearGradient>
+    <radialGradient id="sunglow" cx="206" cy="202" r="46" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fffbe0" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#fff1b0" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="window"><circle cx="256" cy="256" r="98"/></clipPath>
+  </defs>
+  <!-- shadow -->
+  <circle cx="256" cy="266" r="158" fill="#0a1426" opacity="0.16"/>
+  <!-- rose points (long: N, E, S, W; short: the diagonals) -->
+    <g transform="rotate(45 256 256)"><path d="M256,66 L286,256 H256 Z" fill="#5f7397"/><path d="M256,66 L226,256 H256 Z" fill="#8fa1bf"/></g>
+    <g transform="rotate(135 256 256)"><path d="M256,66 L286,256 H256 Z" fill="#5f7397"/><path d="M256,66 L226,256 H256 Z" fill="#8fa1bf"/></g>
+    <g transform="rotate(225 256 256)"><path d="M256,66 L286,256 H256 Z" fill="#5f7397"/><path d="M256,66 L226,256 H256 Z" fill="#8fa1bf"/></g>
+    <g transform="rotate(315 256 256)"><path d="M256,66 L286,256 H256 Z" fill="#5f7397"/><path d="M256,66 L226,256 H256 Z" fill="#8fa1bf"/></g>
+    <g transform="rotate(0 256 256)"><path d="M256,20 L302,256 H256 Z" fill="#d9534a"/><path d="M256,20 L210,256 H256 Z" fill="#ff6f61"/></g>
+    <g transform="rotate(90 256 256)"><path d="M256,20 L302,256 H256 Z" fill="#1f3b63"/><path d="M256,20 L210,256 H256 Z" fill="#3d6a9e"/></g>
+    <g transform="rotate(180 256 256)"><path d="M256,20 L302,256 H256 Z" fill="#1f3b63"/><path d="M256,20 L210,256 H256 Z" fill="#3d6a9e"/></g>
+    <g transform="rotate(270 256 256)"><path d="M256,20 L302,256 H256 Z" fill="#1f3b63"/><path d="M256,20 L210,256 H256 Z" fill="#3d6a9e"/></g>
+  <!-- dial -->
+  <circle cx="256" cy="256" r="158" fill="#1f3b63"/>
+  <circle cx="256" cy="256" r="146" fill="#f4efe6"/>
+  <g fill="#1f3b63">
+      <rect x="254.5" y="106" width="3" height="14" transform="rotate(0 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(10 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(20 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="14" transform="rotate(30 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(40 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(50 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="14" transform="rotate(60 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(70 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(80 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="14" transform="rotate(90 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(100 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(110 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="14" transform="rotate(120 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(130 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(140 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="14" transform="rotate(150 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(160 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(170 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="14" transform="rotate(180 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(190 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(200 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="14" transform="rotate(210 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(220 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(230 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="14" transform="rotate(240 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(250 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(260 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="14" transform="rotate(270 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(280 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(290 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="14" transform="rotate(300 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(310 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(320 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="14" transform="rotate(330 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(340 256 256)"/>
+      <rect x="254.5" y="106" width="3" height="8" transform="rotate(350 256 256)"/>
+  </g>
+  <circle cx="256" cy="256" r="112" fill="#1f3b63"/>
+  <g clip-path="url(#window)">
+    <rect x="158" y="158" width="196" height="114" fill="url(#sky)"/>
+    <circle cx="206" cy="202" r="46" fill="url(#sunglow)"/>
+    <circle cx="206" cy="202" r="15" fill="#fff6cc"/>
+    <g fill="#ffffff">
+      <circle cx="290" cy="200" r="11"/><circle cx="304" cy="194" r="14"/><circle cx="320" cy="201" r="10"/>
+      <rect x="280" y="200" width="50" height="11" rx="5.5"/>
+    </g>
+    <path d="M246,272 C262,252 280,246 300,250 C318,253 334,260 360,272 Z" fill="#5fa889"/>
+    <path d="M300,272 C312,262 326,258 340,262 C350,265 356,268 362,272 Z" fill="#3f8a6e"/>
+    <path d="M234,222 q5,-5 10,0 q5,-5 10,0" fill="none" stroke="#1f5f86" stroke-width="2.2" stroke-linecap="round"/>
+    <rect x="158" y="272" width="196" height="82" fill="url(#sea)"/>
+    <rect x="190" y="278" width="34" height="3" rx="1.5" fill="#ffffff" opacity="0.6"/>
+    <rect x="264" y="282" width="22" height="3" rx="1.5" fill="#ffffff" opacity="0.45"/>
+    <!-- sailboat, coral hull -->
+    <rect x="213" y="230" width="3" height="72" fill="#22344f"/>
+    <path d="M217,234 V296 H252 Z" fill="#ffffff"/>
+    <path d="M212,246 V296 H189 Z" fill="#fff1dc"/>
+    <path d="M216,230 L228,234 L216,238 Z" fill="#ffb84d"/>
+    <path d="M184,298 H246 L237,312 H193 Z" fill="#ff6f61"/>
+    <!-- sailboat, navy hull -->
+    <rect x="295" y="246" width="2.5" height="48" fill="#22344f"/>
+    <path d="M299,250 V289 H322 Z" fill="#ffffff"/>
+    <path d="M294,258 V289 H279 Z" fill="#e8f4ff"/>
+    <path d="M274,290 H322 L315,301 H281 Z" fill="#27466e"/>
+    <!-- back wave -->
+    <path d="M150,306 Q165,298 180,306 T210,306 T240,306 T270,306 T300,306 T330,306 T360,306 V354 H150 Z" fill="#2a9db3"/>
+    <!-- pontoon -->
+    <rect x="150" y="318" width="212" height="9" fill="#b47a4f"/>
+    <rect x="150" y="318" width="212" height="3" fill="#d39a6a"/>
+    <g fill="#5e3a24">
+      <rect x="176" y="327" width="6" height="27"/><rect x="226" y="327" width="6" height="27"/>
+      <rect x="276" y="327" width="6" height="27"/><rect x="326" y="327" width="6" height="27"/>
+    </g>
+    <!-- front wave -->
+    <path d="M150,338 Q165,330 180,338 T210,338 T240,338 T270,338 T300,338 T330,338 T360,338 V354 H150 Z" fill="#59decf"/>
+  </g>
+  <circle cx="256" cy="256" r="98" fill="none" stroke="#142640" stroke-width="4"/>
+  <!-- north marker -->
+  <path d="M256,112 L266,132 H246 Z" fill="#ff6f61"/>
+</svg>

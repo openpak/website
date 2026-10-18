@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Quay: binoculars looking out on a stone quay on a misty morning">
+<!-- SPDX-FileCopyrightText: 2026 tobagin -->
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+  <!-- Original Quay artwork, sibling of the Harbor, Wharf, Pier, Berth and Marina icons. -->
+  <defs>
+    <linearGradient id="body" x1="0" y1="160" x2="0" y2="380" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2f6762"/>
+      <stop offset="1" stop-color="#173b38"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" y1="160" x2="0" y2="360" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f1f4f8"/>
+      <stop offset="1" stop-color="#9aa6b6"/>
+    </linearGradient>
+    <linearGradient id="sky" x1="0" y1="190" x2="0" y2="282" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#a9bfd4"/>
+      <stop offset="1" stop-color="#eef2f4"/>
+    </linearGradient>
+    <linearGradient id="sea" x1="0" y1="282" x2="0" y2="350" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7b9cbb"/>
+      <stop offset="1" stop-color="#4f6f8f"/>
+    </linearGradient>
+    <radialGradient id="sunglow" cx="378" cy="228" r="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fffbe8" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#fffbe8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="lamp" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffd36e" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#ffd36e" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="lenses">
+      <circle cx="164" cy="270" r="74"/>
+      <circle cx="348" cy="270" r="74"/>
+    </clipPath>
+  </defs>
+
+  <g transform="translate(0 -26)">
+    <!-- neck strap -->
+    <path d="M62,262 C52,470 460,470 450,262" fill="none" stroke="#c9a877" stroke-width="12" stroke-linecap="round"/>
+    <path d="M62,262 C52,470 460,470 450,262" fill="none" stroke="#e3c79a" stroke-width="8" stroke-linecap="round"/>
+
+    <!-- shadow -->
+    <g fill="#0a1426" opacity="0.16">
+      <circle cx="164" cy="282" r="104"/><circle cx="348" cy="282" r="104"/>
+    </g>
+
+    <!-- focus wheel -->
+    <rect x="248" y="194" width="16" height="20" fill="#9aa6b6"/>
+    <rect x="228" y="158" width="56" height="40" rx="9" fill="url(#steel)"/>
+    <g fill="#7d8a9c">
+      <rect x="236" y="162" width="2.5" height="32"/><rect x="244" y="162" width="2.5" height="32"/>
+      <rect x="252" y="162" width="2.5" height="32"/><rect x="260" y="162" width="2.5" height="32"/>
+      <rect x="268" y="162" width="2.5" height="32"/><rect x="276" y="162" width="2.5" height="32"/>
+    </g>
+
+    <!-- barrels and bridge -->
+    <circle cx="164" cy="270" r="104" fill="url(#body)"/>
+    <circle cx="348" cy="270" r="104" fill="url(#body)"/>
+    <rect x="228" y="206" width="56" height="128" rx="12" fill="url(#body)"/>
+    <circle cx="164" cy="270" r="94" fill="none" stroke="#123230" stroke-width="10" stroke-dasharray="3 6"/>
+    <circle cx="348" cy="270" r="94" fill="none" stroke="#123230" stroke-width="10" stroke-dasharray="3 6"/>
+    <g fill="#3f7c76"><circle cx="256" cy="228" r="14"/><circle cx="256" cy="312" r="14"/></g>
+    <g fill="url(#steel)"><circle cx="256" cy="228" r="6"/><circle cx="256" cy="312" r="6"/></g>
+    <!-- strap lugs -->
+    <rect x="52" y="250" width="16" height="24" rx="5" fill="url(#steel)"/>
+    <rect x="444" y="250" width="16" height="24" rx="5" fill="url(#steel)"/>
+
+    <!-- lens rims -->
+    <circle cx="164" cy="270" r="84" fill="url(#steel)"/>
+    <circle cx="348" cy="270" r="84" fill="url(#steel)"/>
+    <circle cx="164" cy="270" r="77" fill="#5e6b7d"/>
+    <circle cx="348" cy="270" r="77" fill="#5e6b7d"/>
+
+    <!-- the view, split across both lenses: a stone quay on a misty morning -->
+    <g clip-path="url(#lenses)">
+      <rect x="86" y="190" width="340" height="92" fill="url(#sky)"/>
+      <circle cx="378" cy="228" r="44" fill="url(#sunglow)"/>
+      <circle cx="378" cy="228" r="16" fill="#fffbe8"/>
+      <path d="M270,282 C300,262 330,256 360,260 C390,264 410,272 430,282 Z" fill="#a9b9c9"/>
+      <path d="M150,226 q5,-5 10,0 q5,-5 10,0" fill="none" stroke="#5f7397" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M330,214 q4,-4 8,0 q4,-4 8,0" fill="none" stroke="#5f7397" stroke-width="2" stroke-linecap="round"/>
+      <rect x="86" y="282" width="340" height="70" fill="url(#sea)"/>
+      <!-- approaching boat and its wake -->
+      <g fill="none" stroke="#ffffff" stroke-linecap="round" opacity="0.6">
+        <path d="M384,304 L420,298" stroke-width="3"/>
+        <path d="M384,310 L422,314" stroke-width="3"/>
+      </g>
+      <rect x="338" y="282" width="24" height="14" rx="3" fill="#ffffff"/>
+      <rect x="343" y="286" width="6" height="5" rx="1" fill="#4f6f8f"/>
+      <rect x="352" y="286" width="6" height="5" rx="1" fill="#4f6f8f"/>
+      <rect x="350" y="270" width="3" height="12" fill="#22344f"/>
+      <path d="M326,296 H388 L380,310 H332 Z" fill="#ff6f61"/>
+      <rect x="330" y="299" width="54" height="3" fill="#ffffff"/>
+      <!-- stone quay -->
+      <rect x="86" y="284" width="130" height="70" fill="#8f99a5"/>
+      <rect x="86" y="280" width="134" height="9" rx="2" fill="#c4cbd2"/>
+      <g fill="none" stroke="#6f7a88" stroke-width="2">
+        <path d="M86,304 H216 M86,324 H216 M86,344 H216"/>
+        <path d="M118,289 V304 M162,289 V304 M200,289 V304 M100,304 V324 M140,304 V324 M182,304 V324 M120,324 V344 M164,324 V344 M204,324 V344"/>
+      </g>
+      <rect x="216" y="296" width="12" height="58" fill="#7d8794"/>
+      <rect x="228" y="312" width="12" height="42" fill="#6f7a88"/>
+      <rect x="216" y="294" width="12" height="4" fill="#c4cbd2"/>
+      <rect x="228" y="310" width="12" height="4" fill="#b3bbc5"/>
+      <!-- bollard and lamp on the quay -->
+      <rect x="166" y="268" width="14" height="13" rx="3" fill="#22344f"/>
+      <rect x="163" y="265" width="20" height="5" rx="2.5" fill="#22344f"/>
+      <circle cx="113" cy="236" r="14" fill="url(#lamp)"/>
+      <rect x="111.5" y="238" width="3" height="43" fill="#22344f"/>
+      <circle cx="113" cy="236" r="4.5" fill="#ffd36e"/>
+      <!-- mist -->
+      <rect x="86" y="252" width="340" height="9" fill="#ffffff" opacity="0.35"/>
+      <rect x="86" y="266" width="340" height="5" fill="#ffffff" opacity="0.28"/>
+      <!-- waves -->
+      <path d="M80,330 Q96,322 112,330 T144,330 T176,330 T208,330 T240,330 T272,330 T304,330 T336,330 T368,330 T400,330 T432,330 V352 H80 Z" fill="#59decf" opacity="0.9"/>
+      <!-- glass reflections -->
+      <path d="M110,236 A62,62 0 0 1 150,206" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" opacity="0.35"/>
+      <path d="M294,236 A62,62 0 0 1 334,206" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" opacity="0.35"/>
+    </g>
+    <circle cx="164" cy="270" r="74" fill="none" stroke="#2b3442" stroke-width="3"/>
+    <circle cx="348" cy="270" r="74" fill="none" stroke="#2b3442" stroke-width="3"/>
+  </g>
+</svg>
