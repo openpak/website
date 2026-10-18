@@ -17,7 +17,7 @@
       <div class="foot">
         {{if .Status}}<span class="badge {{badgeClass .Status}}">{{.Status}}</span>{{else}}<span></span>{{end}}
         {{if .URL}}<a class="btn primary" href="{{.URL}}" rel="noopener"><svg class="ico sm" aria-hidden="true"><use href="#i-dl"/></svg>{{t $.Lang "downloads.get"}}</a>
-        {{else}}<span class="text-sm text-muted">{{t $.Lang "downloads.soon"}}</span>{{end}}
+        {{else}}<button class="btn" type="button" disabled>{{t $.Lang "downloads.soon"}}</button>{{end}}
       </div>
     </li>
     {{end}}
@@ -37,7 +37,7 @@
       <div class="foot">
         {{if .Status}}<span class="badge {{badgeClass .Status}}">{{.Status}}</span>{{else}}<span></span>{{end}}
         {{if .URL}}<a class="btn primary" href="{{.URL}}" rel="noopener"><svg class="ico sm" aria-hidden="true"><use href="#i-dl"/></svg>{{t $.Lang "downloads.get"}}</a>
-        {{else}}<span class="text-sm text-muted">{{t $.Lang "downloads.soon"}}</span>{{end}}
+        {{else}}<button class="btn" type="button" disabled>{{t $.Lang "downloads.soon"}}</button>{{end}}
       </div>
     </li>
     {{end}}
