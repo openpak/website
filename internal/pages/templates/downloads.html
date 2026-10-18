@@ -32,7 +32,7 @@
       <div class="flex items-center gap-3">
         {{if .Icon}}<img class="client-mark" src="{{.Icon}}" alt="" width="64" height="64">
         {{else}}<span class="console lg"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="{{.Console}}" width="30" height="30" loading="lazy"></picture></span>{{end}}
-        <div class="min-w-0"><h3 class="break-anywhere">{{t $.Lang "downloads.kind.patch"}}</h3></div>
+        <div class="min-w-0"><div class="kind">{{.Console}}</div><h3 class="break-anywhere">{{t $.Lang "downloads.kind.patch"}}</h3></div>
       </div>
       <div class="foot">
         {{if .Status}}<span class="badge {{badgeClass .Status}}">{{.Status}}</span>{{else}}<span></span>{{end}}
