@@ -19,7 +19,7 @@ var catalogueDE = Catalogue{
 	"downloads.clients":                "Clients",
 	"downloads.emulators":              "OpenPak-Emulatoren",
 	"downloads.emulators.sub":          "Wähle den Emulator für deine Konsole. Download-Links erscheinen, sobald eine öffentliche Version verfügbar ist.",
-	"downloads.console":                "Konsoleneinrichtung",
+	"downloads.console":                "Konsolen-Patches",
 	"downloads.console.sub":            "Verbinde deine eigene Konsole mit der passenden Einrichtungs-App oder dem passenden Patch.",
 	"downloads.kind.patch":             "Konsolen-Patch",
 	"downloads.kind.emulator":          "Emulator",

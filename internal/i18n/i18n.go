@@ -38,7 +38,7 @@ var languages = map[string]Catalogue{
 		"downloads.clients":        "Clients",
 		"downloads.emulators":      "OpenPak emulators",
 		"downloads.emulators.sub":  "Choose the emulator for your console. Download links appear when a public build is available.",
-		"downloads.console":        "Console setup",
+		"downloads.console":        "Console patches",
 		"downloads.console.sub":    "Connect your own console with the matching setup app or patch.",
 		"downloads.kind.patch":     "Console patch",
 		"downloads.kind.emulator":  "Emulator",

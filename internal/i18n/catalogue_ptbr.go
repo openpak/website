@@ -19,7 +19,7 @@ var cataloguePTBR = Catalogue{
 	"downloads.clients":                "Clientes",
 	"downloads.emulators":              "Emuladores OpenPak",
 	"downloads.emulators.sub":          "Escolha o emulador do seu console. Os links aparecem quando uma versão pública está disponível.",
-	"downloads.console":                "Configuração de consoles",
+	"downloads.console":                "Patches para consoles",
 	"downloads.console.sub":            "Conecte seu console com o aplicativo de configuração ou patch correspondente.",
 	"downloads.kind.patch":             "Patch de console",
 	"downloads.kind.emulator":          "Emulador",

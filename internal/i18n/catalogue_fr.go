@@ -19,7 +19,7 @@ var catalogueFR = Catalogue{
 	"downloads.clients":                "Clients",
 	"downloads.emulators":              "Émulateurs OpenPak",
 	"downloads.emulators.sub":          "Choisissez l’émulateur de votre console. Les liens de téléchargement apparaissent lorsqu’une version publique est disponible.",
-	"downloads.console":                "Configuration des consoles",
+	"downloads.console":                "Correctifs pour consoles",
 	"downloads.console.sub":            "Connectez votre console avec l’application de configuration ou le correctif adapté.",
 	"downloads.kind.patch":             "Patch console",
 	"downloads.kind.emulator":          "Émulateur",
