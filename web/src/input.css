@@ -583,11 +583,11 @@
   /* Platforms: one tile per console, its status as a lit LED. */
   .platforms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
   @media (min-width: 48rem) { .platforms { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-  .plat { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; border-radius: 16px; background: var(--raised); box-shadow: var(--shadow-sm); text-decoration: none; }
+  .plat { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px; border-radius: 16px; background: var(--raised); box-shadow: var(--shadow-sm); text-decoration: none; }
   main a.plat { color: var(--ink); text-decoration: none; }
   .plat b { display: block; font-family: var(--font-ui); font-size: .98rem; font-weight: 800; margin-bottom: 4px; }
-  .plat .console { width: 84px; height: 48px; background: transparent; justify-content: start; }
-  .plat .console img { width: 84px; height: 48px; object-position: left center; }
+  .plat .console { width: 84px; height: 48px; background: transparent; justify-content: center; }
+  .plat .console img { width: 84px; height: 48px; object-position: center; }
 
   /* Setup: a real sequence, drawn as the console's own setup progress — dots on a track. */
   .howto { display: grid; gap: 0; counter-reset: s; list-style: none; padding: 0; margin: 0; }

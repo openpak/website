@@ -574,6 +574,7 @@ var downloads = []download{
 	{"Inkay", "Wii U", "downloads.kind.patch", "", "https://github.com/openpak/nn-inkay/releases/latest", ""},
 	{"nimbus", "3DS", "downloads.kind.patch", "", "https://github.com/openpak/nn-nimbus/releases/latest", ""},
 	{"WFC patcher", "Wii", "downloads.kind.patch", "", "https://github.com/openpak/nn-wfc-patcher-wii/releases/latest", ""},
+	{"WFC patcher", "DS", "downloads.kind.patch", "", "", ""},
 }
 
 // platform is one console family and how far OpenPak is with it; the status words and
