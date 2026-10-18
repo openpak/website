@@ -570,7 +570,7 @@ var emulators = []download{
 }
 
 var downloads = []download{
-	{"OpenPak setup", "Switch", "downloads.kind.setup", "", "", ""},
+	{"OpenPak setup", "Switch", "downloads.kind.patch", "", "", ""},
 	{"Inkay", "Wii U", "downloads.kind.patch", "", "https://github.com/openpak/nn-inkay/releases/latest", ""},
 	{"nimbus", "3DS", "downloads.kind.patch", "", "https://github.com/openpak/nn-nimbus/releases/latest", ""},
 	{"WFC patcher", "Wii", "downloads.kind.patch", "", "https://github.com/openpak/nn-wfc-patcher-wii/releases/latest", ""},
