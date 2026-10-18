@@ -250,7 +250,7 @@ func (f *fakeCore) RevokeSession(_ context.Context, sid, id string) error {
 
 // Registration with a profile goes through the same fake path; the profile itself is the
 // core's business, not this package's.
-func (f *fakeCore) RegisterWithProfile(ctx context.Context, email, password, displayName, _, _ string) error {
+func (f *fakeCore) RegisterWithProfile(ctx context.Context, email, password, displayName, _, _, _ string) error {
 	return f.Register(ctx, email, password, displayName)
 }
 

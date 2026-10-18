@@ -180,7 +180,7 @@ func (g *GRPC) GetAccount(ctx context.Context, accountID string) (Account, error
 	if err != nil {
 		return Account{}, mapGRPC(err)
 	}
-	return Account{ID: resp.GetAccountId(), DisplayName: resp.GetDisplayName(),
+	return Account{ID: resp.GetAccountId(), DisplayName: resp.GetDisplayName(), Handle: resp.GetHandle(),
 		Country: resp.GetCountry(), Birthday: resp.GetBirthday(),
 		Status: statusName(resp.GetStatus()), EmailVerified: resp.GetEmailVerified(),
 		TwoFactorEnabled: resp.GetTwoFactorEnabled()}, nil

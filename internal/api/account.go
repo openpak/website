@@ -32,6 +32,7 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 		Email       string `json:"email"`
 		Password    string `json:"password"`
 		DisplayName string `json:"display_name"`
+		Handle      string `json:"handle"`
 		Country     string `json:"country"`
 		Birthday    string `json:"birthday"`
 	}
@@ -40,7 +41,15 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 	}
 	email := strings.ToLower(strings.TrimSpace(req.Email))
 	if err := s.Core.RegisterWithProfile(r.Context(), email, req.Password,
-		strings.TrimSpace(req.DisplayName), strings.TrimSpace(req.Country), strings.TrimSpace(req.Birthday)); err != nil {
+		strings.TrimSpace(req.DisplayName), req.Handle, strings.TrimSpace(req.Country), strings.TrimSpace(req.Birthday)); err != nil {
+		if core.HandleErrorMessage(err) != "" {
+			code := http.StatusBadRequest
+			if errors.Is(err, core.ErrHandleTaken) {
+				code = http.StatusConflict
+			}
+			writeError(w, code, err.Error())
+			return
+		}
 		s.log.Info("api register rejected", "err", err)
 	}
 	writeJSON(w, http.StatusAccepted, map[string]string{"message": "if the address can be registered, a verification mail is on its way"})

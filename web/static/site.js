@@ -21,14 +21,14 @@
     var kind = form.querySelector("select[name=kind]");
     var input = form.querySelector("input[name=friend_code]");
     var shapes = {
-      openpak: { prefix: "OP-", groups: [4, 4], keep: /[^2-9A-HJKMNP-TV-Z]/g, pattern: "OP-[2-9A-HJKMNP-TV-Z]{4}-[2-9A-HJKMNP-TV-Z]{4}", mode: "text" },
+      handle: { free:true, pattern:"[A-Za-z][A-Za-z0-9]{5,14}", mode:"text" },
       switch: { prefix: "SW-", groups: [4, 4, 4, 4], keep: /[^0-9A-F]/g, pattern: "SW-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}(-[0-9A-F]{4})?", mode: "text" },
       "3ds": { prefix: "", groups: [4, 4, 4], keep: /[^0-9]/g, pattern: "[0-9]{4}-[0-9]{4}-[0-9]{4}", mode: "numeric" },
       // A Nintendo Network ID is a name, not a code: 6 to 16 letters, digits, dots, dashes, underscores, as typed.
       wiiu: { free: true, pattern: "[A-Za-z0-9._\\-]{6,16}", mode: "text" },
       email: { free: true, pattern: "[^@\\s]+@[^@\\s]+", mode: "email" }
     };
-    function shape() { return shapes[kind.value] || shapes.openpak; }
+    function shape() { return shapes[kind.value] || shapes.handle; }
     function fit() {
       var sh = shape();
       if (sh.free) return;

@@ -39,7 +39,6 @@ import (
 	"github.com/openpak/website/internal/support"
 	"github.com/openpak/website/internal/titleart"
 	"github.com/openpak/website/internal/wfc"
-	"github.com/openpak/website/internal/xbaccount"
 )
 
 // Server wires the page handlers.
@@ -60,11 +59,6 @@ type Server struct {
 	Adapter *adapter.Client
 	// WFC resolves Wii/DS friend codes for the link flow; nil hides the form.
 	WFC *wfc.Client
-	// XB changes the original-Xbox gamertag in xb-account over mTLS; nil hides the form.
-	XB *xbaccount.Client
-	// X360 is the Xbox 360 gamertag backend. Nil until its contract exists (the Xbox
-	// gamertag then applies to the original Xbox only); no constructor reads the environment.
-	X360 gamertagSetter
 	// Saves is the cloud saves service; nil renders the page as "not available".
 	Saves *saves.Client
 	// Parental relays to nx-baas's parental-controls records; nil renders the
@@ -89,14 +83,9 @@ type Server struct {
 
 // New compiles templates and returns the server.
 func New(tpl *template.Template, log *slog.Logger) *Server {
-	xb, err := xbaccount.FromEnv()
-	if err != nil {
-		log.Error("xb-account client disabled", "err", err)
-	}
 	return &Server{tmpl: tpl, log: log,
 		Adapter: adapter.New(os.Getenv("ADAPTER_INTERNAL_URL"), os.Getenv("NX_INTERNAL_KEY")),
-		WFC:     wfc.New(os.Getenv("WFC_API_URL"), os.Getenv("WFC_API_SECRET")),
-		XB:      xb}
+		WFC:     wfc.New(os.Getenv("WFC_API_URL"), os.Getenv("WFC_API_SECRET"))}
 }
 
 // viewer is the signed-in identity for one request.
@@ -146,9 +135,6 @@ func (s *Server) data(r *http.Request, v *viewer, title string) baseData {
 
 // flashText maps short redirect codes to catalogue strings.
 func flashText(lang, code string) string {
-	if msg, ok := networkFlash(lang, code); ok {
-		return msg
-	}
 	switch code {
 	case "saved":
 		return i18n.T(lang, "msg.saved")
@@ -651,7 +637,14 @@ func (s *Server) handleRegisterSubmit(w http.ResponseWriter, r *http.Request) {
 	birthday := strings.TrimSpace(r.PostFormValue("birthday"))
 	// Enumeration resistance is enforced by the core: taken-but-unverified
 	// emails resend, and the response shape is identical.
-	if err := s.Core.RegisterWithProfile(r.Context(), email, password, display, country, birthday); err != nil {
+	if err := s.Core.RegisterWithProfile(r.Context(), email, password, display, r.PostFormValue("handle"), country, birthday); err != nil {
+		if message := core.HandleErrorMessage(err); message != "" {
+			s.render(w, http.StatusBadRequest, "message.html", struct {
+				baseData
+				Message string
+			}{s.data(r, nil, "Choose a handle"), message})
+			return
+		}
 		s.log.Info("register rejected", "err", err)
 	}
 	s.render(w, http.StatusOK, "message.html", struct {

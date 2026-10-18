@@ -106,7 +106,6 @@ type Store interface {
 
 	TicketStore
 	CrashStore
-	OpenPakCodeStore
 	CompatStore
 	ShopStore
 	PlayabilityStore

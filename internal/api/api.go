@@ -152,6 +152,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	// Public: signing up and asking for a reset mail are what someone without
 	// an account, or without its password, does.
 	h("/register", s.handleRegister)
+	g("/handle/check", s.handleCheck)
 	h("/password/forgot", s.handleForgotPassword)
 	h("/password/reset", s.handleResetPassword)
 	g("/avatars", s.auth(s.handleAvatarChoices))
@@ -208,8 +209,12 @@ func writeError(w http.ResponseWriter, code int, msg string) {
 // errorCodes names the messages a person can meet; everything else gets its
 // status's code. A message changed here changes its code, so keep them paired.
 var errorCodes = map[string]string{
-	"rate limited":                                  "rate_limited",
-	"too many changes; slow down":                   "rate_limited",
+	"handle_taken":                "handle_taken",
+	"handle_invalid":              "handle_invalid",
+	"handle_reserved":             "handle_reserved",
+	"handle_profane":              "handle_profane",
+	"rate limited":                "rate_limited",
+	"too many changes; slow down": "rate_limited",
 	"too many wrong codes; try again in 15 minutes": "two_factor_locked",
 	"invalid credentials":                           "invalid_credentials",
 	"wrong password":                                "wrong_password",
@@ -477,17 +482,17 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request, tok store.APIT
 		platforms = append(platforms, map[string]string{"namespace": "wfc", "link_id": link.LinkID})
 	}
 	// Every code the account can be added by, as the website's profile lists
-	// them; openpak_code is the first of them, kept as its own field for
+	// them; handle is the first of them, kept as its own field for
 	// clients that only want that one.
-	codes := accounts.FriendCodes(r.Context(), s.DB, s.Links, s.Adapter, tok.AccountID, email)
+	codes := accounts.FriendCodes(r.Context(), s.Identity, s.Links, s.Adapter, tok.AccountID, email)
 	if codes == nil {
 		codes = []accounts.Code{}
 	}
 	resp["friend_codes"] = codes
 	for _, c := range codes {
 		switch c.Kind {
-		case accounts.CodeOpenPak:
-			resp["openpak_code"] = c.Code
+		case accounts.CodeHandle:
+			resp["handle"] = c.Code
 		case accounts.CodeSwitch:
 			// The code the adapter published on the Switch link, else the
 			// adapter's own answer; never the link's hex subject.
@@ -616,7 +621,7 @@ func (s *Server) handleSendRequest(w http.ResponseWriter, r *http.Request, tok s
 		writeJSON(w, http.StatusAccepted, map[string]string{"message": "if that address has an account, a friend request was sent"})
 		return
 	}
-	target := accounts.ResolveFriendCode(r.Context(), s.DB, s.Links, s.Adapter, req.Kind, req.FriendCode, normalizeCode(req.FriendCode))
+	target := accounts.ResolveFriendCode(r.Context(), s.Identity, s.Links, s.Adapter, req.Kind, req.FriendCode, normalizeCode(req.FriendCode))
 	if target == "" {
 		writeError(w, http.StatusNotFound, "no account for that friend code")
 		return

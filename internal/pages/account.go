@@ -26,8 +26,7 @@ type accountView struct {
 	// family, shown together in the profile banner.
 	Codes          []accounts.Code
 	Links          []linkRow
-	CanLinkWFC     bool      // a Wii/DS server is configured, so the friend-code form is shown
-	Networks       []netView // network-specific sections; the common profile stays separate
+	CanLinkWFC     bool // a Wii/DS server is configured, so the friend-code form is shown
 	Sessions       []core.Session
 	CurrentSession string
 	AvatarURL      string
@@ -72,7 +71,7 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Every code people can add this account by, shared with the API's /me.
-	view.Codes = accounts.FriendCodes(ctx, s.DB, s.Links, s.Adapter, v.AccountID, v.Email)
+	view.Codes = accounts.FriendCodes(ctx, s.Identity, s.Links, s.Adapter, v.AccountID, v.Email)
 	for _, c := range view.Codes {
 		if c.Kind == accounts.CodeSwitch {
 			view.FriendCode, view.HasFriendCode = c.Code, true
@@ -95,7 +94,6 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 		view.Links = append(view.Links, linkRow{Namespace: "Wii / DS", Subject: link.SubjectID, LinkID: link.LinkID, Revocable: true})
 	}
 	view.CanLinkWFC = s.WFC != nil
-	view.Networks = s.networkViews(ctx, v.AccountID, r.URL.Query().Get("rid"))
 
 	sessions, err := s.Core.ListSessions(ctx, v.CoreSessionID)
 	if err != nil {
@@ -555,7 +553,7 @@ func (s *Server) handleFriendRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	// kind is the add-friend dialog's choice; the resolution order within a
 	// kind is the API's, so a code finds the same person on both.
-	target := accounts.ResolveFriendCode(r.Context(), s.DB, s.Links, s.Adapter, r.PostFormValue("kind"), typed, code)
+	target := accounts.ResolveFriendCode(r.Context(), s.Identity, s.Links, s.Adapter, r.PostFormValue("kind"), typed, code)
 	if target == "" {
 		redirectMsg(w, r, "/account", "funknown")
 		return

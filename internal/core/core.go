@@ -14,6 +14,10 @@ import (
 
 // Sentinel errors mapped from core outcomes.
 var (
+	ErrHandleTaken        = errors.New("handle_taken")
+	ErrHandleInvalid      = errors.New("handle_invalid")
+	ErrHandleReserved     = errors.New("handle_reserved")
+	ErrHandleProfane      = errors.New("handle_profane")
 	ErrInvalidCredentials = errors.New("core: invalid credentials")
 	ErrSessionInvalid     = errors.New("core: session invalid or expired")
 	ErrNotFound           = errors.New("core: not found")
@@ -60,6 +64,7 @@ type Account struct {
 	ID          string
 	Email       string
 	DisplayName string
+	Handle      string
 	// Country and Birthday are what the console's user object carries. Empty is normal for
 	// accounts created before registration collected them.
 	Country  string
@@ -74,6 +79,7 @@ type Account struct {
 type Friend struct {
 	AccountID   string
 	DisplayName string
+	Handle      string
 }
 
 // Relationship between the viewer and another account.
@@ -102,6 +108,7 @@ type Link struct {
 type Blocked struct {
 	AccountID   string
 	DisplayName string
+	Handle      string
 	BlockedAt   time.Time
 }
 
@@ -123,7 +130,7 @@ type Event struct {
 // (WEB-01): registration, verification, login, logout, recovery, sessions.
 type HTTP interface {
 	Register(ctx context.Context, email, password, displayName string) error
-	RegisterWithProfile(ctx context.Context, email, password, displayName, country, birthday string) error
+	RegisterWithProfile(ctx context.Context, email, password, displayName, handle, country, birthday string) error
 	VerifyEmail(ctx context.Context, token string) error
 	// Login signs in. A 2FA account answers *LoginChallenge instead of a
 	// session; Login2FA finishes it.
@@ -166,6 +173,18 @@ type HTTP interface {
 
 // Identity projects account facts and runs the step-up checks. Who a session
 // belongs to is HTTP.Whoami (CR-4).
+type HandleCheck struct {
+	Valid     bool   `json:"valid"`
+	Available bool   `json:"available"`
+	Reason    string `json:"reason,omitempty"`
+}
+
+// Handles is the public identifier contract, owned by the core.
+type Handles interface {
+	CheckHandle(context.Context, string) (HandleCheck, error)
+	ResolveHandle(context.Context, string) (string, error)
+}
+
 type Identity interface {
 	GetAccount(ctx context.Context, accountID string) (Account, error)
 	// VerifyPasswordByID re-checks the password of a signed-in account before

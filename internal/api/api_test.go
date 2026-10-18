@@ -125,7 +125,7 @@ func (f *fakeCore) UpdateProfile(_ context.Context, _, country, birthday, displa
 	f.profile = [3]string{country, birthday, displayName}
 	return nil
 }
-func (f *fakeCore) RegisterWithProfile(ctx context.Context, email, password, displayName, _, _ string) error {
+func (f *fakeCore) RegisterWithProfile(ctx context.Context, email, password, displayName, _, _, _ string) error {
 	return f.Register(ctx, email, password, displayName)
 }
 func (f *fakeCore) ForgotPassword(_ context.Context, _ string) error { return nil }

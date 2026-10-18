@@ -7,6 +7,15 @@ option go_package = "openpak/account/proto/openpak/account/v1;accountv1";
 // Internal identity contract: narrowly scoped verification and status.
 // Never exposes password hashes or recovery credentials.
 service Identity {
+  // Home-only operator action, after a deletion request. Not a user rename.
+  rpc FinalizeAccountDeletion(RequestAccountDeletionRequest) returns (RequestAccountDeletionResponse);
+  rpc CheckHandle(CheckHandleRequest) returns (CheckHandleResponse);
+  rpc ResolveHandle(ResolveHandleRequest) returns (ResolveHandleResponse);
+  // Home-only legacy migration: one assignment, no rename path.
+  rpc ClaimHandle(ClaimHandleRequest) returns (ClaimHandleResponse);
+  // Home-only, minimal active-account directory for adapter identity backfills.
+  // Keyset cursor is an account ID, not an offset; no emails or credentials.
+  rpc ListAccounts(ListAccountsRequest) returns (ListAccountsResponse);
   // Verify an account's email+password. Returns a short-lived result bound to
   // the caller's namespace and purpose; never an unrestricted session.
   rpc VerifyPassword(VerifyPasswordRequest) returns (VerifyPasswordResponse);
@@ -88,6 +97,7 @@ message VerifyPasswordResponse {
 message GetAccountRequest { string account_id = 1; }
 
 message GetAccountResponse {
+  string handle = 9;
   string account_id = 1;
   AccountStatus status = 2;
   bool email_verified = 3;
@@ -95,6 +105,9 @@ message GetAccountResponse {
   string country = 5;
   string birthday = 6; // ISO 8601 date, e.g. "1990-01-01"
   bool two_factor_enabled = 7;
+  // The sign-in address, for an adapter whose console protocol carries it (a Nintendo Account's
+  // users/me has the address and a masked form of it). Never logged by an adapter.
+  string email = 8;
 }
 
 message SetAdapterCredentialRequest {
@@ -248,3 +261,25 @@ enum LinkState {
   LINK_STATE_REVOKING = 3;
   LINK_STATE_REVOKED = 4;
 }
+
+message ListAccountsRequest {
+ string after_account_id = 1;
+ int32 limit = 2; // default 100, maximum 500
+}
+message AccountProjection {
+ string handle = 4;
+ string account_id = 1;
+ string display_name = 2;
+ string country = 3;
+}
+message ListAccountsResponse {
+ repeated AccountProjection accounts = 1;
+ string next_after_account_id = 2; // empty at end
+}
+
+message CheckHandleRequest { string handle = 1; }
+message CheckHandleResponse { bool valid = 1; bool available = 2; string reason = 3; }
+message ResolveHandleRequest { string handle = 1; }
+message ResolveHandleResponse { string account_id = 1; }
+message ClaimHandleRequest { string account_id = 1; string handle = 2; }
+message ClaimHandleResponse {}

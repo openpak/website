@@ -97,12 +97,12 @@ func (c *HTTPClient) call(ctx context.Context, method, path string, body any, co
 // Register creates an account. Country and birthday are part of registration because the
 // console's user object requires both and rejects it outright when either is missing.
 func (c *HTTPClient) Register(ctx context.Context, email, password, displayName string) error {
-	return c.RegisterWithProfile(ctx, email, password, displayName, "", "")
+	return c.RegisterWithProfile(ctx, email, password, displayName, displayName, "", "")
 }
 
-func (c *HTTPClient) RegisterWithProfile(ctx context.Context, email, password, displayName, country, birthday string) error {
-	code, _, _, err := c.call(ctx, http.MethodPost, "v1/register", map[string]string{
-		"email": email, "password": password, "display_name": displayName,
+func (c *HTTPClient) RegisterWithProfile(ctx context.Context, email, password, displayName, handle, country, birthday string) error {
+	code, body, _, err := c.call(ctx, http.MethodPost, "v1/register", map[string]string{
+		"email": email, "password": password, "display_name": displayName, "handle": handle,
 		"country": country, "birthday": birthday,
 	}, "")
 	if err != nil {
@@ -110,6 +110,16 @@ func (c *HTTPClient) RegisterWithProfile(ctx context.Context, email, password, d
 	}
 	if code == http.StatusCreated || code == http.StatusOK {
 		return nil
+	}
+	switch str(body["error"]) {
+	case "handle_taken":
+		return ErrHandleTaken
+	case "handle_invalid":
+		return ErrHandleInvalid
+	case "handle_reserved":
+		return ErrHandleReserved
+	case "handle_profane":
+		return ErrHandleProfane
 	}
 	return fmt.Errorf("core: registration failed (status %d)", code)
 }
@@ -341,7 +351,7 @@ func (c *HTTPClient) Whoami(ctx context.Context, coreSessionID string) (Account,
 		return Account{}, fmt.Errorf("core: whoami failed (status %d)", code)
 	}
 	a := Account{
-		ID: str(body["account_id"]), Email: str(body["email"]), DisplayName: str(body["display_name"]),
+		ID: str(body["account_id"]), Email: str(body["email"]), DisplayName: str(body["display_name"]), Handle: str(body["handle"]),
 		Status: str(body["status"]),
 	}
 	a.EmailVerified, _ = body["email_verified"].(bool)

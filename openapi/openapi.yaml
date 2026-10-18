@@ -679,11 +679,12 @@ paths:
           application/json:
             schema:
               type: object
-              required: [email, password, display_name]
+              required: [email, password, handle]
               properties:
                 email: { type: string, format: email }
                 password: { type: string, minLength: 8 }
-                display_name: { type: string, minLength: 3, maxLength: 32 }
+                display_name: { type: string, maxLength: 32, description: "Editable account name; defaults to the handle." }
+                handle: { type: string, pattern: "^[A-Za-z][A-Za-z0-9]{5,14}$", description: "Permanent case-insensitively unique public account identifier." }
                 country: { type: string, minLength: 2, maxLength: 2, examples: ["IE"] }
                 birthday: { type: string, format: date, examples: ["1990-01-01"] }
       responses:
@@ -692,8 +693,31 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Message" }
+        "400": { description: Invalid, reserved or profane handle. }
+        "409": { description: Handle unavailable. }
         "403": { description: Registrations are closed. }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /handle/check:
+    get:
+      summary: Check public handle availability
+      security: []
+      description: Shares the registration IP rate limit. The core validates the handle; registration checks availability atomically again.
+      parameters:
+        - { in: query, name: h, required: true, schema: { type: string, maxLength: 15 } }
+      responses:
+        "200":
+          description: Validation and availability
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [valid, available]
+                properties:
+                  valid: { type: boolean }
+                  available: { type: boolean }
+                  reason: { type: string }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { description: Account service unavailable. }
   /password/forgot:
     post:
       summary: Send a password reset mail
@@ -1398,14 +1422,13 @@ paths:
               properties:
                 friend_code:
                   type: string
-                  description: Display form (SW-xxxx-xxxx-xxxx, OP-XXXX-XXXX, xxxx-xxxx-xxxx), a Nintendo Network ID, or a bare subject.
+                  description: Display form (SW-xxxx-xxxx-xxxx, an OpenPak handle, xxxx-xxxx-xxxx), a Nintendo Network ID, or a bare subject.
                   examples: ["SW-0123-4567-89ab"]
                 kind:
                   type: string
-                  enum: [openpak, switch, 3ds, wiiu]
+                  enum: [handle, switch, 3ds, wiiu, email]
                   description: |
-                    Which kind of code friend_code is. Omitted, an OpenPak-shaped
-                    code is taken as one and anything else as a Switch code.
+                    Which kind of code friend_code is. Omitted, a handle is tried first, followed by a numeric Switch code.
       responses:
         "201":
           description: Request sent
@@ -2506,7 +2529,7 @@ components:
           description: |
             Stable identifier for clients to translate. Unknown codes may be added; treat one
             like its HTTP status.
-          enum: [account_suspended, attachment_too_large, attachments_unavailable, avatar_invalid, avatars_unavailable, bad_request, challenge_expired, chat_blocked, chat_not_friends, chat_unavailable, conflict, console_taken, forbidden, friend_code_unknown, friend_conflict, friend_self, internal, invalid_credentials, link_expired, no_pending_request, not_found, not_votable, quota_exceeded, rate_limited, registrations_closed, saves_unavailable, service_unavailable, session_expired, tickets_unavailable, too_large, two_factor_locked, two_factor_required, unauthorized, voice_room_full, voice_room_unknown, wfc_not_found, wfc_unavailable, wrong_code, wrong_password]
+          enum: [handle_taken, handle_invalid, handle_reserved, handle_profane, account_suspended, attachment_too_large, attachments_unavailable, avatar_invalid, avatars_unavailable, bad_request, challenge_expired, chat_blocked, chat_not_friends, chat_unavailable, conflict, console_taken, forbidden, friend_code_unknown, friend_conflict, friend_self, internal, invalid_credentials, link_expired, no_pending_request, not_found, not_votable, quota_exceeded, rate_limited, registrations_closed, saves_unavailable, service_unavailable, session_expired, tickets_unavailable, too_large, two_factor_locked, two_factor_required, unauthorized, voice_room_full, voice_room_unknown, wfc_not_found, wfc_unavailable, wrong_code, wrong_password]
     CrashMeta:
       type: object
       required: [source]
@@ -2606,14 +2629,14 @@ components:
             type: object
             required: [kind, console, label, code]
             properties:
-              kind: { type: string, enum: [openpak, switch, wiiu, 3ds] }
+              kind: { type: string, enum: [handle, switch, 3ds, email] }
               console: { type: string, examples: ["3DS"] }
               label: { type: string, examples: ["Wii U · NNID"] }
               code: { type: string, examples: ["0123-4567-8901"] }
-        openpak_code:
+        handle:
           type: string
           description: |
-            The account's OpenPak code (OP-XXXX-XXXX): add a friend by it on
+            The account's permanent handle: add a friend by it on
             the website or the app, whatever console either of you has.
         linked_platforms:
           type: array

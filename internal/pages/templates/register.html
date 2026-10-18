@@ -5,8 +5,13 @@
   <p class="card mt-6 border-bad-line bg-bad-weak p-4" role="alert">{{t .Lang "auth.register.closed"}}</p>
 {{else}}
   <form method="post" action="/register" class="form-stack mt-6">
+    <label for="handle">Handle</label>
+    <input id="handle" name="handle" type="text" required minlength="6" maxlength="15" pattern="[A-Za-z][A-Za-z0-9]{5,14}" autocomplete="username" autocapitalize="none" spellcheck="false" aria-describedby="handle-rules handle-check" autofocus>
+    <p id="handle-rules" class="hint">6–15 letters and digits, starting with a letter. This is your permanent OpenPak, Nintendo Network, Xbox and PlayStation ID. It cannot be changed.</p>
+    <p id="handle-check" class="hint" role="status" aria-live="polite"></p>
+    <script src="/static/handle-check.js" defer></script>
     <label for="display_name">{{t .Lang "auth.displayname"}}</label>
-    <input id="display_name" name="display_name" type="text" required maxlength="32" autocomplete="nickname" autofocus>
+    <input id="display_name" name="display_name" type="text" maxlength="32" autocomplete="nickname">
     <label for="email">{{t .Lang "auth.email"}}</label>
     <input id="email" name="email" type="email" required autocomplete="email">
     <label for="password">{{t .Lang "auth.password"}}</label>

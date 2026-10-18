@@ -39,7 +39,7 @@
     </div>
   </div>
   {{/* Every code people can add this account by, one per console family.
-       The OpenPak code works everywhere; the others are what each console
+       The handle works everywhere; the others are what each console
        itself asks for. */}}
   <div class="codes">
     <h2 id="codes-h" class="eyebrow">{{t .Lang "account.codes"}}</h2>
@@ -240,29 +240,7 @@
   </form>
 </section>
 
-{{if .Networks}}
-<section class="card pad" aria-labelledby="networks-h" id="networks">
-  <div class="section-head">
-    <h2 id="networks-h">{{t .Lang "account.net.title"}}</h2>
-    <p>{{t .Lang "account.net.hint"}}</p>
-  </div>
-  {{range .Networks}}
-  <form method="post" action="/account/networks/{{.ID}}/{{.FieldName}}" class="form-stack max-w-md" id="net-{{.ID}}">
-    <h3>{{t $.Lang .TitleKey}}</h3>
-    <p class="hint">{{t $.Lang .HintKey}}</p>
-    <input type="hidden" name="csrf" value="{{$.CSRF}}">
-    <input type="hidden" name="request_id" value="{{.RequestID}}">
-    {{if .Current}}
-    <label for="net-{{.ID}}-{{.FieldName}}">{{t $.Lang .LabelKey}}</label>
-    <input id="net-{{.ID}}-{{.FieldName}}" name="{{.FieldName}}" value="{{.Current}}" maxlength="{{.MaxLen}}" pattern="{{.Pattern}}" autocomplete="off" spellcheck="false" required>
-    <p class="hint">{{t $.Lang .RulesKey}}</p>
-    <p class="hint">{{t $.Lang "account.net.appliesto"}} {{range $i, $k := .Targets}}{{if $i}}, {{end}}{{t $.Lang $k}}{{end}}</p>
-    <button type="submit">{{t $.Lang .SubmitKey}}</button>
-    {{else}}<p class="empty">{{t $.Lang "account.xbox.noidentity"}}</p>{{end}}
-  </form>
-  {{end}}
-</section>
-{{end}}
+<p class="hint">Your handle is permanent. Changing your account name does not change your console IDs.</p>
 
 <section class="card pad" aria-labelledby="pw-h" id="password">
   <div class="section-head">
@@ -392,15 +370,14 @@
       <input type="hidden" name="csrf" value="{{.CSRF}}">
       <label for="add-kind">{{t .Lang "friends.add.kind"}}</label>
       <select id="add-kind" name="kind">
-        <option value="openpak" data-placeholder="OP-XXXX-XXXX">{{t .Lang "friends.kind.openpak"}}</option>
+        <option value="handle" data-placeholder="ExampleUser">Handle</option>
         <option value="switch" data-placeholder="SW-1234-5678-9012">{{t .Lang "friends.kind.switch"}}</option>
         <option value="3ds" data-placeholder="1234-5678-9012">{{t .Lang "friends.kind.3ds"}}</option>
-        <option value="wiiu" data-placeholder="NNID">{{t .Lang "friends.kind.wiiu"}}</option>
         <option value="email" data-placeholder="name@example.com">{{t .Lang "friends.kind.email"}}</option>
       </select>
       <label for="add-code">{{t .Lang "friends.code"}}</label>
       <input id="add-code" name="friend_code" type="text" required class="font-mono tracking-wider"
-             placeholder="OP-XXXX-XXXX" autocapitalize="characters" autocorrect="off" spellcheck="false" autocomplete="off"
+             placeholder="ExampleUser" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="off"
              title="{{t .Lang "friends.code.title"}}">
       <button type="submit" class="primary">{{t .Lang "friends.send"}}</button>
     </form>

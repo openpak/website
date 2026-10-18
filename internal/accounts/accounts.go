@@ -127,16 +127,16 @@ func AccountByFriendCode(ctx context.Context, links core.Links, ad *adapter.Clie
 }
 
 // Friend-code kinds a request can name. An empty kind is the old form and
-// the old API: an OpenPak code if it has that shape, else a Switch code.
+// the default lookup tries a handle first, then numeric console codes.
 const (
-	CodeOpenPak = "openpak"
-	CodeSwitch  = "switch"
-	Code3DS     = "3ds"
-	CodeWiiU    = "wiiu"
-	CodeEmail   = "email"
-	CodeXbox    = "xbox"
-	CodeX360    = "x360"
-	CodePSN     = "np"
+	CodeHandle = "handle"
+	CodeSwitch = "switch"
+	Code3DS    = "3ds"
+	CodeWiiU   = "wiiu"
+	CodeEmail  = "email"
+	CodeXbox   = "xbox"
+	CodeX360   = "x360"
+	CodePSN    = "np"
 )
 
 // AccountByEmail is the account signed in with exactly this address, compared
@@ -161,10 +161,20 @@ func AccountByEmail(ctx context.Context, mod core.Moderation, typed string) stri
 
 // ResolveFriendCode finds the account behind a code of the given kind; ""
 // when nobody has it.
-func ResolveFriendCode(ctx context.Context, codes store.OpenPakCodeStore, links core.Links, ad *adapter.Client, kind, typed, switchSubject string) string {
-	if kind == CodeOpenPak || (kind == "" && store.NormalizeOpenPakCode(typed) != "") {
-		id, _ := codes.AccountByOpenPakCode(ctx, typed)
-		return id
+func ResolveFriendCode(ctx context.Context, identity core.Identity, links core.Links, ad *adapter.Client, kind, typed, switchSubject string) string {
+	if kind == CodeHandle || kind == "" {
+		if handles, ok := identity.(core.Handles); ok {
+			if id, err := handles.ResolveHandle(ctx, strings.TrimSpace(typed)); err == nil {
+				return id
+			}
+		}
+		if kind == CodeHandle {
+			return ""
+		}
+	}
+	// Retired OP codes have no compatibility resolution.
+	if kind == "openpak" || strings.HasPrefix(strings.ToUpper(strings.TrimSpace(typed)), "OP-") {
+		return ""
 	}
 	if kind == CodeWiiU {
 		// The NNID nn-account published on the Wii U link.
@@ -226,12 +236,12 @@ type Code struct {
 // FriendCodes is every code the account can be added by, in the order the
 // profile shows them. The website's banner and the API's /me both read this,
 // so the app and the site never list different codes.
-func FriendCodes(ctx context.Context, codes store.OpenPakCodeStore, links core.Links, ad *adapter.Client, accountID, email string) []Code {
+func FriendCodes(ctx context.Context, identity core.Identity, links core.Links, ad *adapter.Client, accountID, email string) []Code {
 	var out []Code
-	// The OpenPak code first: it is the one that works for everybody. The
+	// The permanent handle first: it is the one that works for everybody. The
 	// address works everywhere too, but only for someone who already knows it.
-	if c, err := codes.OpenPakCode(ctx, accountID); err == nil {
-		out = append(out, Code{CodeOpenPak, "OpenPak", "OpenPak", c})
+	if a, err := identity.GetAccount(ctx, accountID); err == nil && a.Handle != "" {
+		out = append(out, Code{CodeHandle, "OpenPak", "Handle", a.Handle})
 	}
 	if email != "" {
 		out = append(out, Code{CodeEmail, "OpenPak", "Email", email})
@@ -240,11 +250,6 @@ func FriendCodes(ctx context.Context, codes store.OpenPakCodeStore, links core.L
 		if c := FriendCode(ctx, link, ad, accountID); c != "" {
 			out = append(out, Code{CodeSwitch, "Switch", "Switch", c})
 		}
-	}
-	// Wii U friends add each other by Nintendo Network ID, which nn-account
-	// owns; it appears once nn-account publishes it on the link.
-	if link, err := links.ActiveLinkByAccount(ctx, "wiiu", accountID); err == nil && link.PublicCode != "" {
-		out = append(out, Code{CodeWiiU, "Wii U", "Wii U · NNID", link.PublicCode})
 	}
 	// A 3DS code is derived from the console's principal id, the link's
 	// subject, so it needs no call to nn-account.
@@ -255,16 +260,6 @@ func FriendCodes(ctx context.Context, codes store.OpenPakCodeStore, links core.L
 		}
 		if c != "" {
 			out = append(out, Code{Code3DS, "3DS", "3DS", c})
-		}
-	}
-	// Xbox, Xbox 360 and PS3 show the name their adapter published on the link.
-	for _, p := range []struct{ ns, console, label string }{
-		{CodeXbox, "Xbox", "Xbox · Gamertag"},
-		{CodeX360, "Xbox 360", "Xbox 360 · Gamertag"},
-		{CodePSN, "PS3", "PS3 · PSN ID"},
-	} {
-		if link, err := links.ActiveLinkByAccount(ctx, p.ns, accountID); err == nil && link.PublicCode != "" {
-			out = append(out, Code{p.ns, p.console, p.label, link.PublicCode})
 		}
 	}
 	// Wii and DS have none: a Wii friend code belongs to a game, not the console.
