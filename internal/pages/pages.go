@@ -425,7 +425,7 @@ func (s *Server) handleLanding(w http.ResponseWriter, r *http.Request) {
 	}
 	// News is a nice-to-have on this page: unset or failing, the section is
 	// simply not drawn.
-	view := landing{baseData: d, TitlesTotal: len(titles), News: s.News.Latest(r.Context(), 3), Platforms: platforms[:7]}
+	view := landing{baseData: d, TitlesTotal: len(titles), News: s.News.Latest(r.Context(), 3), Platforms: platforms[:8]}
 	byID := map[string]store.Request{}
 	for _, t := range titles {
 		if t.Name == "" {
@@ -573,16 +573,16 @@ type platform struct{ Name, Console, Status string }
 
 var platforms = []platform{
 	{"Nintendo Switch", "Switch", "live"},
-	{"Wii U", "Wii U", "beta"},
-	{"Nintendo 3DS", "3DS", "beta"},
-	{"Wii", "Wii", "beta"},
-	{"Nintendo DS", "DS", "beta"},
-	{"PlayStation 3", "PS3", "planned"},
-	{"Xbox 360", "Xbox 360", "planned"},
+	{"Wii U", "Wii U", "live"},
+	{"Nintendo 3DS", "3DS", "live"},
+	{"Wii", "Wii", "live"},
+	{"Nintendo DS", "DS", "live"},
+	{"Xbox", "Xbox", "live"},
+	{"PlayStation 3", "PS3", "live"},
+	{"Xbox 360", "Xbox 360", "live"},
 	{"PlayStation 2", "PS2", "exploring"},
 	{"PlayStation Portable", "PSP", "exploring"},
 	{"PlayStation Vita", "Vita", "exploring"},
-	{"Xbox", "Xbox", "exploring"},
 	{"PlayStation 4", "", "exploring"},
 	{"PS5 · Xbox One · Series", "", "not-feasible"},
 }
