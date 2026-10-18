@@ -799,7 +799,7 @@
   .dl { display: flex; flex-direction: column; gap: 14px; padding: 20px; border-radius: 16px; }
   .dl h3 { margin: 0; }
   .dl button:disabled { opacity: .6; color: var(--muted); background: var(--sunk); border-color: var(--line-2); box-shadow: none; }
-  .dl .client-mark { width: 64px; height: 64px; flex-shrink: 0; object-fit: contain; border-radius: 14px; }
+  .dl .client-mark { width: 64px; height: 64px; flex-shrink: 0; object-fit: contain; background: #fff; padding: 6px; border-radius: 0; }
   .dl .foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line); }
   .kind { font-family: var(--font-ui); font-size: .8rem; font-weight: 700; color: var(--muted); }
 
