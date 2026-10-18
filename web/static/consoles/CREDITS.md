@@ -63,3 +63,11 @@ gradients and namespaced editor attributes stripped (they would be unbound
 prefixes once the body is rewrapped), and the art scaled to the box — wordmarks
 to its width, device marks to whichever side binds first. Keep `consoleSlug` (Go)
 and `consoleAsset` (Dart) in step with the filenames here.
+
+## Planned-platform marks added on 18 October 2026
+
+`ps4.svg`, `ps5.svg`, `xbox-one.svg`: unchanged user-provided SVG marks
+from Downloads/console-emulator-logos-256(2)/svg (PS4.svg, PS5.svg,
+XBOX ONE.svg). Original brand ownership is retained; no source licence
+was supplied with that pack. They use the shared white square background
+in both site colour schemes.

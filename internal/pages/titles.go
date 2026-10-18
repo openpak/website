@@ -373,10 +373,16 @@ func consoleSlug(console string) string {
 		return "xbox"
 	case "Xbox 360":
 		return "xbox-360"
+	case "Xbox One":
+		return "xbox-one"
 	case "PS2":
 		return "ps2"
 	case "PS3", "PlayStation 3":
 		return "ps3"
+	case "PS4", "PlayStation 4":
+		return "ps4"
+	case "PS5", "PlayStation 5":
+		return "ps5"
 	case "PSP":
 		return "psp"
 	case "Vita":

@@ -593,11 +593,12 @@ var platforms = []platform{
 	{"Xbox", "Xbox", "live"},
 	{"PlayStation 3", "PS3", "live"},
 	{"Xbox 360", "Xbox 360", "live"},
-	{"PlayStation Portable", "PSP", "exploring"},
-	{"PlayStation Vita", "Vita", "exploring"},
-	{"PlayStation 4", "", "exploring"},
-	{"PlayStation 5", "", "planned"},
-	{"Xbox One · Series", "", "not-feasible"},
+	{"PlayStation Portable", "PSP", "planned"},
+	{"PlayStation Vita", "Vita", "planned"},
+	{"PlayStation 4", "PS4", "planned"},
+	{"PlayStation 5", "PS5", "planned"},
+	{"Xbox One", "Xbox One", "planned"},
+	{"Xbox Series", "", "not-feasible"},
 }
 
 func (s *Server) handleDownloads(w http.ResponseWriter, r *http.Request) {
