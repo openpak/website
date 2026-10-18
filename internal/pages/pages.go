@@ -556,15 +556,24 @@ type download struct {
 	Name, Console, Kind, Status, URL, Icon string
 }
 
-// downloads are the ways onto OpenPak: a real console with its patch, or Harbor, OpenPak's
-// own Switch HOME emulator (the emulator forks are retired). Only public repositories are
-// linked: a private one would be a 404 for every visitor.
+// Only released public downloads are linked; private repositories and unpublished
+// builds remain visible without sending visitors to a missing release page.
+var emulators = []download{
+	{"Harbor", "Switch", "downloads.kind.emulator", "", "", "/static/clients/harbor.svg"},
+	{"Quay", "Wii U", "downloads.kind.emulator", "", "", ""},
+	{"Azahar", "3DS", "downloads.kind.emulator", "", "", ""},
+	{"Marina", "Wii", "downloads.kind.emulator", "", "", ""},
+	{"melonDS", "DS", "downloads.kind.emulator", "", "", ""},
+	{"Berth", "Xbox", "downloads.kind.emulator", "", "", ""},
+	{"Wharf", "Xbox 360", "downloads.kind.emulator", "", "", ""},
+	{"Pier", "PS3", "downloads.kind.emulator", "", "", ""},
+}
+
 var downloads = []download{
-	{"Harbor", "Switch", "downloads.kind.emulator", "alpha", "", "/static/clients/harbor.svg"},
 	{"OpenPak setup", "Switch", "downloads.kind.setup", "", "", ""},
-	{"Inkay", "Wii U", "downloads.kind.patch", "alpha", "https://github.com/openpak/nn-inkay/releases/latest", ""},
-	{"nimbus", "3DS", "downloads.kind.patch", "alpha", "https://github.com/openpak/nn-nimbus/releases/latest", ""},
-	{"WFC patcher", "Wii", "downloads.kind.patch", "alpha", "https://github.com/openpak/nn-wfc-patcher-wii/releases/latest", ""},
+	{"Inkay", "Wii U", "downloads.kind.patch", "", "https://github.com/openpak/nn-inkay/releases/latest", ""},
+	{"nimbus", "3DS", "downloads.kind.patch", "", "https://github.com/openpak/nn-nimbus/releases/latest", ""},
+	{"WFC patcher", "Wii", "downloads.kind.patch", "", "https://github.com/openpak/nn-wfc-patcher-wii/releases/latest", ""},
 }
 
 // platform is one console family and how far OpenPak is with it; the status words and
@@ -584,7 +593,8 @@ var platforms = []platform{
 	{"PlayStation Portable", "PSP", "exploring"},
 	{"PlayStation Vita", "Vita", "exploring"},
 	{"PlayStation 4", "", "exploring"},
-	{"PS5 · Xbox One · Series", "", "not-feasible"},
+	{"PlayStation 5", "", "planned"},
+	{"Xbox One · Series", "", "not-feasible"},
 }
 
 func (s *Server) handleDownloads(w http.ResponseWriter, r *http.Request) {
@@ -592,8 +602,9 @@ func (s *Server) handleDownloads(w http.ResponseWriter, r *http.Request) {
 	s.render(w, http.StatusOK, "downloads.html", struct {
 		baseData
 		Downloads []download
+		Emulators []download
 		Platforms []platform
-	}{s.data(r, v, i18n.T(i18n.FromRequest(r), "downloads.title")), downloads, platforms})
+	}{s.data(r, v, i18n.T(i18n.FromRequest(r), "downloads.title")), downloads, emulators, platforms})
 }
 
 func (s *Server) handleRegisterForm(w http.ResponseWriter, r *http.Request) {

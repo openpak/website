@@ -4,8 +4,28 @@
   <p class="lede">{{t .Lang "downloads.sub"}}</p>
 </div>
 
-<section aria-labelledby="dl-h">
-  <h2 id="dl-h" class="sr-only">{{t .Lang "downloads.clients"}}</h2>
+<section aria-labelledby="emu-h">
+  <div class="section-top"><div><h2 id="emu-h">{{t .Lang "downloads.emulators"}}</h2><p>{{t .Lang "downloads.emulators.sub"}}</p></div></div>
+  <ul class="dlgrid">
+    {{range .Emulators}}
+    <li class="card dl">
+      <div class="flex items-center gap-3">
+        {{if .Icon}}<img class="size-[42px] shrink-0 rounded-[10px]" src="{{.Icon}}" alt="" width="42" height="42">
+        {{else}}<span class="console lg"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>{{end}}
+        <div class="min-w-0"><div class="kind">{{.Console}} · {{t $.Lang .Kind}}</div><h3 class="break-anywhere">{{.Name}}</h3></div>
+      </div>
+      <div class="foot">
+        {{if .Status}}<span class="badge {{badgeClass .Status}}">{{.Status}}</span>{{else}}<span></span>{{end}}
+        {{if .URL}}<a class="btn primary" href="{{.URL}}" rel="noopener"><svg class="ico sm" aria-hidden="true"><use href="#i-dl"/></svg>{{t $.Lang "downloads.get"}}</a>
+        {{else}}<span class="text-sm text-muted">{{t $.Lang "downloads.soon"}}</span>{{end}}
+      </div>
+    </li>
+    {{end}}
+  </ul>
+</section>
+
+<section class="section" aria-labelledby="dl-h">
+  <div class="section-top"><div><h2 id="dl-h">{{t .Lang "downloads.console"}}</h2><p>{{t .Lang "downloads.console.sub"}}</p></div></div>
   <ul class="dlgrid">
     {{range .Downloads}}
     <li class="card dl">
@@ -25,7 +45,7 @@
   <p class="mt-4 text-sm text-muted">{{t .Lang "downloads.note"}}</p>
 </section>
 
-<section aria-labelledby="plat-h" id="platforms">
+<section class="section" aria-labelledby="plat-h" id="platforms">
   <h2 id="plat-h">{{t .Lang "platforms.title"}}</h2>
   <p class="text-muted">{{t .Lang "platforms.note"}}</p>
   <ul class="tgrid">
