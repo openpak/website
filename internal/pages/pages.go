@@ -589,7 +589,6 @@ var platforms = []platform{
 	{"Xbox", "Xbox", "live"},
 	{"PlayStation 3", "PS3", "live"},
 	{"Xbox 360", "Xbox 360", "live"},
-	{"PlayStation 2", "PS2", "exploring"},
 	{"PlayStation Portable", "PSP", "exploring"},
 	{"PlayStation Vita", "Vita", "exploring"},
 	{"PlayStation 4", "", "exploring"},
