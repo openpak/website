@@ -82,7 +82,7 @@
       <thead><tr><th><span class="sr-only">{{t $.Lang "titles.compat.title"}}</span></th>{{range .OSColumns}}<th><img src="/static/clients/{{lower .}}.svg" alt="{{.}}" title="{{.}}" width="18" height="18"></th>{{end}}</tr></thead>
       <tbody>{{range .Clients}}
         <tr>
-          <th scope="row">{{if .Hardware}}{{$c := index .Cells 0}}<span class="mark {{$c.State}}" title="{{template "compat-tip" (arr $.Lang $c)}}"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Client}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Client}}.svg" alt="" width="36" height="24" loading="lazy"></picture></span>
+          <th scope="row">{{if .Hardware}}{{$c := index .Cells 0}}<span class="mark {{$c.State}}" title="{{template "compat-tip" (arr $.Lang $c)}}"><picture class="console-mark"><img src="/static/consoles/{{consoleSlug .Client}}.svg" alt="" width="36" height="24" loading="lazy"></picture></span>
             {{- else}}<span class="mark {{.State}}">{{with .Icon}}<img src="{{.}}" alt="" width="26" height="26" loading="lazy">{{end}}</span>{{end}}<b>{{.Client}}</b></th>
           {{range .Cols}}<td>{{with .}}<span class="mark {{.State}}" title="{{template "compat-tip" (arr $.Lang .)}}"><img src="/static/clients/{{lower .OS}}.svg" alt="{{.OS}}" width="18" height="18" loading="lazy"></span>{{end}}</td>{{end}}
         </tr>
@@ -176,7 +176,7 @@
   {{if and (eq $console "Switch") $id}}{{$art = printf "/titles/icon/%s" $id}}{{end}}
   {{with $art}}<img data-title-image src="{{.}}" alt="" width="256" height="256" loading="lazy">{{end}}
   <span class="mark art-placeholder"{{if $art}} hidden{{end}}>
-    <picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug $console}}-dark.svg"><img src="/static/consoles/{{consoleSlug $console}}.svg" alt="" width="96" height="64" loading="lazy"></picture>
+    <picture class="console-mark"><img src="/static/consoles/{{consoleSlug $console}}.svg" alt="" width="96" height="64" loading="lazy"></picture>
     {{with $label}}<b>{{.}}</b>{{end}}
     <span>{{t $lang "titles.art.soon"}}</span>
   </span>

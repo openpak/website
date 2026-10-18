@@ -239,7 +239,7 @@ func TestTitlesArtworkFallback(t *testing.T) {
 		`class="mark art-placeholder" hidden>`,
 		`data-title-image src="/titles/icon/0100AAA00ACBE800"`,
 		`/static/consoles/wii-u.svg`,
-		`/static/consoles/switch-dark.svg`,
+		`/static/consoles/switch.svg`,
 		`Picture coming soon`,
 	} {
 		if !strings.Contains(out, want) {

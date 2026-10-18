@@ -63,7 +63,7 @@
     <ul>
       {{range .Networks}}
       <li class="state-row {{if eq .State "live"}}ok{{else if eq .State "beta"}}beta{{else if eq .State "building"}}warn{{else}}idle{{end}}">
-        <span class="console">{{range consoleSlugs .Name}}<picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{.}}-dark.svg"><img src="/static/consoles/{{.}}.svg" alt="" width="24" height="24" loading="lazy"></picture>{{end}}</span>
+        <span class="console">{{range consoleSlugs .Name}}<picture class="console-mark"><img src="/static/consoles/{{.}}.svg" alt="" width="24" height="24" loading="lazy"></picture>{{end}}</span>
         <span class="name">{{.Name}}</span>
         <span class="pill">
           {{if eq .State "live"}}{{if eq .Players 1}}{{t $.Lang "status.pill.online.one"}}{{else}}{{.Players}} {{t $.Lang "status.pill.online.many"}}{{end}}

@@ -31,7 +31,7 @@
       {{range $i, $t := .Shelf}}
       <li><a class="tile sel {{if eq $i 0}}is-selected{{end}}" href="{{.Href}}">
         {{if .Art}}<img src="{{.Art}}" alt="" width="184" height="184" loading="lazy">
-        {{else}}<span class="mark"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="96" height="64" loading="lazy"></picture></span>{{end}}
+        {{else}}<span class="mark"><picture class="console-mark"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="96" height="64" loading="lazy"></picture></span>{{end}}
         <span class="cap"><b{{if .Art}} class="sr-only"{{end}}>{{.Name}}</b>
           <span>{{if .Players}}<span class="dot ok" aria-hidden="true"></span>{{if eq .Players 1}}{{t $.Lang "status.pill.one"}}{{else}}{{.Players}} {{t $.Lang "status.pill.many"}}{{end}}{{else}}{{.Console}}{{end}}</span>
         </span>
@@ -63,7 +63,7 @@
   <div class="platforms">
     {{range .Platforms}}
     <a class="plat sel" href="/titles?console={{.Console}}" aria-label="{{.Name}} · {{.Status}}">
-      <span class="console lg"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>
+      <span class="console lg"><picture class="console-mark"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>
       <span class="badge {{badgeClass .Status}}">{{.Status}}</span>
     </a>
     {{end}}

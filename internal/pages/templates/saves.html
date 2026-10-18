@@ -52,11 +52,11 @@
     {{range .Saves}}{{$cur := index .Versions 0}}
     <li class="saves-row flex flex-wrap items-center gap-3 p-4" data-name="{{.Name}}" data-console="{{.Console}}">
       {{if .Icon}}<img class="size-12 shrink-0 rounded-lg" src="/titles/icon/{{.TitleID}}" alt="" width="48" height="48" loading="lazy">
-      {{else}}<span class="flex size-12 shrink-0 items-center justify-center rounded-lg bg-paper-2"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="36" height="24"></picture></span>{{end}}
+      {{else}}<span class="flex size-12 shrink-0 items-center justify-center rounded-lg bg-paper-2"><picture class="console-mark"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="36" height="24"></picture></span>{{end}}
       <span class="flex min-w-0 flex-1 flex-col">
         <span class="font-semibold break-anywhere">{{.Name}}</span>
         <span class="flex items-center gap-2 text-sm text-muted">
-          <picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img class="console-logo shrink-0" src="/static/consoles/{{consoleSlug .Console}}.svg" alt="{{.Console}}" width="24" height="16" loading="lazy"></picture>
+          <picture class="console-mark"><img class="console-logo shrink-0" src="/static/consoles/{{consoleSlug .Console}}.svg" alt="{{.Console}}" width="24" height="16" loading="lazy"></picture>
           {{if .Conflict}}<span class="badge warn">{{t $.Lang "saves.conflict"}}</span>{{end}}
         </span>
       </span>

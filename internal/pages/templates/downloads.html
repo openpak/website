@@ -11,7 +11,7 @@
     <li class="card dl">
       <div class="flex items-center gap-3">
         {{if .Icon}}<img class="client-mark" src="{{.Icon}}" alt="" width="64" height="64">
-        {{else}}<span class="console lg"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>{{end}}
+        {{else}}<span class="console lg"><picture class="console-mark"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>{{end}}
         <div class="min-w-0"><div class="kind">{{.Console}} · {{t $.Lang .Kind}}</div><h3 class="break-anywhere">{{.Name}}</h3></div>
       </div>
       <div class="foot">
@@ -31,7 +31,7 @@
     <li class="card dl" aria-label="{{.Console}} · {{t $.Lang "downloads.kind.patch"}}">
       <div class="flex items-center gap-3">
         {{if .Icon}}<img class="client-mark" src="{{.Icon}}" alt="" width="64" height="64">
-        {{else}}<span class="console lg"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="{{.Console}}" width="30" height="30" loading="lazy"></picture></span>{{end}}
+        {{else}}<span class="console lg"><picture class="console-mark"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="{{.Console}}" width="30" height="30" loading="lazy"></picture></span>{{end}}
         <div class="min-w-0"><div class="kind">{{.Console}}</div><h3 class="break-anywhere">{{t $.Lang "downloads.kind.patch"}}</h3></div>
       </div>
       <div class="foot">
@@ -51,7 +51,7 @@
   <ul class="tgrid">
     {{range .Platforms}}
     <li class="tcard">
-      <span class="console lg"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>
+      <span class="console lg"><picture class="console-mark"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>
       <span class="t"><b>{{.Name}}</b></span>
       <span class="end"><span class="badge {{badgeClass .Status}}">{{.Status}}</span></span>
     </li>
