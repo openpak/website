@@ -598,7 +598,6 @@ var platforms = []platform{
 	{"PlayStation 4", "PS4", "planned"},
 	{"PlayStation 5", "PS5", "planned"},
 	{"Xbox One", "Xbox One", "planned"},
-	{"Xbox Series", "", "not-feasible"},
 }
 
 func (s *Server) handleDownloads(w http.ResponseWriter, r *http.Request) {
