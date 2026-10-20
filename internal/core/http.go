@@ -266,10 +266,17 @@ func (c *HTTPClient) ChangePassword(ctx context.Context, coreSessionID, current,
 // UpdateProfile proxies POST /v1/profile: the display name, country and date of birth of the
 // signed-in account. The core keeps the current display name when it is sent empty; country
 // and birthday are stored as sent, so an empty one clears it.
-func (c *HTTPClient) UpdateProfile(ctx context.Context, coreSessionID, country, birthday, displayName string) error {
-	code, body, _, err := c.call(ctx, http.MethodPost, "v1/profile", map[string]string{
-		"country": country, "birthday": birthday, "display_name": displayName,
-	}, coreSessionID)
+func (c *HTTPClient) UpdateProfile(ctx context.Context, coreSessionID, country, birthday, displayName string, text ...ProfileText) error {
+	payload := map[string]any{"country": country, "birthday": birthday, "display_name": displayName}
+	if len(text) != 0 {
+		if text[0].Bio != nil {
+			payload["bio"] = *text[0].Bio
+		}
+		if text[0].Motto != nil {
+			payload["motto"] = *text[0].Motto
+		}
+	}
+	code, body, _, err := c.call(ctx, http.MethodPost, "v1/profile", payload, coreSessionID)
 	if err != nil {
 		return err
 	}
@@ -352,7 +359,7 @@ func (c *HTTPClient) Whoami(ctx context.Context, coreSessionID string) (Account,
 	}
 	a := Account{
 		ID: str(body["account_id"]), Email: str(body["email"]), DisplayName: str(body["display_name"]), Handle: str(body["handle"]),
-		Status: str(body["status"]),
+		Status: str(body["status"]), Bio: str(body["bio"]), Motto: str(body["motto"]),
 	}
 	a.EmailVerified, _ = body["email_verified"].(bool)
 	a.TwoFactorEnabled, _ = body["two_factor_enabled"].(bool)

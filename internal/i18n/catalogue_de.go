@@ -102,6 +102,8 @@ var catalogueDE = Catalogue{
 	"auth.login.title":                 "Anmelden",
 	"auth.email":                       "E-Mail-Adresse",
 	"auth.password":                    "Passwort",
+	"account.profile.bio":              "Biografie",
+	"account.profile.motto":            "Motto",
 	"account.profile.title":            "Profil",
 	"account.profile.hint":             "Deinen Namen sehen deine Freunde. Deine Konsole sendet Land und Geburtsdatum mit deinem Profil; du kannst sie leer lassen — nichts wird für dich ausgefüllt.",
 	"account.profile.submit":           "Speichern",

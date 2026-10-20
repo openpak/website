@@ -102,6 +102,8 @@ var cataloguePTBR = Catalogue{
 	"auth.login.title":                 "Entrar",
 	"auth.email":                       "Endereço de e-mail",
 	"auth.password":                    "Senha",
+	"account.profile.bio":              "Biografia",
+	"account.profile.motto":            "Lema",
 	"account.profile.title":            "Perfil",
 	"account.profile.hint":             "Seu nome é o que seus amigos veem. Seu console envia país e data de nascimento com o seu perfil; você pode deixá-los em branco — nada é preenchido automaticamente.",
 	"account.profile.submit":           "Salvar",

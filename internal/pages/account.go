@@ -32,6 +32,8 @@ type accountView struct {
 	AvatarURL      string
 	AvatarPending  bool
 	Presets        []string
+	Bio            string
+	Motto          string
 	DisplayName    string
 	Country        string
 	Birthday       string
@@ -107,6 +109,7 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 	view.Countries, view.MaxBirthday = countries, time.Now().Format("2006-01-02")
 	if acct, err := s.Identity.GetAccount(ctx, v.AccountID); err == nil {
 		view.DisplayName, view.Country, view.Birthday = acct.DisplayName, acct.Country, acct.Birthday
+		view.Bio, view.Motto = acct.Bio, acct.Motto
 	} else {
 		s.log.Error("get account", "err", err)
 	}
@@ -164,7 +167,15 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request) {
 	display := strings.TrimSpace(r.PostFormValue("display_name"))
 	country := strings.TrimSpace(r.PostFormValue("country"))
 	birthday := strings.TrimSpace(r.PostFormValue("birthday"))
-	if err := s.Core.UpdateProfile(r.Context(), v.CoreSessionID, country, birthday, display); err != nil {
+	bio, motto := r.PostFormValue("bio"), r.PostFormValue("motto")
+	text := core.ProfileText{}
+	if r.PostForm.Has("bio") {
+		text.Bio = &bio
+	}
+	if r.PostForm.Has("motto") {
+		text.Motto = &motto
+	}
+	if err := s.Core.UpdateProfile(r.Context(), v.CoreSessionID, country, birthday, display, text); err != nil {
 		s.log.Error("update profile", "err", err)
 		redirectMsg(w, r, "/account", "profile-failed")
 		return

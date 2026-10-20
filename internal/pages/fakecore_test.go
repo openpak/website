@@ -18,6 +18,7 @@ import (
 // fakeCore implements every core interface in memory, mirroring the
 // contract semantics the website relies on.
 type fakeCore struct {
+	profileText    core.ProfileText
 	accounts       map[string]string // email -> password
 	verified       map[string]bool
 	sessions       map[string]string // coreSessionID -> email
@@ -263,7 +264,7 @@ func (f *fakeCore) ChangePassword(_ context.Context, _, current, next string) er
 	f.accounts["a@x.test"] = next
 	return nil
 }
-func (f *fakeCore) UpdateProfile(_ context.Context, sid, country, birthday, displayName string) error {
+func (f *fakeCore) UpdateProfile(_ context.Context, sid, country, birthday, displayName string, text ...core.ProfileText) error {
 	// Mirror the core's own rule: an ISO date or nothing.
 	if birthday != "" {
 		if _, err := time.Parse("2006-01-02", birthday); err != nil {
@@ -275,6 +276,14 @@ func (f *fakeCore) UpdateProfile(_ context.Context, sid, country, birthday, disp
 	if displayName != "" {
 		f.names["acct-"+f.sessions[sid]] = displayName
 	}
+	if len(text) != 0 {
+		if text[0].Bio != nil {
+			f.profileText.Bio = text[0].Bio
+		}
+		if text[0].Motto != nil {
+			f.profileText.Motto = text[0].Motto
+		}
+	}
 	return nil
 }
 func (f *fakeCore) ForgotPassword(_ context.Context, _ string) error { return nil }
@@ -285,8 +294,15 @@ func (f *fakeCore) ResetPassword(_ context.Context, _, password string) error {
 func (f *fakeCore) Healthy(_ context.Context) error { return nil }
 
 func (f *fakeCore) GetAccount(_ context.Context, accountID string) (core.Account, error) {
+	bio, motto := "", ""
+	if f.profileText.Bio != nil {
+		bio = *f.profileText.Bio
+	}
+	if f.profileText.Motto != nil {
+		motto = *f.profileText.Motto
+	}
 	email := strings.TrimPrefix(accountID, "acct-")
-	return core.Account{ID: accountID, DisplayName: f.names[accountID],
+	return core.Account{Bio: bio, Motto: motto, ID: accountID, DisplayName: f.names[accountID],
 		EmailVerified: f.verified[email], TwoFactorEnabled: f.twoFactor[email]}, nil
 }
 

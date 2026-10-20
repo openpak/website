@@ -442,8 +442,9 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request, tok store.APIT
 	resp := map[string]any{
 		"account_id":   tok.AccountID,
 		"display_name": acct.DisplayName,
-		"country":      acct.Country,
-		"birthday":     acct.Birthday,
+		"bio":          acct.Bio, "motto": acct.Motto,
+		"country":  acct.Country,
+		"birthday": acct.Birthday,
 		// So the app can offer "resend the link" and show whether 2FA is on.
 		"email_verified":     acct.EmailVerified,
 		"two_factor_enabled": acct.TwoFactorEnabled,
@@ -874,9 +875,11 @@ func (s *Server) handleForgetPush(w http.ResponseWriter, r *http.Request, tok st
 // thing rather than having to echo back the rest.
 func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
 	var req struct {
-		DisplayName string `json:"display_name"`
-		Country     string `json:"country"`
-		Birthday    string `json:"birthday"`
+		Bio         *string `json:"bio"`
+		Motto       *string `json:"motto"`
+		DisplayName string  `json:"display_name"`
+		Country     string  `json:"country"`
+		Birthday    string  `json:"birthday"`
 	}
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8192)).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid body")
@@ -897,7 +900,7 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, tok
 			req.Birthday = acct.Birthday
 		}
 	}
-	err := s.Core.UpdateProfile(r.Context(), tok.CoreSessionID, req.Country, req.Birthday, req.DisplayName)
+	err := s.Core.UpdateProfile(r.Context(), tok.CoreSessionID, req.Country, req.Birthday, req.DisplayName, core.ProfileText{Bio: req.Bio, Motto: req.Motto})
 	if err != nil {
 		// The core validates: a two-letter country, an ISO date, a name of a
 		// sane length. Its complaint is the useful one to pass on.

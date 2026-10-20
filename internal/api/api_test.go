@@ -26,6 +26,7 @@ import (
 
 // fakeCore mirrors contract semantics the API relies on.
 type fakeCore struct {
+	profileText    core.ProfileText
 	accounts       map[string]string
 	verified       map[string]bool
 	sessions       map[string]string
@@ -114,7 +115,7 @@ func (f *fakeCore) Presence(_ context.Context, ids []string) (map[string]core.Pr
 	}
 	return out, nil
 }
-func (f *fakeCore) UpdateProfile(_ context.Context, _, country, birthday, displayName string) error {
+func (f *fakeCore) UpdateProfile(_ context.Context, _, country, birthday, displayName string, text ...core.ProfileText) error {
 	// Mirror the core's own validation: the API must pass its complaint on
 	// rather than flatten it.
 	if birthday != "" {
@@ -123,6 +124,14 @@ func (f *fakeCore) UpdateProfile(_ context.Context, _, country, birthday, displa
 		}
 	}
 	f.profile = [3]string{country, birthday, displayName}
+	if len(text) != 0 {
+		if text[0].Bio != nil {
+			f.profileText.Bio = text[0].Bio
+		}
+		if text[0].Motto != nil {
+			f.profileText.Motto = text[0].Motto
+		}
+	}
 	return nil
 }
 func (f *fakeCore) RegisterWithProfile(ctx context.Context, email, password, displayName, _, _, _ string) error {
@@ -139,6 +148,13 @@ func (f *fakeCore) ResetPassword(_ context.Context, token, password string) erro
 }
 func (f *fakeCore) Healthy(_ context.Context) error { return nil }
 func (f *fakeCore) GetAccount(_ context.Context, id string) (core.Account, error) {
+	bio, motto := "", ""
+	if f.profileText.Bio != nil {
+		bio = *f.profileText.Bio
+	}
+	if f.profileText.Motto != nil {
+		motto = *f.profileText.Motto
+	}
 	email := strings.TrimPrefix(id, "acct-")
 	st := f.status[id]
 	if st == "" {
@@ -147,7 +163,7 @@ func (f *fakeCore) GetAccount(_ context.Context, id string) (core.Account, error
 	if st == "missing" {
 		return core.Account{}, core.ErrNotFound
 	}
-	return core.Account{ID: id, Country: f.profile[0], Birthday: f.profile[1], Status: st,
+	return core.Account{Bio: bio, Motto: motto, ID: id, Country: f.profile[0], Birthday: f.profile[1], Status: st,
 		EmailVerified: f.verified[email], TwoFactorEnabled: f.twoFactor[email]}, nil
 }
 

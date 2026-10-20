@@ -181,7 +181,7 @@ func (g *GRPC) GetAccount(ctx context.Context, accountID string) (Account, error
 		return Account{}, mapGRPC(err)
 	}
 	return Account{ID: resp.GetAccountId(), DisplayName: resp.GetDisplayName(), Handle: resp.GetHandle(),
-		Country: resp.GetCountry(), Birthday: resp.GetBirthday(),
+		Country: resp.GetCountry(), Birthday: resp.GetBirthday(), Bio: resp.GetBio(), Motto: resp.GetMotto(),
 		Status: statusName(resp.GetStatus()), EmailVerified: resp.GetEmailVerified(),
 		TwoFactorEnabled: resp.GetTwoFactorEnabled()}, nil
 }

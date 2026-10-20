@@ -65,6 +65,8 @@ type Account struct {
 	Email       string
 	DisplayName string
 	Handle      string
+	Bio         string
+	Motto       string
 	// Country and Birthday are what the console's user object carries. Empty is normal for
 	// accounts created before registration collected them.
 	Country  string
@@ -165,10 +167,16 @@ type HTTP interface {
 	ChangePassword(ctx context.Context, coreSessionID, current, next string) error
 	// An empty display name leaves the current one. Country and birthday are
 	// stored as sent, so an empty one clears it.
-	UpdateProfile(ctx context.Context, coreSessionID, country, birthday, displayName string) error
+	UpdateProfile(ctx context.Context, coreSessionID, country, birthday, displayName string, text ...ProfileText) error
 	ForgotPassword(ctx context.Context, email string) error
 	ResetPassword(ctx context.Context, token, password string) error
 	Healthy(ctx context.Context) error
+}
+
+// ProfileText preserves omitted fields and permits clearing supplied empty text.
+type ProfileText struct {
+	Bio   *string
+	Motto *string
 }
 
 // Identity projects account facts and runs the step-up checks. Who a session

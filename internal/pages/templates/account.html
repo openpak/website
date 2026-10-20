@@ -229,6 +229,10 @@
     <input type="hidden" name="csrf" value="{{.CSRF}}">
     <label for="profile-name">{{t .Lang "auth.displayname"}}</label>
     <input id="profile-name" name="display_name" type="text" value="{{.DisplayName}}" minlength="3" maxlength="32" autocomplete="nickname">
+    <label for="profile-motto">{{t .Lang "account.profile.motto"}}</label>
+    <input id="profile-motto" name="motto" type="text" value="{{.Motto}}" maxlength="21">
+    <label for="profile-bio">{{t .Lang "account.profile.bio"}}</label>
+    <textarea id="profile-bio" name="bio" rows="4" maxlength="499">{{.Bio}}</textarea>
     <label for="profile-country">{{t .Lang "auth.country"}}</label>
     <select id="profile-country" name="country" autocomplete="country">
       <option value="">{{t .Lang "account.profile.unset"}}</option>
