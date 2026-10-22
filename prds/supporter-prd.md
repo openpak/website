@@ -222,7 +222,7 @@ Cross-play (research only):
 | --- | --- | --- |
 | SP-0 | Legal review and model decision | Written legal opinion covering reverse-engineered console protocols, vendor IP and trademarks, DMCA §1201 exposure of porting/editing, processor acceptable-use (Patreon, Stripe), and the AGPL/GPL mix. Owner confirms recurring vs one-time, price points, and the §14 answers. **No later milestone starts without it.** |
 | SP-1 | Supporter tier, CR-8, Patreon linking | CR-8 merged in `account`; a test Patreon pledge grants, a cancel revokes, a missed webhook is fixed by the nightly reconcile; `/api/v1/me` shows the field; SUP-11 test green; privacy policy updated. After public launch only. |
-| SP-2 | Minecraft save porting | One real Switch-legacy world ported to Wii U and loaded on hardware or Cemu with a correct loss report; source untouched; converter licences recorded. Wii U ingest by upload works. |
+| SP-2 | Minecraft save porting | One real Switch world ported to Wii U and loaded on hardware or Cemu with a correct loss report; source untouched; converter licences recorded. Wii U ingest by upload works. |
 | SP-3 | Save editors, one game at a time | Per game: round-trip test byte-identical, an edit loads on hardware or emulator, licence recorded, AGPL source offer reachable from the editor page. |
 | SP-4 | Cross-play research | The SUP-19 written verdict, with packet evidence from two families. Only a "build" verdict becomes a new PRD. |
 
