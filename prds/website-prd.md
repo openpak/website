@@ -23,7 +23,7 @@ Everything the console and emulator cannot do themselves lives here.
 - Core HTTP already exists: `POST /v1/register`, `GET /v1/verify`, `POST /v1/login`,
   `POST /v1/logout`, `GET/DELETE /v1/sessions`, forgot/reset-password
   (`account/internal/web`). Core gRPC: Identity, Links, Social, Sessions, Invitations, Events.
-- Observed earlier behaviour (evidence only): registration open/closed state, profile
+- Observed behaviour of earlier networks (evidence only): registration open/closed state, profile
   (name, avatar, Mii), friend code `SW-xxxx-xxxx-xxxx`, friends list with
   accept/decline/remove/block/favourite, play history, online counts per game, session
   list with revoke, admin ban/unban/reports, Discord link. Source: route list of
@@ -118,8 +118,8 @@ own internal key. Deployed behind the existing Traefik on its own hostname; neve
   image. So CR-2 must carry: the JPEG bytes, `image_updated_at`, and a documented default.
   **Still unmeasured, and to be measured rather than read:** the pixel dimensions the
   console expects for `/1/` versus `/2/`, and the byte ceiling it will accept. Both are
-  observable on a linked emulator or console; neither should be answered by reading a
-  source-available competitor.
+  observable on a linked emulator or console; neither should be answered by reading another
+  implementation's source.
 - CR-3 Friend-code projection: the Switch adapter owns `SW-` codes (T2); define how the
   website reads them (core-published field or adapter read contract).
 - CR-4 (from W1 implementation) `GET /v1/whoami` on the core HTTP surface. Core login
@@ -154,8 +154,8 @@ own internal key. Deployed behind the existing Traefik on its own hostname; neve
 
 ## 12. Evidence references
 
-`account/internal/web/*.go`; `account/proto/openpak/account/v1/*.proto`; Reference route list
-(paths only) from `openpak-account/main.go` as the observed feature set.
+`account/internal/web/*.go`; `account/proto/openpak/account/v1/*.proto`; the observed feature set
+from earlier research notes.
 
 ## 2026-09-08 — what shipped, and the one structural decision
 
