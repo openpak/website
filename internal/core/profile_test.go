@@ -30,7 +30,7 @@ func TestProfileTextPreservesOmittedFieldsAndSendsClears(t *testing.T) {
 		t.Fatal(err)
 	}
 	if _, exists := received["bio"]; exists {
-		t.Fatal("legacy update sent a bio it did not edit")
+		t.Fatal("older update sent a bio it did not edit")
 	}
 	bio, motto := "", "Play together"
 	if err := c.UpdateProfile(t.Context(), "session-1", "IE", "1990-01-01", "Player", ProfileText{Bio: &bio, Motto: &motto}); err != nil {

@@ -15,5 +15,5 @@ network gamertag-edit POST answers Gone and invokes no adapter.
 
 OP codes are fully retired, including minting and lookup; migration
 0022_retire_openpak_codes drops their table. There is no old-code alias path.
-Deploy only after the account core, adapters and owner-reviewed legacy migration
+Deploy only after the account core, adapters and owner-reviewed migration
 are ready. See account-core docs/handles.md for the authoritative policy.
