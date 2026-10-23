@@ -9,4 +9,4 @@ ponytail: a copy, not a shared module. When a third consumer appears (or these d
 promote it to its own module — `github.com/openpak/account-proto` — and delete this
 directory. To refresh today: re-copy the files from the account repo.
 
-Last refreshed from account revision 04aed49 (v0.11.0); `federation.*` from ae014c3 (federation admission rules).
+Last refreshed from account revision 04aed49 (v0.11.0); `federation.*` from ae014c3 (federation admission rules); `account.*` from 6113fce (account erasure).

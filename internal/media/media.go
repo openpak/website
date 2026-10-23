@@ -89,6 +89,36 @@ func (s *FSStorage) Get(_ context.Context, key string) ([]byte, error) {
 	return os.ReadFile(p)
 }
 
+// RemoveAll deletes every object under a key prefix; a missing prefix is fine.
+func (s *FSStorage) RemoveAll(_ context.Context, prefix string) error {
+	p, err := s.path(prefix)
+	if err != nil {
+		return err
+	}
+	if p == filepath.Clean(s.root) {
+		return errors.New("media: refusing to remove the storage root")
+	}
+	return os.RemoveAll(p)
+}
+
+// Remover is a Storage that can delete (account erasure needs it).
+type Remover interface {
+	RemoveAll(ctx context.Context, prefix string) error
+}
+
+// Erase deletes every stored avatar of an account, website copies and the
+// console JPEG alike. The core's copies go with the core's own erasure.
+func (s *Service) Erase(ctx context.Context, accountID string) error {
+	if accountID == "" || strings.ContainsAny(accountID, "/\\.") {
+		return fmt.Errorf("media: bad account id %q", accountID)
+	}
+	r, ok := s.store.(Remover)
+	if !ok {
+		return errors.New("media: this storage cannot delete")
+	}
+	return r.RemoveAll(ctx, "avatars/"+accountID)
+}
+
 // Service processes and stores avatars.
 type Service struct {
 	store Storage

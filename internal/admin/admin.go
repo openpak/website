@@ -35,10 +35,13 @@ type Server struct {
 	// Moderation is the core's account search, bans and reports; nil says
 	// "not configured" on /admin/users and /admin/reports.
 	Moderation core.Moderation
-	Core       core.Events
-	DB         store.Store
-	Sessions   sessionView
-	AdminIDs   []string
+	// Erasure restores a closed account within its grace period and says
+	// when one will be erased; nil hides the restore button.
+	Erasure  ErasureCore
+	Core     core.Events
+	DB       store.Store
+	Sessions sessionView
+	AdminIDs []string
 
 	// What the monitor reads. Every one is optional: nil (or an empty URL)
 	// renders as "not configured", never as an error page.
@@ -267,6 +270,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/events", s.handleEvents)
 	mux.HandleFunc("GET /admin/users", s.handleUsers)
 	mux.HandleFunc("POST /admin/users/{id}/ban", s.handleBan)
+	mux.HandleFunc("POST /admin/users/{id}/restore", s.handleRestore)
 	mux.HandleFunc("GET /admin/reports", s.handleReports)
 	mux.HandleFunc("POST /admin/reports/{id}/resolve", s.handleResolveReport)
 	mux.HandleFunc("GET /admin/tickets", s.handleTickets)

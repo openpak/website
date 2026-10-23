@@ -129,6 +129,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 
 	h("/token", s.handleMintToken)              // POST /api/v1/token
 	h("/token/2fa", s.handleMintToken2FA)       // POST /api/v1/token/2fa
+	h("/token/restore", s.handleRestoreToken)   // POST /api/v1/token/restore
 	d("/token", s.auth(s.handleRevokeToken))    // DELETE /api/v1/token
 	g("/me", s.auth(s.handleMe))                // GET /api/v1/me
 	d("/me", s.auth(s.handleDeleteAccount))     // DELETE /api/v1/me {"password"}
@@ -310,18 +311,50 @@ func (s *Server) handleMintToken(w http.ResponseWriter, r *http.Request) {
 	// Establish the core web session through the public HTTP contract. A 2FA
 	// account answers with a challenge instead, which POST /token/2fa redeems.
 	coreSession, err := s.Core.Login(r.Context(), req.Email, req.Password)
+	s.afterLogin(w, r, coreSession, err)
+}
+
+// handleRestoreToken: POST /api/v1/token/restore {email,password} reopens a
+// closed account within its grace period and then answers exactly like
+// POST /token (a 2FA account still gets its challenge).
+func (s *Server) handleRestoreToken(w http.ResponseWriter, r *http.Request) {
+	if !s.Auth.Allow(clientKey(r)) {
+		writeError(w, http.StatusTooManyRequests, "rate limited")
+		return
+	}
+	var req tokenRequest
+	if !decodeSmall(w, r, &req) {
+		return
+	}
+	coreSession, err := s.Core.RestoreLogin(r.Context(), req.Email, req.Password)
+	s.afterLogin(w, r, coreSession, err)
+}
+
+// afterLogin answers POST /token and /token/restore. A closed account whose
+// password was right gets 409 account_deletion_pending with its erasure date,
+// so the app can offer the restore.
+func (s *Server) afterLogin(w http.ResponseWriter, r *http.Request, coreSession string, err error) {
 	var challenge *core.LoginChallenge
-	if errors.As(err, &challenge) {
+	var pending *core.DeletionPending
+	switch {
+	case errors.As(err, &challenge):
 		writeJSON(w, http.StatusAccepted, map[string]any{
 			"two_factor_required": true, "challenge": challenge.Challenge,
 		})
-		return
-	}
-	if err != nil {
+	case errors.As(err, &pending):
+		out := map[string]any{"error": "this account is closed; restore it with POST /api/v1/token/restore",
+			"code": "account_deletion_pending", "deletion_pending": true}
+		if !pending.EraseAfter.IsZero() {
+			out["erase_after"] = pending.EraseAfter.UTC().Format(time.RFC3339)
+		}
+		writeJSON(w, http.StatusConflict, out)
+	case errors.Is(err, core.ErrErasureStarted):
+		writeJSON(w, http.StatusGone, map[string]any{"error": "the grace period is over; this account is being erased", "code": "account_erasure_started"})
+	case err != nil:
 		writeError(w, http.StatusUnauthorized, "invalid credentials")
-		return
+	default:
+		s.mintBearer(w, r, coreSession)
 	}
-	s.mintBearer(w, r, coreSession)
 }
 
 // handleMintToken2FA: POST /api/v1/token/2fa {challenge, code | recovery_code}

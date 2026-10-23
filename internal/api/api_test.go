@@ -48,6 +48,7 @@ type fakeCore struct {
 	resent         int
 	newEmail       string
 	status         map[string]string // account id -> core status; absent = active
+	closed         map[string]bool   // email -> closed, restorable
 }
 
 func newFakeCore() *fakeCore {
@@ -69,12 +70,22 @@ func (f *fakeCore) Login(_ context.Context, email, password string) (string, err
 	if pw, ok := f.accounts[email]; !ok || pw != password || !f.verified[email] {
 		return "", core.ErrInvalidCredentials
 	}
+	if f.closed[email] {
+		return "", &core.DeletionPending{EraseAfter: time.Date(2026, 11, 22, 12, 0, 0, 0, time.UTC)}
+	}
 	if f.twoFactor[email] {
 		return "", &core.LoginChallenge{Challenge: "ch-" + email}
 	}
 	id := "sess-" + email
 	f.sessions[id] = email
 	return id, nil
+}
+func (f *fakeCore) RestoreLogin(ctx context.Context, email, password string) (string, error) {
+	if pw, ok := f.accounts[email]; !ok || pw != password {
+		return "", core.ErrInvalidCredentials
+	}
+	delete(f.closed, email)
+	return f.Login(ctx, email, password)
 }
 func (f *fakeCore) Logout(_ context.Context, sid string) error {
 	delete(f.sessions, sid)

@@ -108,6 +108,7 @@ type Store interface {
 
 	TicketStore
 	CrashStore
+	ErasureStore
 	CompatStore
 	ShopStore
 	PlayabilityStore

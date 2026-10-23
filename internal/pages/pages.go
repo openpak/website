@@ -334,6 +334,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /login", s.handleLoginForm)
 	mux.HandleFunc("POST /login", s.handleLoginSubmit)
 	mux.HandleFunc("POST /login/2fa", s.handleLogin2FASubmit)
+	mux.HandleFunc("POST /login/restore", s.handleLoginRestore)
 	mux.HandleFunc("GET /email/confirm", s.handleEmailConfirmForm)
 	mux.HandleFunc("POST /email/confirm", s.handleEmailConfirmSubmit)
 	mux.HandleFunc("POST /account/email", s.handleEmailChange)
@@ -765,16 +766,63 @@ func (s *Server) handleLoginSubmit(w http.ResponseWriter, r *http.Request) {
 	// cookie to the core session id. A 2FA account gets a challenge instead of
 	// a session, and the second step asks for the code.
 	coreSession, err := s.Core.Login(r.Context(), email, password)
+	s.afterLogin(w, r, email, coreSession, err)
+}
+
+// afterLogin answers a sign-in or a restore: a session finishes it, a 2FA
+// account gets its second step, and a closed account (the password was right)
+// is offered its restore until the erasure date.
+func (s *Server) afterLogin(w http.ResponseWriter, r *http.Request, email, coreSession string, err error) {
 	var challenge *core.LoginChallenge
-	if errors.As(err, &challenge) {
+	var pending *core.DeletionPending
+	switch {
+	case errors.As(err, &challenge):
 		s.renderLogin2FA(w, r, http.StatusOK, challenge.Challenge, "")
-		return
-	}
-	if err != nil {
+	case errors.As(err, &pending):
+		s.renderLoginRestore(w, r, email, pending.EraseAfter)
+	case errors.Is(err, core.ErrErasureStarted):
+		s.loginFailed(w, r, http.StatusGone, "auth.restore.gone")
+	case err != nil:
 		s.loginFailed(w, r, http.StatusUnauthorized, "auth.login.failed")
+	default:
+		s.finishLogin(w, r, coreSession)
+	}
+}
+
+// loginRestoreView offers a closed account its restore. The password is asked
+// again rather than carried in the page.
+type loginRestoreView struct {
+	baseData
+	Email   string
+	Message string
+}
+
+func (s *Server) renderLoginRestore(w http.ResponseWriter, r *http.Request, email string, eraseAfter time.Time) {
+	lang := i18n.FromRequest(r)
+	when := i18n.T(lang, "auth.restore.soon")
+	if !eraseAfter.IsZero() {
+		when = i18n.Date(lang, eraseAfter)
+	}
+	s.render(w, http.StatusOK, "login_restore.html", loginRestoreView{
+		baseData: s.data(r, nil, i18n.T(lang, "auth.restore.title")),
+		Email:    email,
+		Message:  strings.ReplaceAll(i18n.T(lang, "auth.restore.sub"), "{date}", when),
+	})
+}
+
+// handleLoginRestore reopens a closed account with its password and signs in.
+func (s *Server) handleLoginRestore(w http.ResponseWriter, r *http.Request) {
+	if !s.AuthLimit.Allow(clientKey(r)) {
+		http.Error(w, "too many attempts; slow down", http.StatusTooManyRequests)
 		return
 	}
-	s.finishLogin(w, r, coreSession)
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid form", http.StatusBadRequest)
+		return
+	}
+	email := normalizeEmail(r.PostFormValue("email"))
+	coreSession, err := s.Core.RestoreLogin(r.Context(), email, r.PostFormValue("password"))
+	s.afterLogin(w, r, email, coreSession, err)
 }
 
 // login2FAView is the second sign-in step. The challenge is the core's own:

@@ -42,6 +42,12 @@ type Config struct {
 	// anywhere.
 	AttachmentsDir string
 
+	// ErasureInterval is how often the account-erasure finaliser looks for
+	// closed accounts whose grace period is over (WEBSITE_ERASURE_INTERVAL,
+	// Go duration, default 1h). The grace period itself is the core's
+	// ACCOUNT_DELETION_GRACE.
+	ErasureInterval time.Duration
+
 	// NetProfileTraefikFile is the read-only mount of Traefik's dynamic
 	// configuration; the network profile (PRD prds/network-profile-service-prd.md) is
 	// generated from it at request time. Empty disables /api/v1/network/*:
@@ -96,6 +102,11 @@ func Load() (Config, error) {
 		return c, fmt.Errorf("config: WEBSITE_MIN_AGE must be a whole number of years")
 	}
 	c.MinAge = minAge
+	every, err := time.ParseDuration(env("WEBSITE_ERASURE_INTERVAL", "1h"))
+	if err != nil || every < time.Minute {
+		return c, fmt.Errorf("config: WEBSITE_ERASURE_INTERVAL must be a duration of at least 1m")
+	}
+	c.ErasureInterval = every
 	for _, id := range strings.Split(os.Getenv("WEBSITE_ADMIN_ACCOUNT_IDS"), ",") {
 		if id = strings.TrimSpace(id); id != "" {
 			c.AdminAccountIDs = append(c.AdminAccountIDs, id)

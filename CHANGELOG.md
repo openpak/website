@@ -13,6 +13,18 @@ release, taken from git history. `git log` stays the source of truth.
 
 ## Unreleased
 
+- **Automatic account erasure.** `internal/erasure` runs every `WEBSITE_ERASURE_INTERVAL` (1h)
+  under a Postgres advisory lock: for each closed account whose grace period is over (the core's
+  `ListDueAccountDeletions`) it erases saves (`DELETE /internal/accounts/{a}/saves`), chat
+  (`DELETE /internal/accounts/{a}/messages`) and the website (ticket and crash files, avatar files,
+  sessions, tokens, media, push installs, votes, compatibility reports, tickets, crash reports, ban
+  record, operator applications), then calls the core's `FinalizeAccountDeletion`. A failed step
+  is logged and retried next run; the account is finalized only when every step succeeded.
+- Signing in to a closed account with the right password offers "Restore my account" until the
+  erasure date (`POST /login/restore`); the API answers 409 `account_deletion_pending` and adds
+  `POST /api/v1/token/restore`. Admins restore from the users page. Push installs are revoked at
+  close. Delete-account copy and the privacy policy describe the 30-day grace and erasure.
+
 - **Federation admission.** Servers join a node with the node key (`POST /api/v1/federation/join`)
   and get their own key; each announces its roles and hardware report, and runs a daily
   home-measured bandwidth self-test (`GET`/`POST /api/v1/federation/selftest`). `/api/v1/regions`

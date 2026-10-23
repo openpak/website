@@ -28,6 +28,7 @@ internal/attachments/   ticket and crash-report files on disk (WEBSITE_ATTACHMEN
 internal/api/           /api/v1 mobile API (+ openapi/openapi.yaml contract)
 internal/chat/          client for the chat service's internal API
 internal/config/        environment configuration
+internal/erasure/       account-erasure finaliser: after the grace period, every service, then the core
 internal/core/          account-core clients (HTTP /v1/*, gRPC) + interfaces
 internal/fetchtool/     library behind cmd/openpak-network
 internal/i18n/          single string catalogue (WEB-09)

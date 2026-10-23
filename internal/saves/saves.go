@@ -255,6 +255,13 @@ func (c *Client) DeleteTitle(ctx context.Context, account, platform, title strin
 	return out.Deleted, err
 }
 
+// WipeAccount erases every backup, the storage credential and every row of an
+// account (account erasure, after the grace period). Idempotent; a 503 means
+// bytes on OpenPak storage survived and the call must be retried.
+func (c *Client) WipeAccount(ctx context.Context, account string) error {
+	return c.doJSON(ctx, http.MethodDelete, acct(account)+"/saves", nil, nil)
+}
+
 // Healthy asks the service's /healthz, for the admin monitor. A short deadline of its own:
 // the client's timeout is sized for uploads, and a health check that waits that long is
 // not answering the question.

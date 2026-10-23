@@ -183,7 +183,42 @@ func (g *GRPC) GetAccount(ctx context.Context, accountID string) (Account, error
 	return Account{ID: resp.GetAccountId(), DisplayName: resp.GetDisplayName(), Handle: resp.GetHandle(),
 		Country: resp.GetCountry(), Birthday: resp.GetBirthday(), Bio: resp.GetBio(), Motto: resp.GetMotto(),
 		Status: statusName(resp.GetStatus()), EmailVerified: resp.GetEmailVerified(),
-		TwoFactorEnabled: resp.GetTwoFactorEnabled()}, nil
+		TwoFactorEnabled: resp.GetTwoFactorEnabled(), EraseAfter: unixTime(resp.GetEraseAfterUnix())}, nil
+}
+
+// DueDeletions lists closed accounts whose grace period is over (home only).
+func (g *GRPC) DueDeletions(ctx context.Context, limit int) ([]string, error) {
+	c := accountv1.NewIdentityClient(g.conn)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	resp, err := c.ListDueAccountDeletions(ctx, &accountv1.ListDueAccountDeletionsRequest{Limit: int32(limit)})
+	if err != nil {
+		return nil, mapGRPC(err)
+	}
+	return resp.GetAccountIds(), nil
+}
+
+// FinalizeDeletion erases the core's part of a closed account.
+func (g *GRPC) FinalizeDeletion(ctx context.Context, accountID string) error {
+	c := accountv1.NewIdentityClient(g.conn)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	_, err := c.FinalizeAccountDeletion(ctx, &accountv1.RequestAccountDeletionRequest{
+		CallerNamespace: "website", Purpose: "account_erasure", AccountId: accountID})
+	return mapGRPC(err)
+}
+
+// RestoreDeletion is the admin restore within the grace period.
+func (g *GRPC) RestoreDeletion(ctx context.Context, accountID string) error {
+	c := accountv1.NewIdentityClient(g.conn)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	_, err := c.RestoreAccountDeletion(ctx, &accountv1.RequestAccountDeletionRequest{
+		CallerNamespace: "website", Purpose: "admin_restore", AccountId: accountID})
+	if status.Code(err) == codes.OutOfRange {
+		return ErrErasureStarted
+	}
+	return mapGRPC(err)
 }
 
 // --- Social ---

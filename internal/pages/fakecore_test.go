@@ -37,6 +37,9 @@ type fakeCore struct {
 	subjectToAc    map[string]string // subject -> accountID
 	publicCodes    map[string]string // published friend code -> accountID
 	deleted        []string          // accounts whose deletion was requested
+	closed         map[string]bool   // email -> closed, restorable (Login answers DeletionPending)
+	erasing        map[string]bool   // email -> closed, grace over (restore refused)
+	restored       []string          // accounts an admin restored
 	twoFactor      map[string]bool   // email -> 2FA on (code fakeTOTP, recovery fakeRecovery)
 	pending2FA     map[string]bool   // email -> setup started, not yet enabled
 	banned         map[string]bool   // email -> banned
@@ -224,6 +227,9 @@ func (f *fakeCore) Login(_ context.Context, email, password string) (string, err
 	if pw, ok := f.accounts[email]; !ok || pw != password || !f.verified[email] {
 		return "", core.ErrInvalidCredentials
 	}
+	if f.closed[email] || f.erasing[email] {
+		return "", &core.DeletionPending{EraseAfter: time.Date(2026, 11, 22, 12, 0, 0, 0, time.UTC)}
+	}
 	if f.twoFactor[email] {
 		return "", &core.LoginChallenge{Challenge: "ch-" + email}
 	}
@@ -231,6 +237,24 @@ func (f *fakeCore) Login(_ context.Context, email, password string) (string, err
 	f.sessions[id] = email
 	return id, nil
 }
+func (f *fakeCore) RestoreLogin(ctx context.Context, email, password string) (string, error) {
+	if pw, ok := f.accounts[email]; !ok || pw != password {
+		return "", core.ErrInvalidCredentials
+	}
+	if f.erasing[email] {
+		return "", core.ErrErasureStarted
+	}
+	delete(f.closed, email)
+	return f.Login(ctx, email, password)
+}
+
+func (f *fakeCore) DueDeletions(context.Context, int) ([]string, error) { return nil, nil }
+func (f *fakeCore) FinalizeDeletion(context.Context, string) error      { return nil }
+func (f *fakeCore) RestoreDeletion(_ context.Context, accountID string) error {
+	f.restored = append(f.restored, accountID)
+	return nil
+}
+
 func (f *fakeCore) Logout(_ context.Context, sid string) error {
 	delete(f.sessions, sid)
 	return nil

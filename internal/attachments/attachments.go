@@ -102,6 +102,19 @@ func (s *Store) Remove(key string) {
 	}
 }
 
+// Delete removes a stored file and says when it could not: a file already
+// gone, or a key that is not one of ours, is not an error (account erasure
+// retries until every file it found is gone).
+func (s *Store) Delete(key string) error {
+	if !keyRE.MatchString(key) {
+		return nil
+	}
+	if err := os.Remove(filepath.Join(s.dir, filepath.FromSlash(key))); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	return nil
+}
+
 // Serve writes a stored file as a download. It is always served as an opaque
 // attachment, whatever it claims to be, so an uploaded HTML file can never
 // run in the site's origin.

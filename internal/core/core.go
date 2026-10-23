@@ -37,7 +37,19 @@ var (
 	// ErrSecondFactorRequired is a step-up on a 2FA account that came without
 	// its code.
 	ErrSecondFactorRequired = errors.New("core: second factor required")
+	// ErrErasureStarted is a restore asked for after the grace period: the
+	// account is being erased and can no longer come back.
+	ErrErasureStarted = errors.New("core: the grace period is over; the account is being erased")
 )
+
+// DeletionPending is what Login answers when the password is right but the
+// account is closed and still restorable until EraseAfter. RestoreLogin
+// reopens it and signs in.
+type DeletionPending struct{ EraseAfter time.Time }
+
+func (e *DeletionPending) Error() string {
+	return "core: account closed; restorable until " + e.EraseAfter.UTC().Format(time.RFC3339)
+}
 
 // LoginChallenge is what Login returns when the password was right but the
 // account has two-factor authentication: no session yet, only a challenge
@@ -77,6 +89,9 @@ type Account struct {
 	Status           string
 	EmailVerified    bool
 	TwoFactorEnabled bool
+	// EraseAfter is set while the account is closed: the moment the erasure
+	// finaliser erases it unless it is restored first.
+	EraseAfter time.Time
 }
 
 // Friend is a friend or pending request counterparty.
@@ -139,6 +154,10 @@ type HTTP interface {
 	// Login signs in. A 2FA account answers *LoginChallenge instead of a
 	// session; Login2FA finishes it.
 	Login(ctx context.Context, email, password string) (coreSessionID string, err error)
+	// RestoreLogin reopens a closed account within its grace period with its
+	// password, then signs in exactly like Login (a 2FA account still answers
+	// *LoginChallenge). ErrErasureStarted once the grace period is over.
+	RestoreLogin(ctx context.Context, email, password string) (coreSessionID string, err error)
 	// Login2FA completes a challenged sign-in with a TOTP code or a recovery
 	// code. A wrong code or a dead challenge is ErrInvalidCode; the core's lock
 	// is ErrTwoFactorLocked.
@@ -208,6 +227,17 @@ type Identity interface {
 	// RequestDeletion starts deleting the account: the core disables it at once
 	// and revokes every one of its sessions.
 	RequestDeletion(ctx context.Context, accountID string) error
+}
+
+// Erasure is the home-only side of account deletion: the finaliser's list of
+// accounts whose grace period is over, its last step, and the admin restore.
+type Erasure interface {
+	DueDeletions(ctx context.Context, limit int) ([]string, error)
+	// FinalizeDeletion erases the core's part; idempotent.
+	FinalizeDeletion(ctx context.Context, accountID string) error
+	// RestoreDeletion reopens a closed account: ErrConflict when it is not
+	// closed, ErrErasureStarted once the grace period is over.
+	RestoreDeletion(ctx context.Context, accountID string) error
 }
 
 // Social is the core's canonical friend graph (WEB-04). Every write goes

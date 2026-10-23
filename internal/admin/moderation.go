@@ -1,11 +1,13 @@
 package admin
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
@@ -36,8 +38,10 @@ func (s *Server) handleUsers(w http.ResponseWriter, r *http.Request) {
 		// Banned is every account banned through this site, newest first,
 		// shown when nothing is searched: who did it and why at a glance.
 		Banned []store.Ban
+		// CanRestore shows the restore button on closed accounts.
+		CanRestore bool
 	}
-	v := usersView{base: b, Query: strings.TrimSpace(r.URL.Query().Get("q"))}
+	v := usersView{base: b, Query: strings.TrimSpace(r.URL.Query().Get("q")), CanRestore: s.Erasure != nil}
 	v.Flash = moderationFlash(r.URL.Query().Get("m"))
 	if v.Query != "" {
 		accts, err := s.Moderation.SearchAccounts(r.Context(), v.Query, 50)
@@ -47,6 +51,11 @@ func (s *Server) handleUsers(w http.ResponseWriter, r *http.Request) {
 		}
 		for _, a := range accts {
 			row := userRow{ModeratedAccount: a}
+			if a.Status == "deletion-pending" && s.Erasure != nil {
+				if acct, err := s.Erasure.GetAccount(r.Context(), a.ID); err == nil {
+					row.EraseAfter = acct.EraseAfter
+				}
+			}
 			if a.Status == "banned" {
 				if ban, err := s.DB.GetBan(r.Context(), a.ID); err == nil && ban.Banned {
 					row.Ban = &ban
@@ -69,6 +78,48 @@ func (s *Server) handleUsers(w http.ResponseWriter, r *http.Request) {
 type userRow struct {
 	core.ModeratedAccount
 	Ban *store.Ban
+	// EraseAfter is when a closed account is erased unless restored.
+	EraseAfter time.Time
+}
+
+// ErasureCore is the core's side of an admin restore.
+type ErasureCore interface {
+	GetAccount(ctx context.Context, accountID string) (core.Account, error)
+	RestoreDeletion(ctx context.Context, accountID string) error
+}
+
+// handleRestore reopens a closed account within its grace period, with the
+// status it had before (a banned account stays banned). The owner signs in
+// again; sessions revoked at close stay revoked.
+func (s *Server) handleRestore(w http.ResponseWriter, r *http.Request) {
+	ws, ok := s.authorizePost(w, r)
+	if !ok {
+		return
+	}
+	if s.Erasure == nil {
+		http.Error(w, "account restore is not configured", http.StatusServiceUnavailable)
+		return
+	}
+	id := r.PathValue("id")
+	back := "/admin/users?" + url.Values{"q": {r.PostFormValue("q")}}.Encode()
+	switch err := s.Erasure.RestoreDeletion(r.Context(), id); {
+	case err == nil:
+	case errors.Is(err, core.ErrNotFound):
+		http.Redirect(w, r, back+"&m=gone", http.StatusSeeOther)
+		return
+	case errors.Is(err, core.ErrErasureStarted):
+		http.Redirect(w, r, back+"&m=erasing", http.StatusSeeOther)
+		return
+	case errors.Is(err, core.ErrConflict):
+		http.Redirect(w, r, back+"&m=notclosed", http.StatusSeeOther)
+		return
+	default:
+		s.log.Error("admin: restore account", "account", id, "err", err)
+		http.Error(w, "the account service refused the restore", http.StatusBadGateway)
+		return
+	}
+	_ = s.DB.AddAudit(r.Context(), ws.AccountID, "account.restore", "account="+id)
+	http.Redirect(w, r, back+"&m=restored", http.StatusSeeOther)
 }
 
 // handleBan bans or unbans one account. A reason is required either way: the
@@ -199,7 +250,7 @@ func (s *Server) renderPending(w http.ResponseWriter, b base, key string) {
 
 func moderationFlash(code string) string {
 	switch code {
-	case "banned", "unbanned", "gone", "reason", "resolved", "resolution", "already":
+	case "banned", "unbanned", "gone", "reason", "resolved", "resolution", "already", "restored", "erasing", "notclosed":
 		return i18n.T("en", "admin.flash."+code)
 	default:
 		return ""

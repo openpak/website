@@ -20,6 +20,7 @@ import (
 	"github.com/openpak/website/internal/chat"
 	"github.com/openpak/website/internal/config"
 	"github.com/openpak/website/internal/core"
+	"github.com/openpak/website/internal/erasure"
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/metrics"
@@ -205,6 +206,19 @@ func run(log *slog.Logger) error {
 		files = nil
 	}
 	supportSvc := &support.Service{DB: db, Files: files, Push: pushSender, Log: log}
+
+	// Account erasure: once a closed account's grace period is over, erase it
+	// in every service, then in the core. Saves and chat must be configured
+	// for an account to finish: an unconfigured service fails its step, and
+	// the account waits (closed, not restorable) until it is.
+	finaliser := &erasure.Finaliser{Core: coreGRPC, Lock: db, Interval: cfg.ErasureInterval, Log: log,
+		Steps: []erasure.Step{
+			{Name: "saves", Erase: savesCli.WipeAccount},
+			{Name: "chat", Erase: chatCli.EraseAccount},
+			erasure.WebsiteStep(db, files, mediaSvc, log),
+		}}
+	go finaliser.Run(ctx)
+	log.Info("erasure: finaliser started", "every", cfg.ErasureInterval)
 	pageSrv.Support = supportSvc
 	apiSrv.Support = supportSvc
 	apiSrv.Crashes = files
@@ -212,6 +226,7 @@ func run(log *slog.Logger) error {
 	adminSrv.Federation = coreGRPC
 	adminSrv.Operators = db
 	adminSrv.Moderation = coreGRPC
+	adminSrv.Erasure = coreGRPC
 	// The monitor's sources. Each is optional and reads as "not configured"
 	// when absent; a typed nil must not reach an interface field, or it would
 	// read as configured and broken.

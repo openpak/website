@@ -24,6 +24,16 @@
       {{if eq .Status "banned"}}<span class="block text-sm break-anywhere">{{t $.Lang "admin.users.banreason"}}: {{if .BanReason}}{{.BanReason}}{{else if .Ban}}{{.Ban.Reason}}{{else}}{{t $.Lang "admin.users.noreason"}}{{end}}{{with .Ban}} · {{t $.Lang "admin.users.banby"}} <code>{{.Actor}}</code> · {{.UpdatedAt.Format "2 Jan 2006 15:04"}}{{end}}</span>
       <span class="block text-sm text-muted">{{t $.Lang "admin.users.everywhere"}}</span>{{end}}
     </span>
+    {{if eq .Status "deletion-pending"}}
+    <span class="block w-full text-sm sm:w-auto">{{t $.Lang "admin.users.closed"}}{{if not .EraseAfter.IsZero}} {{.EraseAfter.Format "2 Jan 2006 15:04"}}{{end}}</span>
+    {{if $.CanRestore}}
+    <form method="post" action="/admin/users/{{.ID}}/restore" class="sm:ml-auto">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <input type="hidden" name="q" value="{{$.Query}}">
+      <button type="submit" class="btn text-sm">{{t $.Lang "admin.users.restore"}}</button>
+    </form>
+    {{end}}
+    {{end}}
     {{if or (eq .Status "active") (eq .Status "banned")}}
     <form method="post" action="/admin/users/{{.ID}}/ban" class="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">

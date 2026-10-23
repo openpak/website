@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 )
@@ -105,6 +106,15 @@ func (c *Client) History(ctx context.Context, account, peer string, after int64)
 	out := []Message{}
 	out = append(out, wire.Messages...)
 	return out, nil
+}
+
+// EraseAccount deletes every message the account sent or received (account
+// erasure, after the grace period). Idempotent.
+func (c *Client) EraseAccount(ctx context.Context, account string) error {
+	if c == nil {
+		return ErrUnavailable
+	}
+	return c.call(ctx, http.MethodDelete, "/internal/accounts/"+url.PathEscape(account)+"/messages", nil, nil)
 }
 
 // Send posts one message; the service announces it to the recipient's

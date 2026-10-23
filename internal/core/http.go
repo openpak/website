@@ -142,7 +142,16 @@ func (c *HTTPClient) VerifyEmail(ctx context.Context, token string) error {
 // the response cookie. The website's own cookie wraps this id (WEB-02). A 2FA
 // account answers 202 with a challenge and no cookie: *LoginChallenge.
 func (c *HTTPClient) Login(ctx context.Context, email, password string) (string, error) {
-	code, body, cookies, err := c.call(ctx, http.MethodPost, "v1/login", map[string]string{
+	return c.login(ctx, "v1/login", email, password)
+}
+
+// RestoreLogin proxies POST /v1/login/restore: reopen a closed account, then sign in.
+func (c *HTTPClient) RestoreLogin(ctx context.Context, email, password string) (string, error) {
+	return c.login(ctx, "v1/login/restore", email, password)
+}
+
+func (c *HTTPClient) login(ctx context.Context, path, email, password string) (string, error) {
+	code, body, cookies, err := c.call(ctx, http.MethodPost, path, map[string]string{
 		"email": email, "password": password,
 	}, "")
 	if err != nil {
@@ -151,6 +160,14 @@ func (c *HTTPClient) Login(ctx context.Context, email, password string) (string,
 	if code == http.StatusAccepted && body["two_factor_required"] == true {
 		// Password right, second factor owed: the core set no cookie.
 		return "", &LoginChallenge{Challenge: str(body["challenge"])}
+	}
+	if code == http.StatusConflict && body["deletion_pending"] == true {
+		// Password right, account closed but restorable.
+		t, _ := time.Parse(time.RFC3339, str(body["erase_after"]))
+		return "", &DeletionPending{EraseAfter: t}
+	}
+	if code == http.StatusGone {
+		return "", ErrErasureStarted
 	}
 	if code != http.StatusOK {
 		return "", ErrInvalidCredentials

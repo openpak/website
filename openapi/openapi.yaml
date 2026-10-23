@@ -46,7 +46,10 @@ paths:
       description: |
         An account with two-factor authentication answers 202 with a challenge
         and no token; redeem it at `POST /token/2fa` with a code from the
-        authenticator app or a recovery code.
+        authenticator app or a recovery code. A closed (deleted) account that
+        is still within its 30-day grace period answers 409
+        `account_deletion_pending` with `erase_after`, and only to the right
+        password: offer the restore (`POST /token/restore`).
       responses:
         "201":
           description: Token minted
@@ -65,6 +68,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
+        "409": { $ref: "#/components/responses/DeletionPending" }
         "429": { $ref: "#/components/responses/RateLimited" }
     delete:
       summary: Revoke the presented token (ends the core session too)
@@ -75,6 +79,49 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Message" }
         "401": { $ref: "#/components/responses/Unauthorized" }
+  /token/restore:
+    post:
+      summary: Restore a closed account and mint the bearer
+      security: []
+      description: |
+        Reopens an account closed within its grace period (the password is the
+        proof, as for `POST /token`), then answers exactly like `POST /token`:
+        201 with a token, or 202 with a challenge for a two-factor account. An
+        account that is not closed simply signs in. Shares the token-minting
+        rate limit.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "201":
+          description: Restored and token minted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenResponse" }
+        "202":
+          description: Restored; a second factor is owed (no token yet).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TwoFactorChallenge" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: The account is suspended (a restore keeps a suspension).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "410":
+          description: The grace period is over (`account_erasure_started`); the account is being erased.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "429": { $ref: "#/components/responses/RateLimited" }
   /token/2fa:
     post:
       summary: Finish a two-factor sign-in and mint the bearer
@@ -176,8 +223,10 @@ paths:
         account. An account with two-factor authentication also needs a
         current code or a recovery code (`code` or `recovery_code`); without
         one the answer is 403 with `two_factor_required: true`. The core
-        disables the account at once and revokes every session; every bearer
-        of the account, this one included, stops working.
+        closes the account at once and revokes every session; every bearer
+        of the account, this one included, stops working. For 30 days signing
+        in offers a restore (`POST /token/restore`); after that the account is
+        erased in every service automatically.
       requestBody:
         required: true
         content:
@@ -2430,6 +2479,17 @@ components:
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
+    DeletionPending:
+      description: The password is right but the account is closed; it can be restored until erase_after.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string }
+              code: { type: string, enum: [account_deletion_pending] }
+              deletion_pending: { type: boolean }
+              erase_after: { type: string, format: date-time }
     TwoFactorLocked:
       description: Too many wrong codes; the second factor is locked for 15 minutes.
       headers:
