@@ -9,6 +9,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"html/template"
 	"io/fs"
 	"log/slog"
@@ -39,6 +40,7 @@ import (
 	"github.com/openpak/website/internal/store"
 	"github.com/openpak/website/internal/support"
 	"github.com/openpak/website/internal/titleart"
+	"github.com/openpak/website/internal/turnstile"
 	"github.com/openpak/website/internal/wfc"
 )
 
@@ -78,8 +80,15 @@ type Server struct {
 	AdminAccountIDs []string
 	AuthLimit       *ratelimit.Limiter
 	MediaLimit      *ratelimit.Limiter
-	tmpl            *template.Template
-	log             *slog.Logger
+	// MailLimit caps verification and reset mails per address
+	// (accounts.MailAllowed); nil allows everything.
+	MailLimit *ratelimit.Limiter
+	// Turnstile guards signup and password reset; nil means the check is off.
+	Turnstile *turnstile.Verifier
+	// MinAge is the youngest age that may register (WEBSITE_MIN_AGE); 0 is off.
+	MinAge int
+	tmpl   *template.Template
+	log    *slog.Logger
 }
 
 // New compiles templates and returns the server.
@@ -229,8 +238,12 @@ func (s *Server) render(w http.ResponseWriter, status int, name string, data any
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("Referrer-Policy", "same-origin")
-	w.Header().Set("Content-Security-Policy",
-		"default-src 'self'; img-src 'self' data:; style-src 'self'; frame-ancestors 'none'")
+	csp := "default-src 'self'; img-src 'self' data:; style-src 'self'; frame-ancestors 'none'"
+	if s.Turnstile != nil {
+		// The Turnstile widget is a script and an iframe from Cloudflare.
+		csp += "; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com"
+	}
+	w.Header().Set("Content-Security-Policy", csp)
 	w.WriteHeader(status)
 	_, _ = buf.WriteTo(w)
 }
@@ -623,9 +636,11 @@ func (s *Server) handleRegisterForm(w http.ResponseWriter, r *http.Request) {
 		Closed      bool
 		Countries   []country
 		MaxBirthday string
+		Turnstile   string
+		MinAge      int
 	}
 	// No date in the future, and no JavaScript to enforce it.
-	s.render(w, http.StatusOK, "register.html", reg{d, !d.RegOpen, countries, time.Now().Format("2006-01-02")})
+	s.render(w, http.StatusOK, "register.html", reg{d, !d.RegOpen, countries, time.Now().Format("2006-01-02"), s.Turnstile.Key(), s.MinAge})
 }
 
 func (s *Server) handleRegisterSubmit(w http.ResponseWriter, r *http.Request) {
@@ -645,11 +660,34 @@ func (s *Server) handleRegisterSubmit(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid form", http.StatusBadRequest)
 		return
 	}
+	if !s.humanCheck(w, r, "nav.register") {
+		return
+	}
 	email := normalizeEmail(r.PostFormValue("email"))
 	password := r.PostFormValue("password")
 	display := strings.TrimSpace(r.PostFormValue("display_name"))
 	country := strings.TrimSpace(r.PostFormValue("country"))
 	birthday := strings.TrimSpace(r.PostFormValue("birthday"))
+	if err := accounts.CheckAge(birthday, s.MinAge, time.Now()); err != nil {
+		msg := i18n.T(i18n.FromRequest(r), "auth.birthday.invalid")
+		if errors.Is(err, accounts.ErrTooYoung) {
+			msg = fmt.Sprintf(i18n.T(i18n.FromRequest(r), "auth.register.tooyoung"), s.MinAge)
+		}
+		s.render(w, http.StatusBadRequest, "message.html", struct {
+			baseData
+			Message string
+		}{s.data(r, nil, i18n.T(i18n.FromRequest(r), "nav.register")), msg})
+		return
+	}
+	// A taken-but-unverified address makes the core mail again, so the mail
+	// budget is spent here too; past it the answer is the same, and no mail.
+	if !accounts.MailAllowed(s.MailLimit, email) {
+		s.render(w, http.StatusOK, "message.html", struct {
+			baseData
+			Message string
+		}{s.data(r, nil, i18n.T(i18n.FromRequest(r), "nav.register")), i18n.T(i18n.FromRequest(r), "auth.register.sent")})
+		return
+	}
 	// Enumeration resistance is enforced by the core: taken-but-unverified
 	// emails resend, and the response shape is identical.
 	if err := s.Core.RegisterWithProfile(r.Context(), email, password, display, r.PostFormValue("handle"), country, birthday); err != nil {
@@ -820,7 +858,10 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleForgotForm(w http.ResponseWriter, r *http.Request) {
-	s.render(w, http.StatusOK, "forgot.html", s.data(r, nil, i18n.T(i18n.FromRequest(r), "auth.forgot.title")))
+	s.render(w, http.StatusOK, "forgot.html", struct {
+		baseData
+		Turnstile string
+	}{s.data(r, nil, i18n.T(i18n.FromRequest(r), "auth.forgot.title")), s.Turnstile.Key()})
 }
 
 func (s *Server) handleForgotSubmit(w http.ResponseWriter, r *http.Request) {
@@ -828,9 +869,17 @@ func (s *Server) handleForgotSubmit(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "too many attempts; slow down", http.StatusTooManyRequests)
 		return
 	}
-	if err := r.ParseForm(); err == nil {
-		// Core-side enumeration resistance: identical response either way.
-		_ = s.Core.ForgotPassword(r.Context(), normalizeEmail(r.PostFormValue("email")))
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid form", http.StatusBadRequest)
+		return
+	}
+	if !s.humanCheck(w, r, "auth.forgot.title") {
+		return
+	}
+	// Core-side enumeration resistance: identical response either way, and
+	// past the per-address budget no mail is sent.
+	if email := normalizeEmail(r.PostFormValue("email")); accounts.MailAllowed(s.MailLimit, email) {
+		_ = s.Core.ForgotPassword(r.Context(), email)
 	}
 	s.render(w, http.StatusOK, "message.html", struct {
 		baseData
@@ -872,6 +921,25 @@ func (s *Server) handleResetSubmit(w http.ResponseWriter, r *http.Request) {
 
 // clientKey is the visitor's address behind Cloudflare and Traefik (internal/clientip).
 func clientKey(r *http.Request) string { return clientip.Of(r) }
+
+// humanCheck verifies the form's Turnstile answer when Turnstile is configured,
+// and answers the request itself when it fails. Cloudflare not answering is a
+// failure too: the check fails closed.
+func (s *Server) humanCheck(w http.ResponseWriter, r *http.Request, titleKey string) bool {
+	err := s.Turnstile.Verify(r.Context(), r.PostFormValue(turnstile.FormField), clientKey(r))
+	if err == nil {
+		return true
+	}
+	if !errors.Is(err, turnstile.ErrFailed) {
+		s.log.Error("turnstile", "err", err)
+	}
+	lang := i18n.FromRequest(r)
+	s.render(w, http.StatusBadRequest, "message.html", struct {
+		baseData
+		Message string
+	}{s.data(r, nil, i18n.T(lang, titleKey)), i18n.T(lang, "auth.human.failed")})
+	return false
+}
 
 func normalizeEmail(s string) string {
 	return strings.ToLower(strings.TrimSpace(s))

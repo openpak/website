@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/openpak/website/internal/accounts"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
 )
@@ -41,8 +42,10 @@ func (s *Server) handleVerifyResend(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if err := s.Core.ResendVerification(r.Context(), v.CoreSessionID); err != nil {
-		s.log.Error("verify resend", "err", err)
+	if accounts.MailAllowed(s.MailLimit, v.Email) {
+		if err := s.Core.ResendVerification(r.Context(), v.CoreSessionID); err != nil {
+			s.log.Error("verify resend", "err", err)
+		}
 	}
 	redirectMsg(w, r, "/account", "verify-sent")
 }

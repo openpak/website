@@ -94,7 +94,12 @@ type Server struct {
 	AdminIDs   []string           // WEBSITE_ADMIN_ACCOUNT_IDS: may write the catalog with a session
 	Auth       *ratelimit.Limiter // per IP, token minting
 	PerToken   *ratelimit.Limiter // per token, API calls
-	log        *slog.Logger
+	// MailLimit caps verification and reset mails per address; main shares the
+	// site's limiter so both surfaces spend one budget.
+	MailLimit *ratelimit.Limiter
+	// MinAge is the youngest age that may register (WEBSITE_MIN_AGE); 0 is off.
+	MinAge int
+	log    *slog.Logger
 }
 
 // New builds the API server.
@@ -111,6 +116,7 @@ func New(c core.HTTP, id core.Identity, soc core.Social, lnk core.Links, inv cor
 		PerToken:   ratelimit.New(120, time.Minute),
 		MediaLimit: ratelimit.New(5, time.Hour),
 		CrashLimit: ratelimit.New(20, 10*time.Minute),
+		MailLimit:  accounts.NewMailLimit(),
 		log:        log,
 	}
 }

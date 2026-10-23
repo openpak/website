@@ -91,6 +91,13 @@
 {{if .Flash}}<p class="card {{if eq .Path "/"}}wrap {{end}}mb-6 mt-4 border-accent-line bg-accent-weak px-4 py-3 text-ink-2" role="status">{{.Flash}}</p>{{end}}
 {{end}}
 
+{{/* Cloudflare Turnstile on the forms bots go for; the argument is the site
+     key, and without one (development) nothing is drawn. The widget needs
+     scripting, the one place this site does: a bot check without it does not
+     exist. */}}
+{{define "turnstile"}}{{if .}}<div class="cf-turnstile" data-sitekey="{{.}}"></div>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>{{end}}{{end}}
+
 {{define "footer"}}
 </main>
 <footer class="site-foot">

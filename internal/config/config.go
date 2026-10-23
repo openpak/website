@@ -4,6 +4,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -56,6 +57,15 @@ type Config struct {
 	// and re-read when it changes. Missing or invalid: 503 there, and
 	// profiles fall back to the compiled Universe.
 	NetProfileCeilingFile string
+
+	// TurnstileSiteKey and TurnstileSecret are the Cloudflare Turnstile pair
+	// for the signup and password-reset forms. Either unset: no bot check.
+	TurnstileSiteKey string
+	TurnstileSecret  string
+	// MinAge is the youngest age allowed to create an account
+	// (WEBSITE_MIN_AGE, default 16, the highest EU digital-consent age); 0 turns
+	// the check off.
+	MinAge int
 }
 
 // Load reads the environment and validates required fields.
@@ -78,7 +88,14 @@ func Load() (Config, error) {
 		NetProfileTraefikFile: os.Getenv("NETPROFILE_TRAEFIK_FILE"),
 		NetProfilePlatformMap: os.Getenv("NETPROFILE_PLATFORM_MAP"),
 		NetProfileCeilingFile: env("NETPROFILE_CEILING_FILE", "/data/netprofile-ceiling.json"),
+		TurnstileSiteKey:      os.Getenv("WEBSITE_TURNSTILE_SITE_KEY"),
+		TurnstileSecret:       os.Getenv("WEBSITE_TURNSTILE_SECRET"),
 	}
+	minAge, err := strconv.Atoi(env("WEBSITE_MIN_AGE", "16"))
+	if err != nil || minAge < 0 {
+		return c, fmt.Errorf("config: WEBSITE_MIN_AGE must be a whole number of years")
+	}
+	c.MinAge = minAge
 	for _, id := range strings.Split(os.Getenv("WEBSITE_ADMIN_ACCOUNT_IDS"), ",") {
 		if id = strings.TrimSpace(id); id != "" {
 			c.AdminAccountIDs = append(c.AdminAccountIDs, id)

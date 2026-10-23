@@ -579,4 +579,9 @@ var cataloguePTBR = Catalogue{
 	"parental.player.none":                "Nenhum usuário selecionado",
 	"parental.minutes.one":                "1 minuto",
 	"parental.minutes":                    "%d minutos",
+
+	"auth.birthday.invalid":  "Informe sua data de nascimento: uma data real, não no futuro.",
+	"auth.register.tooyoung": "Você precisa ter pelo menos %d anos para criar uma conta OpenPak.",
+	"auth.register.minage":   "Você precisa ter pelo menos %d anos para criar uma conta.",
+	"auth.human.failed":      "Não conseguimos confirmar que você é uma pessoa. Volte, conclua a verificação e tente de novo.",
 }

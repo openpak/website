@@ -579,4 +579,9 @@ var catalogueIT = Catalogue{
 	"parental.player.none":                "Nessun utente selezionato",
 	"parental.minutes.one":                "1 minuto",
 	"parental.minutes":                    "%d minuti",
+
+	"auth.birthday.invalid":  "Inserisci la tua data di nascita: una data reale, non nel futuro.",
+	"auth.register.tooyoung": "Devi avere almeno %d anni per creare un account OpenPak.",
+	"auth.register.minage":   "Devi avere almeno %d anni per creare un account.",
+	"auth.human.failed":      "Non siamo riusciti a confermare che sei una persona. Torna indietro, completa la verifica e riprova.",
 }

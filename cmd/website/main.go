@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/openpak/website/internal/accounts"
 	"github.com/openpak/website/internal/admin"
 	"github.com/openpak/website/internal/api"
 	"github.com/openpak/website/internal/attachments"
@@ -32,6 +33,7 @@ import (
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/store"
 	"github.com/openpak/website/internal/support"
+	"github.com/openpak/website/internal/turnstile"
 )
 
 func main() {
@@ -105,6 +107,13 @@ func run(log *slog.Logger) error {
 	pageSrv.AdminAccountIDs = cfg.AdminAccountIDs
 	pageSrv.AuthLimit = ratelimit.New(20, time.Minute)
 	pageSrv.MediaLimit = ratelimit.New(5, time.Hour)
+	pageSrv.MailLimit = accounts.NewMailLimit()
+	pageSrv.MinAge = cfg.MinAge
+	pageSrv.Turnstile = turnstile.New(cfg.TurnstileSiteKey, cfg.TurnstileSecret)
+	if pageSrv.Turnstile == nil {
+		log.Warn("turnstile: WEBSITE_TURNSTILE_SITE_KEY/WEBSITE_TURNSTILE_SECRET not set; signup and password-reset bot checks are off")
+	}
+	log.Info("signup minimum age", "years", cfg.MinAge)
 	savesCli := saves.New(os.Getenv("SAVES_URL"), os.Getenv("SAVES_INTERNAL_KEY"))
 	if savesCli == nil {
 		log.Info("saves: SAVES_URL not set; the saves page says so and the API answers 503")
@@ -132,6 +141,8 @@ func run(log *slog.Logger) error {
 	apiSrv.SaveTitle = pages.SaveTitle
 	apiSrv.Chat = chatCli
 	apiSrv.AdminIDs = cfg.AdminAccountIDs
+	apiSrv.MailLimit = pageSrv.MailLimit // one mail budget per address across site and app
+	apiSrv.MinAge = cfg.MinAge
 
 	// The network profile (PRD prds/network-profile-service-prd.md): generated from
 	// the live Traefik routing, so adding a title is a server deploy, not six

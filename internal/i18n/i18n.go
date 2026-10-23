@@ -985,6 +985,11 @@ var languages = map[string]Catalogue{
 		"parental.player.none":                "No user selected",
 		"parental.minutes.one":                "1 minute",
 		"parental.minutes":                    "%d minutes",
+
+		"auth.birthday.invalid":  "Enter your date of birth: a real date, not in the future.",
+		"auth.register.tooyoung": "You must be at least %d years old to create an OpenPak account.",
+		"auth.register.minage":   "You must be at least %d to create an account.",
+		"auth.human.failed":      "We could not confirm you are a person. Go back, complete the check and try again.",
 	},
 }
 

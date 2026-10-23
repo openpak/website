@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -40,6 +41,19 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	email := strings.ToLower(strings.TrimSpace(req.Email))
+	if err := accounts.CheckAge(req.Birthday, s.MinAge, time.Now()); err != nil {
+		msg := "birthday must be a past date, YYYY-MM-DD"
+		if errors.Is(err, accounts.ErrTooYoung) {
+			msg = fmt.Sprintf("you must be at least %d to create an OpenPak account", s.MinAge)
+		}
+		writeError(w, http.StatusBadRequest, msg)
+		return
+	}
+	// Same answer past the per-address mail budget, without the mail.
+	if !accounts.MailAllowed(s.MailLimit, email) {
+		writeJSON(w, http.StatusAccepted, map[string]string{"message": "if the address can be registered, a verification mail is on its way"})
+		return
+	}
 	if err := s.Core.RegisterWithProfile(r.Context(), email, req.Password,
 		strings.TrimSpace(req.DisplayName), req.Handle, strings.TrimSpace(req.Country), strings.TrimSpace(req.Birthday)); err != nil {
 		if core.HandleErrorMessage(err) != "" {
@@ -68,7 +82,9 @@ func (s *Server) handleForgotPassword(w http.ResponseWriter, r *http.Request) {
 	if !decodeSmall(w, r, &req) {
 		return
 	}
-	_ = s.Core.ForgotPassword(r.Context(), strings.ToLower(strings.TrimSpace(req.Email)))
+	if email := strings.ToLower(strings.TrimSpace(req.Email)); accounts.MailAllowed(s.MailLimit, email) {
+		_ = s.Core.ForgotPassword(r.Context(), email)
+	}
 	writeJSON(w, http.StatusAccepted, map[string]string{"message": "if the address has an account, a reset mail is on its way"})
 }
 

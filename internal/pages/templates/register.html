@@ -22,8 +22,10 @@
     </select>
     <label for="birthday">{{t .Lang "auth.birthday"}}</label>
     <input id="birthday" name="birthday" type="date" required max="{{.MaxBirthday}}" autocomplete="bday">
+    {{if .MinAge}}<p class="hint">{{printf (t .Lang "auth.register.minage") .MinAge}}</p>{{end}}
     <p class="hint">{{t .Lang "auth.profile.why"}}</p>
     <p class="hint">{{t .Lang "auth.remember"}}</p>
+    {{template "turnstile" .Turnstile}}
     <button type="submit" class="btn primary">{{t .Lang "nav.register"}}</button>
   </form>
   <p class="mt-6 text-sm text-muted"><a href="/login">{{t .Lang "nav.signin"}}</a> · <a href="/forgot-password">{{t .Lang "auth.forgot"}}</a></p>

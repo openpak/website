@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/openpak/website/internal/accounts"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/store"
 )
@@ -149,8 +150,10 @@ func (s *Server) handleEmailConfirm(w http.ResponseWriter, r *http.Request) {
 // handleVerifyResend: POST /api/v1/me/verify/resend. Always the same answer; the core sends at
 // most one link per 10 minutes.
 func (s *Server) handleVerifyResend(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
-	if err := s.Core.ResendVerification(r.Context(), tok.CoreSessionID); err != nil {
-		s.log.Error("api verify resend", "err", err)
+	if accounts.MailAllowed(s.MailLimit, "acct:"+tok.AccountID) {
+		if err := s.Core.ResendVerification(r.Context(), tok.CoreSessionID); err != nil {
+			s.log.Error("api verify resend", "err", err)
+		}
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"message": "if the address still needs confirming, a new link has been sent"})
 }
