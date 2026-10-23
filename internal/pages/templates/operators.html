@@ -13,11 +13,18 @@
 <h2 id="approval">Approval</h2>
 <ul>
   <li>A node serves nobody until OpenPak approves it. Approval is a decision by a person at OpenPak; meeting the figures below makes a node eligible, not approved.</li>
-  <li>OpenPak only takes applications for the locations it lists as wanted, and may keep you on a waitlist for anywhere else.</li>
+  <li>Within the location policy below, OpenPak approves nodes for the locations it lists as wanted, and may keep you on a waitlist for anywhere else.</li>
   <li>Each server gets its own key. Keep keys secret; if one leaks, tell us and we revoke that server.</li>
 </ul>
 
+<h2 id="location">Location policy</h2>
+<p>Applications are accepted from all locations except nodes inside mainland China and Russia. Licensing, national firewalls, sanctions and surveillance laws there conflict with these terms, so we cannot accept a node in either. Players there are served from neighbouring regions.</p>
+
 <h2 id="hardware">Hardware and network minimums</h2>
+<ul>
+  <li>Each server must be dedicated to OpenPak: run nothing else on the box.</li>
+  <li>OpenPak Node OS (Fedora CoreOS) is the preferred install.</li>
+</ul>
 {{with .Req}}
 <table>
   <thead><tr><th>Requirement</th><th>Minimum</th><th>Counted</th></tr></thead>
@@ -40,7 +47,17 @@
 <ul>
   <li>Do not log or keep player data beyond what running the relay needs at that moment. No packet captures, no IP address logs kept past their operational use, no per-player records.</li>
   <li>Do not share, sell or analyse traffic or anything you learn from it.</li>
-  <li>Operational logs (errors, totals) are fine; keep them only as long as you need them to run the node.</li>
+  <li>Operational logs (errors, totals) are fine; keep them only as long as you need them to run the node, and never more than 7 days.</li>
+</ul>
+
+<h2 id="dpa">Data processing agreement</h2>
+<p>For the player data a node handles, you process it on OpenPak’s behalf, and you agree to the following:</p>
+<ul>
+  <li>You process player IP addresses and game traffic only to host rooms on your node.</li>
+  <li>You log nothing beyond operational need, and you delete those logs within 7 days.</li>
+  <li>You use the data for nothing else.</li>
+  <li>You notify OpenPak of any security incident affecting player data within 72 hours of learning of it, at <a href="mailto:{{contactEmail}}">{{contactEmail}}</a>.</li>
+  <li>When you stop running a node, or your approval ends, you delete all player data you still hold.</li>
 </ul>
 
 <h2 id="traffic">No interference</h2>

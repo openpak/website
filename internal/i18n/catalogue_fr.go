@@ -658,6 +658,7 @@ var catalogueFR = Catalogue{
 	"operator.err.disk":         "Stockage NVMe/SSD au total : {have} Go ; le minimum est {want} Go.",
 	"operator.err.pending":      "Tu as déjà une candidature en cours d’examen.",
 	"operator.err.notwanted":    "OpenPak ne cherche pas encore de nœuds là-bas. Tu peux rejoindre la liste d’attente de ce pays à la place.",
+	"operator.err.excluded":     "OpenPak n’accepte pas de nœuds en Chine continentale ni en Russie (voir les conditions des opérateurs). Les joueurs de ces pays sont servis depuis les régions voisines.",
 	"operator.err.fields":       "Indique la ville, l’hébergeur et un e-mail de contact valide.",
 	"operator.err.terms":        "Accepte les conditions pour les opérateurs pour postuler.",
 	"operator.err.waitlist":     "Indique un code pays à deux lettres et un e-mail valide.",

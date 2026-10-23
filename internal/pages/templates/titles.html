@@ -27,7 +27,7 @@
       <a class="t" href="#t-{{.ID}}" aria-label="{{.Name}}, {{.Console}}, {{.Status}}" title="{{.Name}}">
         <span class="art">
           {{template "title-art" (arr $.Lang .Console .Name .TitleID .Name)}}
-          <span class="cap"><span class="sub">{{.Console}}</span><span class="badge {{badgeClass .Status}}">{{.Status}}</span></span>
+          <span class="cap"><span class="sub">{{.Console}}</span><span class="badge {{badgeClass .Status}}">{{statusText .Status}}</span></span>
         </span>
       </a>
       {{if $later}}
@@ -67,7 +67,7 @@
       <span class="tart title-art">{{template "title-art" (arr $.Lang .Console .Name .TitleID "")}}</span>
       <div class="tinfo">
         <h2 id="t-{{.ID}}-h">{{.Name}}</h2>
-        <p class="tmeta"><span>{{.Console}}</span><span class="badge {{badgeClass .Status}}">{{.Status}}</span></p>
+        <p class="tmeta"><span>{{.Console}}</span><span class="badge {{badgeClass .Status}}">{{statusText .Status}}</span></p>
         <dl class="facts">
           {{if not .DateAdded.IsZero}}<dt>{{t $.Lang "titles.info.added"}}</dt><dd>{{date $.Lang .DateAdded}}</dd>{{end}}
           {{if not .LastUpdated.IsZero}}<dt>{{t $.Lang "titles.info.updated"}}</dt><dd>{{date $.Lang .LastUpdated}}</dd>{{end}}

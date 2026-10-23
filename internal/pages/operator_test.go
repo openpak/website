@@ -58,6 +58,14 @@ func TestOperatorApplyOnlyWhereWanted(t *testing.T) {
 	if rec.Code != http.StatusUnprocessableEntity || !strings.Contains(rec.Body.String(), "not looking for nodes there yet") {
 		t.Fatalf("unwanted location: %d", rec.Code)
 	}
+	// The location policy: no node in mainland China or Russia, not even a waitlist row.
+	for _, c := range []string{"cn", "RU"} {
+		x := url.Values{"country": {c}, "email": {"op@x.test"}}
+		if rec := authedRequest(s, lg, http.MethodPost, "/account/operator/waitlist", &x); rec.Code != http.StatusUnprocessableEntity ||
+			!strings.Contains(rec.Body.String(), "mainland China or Russia") {
+			t.Fatalf("waitlist %s: %d", c, rec.Code)
+		}
+	}
 	w := url.Values{"country": {"br"}, "email": {"op@x.test"}}
 	if rec := authedRequest(s, lg, http.MethodPost, "/account/operator/waitlist", &w); rec.Code != http.StatusSeeOther {
 		t.Fatalf("waitlist: %d", rec.Code)
@@ -115,7 +123,8 @@ func TestOperatorTermsPage(t *testing.T) {
 	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/operators", nil))
 	body := rec.Body.String()
 	for _, want := range []string{"8 per node, 2 per server", "160 GB NVMe or SSD", "1000 Mbps symmetric", "99.5 %", "3 minutes", "72 hours",
-		"Do not log or keep player data", "Do not modify", "at any time", "Security contact", "can be faked"} {
+		"Do not log or keep player data", "Do not modify", "at any time", "Security contact", "can be faked",
+		"Data processing agreement", "within 7 days", "within 72 hours", "dedicated to OpenPak", "Fedora CoreOS", "mainland China and Russia"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("/operators lacks %q", want)
 		}

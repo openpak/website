@@ -39,14 +39,17 @@ func TestLegalPages(t *testing.T) {
 	s, _, _ := newTestServer(t)
 	for path, want := range map[string][]string{
 		"/terms":   {"Terms of use", "the OpenPak project", "at least 16", "AGPL", "pirated"},
-		"/privacy": {"Privacy policy", "the OpenPak project", "opak_session", "Cloudflare", "Delete account", "contact@openpak.org"},
-		"/legal":   {"Nintendo", "Microsoft", "Sony", "takedown", "contact@openpak.org"},
+		"/privacy": {"Privacy policy", "the OpenPak project", "opak_session", "Cloudflare", "Oracle Cloud", "Zoho Mail", "smtp.zoho.eu", "federation node operators", "GitHub", "essential cookies only", "Delete account", "contact@openpak.org"},
+		"/legal":   {"Nintendo", "Microsoft", "Sony", "takedown", "contact@openpak.org", "Name and logo", "based on OpenPak software"},
 	} {
 		body := get(t, s, path).Body.String()
 		for _, w := range want {
 			if !strings.Contains(body, w) {
 				t.Errorf("%s: missing %q", path, w)
 			}
+		}
+		if strings.Contains(body, "may set its own") {
+			t.Errorf("%s: openpak.org sets no Cloudflare cookie", path)
 		}
 		if strings.Contains(body, "OWNER REVIEW") {
 			t.Errorf("%s: the review note must stay in the template, not reach visitors", path)
@@ -103,11 +106,12 @@ func TestConsoleStagesFollowFeatures(t *testing.T) {
 		{Kind: "feature", Name: "Friends", Console: "Switch", Status: "partial"},
 		{Kind: "feature", Name: "Matchmaking", Console: "Wii U / 3DS", Status: "beta"},
 		{Kind: "feature", Name: "WFC", Console: "Wii U / 3DS / Wii / DS", Status: "alpha"},
-		{Kind: "feature", Name: "Xbox Live", Console: "Xbox 360", Status: "planned"},
+		{Kind: "feature", Name: "Xbox Live", Console: "Xbox 360", Status: "in-development"},
+		{Kind: "feature", Name: "Network", Console: "PSP", Status: "planned"},
 		{Kind: "feature", Name: "Broken thing", Console: "PS3", Status: "broken"},
 	})
 	st := consoleStages(mustFeatures(t, db))
-	for console, want := range map[string]string{"Switch": "live", "Wii U": "beta", "3DS": "beta", "Wii": "alpha", "DS": "alpha", "Xbox 360": "planned"} {
+	for console, want := range map[string]string{"Switch": "live", "Wii U": "beta", "3DS": "beta", "Wii": "alpha", "DS": "alpha", "Xbox 360": "in-development", "PSP": "planned"} {
 		if st[console] != want {
 			t.Errorf("%s: %q, want %q", console, st[console], want)
 		}
@@ -119,10 +123,16 @@ func TestConsoleStagesFollowFeatures(t *testing.T) {
 	for _, n := range networks {
 		byName[n.Name] = n
 	}
-	for name, want := range map[string]string{"Switch": "live", "Wii U / 3DS": "beta", "Wii / DS": "building", "Xbox 360": "planned", "PlayStation 3": "planned", "Xbox": "planned"} {
+	for name, want := range map[string]string{"Switch": "live", "Wii U / 3DS": "beta", "Wii / DS": "building", "Xbox 360": "building", "PlayStation 3": "building", "Xbox": "building", "PSP": "planned"} {
 		if got := byName[name].stateAt(st); got != want {
 			t.Errorf("network %s: %q, want %q", name, got, want)
 		}
+	}
+	if body := get(t, s, "/status").Body.String(); !strings.Contains(body, "In development") {
+		t.Error("the status page should label Xbox, Xbox 360 and PS3 In development")
+	}
+	if body := get(t, s, "/features").Body.String(); !strings.Contains(body, ">in development</span>") {
+		t.Error("/features should show the in-development badge in words")
 	}
 	body := get(t, s, "/downloads").Body.String()
 	if !strings.Contains(body, "openpak-nro/releases/latest") || !strings.Contains(body, "openpak/app/releases/latest") {

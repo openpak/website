@@ -211,6 +211,11 @@ func (s *Server) handleOperatorApply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	form.Country = loc.Country
+	if excludedCountry(form.Country) {
+		view.Errors = append(view.Errors, i18n.T(lang, "operator.err.excluded"))
+		s.renderOperator(w, r, v, view, http.StatusUnprocessableEntity)
+		return
+	}
 	if form.City == "" || form.Provider == "" || !validEmail(form.Email) {
 		view.Errors = append(view.Errors, i18n.T(lang, "operator.err.fields"))
 	}
@@ -231,6 +236,17 @@ func (s *Server) handleOperatorApply(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/account/operator?done=applied", http.StatusSeeOther)
 }
 
+// excludedCountry is the location policy in the operator terms: no node inside
+// mainland China (CN; Hong Kong, Macao and Taiwan have their own codes) or
+// Russia, whatever the coverage plan says.
+func excludedCountry(code string) bool {
+	switch strings.ToUpper(code) {
+	case "CN", "RU":
+		return true
+	}
+	return false
+}
+
 // handleOperatorWaitlist records interest in a country nobody is wanted in yet.
 func (s *Server) handleOperatorWaitlist(w http.ResponseWriter, r *http.Request) {
 	v, ok := s.postGuard(w, r)
@@ -246,6 +262,11 @@ func (s *Server) handleOperatorWaitlist(w http.ResponseWriter, r *http.Request) 
 	if len(country) != 2 || !validEmail(email) {
 		s.renderOperator(w, r, v, operatorView{NotWanted: true, Form: store.OperatorApplication{Email: email, Country: country},
 			Errors: []string{i18n.T(i18n.FromRequest(r), "operator.err.waitlist")}}, http.StatusUnprocessableEntity)
+		return
+	}
+	if excludedCountry(country) {
+		s.renderOperator(w, r, v, operatorView{NotWanted: true, Form: store.OperatorApplication{Email: email, Country: country},
+			Errors: []string{i18n.T(i18n.FromRequest(r), "operator.err.excluded")}}, http.StatusUnprocessableEntity)
 		return
 	}
 	if apps, _ := s.Operators.OperatorApplicationsFor(r.Context(), v.AccountID); apps != nil {

@@ -62,9 +62,9 @@
   </div>
   <div class="platforms">
     {{range .Platforms}}
-    <a class="plat sel" href="/titles?console={{.Console}}" aria-label="{{.Name}} · {{.Status}}">
+    <a class="plat sel" href="/titles?console={{.Console}}" aria-label="{{.Name}} · {{statusText .Status}}">
       <span class="console lg"><picture class="console-mark"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>
-      <span class="badge {{badgeClass .Status}}">{{.Status}}</span>
+      <span class="badge {{badgeClass .Status}}">{{statusText .Status}}</span>
     </a>
     {{end}}
   </div>

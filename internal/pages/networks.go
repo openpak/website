@@ -23,7 +23,7 @@ type network struct {
 	Namespaces []string
 	// Consoles are the /features console names this network covers.
 	Consoles []string
-	State    string // fallback: live | beta | building | planned
+	State    string // fallback: live | beta | building (shown "In development") | planned
 }
 
 // networks reads top to bottom on the status page, most finished first.
@@ -31,14 +31,15 @@ var networks = []network{
 	{Name: "Switch", Namespaces: []string{"switch"}, Consoles: []string{"Switch"}, State: "live"},
 	{Name: "Wii U / 3DS", Namespaces: []string{"wiiu", "3ds"}, Consoles: []string{"Wii U", "3DS"}, State: "beta"},
 	{Name: "Wii / DS", Namespaces: []string{"wfc"}, Consoles: []string{"Wii", "DS"}, State: "beta"},
-	{Name: "Xbox", Namespaces: []string{"xbox"}, Consoles: []string{"Xbox"}, State: "planned"},
-	{Name: "Xbox 360", Namespaces: []string{"x360"}, Consoles: []string{"Xbox 360"}, State: "planned"},
-	{Name: "PlayStation 3", Namespaces: []string{"np"}, Consoles: []string{"PS3"}, State: "planned"},
+	{Name: "Xbox", Namespaces: []string{"xbox"}, Consoles: []string{"Xbox"}, State: "building"},
+	{Name: "Xbox 360", Namespaces: []string{"x360"}, Consoles: []string{"Xbox 360"}, State: "building"},
+	{Name: "PlayStation 3", Namespaces: []string{"np"}, Consoles: []string{"PS3"}, State: "building"},
 	{Name: "PSP", Consoles: []string{"PSP"}, State: "planned"},
 }
 
 // platform is one console family and how far OpenPak is with it, in the titles
-// list's words (live, beta, alpha, planned). Status is the fallback, as above.
+// list's words (live, beta, alpha, in-development, planned). Status is the
+// fallback, as above.
 type platform struct{ Name, Console, Status string }
 
 var platforms = []platform{
@@ -47,9 +48,9 @@ var platforms = []platform{
 	{"Nintendo 3DS", "3DS", "beta"},
 	{"Wii", "Wii", "beta"},
 	{"Nintendo DS", "DS", "beta"},
-	{"Xbox", "Xbox", "planned"},
-	{"PlayStation 3", "PS3", "planned"},
-	{"Xbox 360", "Xbox 360", "planned"},
+	{"Xbox", "Xbox", "in-development"},
+	{"PlayStation 3", "PS3", "in-development"},
+	{"Xbox 360", "Xbox 360", "in-development"},
 	{"PlayStation Portable", "PSP", "planned"},
 	{"PlayStation Vita", "Vita", "planned"},
 	{"PlayStation 4", "PS4", "planned"},
@@ -58,7 +59,7 @@ var platforms = []platform{
 }
 
 // stageRank orders the platform words; a console is as far as its furthest feature.
-var stageRank = map[string]int{"live": 3, "beta": 2, "alpha": 1, "planned": 0}
+var stageRank = map[string]int{"live": 4, "beta": 3, "alpha": 2, "in-development": 1, "planned": 0}
 
 // featureStage maps a /features status to a platform word; "" is a status that
 // says nothing about progress (broken, not-feasible).
@@ -70,6 +71,8 @@ func featureStage(status string) string {
 		return "beta"
 	case "alpha", "partial", "scaffold":
 		return "alpha"
+	case "in-development":
+		return "in-development"
 	case "planned", "requestable":
 		return "planned"
 	}
@@ -130,7 +133,7 @@ func (n network) stateAt(stages map[string]string) string {
 	if !found {
 		return n.State
 	}
-	if best == "alpha" {
+	if best == "alpha" || best == "in-development" {
 		return "building"
 	}
 	return best

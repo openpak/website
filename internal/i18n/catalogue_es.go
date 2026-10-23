@@ -658,6 +658,7 @@ var catalogueES = Catalogue{
 	"operator.err.disk":         "Almacenamiento NVMe/SSD en total: {have} GB; el mínimo es {want} GB.",
 	"operator.err.pending":      "Ya tienes una solicitud en revisión.",
 	"operator.err.notwanted":    "OpenPak todavía no busca nodos allí. Puedes unirte a la lista de espera de ese país.",
+	"operator.err.excluded":     "OpenPak no acepta nodos en China continental ni en Rusia (consulta las condiciones para operadores). Los jugadores de allí se atienden desde regiones vecinas.",
 	"operator.err.fields":       "Indica la ciudad, el proveedor de alojamiento y un correo de contacto válido.",
 	"operator.err.terms":        "Acepta las condiciones para operadores para solicitar.",
 	"operator.err.waitlist":     "Indica un código de país de dos letras y un correo válido.",

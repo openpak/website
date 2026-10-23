@@ -15,7 +15,7 @@
         <div class="min-w-0"><div class="kind">{{.Console}} · {{t $.Lang .Kind}}</div><h3 class="break-anywhere">{{.Name}}</h3></div>
       </div>
       <div class="foot">
-        {{if .Status}}<span class="badge {{badgeClass .Status}}">{{.Status}}</span>{{else}}<span></span>{{end}}
+        {{if .Status}}<span class="badge {{badgeClass .Status}}">{{statusText .Status}}</span>{{else}}<span></span>{{end}}
         {{if .URL}}<a class="btn primary" href="{{.URL}}" rel="noopener"><svg class="ico sm" aria-hidden="true"><use href="#i-dl"/></svg>{{t $.Lang "downloads.get"}}</a>
         {{else}}<button class="btn" type="button" disabled>{{t $.Lang "downloads.soon"}}</button>{{end}}
       </div>
@@ -53,7 +53,7 @@
         <div class="min-w-0"><div class="kind">{{.Console}}</div><h3 class="break-anywhere">{{t $.Lang "downloads.kind.patch"}}</h3></div>
       </div>
       <div class="foot">
-        {{if .Status}}<span class="badge {{badgeClass .Status}}">{{.Status}}</span>{{else}}<span></span>{{end}}
+        {{if .Status}}<span class="badge {{badgeClass .Status}}">{{statusText .Status}}</span>{{else}}<span></span>{{end}}
         {{if .URL}}<a class="btn primary" href="{{.URL}}" rel="noopener"><svg class="ico sm" aria-hidden="true"><use href="#i-dl"/></svg>{{t $.Lang "downloads.get"}}</a>
         {{else}}<button class="btn" type="button" disabled>{{t $.Lang "downloads.soon"}}</button>{{end}}
       </div>
@@ -71,7 +71,7 @@
     <li class="tcard">
       <span class="console lg"><picture class="console-mark"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>
       <span class="t"><b>{{.Name}}</b></span>
-      <span class="end"><span class="badge {{badgeClass .Status}}">{{.Status}}</span></span>
+      <span class="end"><span class="badge {{badgeClass .Status}}">{{statusText .Status}}</span></span>
     </li>
     {{end}}
   </ul>

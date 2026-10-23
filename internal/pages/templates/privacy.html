@@ -55,15 +55,17 @@
 
 <h2 id="who">Who else handles it</h2>
 <ul>
-  <li><strong>Cloudflare</strong> sits in front of openpak.org: it carries all web traffic (and so sees IP addresses and requests), protects the site from attacks, and runs the human check on the signup and password-reset forms (Turnstile).</li>
-  <li><strong>An email delivery provider</strong> sends our account emails.</li>
-  <li><strong>Our server hosting provider</strong> runs the machines the network is on.</li>
+  <li><strong>Cloudflare</strong> runs DNS for openpak.org and sits in front of the site as a proxy and bot protection: it carries all web traffic, and so sees IP addresses and requests. When Turnstile (its human check) is enabled, it runs only on the signup and password-reset forms.</li>
+  <li><strong>Oracle Cloud</strong> hosts the servers that hold account data.</li>
+  <li><strong>Zoho Mail</strong> sends our verification and password-reset emails (through smtp.zoho.eu), so it receives your email address and the message.</li>
+  <li><strong>Regional federation node operators</strong>, approved by OpenPak, host game rooms for players near them. They see the IP addresses and game traffic of the players in the rooms they host, and nothing about accounts. They process it under the data processing agreement in the <a href="/operators#dpa">operator terms</a>.</li>
   <li><strong>Google Firebase Cloud Messaging</strong> delivers app notifications: the push token, and a short message such as “Alice wants to be friends”.</li>
   <li><strong>Storage you choose</strong> (Google Drive, OneDrive, S3, WebDAV) receives your saves if you set it up.</li>
   <li><strong>Other players</strong> see your handle, display name, avatar, presence and, in direct-connection games, your IP address.</li>
 </ul>
+<p>Downloads of the OpenPak apps and tools are served from <strong>GitHub</strong>, under GitHub’s own terms and privacy statement.</p>
 <p>Some of these providers are in the United States or other countries outside the European Economic Area. Where that happens, the transfer relies on the provider’s standard contractual clauses or an adequacy decision.</p>
-<!-- OWNER REVIEW: name the email provider and the hosting provider, and confirm each has a data processing agreement in place. -->
+<!-- OWNER REVIEW: confirm a data processing agreement is in place with Cloudflare, Oracle Cloud and Zoho. -->
 
 <h2 id="retention">How long we keep it</h2>
 <p>We are early, and we would rather tell you exactly where things stand than promise schedules the code does not yet keep:</p>
@@ -82,12 +84,12 @@
 <p>You can ask us for a copy of your data, to correct it, to delete it, to restrict or object to how we use it, and to receive it in a portable form; and you can withdraw any consent you gave. Much of this you can do yourself on your account page; for the rest, email <a href="mailto:contact@openpak.org">contact@openpak.org</a>. We answer within one month. You also have the right to complain to your data protection authority.</p>
 
 <h2 id="cookies">Cookies</h2>
-<p>openpak.org sets only the cookies it needs to work:</p>
+<p>openpak.org sets essential cookies only:</p>
 <ul>
   <li><code>opak_session</code>: keeps you signed in. Set when you sign in, lasts up to 30 days, removed when you sign out.</li>
   <li><code>lang</code>: remembers the language you chose in the footer. Set only when you choose one, lasts one year.</li>
 </ul>
-<p>Cloudflare may set its own strictly necessary security cookies while checking for bots. There are no analytics or advertising cookies, so there is nothing to consent to.</p>
+<p>No other cookie is set, by us or by Cloudflare. Turnstile, when enabled, runs only on the signup and password-reset forms. There are no analytics or advertising cookies, so there is nothing to consent to.</p>
 
 <h2 id="children">Children</h2>
 <p>You must be at least 16 to create an OpenPak account. If you believe a younger child has an account, tell us and we will delete it.</p>

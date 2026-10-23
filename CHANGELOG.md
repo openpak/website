@@ -23,6 +23,15 @@ release, taken from git history. `git log` stays the source of truth.
   (audited), server revocation and key rotation, plus Applications (approve creates the node and shows
   its key once, reject with a reason, ask for info) and Wanted locations (the coverage plan).
 - `/operators`: operator terms with the core's figures (store migration 0023 for applications).
+- `/operators` adds the data processing agreement (rooms only, logs deleted within 7 days, incidents
+  within 72 hours, deletion on leaving), a dedicated box with OpenPak Node OS (Fedora CoreOS)
+  preferred, and the location policy: no nodes in mainland China or Russia. Applications and
+  waitlist entries for CN and RU are refused.
+- Feature status `in-development` (badge "in development"; status page "In development", which
+  is also the new label of "building"). Xbox, Xbox 360 and PS3 fall back to it; PSP and later
+  stay planned.
+- `/privacy` names Cloudflare, Oracle Cloud, Zoho Mail, regional node operators and GitHub
+  downloads, and says essential cookies only. `/legal` gains the name and logo rule.
 
 ## v0.72.4 — 2026-10-17
 

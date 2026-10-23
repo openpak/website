@@ -395,6 +395,15 @@ func consoleSlug(console string) string {
 // badgeClass maps a status to the badge colour modifier, so a pill reads the
 // same as the app: green for done, amber for in-flight, red for blocked, and
 // neutral (no class) for the not-yet-started long tail.
+// statusText is a status as a badge shows it. Only "in-development" differs
+// from its token, because the hyphen would read as a code.
+func statusText(status string) string {
+	if status == "in-development" {
+		return "in development"
+	}
+	return status
+}
+
 func badgeClass(status string) string {
 	switch status {
 	case "live", "working", "active":
@@ -405,7 +414,7 @@ func badgeClass(status string) string {
 		return "warn"
 	case "banned":
 		return "bad"
-	case "scaffold": // code in the tree, waiting on a fact a console has to reveal
+	case "scaffold", "in-development": // code in the tree, not yet playable
 		return "warn"
 	case "not-feasible", "broken":
 		return "bad"

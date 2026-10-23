@@ -658,6 +658,7 @@ var cataloguePTBR = Catalogue{
 	"operator.err.disk":         "Total de armazenamento NVMe/SSD: {have} GB; o mínimo é {want} GB.",
 	"operator.err.pending":      "Você já tem uma inscrição em análise.",
 	"operator.err.notwanted":    "O OpenPak ainda não procura nós aí. Você pode entrar na lista de espera desse país.",
+	"operator.err.excluded":     "O OpenPak não aceita nós na China continental nem na Rússia (veja os termos para operadores). Os jogadores de lá são atendidos por regiões vizinhas.",
 	"operator.err.fields":       "Preencha a cidade, o provedor de hospedagem e um e-mail de contato válido.",
 	"operator.err.terms":        "Aceite os termos para operadores para se inscrever.",
 	"operator.err.waitlist":     "Informe um código de país de duas letras e um e-mail válido.",

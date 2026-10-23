@@ -46,7 +46,7 @@ type Request struct {
 }
 
 // Votable reports whether this request accepts votes: only games (kind=title)
-// that are not yet playable — requestable, alpha or planned. Live and beta
+// that are not yet playable — requestable, alpha, in-development or planned. Live and beta
 // games are already available, and features are display-only. This is the one
 // definition of the rule; the UI and the vote handlers both read it.
 func (r Request) Votable() bool {
@@ -54,7 +54,7 @@ func (r Request) Votable() bool {
 		return false
 	}
 	switch r.Status {
-	case "requestable", "alpha", "planned":
+	case "requestable", "alpha", "in-development", "planned":
 		return true
 	}
 	return false
@@ -70,7 +70,7 @@ func statusRank(status string) int {
 		return 1
 	case "alpha", "partial":
 		return 2
-	case "scaffold":
+	case "scaffold", "in-development":
 		return 3
 	case "requestable", "planned":
 		return 4
@@ -174,7 +174,7 @@ func (s *PG) RequestVotes(ctx context.Context, requestID int64, accountID string
 }
 
 // Statuses is every status a request may hold. A write naming anything else is refused.
-var Statuses = []string{"live", "working", "beta", "alpha", "partial", "planned", "requestable", "not-feasible"}
+var Statuses = []string{"live", "working", "beta", "alpha", "partial", "in-development", "planned", "requestable", "not-feasible"}
 
 var (
 	// ErrInvalid is a request that fails validation; the wrapped message says why.

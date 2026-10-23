@@ -13,7 +13,7 @@
     <li class="titles-row tcard" data-name="{{.Name}}" data-console="{{.Console}}" data-status="{{.Status}}">
       <span class="console lg"><picture class="console-mark"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>
       <span class="t"><b>{{.Name}}</b><span class="sub">{{.Console}}</span></span>
-      <span class="end"><span class="badge {{badgeClass .Status}}">{{.Status}}</span></span>
+      <span class="end"><span class="badge {{badgeClass .Status}}">{{statusText .Status}}</span></span>
     </li>
     {{end}}
   </ul>
