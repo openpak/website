@@ -18,6 +18,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -61,6 +62,11 @@ func cmdCeiling(args []string, stdout io.Writer) error {
 		pos = append(pos, fs.Arg(0))
 		if err := fs.Parse(fs.Args()[1:]); err != nil {
 			return fmt.Errorf("ceiling %s: %w", sub, err)
+		}
+	}
+	if strings.HasPrefix(*keyPath, "~/") {
+		if home, err := os.UserHomeDir(); err == nil {
+			*keyPath = filepath.Join(home, (*keyPath)[2:])
 		}
 	}
 
