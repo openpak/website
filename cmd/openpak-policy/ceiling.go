@@ -28,7 +28,7 @@ import (
 
 const (
 	ceilingURL        = "https://openpak.org/api/v1/network/ceiling"
-	ceilingDefaultKey = "~/openpak-ceiling-private/ceiling-signing.pem"
+	ceilingDefaultKey = "~/REPOS/Openpak/.secrets/ceiling/ceiling-signing.pem"
 	ceilingBoxTarget  = "<prod-host>:~/openpak/deploy/netprofile-ceiling.json"
 )
 
