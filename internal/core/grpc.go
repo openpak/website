@@ -487,15 +487,29 @@ func (g *GRPC) Presence(ctx context.Context, accountIDs []string) (map[string]Pr
 
 // --- Federation ---
 
+// mapFed keeps the core's wording where a person needs it: an approval
+// refusal names what is short, a refused self-test says when the next is due.
+func mapFed(err error) error {
+	switch status.Code(err) {
+	case codes.FailedPrecondition:
+		return fmt.Errorf("%w: %s", ErrConflict, status.Convert(err).Message())
+	case codes.ResourceExhausted:
+		return fmt.Errorf("%w: %s", ErrTooSoon, status.Convert(err).Message())
+	case codes.PermissionDenied:
+		return fmt.Errorf("%w: %s", ErrBlocked, status.Convert(err).Message())
+	}
+	return mapGRPC(err)
+}
+
 func (g *GRPC) ListNodes(ctx context.Context) ([]Node, error) {
 	resp, err := accountv1.NewFederationClient(g.conn).ListNodes(ctx, &accountv1.ListNodesRequest{})
 	if err != nil {
-		return nil, mapGRPC(err)
+		return nil, mapFed(err)
 	}
 	nodes := toNodes(resp.GetNodes())
 	counts, err := accountv1.NewSessionsClient(g.conn).GetPlayerCounts(ctx, &accountv1.GetPlayerCountsRequest{})
 	if err != nil {
-		return nil, mapGRPC(err)
+		return nil, mapFed(err)
 	}
 	byNode := map[string]int{}
 	for _, n := range counts.GetNodes() {
@@ -510,41 +524,147 @@ func (g *GRPC) ListNodes(ctx context.Context) ([]Node, error) {
 func (g *GRPC) ListAllNodes(ctx context.Context) ([]Node, error) {
 	resp, err := accountv1.NewFederationClient(g.conn).ListAllNodes(ctx, &accountv1.ListNodesRequest{})
 	if err != nil {
-		return nil, mapGRPC(err)
+		return nil, mapFed(err)
 	}
 	return toNodes(resp.GetNodes()), nil
 }
 
-func (g *GRPC) CreateNode(ctx context.Context, id, name, country string) (string, error) {
-	resp, err := accountv1.NewFederationClient(g.conn).CreateNode(ctx, &accountv1.CreateNodeRequest{NodeId: id, Name: name, Country: country})
+func (g *GRPC) CreateNode(ctx context.Context, id, name, country, region string) (string, error) {
+	resp, err := accountv1.NewFederationClient(g.conn).CreateNode(ctx, &accountv1.CreateNodeRequest{NodeId: id, Name: name, Country: country, Region: region})
 	if err != nil {
-		return "", mapGRPC(err)
+		return "", mapFed(err)
+	}
+	return resp.GetKey(), nil
+}
+
+func (g *GRPC) RotateNodeKey(ctx context.Context, id string) (string, error) {
+	resp, err := accountv1.NewFederationClient(g.conn).RotateNodeKey(ctx, &accountv1.RotateNodeKeyRequest{NodeId: id})
+	if err != nil {
+		return "", mapFed(err)
 	}
 	return resp.GetKey(), nil
 }
 
 func (g *GRPC) SetNodeApproved(ctx context.Context, id string, approved bool) error {
 	_, err := accountv1.NewFederationClient(g.conn).SetNodeApproved(ctx, &accountv1.SetNodeApprovedRequest{NodeId: id, Approved: approved})
-	return mapGRPC(err)
+	return mapFed(err)
 }
 
-func (g *GRPC) AnnounceAs(ctx context.Context, nodeKey string, services map[string]string) (string, bool, error) {
-	ctx = metadata.AppendToOutgoingContext(ctx, nodeKeyMetadataKey, nodeKey)
-	resp, err := accountv1.NewFederationClient(g.conn).Announce(ctx, &accountv1.AnnounceRequest{Services: services})
-	if err != nil {
-		return "", false, mapGRPC(err)
+func (g *GRPC) SetNodeWaiver(ctx context.Context, id, reason string, until time.Time) error {
+	var u int64
+	if !until.IsZero() {
+		u = until.Unix()
 	}
-	return resp.GetNodeId(), resp.GetApproved(), nil
+	_, err := accountv1.NewFederationClient(g.conn).SetNodeWaiver(ctx, &accountv1.SetNodeWaiverRequest{NodeId: id, Reason: reason, UntilUnix: u})
+	return mapFed(err)
+}
+
+func (g *GRPC) RevokeServer(ctx context.Context, serverID string) error {
+	_, err := accountv1.NewFederationClient(g.conn).RevokeServer(ctx, &accountv1.RevokeServerRequest{ServerId: serverID})
+	return mapFed(err)
+}
+
+func (g *GRPC) NodeRequirements(ctx context.Context) (NodeRequirements, error) {
+	r, err := accountv1.NewFederationClient(g.conn).GetRequirements(ctx, &accountv1.GetRequirementsRequest{})
+	if err != nil {
+		return NodeRequirements{}, mapFed(err)
+	}
+	return NodeRequirements{
+		NodeCores: int(r.GetNodeCores()), NodeRAMGB: int(r.GetNodeRamGb()), NodeDiskGB: int(r.GetNodeDiskGb()),
+		ServerCores: int(r.GetServerCores()), ServerRAMGB: int(r.GetServerRamGb()), ServerBandwidthMbps: int(r.GetServerBandwidthMbps()),
+		MeasuredMbps: int(r.GetMeasuredMbps()), SlackPct: int(r.GetSlackPct()), AvailabilityPct: r.GetAvailabilityPct(),
+		ReportStale:      time.Duration(r.GetReportStaleSeconds()) * time.Second,
+		SelfTestInterval: time.Duration(r.GetSelftestIntervalSeconds()) * time.Second,
+		SelfTestMaxAge:   time.Duration(r.GetSelftestMaxAgeSeconds()) * time.Second,
+		SelfTestBytes:    r.GetSelftestBytes(), Roles: r.GetRoles(),
+	}, nil
+}
+
+func (g *GRPC) ListLocations(ctx context.Context) ([]NodeLocation, error) {
+	resp, err := accountv1.NewFederationClient(g.conn).ListLocations(ctx, &accountv1.ListLocationsRequest{})
+	if err != nil {
+		return nil, mapFed(err)
+	}
+	out := make([]NodeLocation, 0, len(resp.GetLocations()))
+	for _, l := range resp.GetLocations() {
+		out = append(out, NodeLocation{Code: l.GetCode(), Country: l.GetCountry(), City: l.GetCity(), Wanted: int(l.GetWanted()),
+			Status: l.GetStatus(), Approved: int(l.GetApproved()), Accepting: l.GetAccepting()})
+	}
+	return out, nil
+}
+
+func (g *GRPC) PutLocation(ctx context.Context, l NodeLocation) error {
+	_, err := accountv1.NewFederationClient(g.conn).PutLocation(ctx, &accountv1.Location{Code: l.Code, Country: l.Country, City: l.City,
+		Wanted: int32(l.Wanted), Status: l.Status})
+	return mapFed(err)
+}
+
+func (g *GRPC) DeleteLocation(ctx context.Context, code string) error {
+	_, err := accountv1.NewFederationClient(g.conn).DeleteLocation(ctx, &accountv1.DeleteLocationRequest{Code: code})
+	return mapFed(err)
+}
+
+func (g *GRPC) JoinServerAs(ctx context.Context, nodeKey, name string) (string, string, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, nodeKeyMetadataKey, nodeKey)
+	resp, err := accountv1.NewFederationClient(g.conn).JoinServer(ctx, &accountv1.JoinServerRequest{Name: name})
+	if err != nil {
+		return "", "", mapFed(err)
+	}
+	return resp.GetServerId(), resp.GetKey(), nil
+}
+
+func (g *GRPC) AnnounceAs(ctx context.Context, serverKey string, services map[string]string, rep ServerReport, observedIP string) (AnnounceResult, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, nodeKeyMetadataKey, serverKey)
+	resp, err := accountv1.NewFederationClient(g.conn).Announce(ctx, &accountv1.AnnounceRequest{
+		Services: services, ObservedIp: observedIP,
+		Report: &accountv1.ServerReport{Cores: int32(rep.Cores), RamMb: rep.RAMMB, DiskGb: rep.DiskGB, DiskSsd: rep.DiskSSD,
+			Ipv4: rep.IPv4, Ipv6: rep.IPv6, PortMbps: int32(rep.PortMbps)},
+	})
+	if err != nil {
+		return AnnounceResult{}, mapFed(err)
+	}
+	return AnnounceResult{NodeID: resp.GetNodeId(), ServerID: resp.GetServerId(), Approved: resp.GetApproved(),
+		InRotation: resp.GetInRotation(), Problems: resp.GetProblems(), SelfTestDue: resp.GetSelftestDue()}, nil
+}
+
+func (g *GRPC) StartSelfTestAs(ctx context.Context, serverKey, direction string) (string, int64, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, nodeKeyMetadataKey, serverKey)
+	resp, err := accountv1.NewFederationClient(g.conn).StartSelfTest(ctx, &accountv1.StartSelfTestRequest{Direction: direction})
+	if err != nil {
+		return "", 0, mapFed(err)
+	}
+	return resp.GetServerId(), resp.GetBytes(), nil
+}
+
+func (g *GRPC) RecordSelfTest(ctx context.Context, serverID, direction string, mbps float64, rttMs int) error {
+	_, err := accountv1.NewFederationClient(g.conn).RecordSelfTest(ctx, &accountv1.RecordSelfTestRequest{ServerId: serverID, Direction: direction, Mbps: mbps, RttMs: int32(rttMs)})
+	return mapFed(err)
+}
+
+func unixTime(u int64) time.Time {
+	if u <= 0 {
+		return time.Time{}
+	}
+	return time.Unix(u, 0)
 }
 
 func toNodes(in []*accountv1.Node) []Node {
 	out := make([]Node, 0, len(in))
 	for _, n := range in {
-		var seen time.Time
-		if n.GetLastSeenUnix() > 0 {
-			seen = time.Unix(n.GetLastSeenUnix(), 0)
+		node := Node{ID: n.GetNodeId(), Name: n.GetName(), Country: n.GetCountry(), Region: n.GetRegion(), Services: n.GetServices(),
+			LastSeen: unixTime(n.GetLastSeenUnix()), Approved: n.GetApproved(), InRotation: n.GetInRotation(), Problems: n.GetProblems(),
+			WaiverReason: n.GetWaiverReason(), WaiverUntil: unixTime(n.GetWaiverUntilUnix()), Waived: n.GetWaived(),
+			TotalCores: int(n.GetTotalCores()), TotalRAMMB: n.GetTotalRamMb(), TotalDiskGB: n.GetTotalDiskGb()}
+		for _, v := range n.GetServers() {
+			r := v.GetReport()
+			node.Servers = append(node.Servers, NodeServer{ID: v.GetServerId(), Name: v.GetName(), Services: v.GetServices(),
+				Report: ServerReport{Cores: int(r.GetCores()), RAMMB: r.GetRamMb(), DiskGB: r.GetDiskGb(), DiskSSD: r.GetDiskSsd(),
+					IPv4: r.GetIpv4(), IPv6: r.GetIpv6(), PortMbps: int(r.GetPortMbps())},
+				ObservedIP: v.GetObservedIp(), LastSeen: unixTime(v.GetLastSeenUnix()),
+				DownMbps: v.GetDownMbps(), DownAt: unixTime(v.GetDownUnix()), UpMbps: v.GetUpMbps(), UpAt: unixTime(v.GetUpUnix()),
+				RTTMs: int(v.GetRttMs()), Problems: v.GetProblems()})
 		}
-		out = append(out, Node{ID: n.GetNodeId(), Name: n.GetName(), Country: n.GetCountry(), Services: n.GetServices(), LastSeen: seen, Approved: n.GetApproved()})
+		out = append(out, node)
 	}
 	return out
 }

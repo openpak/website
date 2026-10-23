@@ -187,9 +187,13 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	// Public: the region nodes a room may be served from. The status page, the
 	// app, and the matchmaking servers all read this one list.
 	g("/regions", s.handleRegions)
-	// A node's minute-by-minute announce, with its own key as the bearer. The
-	// core's gRPC stays internal; this is the one door in.
+	// A node's doors, each with its own key as the bearer. The core's gRPC
+	// stays internal. The node key only joins servers; a server key
+	// announces once a minute and runs its daily bandwidth self-test.
+	h("/federation/join", s.handleJoin)
 	h("/federation/announce", s.handleAnnounce)
+	g("/federation/selftest", s.handleSelfTestDown)
+	h("/federation/selftest", s.handleSelfTestUp)
 
 	s.registerInternal(mux)
 	s.registerBans(mux)
@@ -1088,7 +1092,7 @@ func nodeJSON(n core.Node) map[string]any {
 	if !n.LastSeen.IsZero() {
 		seen = n.LastSeen.Unix()
 	}
-	return map[string]any{"id": n.ID, "name": n.Name, "country": n.Country, "services": n.Services, "players": n.Players, "last_seen_unix": seen}
+	return map[string]any{"id": n.ID, "name": n.Name, "country": n.Country, "region": n.Region, "services": n.Services, "players": n.Players, "last_seen_unix": seen}
 }
 
 // handleRegions is cached for a moment because every matchmaking server polls
@@ -1110,36 +1114,6 @@ func (s *Server) handleRegions(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Cache-Control", "public, max-age=15")
 	writeJSON(w, http.StatusOK, map[string]any{"regions": out})
-}
-
-func (s *Server) handleAnnounce(w http.ResponseWriter, r *http.Request) {
-	if s.Federation == nil {
-		writeError(w, http.StatusServiceUnavailable, "federation not configured")
-		return
-	}
-	key, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
-	if !ok || !strings.HasPrefix(key, "opnode_") {
-		writeError(w, http.StatusUnauthorized, "node key required")
-		return
-	}
-	var in struct {
-		Services map[string]string `json:"services"`
-	}
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8192)).Decode(&in); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON")
-		return
-	}
-	id, approved, err := s.Federation.AnnounceAs(r.Context(), key, in.Services)
-	if err != nil {
-		if strings.Contains(err.Error(), "credentials rejected") {
-			writeError(w, http.StatusUnauthorized, "unknown node key")
-			return
-		}
-		s.log.Error("announce", "err", err)
-		writeError(w, http.StatusBadGateway, "announce failed")
-		return
-	}
-	writeJSON(w, http.StatusOK, map[string]any{"node_id": id, "approved": approved})
 }
 
 // nnAdapter is the Wii U/3DS adapter client, or nil until NN_ACCOUNT_INTERNAL_URL is set.

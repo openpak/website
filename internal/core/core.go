@@ -23,9 +23,11 @@ var (
 	ErrNotFound           = errors.New("core: not found")
 	ErrConflict           = errors.New("core: conflicting state")
 	ErrBlocked            = errors.New("core: blocked")
-	ErrNotAllowed         = errors.New("core: interaction not allowed")
-	ErrBanned             = errors.New("core: account banned")
-	ErrContractPending    = errors.New("core: contract not yet available (see Contract requests)")
+	// ErrTooSoon is a rate-limited federation call (one self-test per day).
+	ErrTooSoon         = errors.New("core: too soon")
+	ErrNotAllowed      = errors.New("core: interaction not allowed")
+	ErrBanned          = errors.New("core: account banned")
+	ErrContractPending = errors.New("core: contract not yet available (see Contract requests)")
 	// ErrInvalidCode is a wrong or reused second-factor code (TOTP or recovery),
 	// or a sign-in challenge that is no longer valid.
 	ErrInvalidCode = errors.New("core: invalid code")
@@ -376,28 +378,110 @@ func ClientLabel(namespace, client string) string {
 
 // Node is a federation region: a relay tier somewhere that announces its
 // addresses. Matchmaking hands them out per room, so a joiner lands where
-// the host's room lives.
+// the host's room lives. A node runs on one or more servers.
 type Node struct {
 	ID       string
 	Name     string
 	Country  string
+	Region   string // coverage-plan code; "" outside the plan
 	Services map[string]string
 	LastSeen time.Time
 	Approved bool
 	Players  int
+
+	InRotation bool
+	Problems   []string
+	// Admin view only (ListAllNodes); never in a public answer.
+	WaiverReason string
+	WaiverUntil  time.Time
+	Waived       bool
+	Servers      []NodeServer
+	TotalCores   int
+	TotalRAMMB   int64
+	TotalDiskGB  int64
+}
+
+// NodeServer is one box of a node and what it last reported. Everything but
+// the measured bandwidth is self-declared.
+type NodeServer struct {
+	ID         string
+	Name       string
+	Services   map[string]string
+	Report     ServerReport
+	ObservedIP string
+	LastSeen   time.Time
+	DownMbps   float64
+	DownAt     time.Time
+	UpMbps     float64
+	UpAt       time.Time
+	RTTMs      int
+	Problems   []string
+}
+
+// ServerReport is a server's own account of its hardware.
+type ServerReport struct {
+	Cores    int    `json:"cores"`
+	RAMMB    int64  `json:"ram_mb"`
+	DiskGB   int64  `json:"disk_gb"`
+	DiskSSD  bool   `json:"disk_ssd"`
+	IPv4     string `json:"ipv4"`
+	IPv6     string `json:"ipv6"`
+	PortMbps int    `json:"port_mbps"`
+}
+
+// AnnounceResult is what a server learns from its announce.
+type AnnounceResult struct {
+	NodeID      string   `json:"node_id"`
+	ServerID    string   `json:"server_id"`
+	Approved    bool     `json:"approved"`
+	InRotation  bool     `json:"in_rotation"`
+	Problems    []string `json:"problems"`
+	SelfTestDue bool     `json:"selftest_due"`
+}
+
+// NodeRequirements are the admission figures, owned by the core.
+type NodeRequirements struct {
+	NodeCores, NodeRAMGB, NodeDiskGB              int
+	ServerCores, ServerRAMGB, ServerBandwidthMbps int
+	MeasuredMbps, SlackPct                        int
+	AvailabilityPct                               float64
+	ReportStale, SelfTestInterval, SelfTestMaxAge time.Duration
+	SelfTestBytes                                 int64
+	Roles                                         []string
+}
+
+// NodeLocation is one entry of the coverage plan.
+type NodeLocation struct {
+	Code      string
+	Country   string
+	City      string
+	Wanted    int
+	Status    string // open | full | closed
+	Approved  int
+	Accepting bool // open and approved < wanted
 }
 
 // Federation is the node register in the core.
 type Federation interface {
-	// ListNodes is what may be handed out: approved and recently seen, with
+	// ListNodes is what may be handed out: approved and in rotation, with
 	// live player counts.
 	ListNodes(ctx context.Context) ([]Node, error)
 	ListAllNodes(ctx context.Context) ([]Node, error)
-	CreateNode(ctx context.Context, id, name, country string) (key string, err error)
+	CreateNode(ctx context.Context, id, name, country, region string) (key string, err error)
+	RotateNodeKey(ctx context.Context, id string) (key string, err error)
 	SetNodeApproved(ctx context.Context, id string, approved bool) error
-	// AnnounceAs relays a node's own announce, authenticated with the node's
-	// key rather than the website's.
-	AnnounceAs(ctx context.Context, nodeKey string, services map[string]string) (nodeID string, approved bool, err error)
+	SetNodeWaiver(ctx context.Context, id, reason string, until time.Time) error
+	RevokeServer(ctx context.Context, serverID string) error
+	NodeRequirements(ctx context.Context) (NodeRequirements, error)
+	ListLocations(ctx context.Context) ([]NodeLocation, error)
+	PutLocation(ctx context.Context, l NodeLocation) error
+	DeleteLocation(ctx context.Context, code string) error
+	// The *As calls relay a node's or server's own request, authenticated
+	// with its key rather than the website's.
+	JoinServerAs(ctx context.Context, nodeKey, name string) (serverID, key string, err error)
+	AnnounceAs(ctx context.Context, serverKey string, services map[string]string, rep ServerReport, observedIP string) (AnnounceResult, error)
+	StartSelfTestAs(ctx context.Context, serverKey, direction string) (serverID string, bytes int64, err error)
+	RecordSelfTest(ctx context.Context, serverID, direction string, mbps float64, rttMs int) error
 }
 
 // ModeratedAccount is one search hit for moderators.

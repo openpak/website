@@ -11,6 +11,19 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## Unreleased
+
+- **Federation admission.** Servers join a node with the node key (`POST /api/v1/federation/join`)
+  and get their own key; each announces its roles and hardware report, and runs a daily
+  home-measured bandwidth self-test (`GET`/`POST /api/v1/federation/selftest`). `/api/v1/regions`
+  lists only nodes in rotation and now carries `region`; waivers and server detail never appear in it.
+- **Region node applications.** `/account/operator`: apply for an open location with the planned
+  servers, contact and the operator terms, or join a country's waitlist; see the status and answer
+  questions. Admin › Region nodes gains per-server specs, self-tests, compliance, rotation, waivers
+  (audited), server revocation and key rotation, plus Applications (approve creates the node and shows
+  its key once, reject with a reason, ask for info) and Wanted locations (the coverage plan).
+- `/operators`: operator terms with the core's figures (store migration 0023 for applications).
+
 ## v0.72.4 — 2026-10-17
 
 - Status page: "Wii U / 3DS" share one row too, each row with both logos and a summed count.

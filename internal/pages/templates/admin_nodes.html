@@ -1,35 +1,88 @@
+{{define "nodetabs"}}
+<nav aria-label="{{t .Lang "admin.nodes"}}" class="mb-6 flex flex-wrap gap-2">
+  <a class="btn text-sm {{if eq .Path "/admin/nodes"}}primary{{end}}" href="/admin/nodes">{{t .Lang "admin.nodes"}}</a>
+  <a class="btn text-sm {{if eq .Path "/admin/nodes/applications"}}primary{{end}}" href="/admin/nodes/applications">{{t .Lang "admin.applications"}}</a>
+  <a class="btn text-sm {{if eq .Path "/admin/nodes/locations"}}primary{{end}}" href="/admin/nodes/locations">{{t .Lang "admin.locations"}}</a>
+</nav>
+{{end}}
+{{define "nodekey"}}
+{{if .Key}}
+<div class="notice ok mb-6" role="status">
+  <p class="mb-2">{{t .Lang "admin.nodes.key"}}{{if .KeyNode}} (<code>{{.KeyNode}}</code>){{end}}</p>
+  <span class="code break-anywhere">{{.Key}}</span>
+</div>
+{{end}}
+{{end}}
 {{template "header" .}}
 {{template "adminnav" .}}
 <div class="page-head"><h1>{{t .Lang "admin.nodes"}}</h1><p>{{t .Lang "admin.nodes.sub"}}</p></div>
+{{template "nodetabs" .}}
 {{if .Error}}<p class="notice bad mb-6" role="alert">{{.Error}}</p>{{end}}
-{{if .Key}}
-<div class="notice ok mb-6" role="status">
-  <p class="mb-2">{{t .Lang "admin.nodes.key"}}</p>
-  <span class="code">{{.Key}}</span>
-</div>
-{{end}}
+{{template "nodekey" .}}
+<p class="notice warn mb-6">{{t .Lang "admin.nodes.selfdeclared"}}</p>
+{{with .Req}}<p class="text-sm text-muted mb-6">{{t $.Lang "admin.nodes.rules"}} {{.NodeCores}} cores · {{.NodeRAMGB}} GB RAM · {{.NodeDiskGB}} GB NVMe/SSD per node; {{.ServerCores}} cores · {{.ServerRAMGB}} GB RAM · public IPv4 · {{.ServerBandwidthMbps}} Mbps symmetric per server; measured ≥ {{.MeasuredMbps}} Mbps; report within {{.ReportStale}}; self-test within {{.SelfTestMaxAge}}.</p>{{end}}
 
 {{if .Nodes}}
 <ul class="card list-none divide-y divide-line p-0">
   {{range .Nodes}}
-  <li class="flex items-center gap-3 p-4">
-    <span class="min-w-0">
-      <span class="font-semibold break-anywhere">{{.Name}}</span>
-      {{if .Approved}}<span class="badge {{if .Fresh}}ok{{end}} ml-1">{{t $.Lang "admin.nodes.approved"}}</span>
-      {{else}}<span class="badge warn ml-1">{{t $.Lang "admin.nodes.waiting"}}</span>{{end}}
-      <span class="block text-sm text-muted break-anywhere"><code>{{.ID}}</code> · {{.Country}} · {{.Seen}}</span>
-      {{if .Services}}<span class="block text-sm text-muted break-anywhere">{{range $k, $v := .Services}}<span class="mr-3 inline-block">{{$k}} {{$v}}</span>{{end}}</span>{{end}}
-    </span>
-    <form method="post" action="/admin/nodes/{{.ID}}/approve" class="ml-auto shrink-0">
-      <input type="hidden" name="csrf" value="{{$.CSRF}}">
-      {{if .Approved}}
-      <input type="hidden" name="approved" value="false">
-      <button type="submit" class="btn text-sm danger">{{t $.Lang "admin.nodes.revoke"}}</button>
-      {{else}}
-      <input type="hidden" name="approved" value="true">
-      <button type="submit" class="btn text-sm primary">{{t $.Lang "admin.nodes.approve"}}</button>
-      {{end}}
-    </form>
+  <li class="p-4">
+    <div class="flex flex-wrap items-start gap-3">
+      <span class="min-w-0">
+        <span class="font-semibold break-anywhere">{{.Name}}</span>
+        {{if .Approved}}<span class="badge ok ml-1">{{t $.Lang "admin.nodes.approved"}}</span>
+        {{else}}<span class="badge warn ml-1">{{t $.Lang "admin.nodes.waiting"}}</span>{{end}}
+        {{if .InRotation}}<span class="badge ok ml-1">{{t $.Lang "admin.nodes.inrotation"}}</span>
+        {{else}}<span class="badge bad ml-1">{{t $.Lang "admin.nodes.outrotation"}}</span>{{end}}
+        {{if .Waived}}<span class="badge warn ml-1">{{t $.Lang "admin.nodes.waived"}}</span>{{end}}
+        <span class="block text-sm text-muted break-anywhere"><code>{{.ID}}</code> · {{if .Region}}{{.Region}} · {{end}}{{.Country}} · {{.Seen}}</span>
+        <span class="block text-sm text-muted">{{.Totals}}</span>
+        {{if .WaiverReason}}<span class="block text-sm">{{t $.Lang "admin.nodes.waiver"}}: “{{.WaiverReason}}”{{if .WaiverUntil}} · {{t $.Lang "admin.nodes.waiver.until"}} {{.WaiverUntil}}{{else}} · {{t $.Lang "admin.nodes.waiver.noexpiry"}}{{end}}{{if not .Waived}} ({{t $.Lang "admin.nodes.waiver.expired"}}){{end}}</span>{{end}}
+      </span>
+      <form method="post" action="/admin/nodes/{{.ID}}/approve" class="ml-auto shrink-0">
+        <input type="hidden" name="csrf" value="{{$.CSRF}}">
+        {{if .Approved}}
+        <input type="hidden" name="approved" value="false">
+        <button type="submit" class="btn text-sm danger">{{t $.Lang "admin.nodes.revoke"}}</button>
+        {{else}}
+        <input type="hidden" name="approved" value="true">
+        <button type="submit" class="btn text-sm primary">{{t $.Lang "admin.nodes.approve"}}</button>
+        {{end}}
+      </form>
+    </div>
+    {{if .Problems}}
+    <ul class="notice bad mt-2 text-sm">{{range .Problems}}<li>{{.}}</li>{{end}}</ul>
+    {{end}}
+    {{if .Servers}}
+    <table class="mt-4 text-sm">
+      <thead><tr><th>{{t $.Lang "admin.nodes.server"}}</th><th>{{t $.Lang "admin.nodes.specs"}}</th><th>{{t $.Lang "admin.nodes.selftest"}}</th><th>{{t $.Lang "admin.nodes.state"}}</th><th></th></tr></thead>
+      <tbody>{{range .Servers}}<tr>
+        <td><code>{{.Name}}</code><span class="block text-muted break-anywhere">{{.Roles}}</span><span class="block text-muted break-anywhere">{{.Address}}</span><span class="block text-muted">{{.Seen}}</span></td>
+        <td>{{.Specs}}</td>
+        <td>{{.SelfTest}}</td>
+        <td>{{if .Problems}}{{range .Problems}}<span class="block">{{.}}</span>{{end}}{{else}}<span class="badge ok">{{t $.Lang "admin.nodes.compliant"}}</span>{{end}}</td>
+        <td><form method="post" action="/admin/nodes/servers/revoke"><input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="server" value="{{.ID}}"><button type="submit" class="btn text-sm danger">{{t $.Lang "admin.nodes.server.revoke"}}</button></form></td>
+      </tr>{{end}}</tbody>
+    </table>
+    {{else}}<p class="mt-2 text-sm text-muted">{{t $.Lang "admin.nodes.noservers"}}</p>{{end}}
+    <details class="mt-3">
+      <summary class="text-sm">{{t $.Lang "admin.nodes.manage"}}</summary>
+      <form method="post" action="/admin/nodes/{{.ID}}/waiver" class="form-stack max-w-md mt-3">
+        <input type="hidden" name="csrf" value="{{$.CSRF}}">
+        <label for="wr-{{.ID}}">{{t $.Lang "admin.nodes.waiver.reason"}}</label>
+        <input id="wr-{{.ID}}" name="reason" type="text" maxlength="200" value="{{.WaiverReason}}" placeholder="owner test node">
+        <label for="wu-{{.ID}}">{{t $.Lang "admin.nodes.waiver.untilfield"}}</label>
+        <input id="wu-{{.ID}}" name="until" type="date" value="{{.WaiverUntil}}">
+        <p class="text-sm text-muted">{{t $.Lang "admin.nodes.waiver.help"}}</p>
+        <div class="flex gap-2">
+          <button type="submit" class="btn text-sm primary">{{t $.Lang "admin.nodes.waiver.save"}}</button>
+          {{if .WaiverReason}}<button type="submit" name="clear" value="true" class="btn text-sm danger">{{t $.Lang "admin.nodes.waiver.clear"}}</button>{{end}}
+        </div>
+      </form>
+      <form method="post" action="/admin/nodes/{{.ID}}/rotate-key" class="mt-3">
+        <input type="hidden" name="csrf" value="{{$.CSRF}}">
+        <button type="submit" class="btn text-sm">{{t $.Lang "admin.nodes.rotate"}}</button>
+      </form>
+    </details>
   </li>
   {{end}}
 </ul>
@@ -37,6 +90,7 @@
 
 <section aria-labelledby="nn-h">
   <h2 id="nn-h">{{t .Lang "admin.nodes.new"}}</h2>
+  <p class="text-sm text-muted">{{t .Lang "admin.nodes.new.sub"}}</p>
   <form method="post" action="/admin/nodes" class="form-stack max-w-md">
     <input type="hidden" name="csrf" value="{{.CSRF}}">
     <label for="id">{{t .Lang "admin.nodes.id"}}</label>
@@ -45,6 +99,9 @@
     <input id="name" name="name" type="text" required maxlength="64">
     <label for="country">{{t .Lang "admin.nodes.country"}}</label>
     <input id="country" name="country" type="text" required minlength="2" maxlength="2" class="uppercase">
+    <label for="region">{{t .Lang "admin.nodes.region"}}</label>
+    <input id="region" name="region" type="text" maxlength="32" list="region-codes" pattern="[a-z]{2}(-[a-z0-9]+)*">
+    <datalist id="region-codes">{{range .Locations}}<option value="{{.Code}}">{{.City}}, {{.Country}}</option>{{end}}</datalist>
     <button type="submit" class="btn primary">{{t .Lang "admin.nodes.create"}}</button>
   </form>
 </section>

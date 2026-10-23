@@ -97,6 +97,8 @@ func run(log *slog.Logger) error {
 	pageSrv.Social = coreGRPC
 	pageSrv.Moderation = coreGRPC
 	pageSrv.Links = coreGRPC
+	pageSrv.Federation = coreGRPC
+	pageSrv.Operators = db
 	pageSrv.Events = coreGRPC
 	pageSrv.Invites = coreGRPC
 	pageSrv.Playtime = coreGRPC
@@ -208,6 +210,7 @@ func run(log *slog.Logger) error {
 	apiSrv.Crashes = files
 	adminSrv := admin.New(tmpl, coreGRPC, db, sessions, cfg.AdminAccountIDs, log)
 	adminSrv.Federation = coreGRPC
+	adminSrv.Operators = db
 	adminSrv.Moderation = coreGRPC
 	// The monitor's sources. Each is optional and reads as "not configured"
 	// when absent; a typed nil must not reach an interface field, or it would

@@ -1,0 +1,36 @@
+{{template "header" .}}
+{{template "adminnav" .}}
+<div class="page-head"><h1>{{t .Lang "admin.locations"}}</h1><p>{{t .Lang "admin.locations.sub"}}</p></div>
+{{template "nodetabs" .}}
+{{if .Error}}<p class="notice bad mb-6" role="alert">{{.Error}}</p>{{end}}
+{{if .Locations}}
+<table class="text-sm">
+  <thead><tr><th>{{t .Lang "admin.locations.code"}}</th><th>{{t .Lang "admin.nodes.country"}}</th><th>{{t .Lang "admin.locations.city"}}</th><th>{{t .Lang "admin.locations.wanted"}}</th><th>{{t .Lang "admin.nodes.approved"}}</th><th>{{t .Lang "admin.locations.status"}}</th><th></th></tr></thead>
+  <tbody>{{range .Locations}}<tr>
+    <td><code>{{.Code}}</code></td><td>{{.Country}}</td><td>{{.City}}</td><td>{{.Wanted}}</td><td>{{.Approved}}</td>
+    <td><span class="badge {{if .Accepting}}ok{{else if eq .Status "closed"}}bad{{else}}warn{{end}}">{{.Status}}{{if and (eq .Status "open") (not .Accepting)}} (filled){{end}}</span></td>
+    <td class="flex gap-2"><a class="btn text-sm" href="/admin/nodes/locations?edit={{.Code}}">{{t $.Lang "admin.locations.edit"}}</a>
+      <form method="post" action="/admin/nodes/locations/{{.Code}}/delete"><input type="hidden" name="csrf" value="{{$.CSRF}}"><button type="submit" class="btn text-sm danger">{{t $.Lang "admin.locations.delete"}}</button></form></td>
+  </tr>{{end}}</tbody>
+</table>
+{{else}}<p class="card p-4 text-muted">{{t .Lang "admin.locations.none"}}</p>{{end}}
+
+<section aria-labelledby="loc-h">
+  <h2 id="loc-h">{{if .Edit.Code}}{{t .Lang "admin.locations.edit"}} {{.Edit.Code}}{{else}}{{t .Lang "admin.locations.new"}}{{end}}</h2>
+  <form method="post" action="/admin/nodes/locations" class="form-stack max-w-md">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <label for="code">{{t .Lang "admin.locations.code"}}</label>
+    <input id="code" name="code" type="text" required maxlength="32" pattern="[a-z]{2}(-[a-z0-9]+)*" value="{{.Edit.Code}}" placeholder="sa-east">
+    <label for="country">{{t .Lang "admin.nodes.country"}}</label>
+    <input id="country" name="country" type="text" required minlength="2" maxlength="2" class="uppercase" value="{{.Edit.Country}}">
+    <label for="city">{{t .Lang "admin.locations.city"}}</label>
+    <input id="city" name="city" type="text" maxlength="64" value="{{.Edit.City}}">
+    <label for="wanted">{{t .Lang "admin.locations.wanted"}}</label>
+    <input id="wanted" name="wanted" type="number" min="0" max="1000" required value="{{.Edit.Wanted}}">
+    <label for="status">{{t .Lang "admin.locations.status"}}</label>
+    <select id="status" name="status" class="field">{{$cur := .Edit.Status}}{{range arr "open" "full" "closed"}}<option value="{{.}}" {{if eq . $cur}}selected{{end}}>{{.}}</option>{{end}}</select>
+    <button type="submit" class="btn primary">{{t .Lang "admin.locations.save"}}</button>
+  </form>
+</section>
+{{template "adminend"}}
+{{template "footer" .}}

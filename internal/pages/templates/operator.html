@@ -1,0 +1,124 @@
+{{template "header" .}}
+{{/* Region-node operator application. The planned servers are rows of
+     plain fields (no script); a row without cores is ignored. The figures
+     come from the core (Federation.GetRequirements). */}}
+<div class="page-head">
+  <h1>{{t .Lang "operator.title"}}</h1>
+  <p>{{t .Lang "operator.intro"}} <a href="/operators">{{t .Lang "operator.terms.link"}}</a></p>
+</div>
+
+{{if eq .Done "applied"}}<p class="notice ok mb-6" role="status">{{t .Lang "operator.done.applied"}}</p>{{end}}
+{{if eq .Done "waitlist"}}<p class="notice ok mb-6" role="status">{{t .Lang "operator.done.waitlist"}}</p>{{end}}
+{{if eq .Done "replied"}}<p class="notice ok mb-6" role="status">{{t .Lang "operator.done.replied"}}</p>{{end}}
+{{if .Errors}}<div class="notice bad mb-6" role="alert"><ul class="m-0">{{range .Errors}}<li>{{.}}</li>{{end}}</ul></div>{{end}}
+
+{{if not .Available}}
+<p class="empty">{{t .Lang "operator.unavailable"}}</p>
+{{else}}
+
+{{with .Req}}
+<section aria-labelledby="req-h" class="mb-9">
+  <div class="section-head"><h2 id="req-h">{{t $.Lang "operator.req.title"}}</h2></div>
+  <div class="card pad">
+    <ul class="m-0">
+      <li>{{t $.Lang "operator.req.node"}}: {{.NodeCores}} {{t $.Lang "operator.req.cores"}} · {{.NodeRAMGB}} GB RAM · {{.NodeDiskGB}} GB NVMe/SSD</li>
+      <li>{{t $.Lang "operator.req.server"}}: {{.ServerCores}} {{t $.Lang "operator.req.cores"}} · {{.ServerRAMGB}} GB RAM · {{t $.Lang "operator.req.ipv4"}} · {{.ServerBandwidthMbps}} Mbps {{t $.Lang "operator.req.symmetric"}}</li>
+      <li>{{t $.Lang "operator.req.availability"}}: {{.AvailabilityPct}} %</li>
+    </ul>
+    <p class="hint m-0 mt-2">{{t $.Lang "operator.req.note"}}</p>
+  </div>
+</section>
+{{end}}
+
+{{if .Apps}}
+<section aria-labelledby="apps-h" class="mb-9">
+  <div class="section-head"><h2 id="apps-h">{{t .Lang "operator.apps"}}</h2></div>
+  <ul class="card list-none divide-y divide-line p-0">
+    {{range .Apps}}
+    <li class="p-4">
+      <span class="font-semibold">{{if .Location}}{{.Location}} · {{end}}{{.City}}{{if .City}}, {{end}}{{.Country}}</span>
+      <span class="badge {{if eq .Status "approved"}}ok{{else if eq .Status "rejected"}}bad{{else}}warn{{end}} ml-1">{{t $.Lang (print "operator.status." .Status)}}</span>
+      <span class="block text-sm text-muted">{{date $.Lang .CreatedAt}}</span>
+      {{if .AdminNote}}<p class="mt-2 mb-0 text-sm"><strong>{{if eq .Status "rejected"}}{{t $.Lang "operator.reason"}}{{else}}{{t $.Lang "operator.question"}}{{end}}:</strong> {{.AdminNote}}</p>{{end}}
+      {{if eq .Status "approved"}}<p class="mt-2 mb-0 text-sm">{{t $.Lang "operator.approved.next"}} <code>{{.NodeID}}</code></p>{{end}}
+      {{if eq .Status "info"}}
+      <form method="post" action="/account/operator/reply" class="form-stack max-w-md mt-3">
+        <input type="hidden" name="csrf" value="{{$.CSRF}}">
+        <input type="hidden" name="id" value="{{.ID}}">
+        <label for="reply-{{.ID}}">{{t $.Lang "operator.reply"}}</label>
+        <textarea id="reply-{{.ID}}" name="reply" rows="3" maxlength="2000" required></textarea>
+        <button type="submit" class="btn primary">{{t $.Lang "operator.reply.send"}}</button>
+      </form>
+      {{end}}
+    </li>
+    {{end}}
+  </ul>
+</section>
+{{end}}
+
+{{if not .InReview}}
+{{if and .Locations (not .NotWanted)}}
+<section aria-labelledby="apply-h" class="mb-9">
+  <div class="section-head"><h2 id="apply-h">{{t .Lang "operator.apply"}}</h2></div>
+  <form method="post" action="/account/operator" class="form-stack max-w-md card pad">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <label for="location">{{t .Lang "operator.location"}}</label>
+    <select id="location" name="location" class="field" required>
+      {{$cur := .Form.Location}}{{range .Locations}}<option value="{{.Code}}" {{if eq .Code $cur}}selected{{end}}>{{if .City}}{{.City}}, {{end}}{{.Country}} ({{.Code}})</option>{{end}}
+    </select>
+    <p class="hint m-0">{{t .Lang "operator.location.hint"}}</p>
+    <label for="city">{{t .Lang "operator.city"}}</label>
+    <input id="city" name="city" type="text" required maxlength="64" value="{{.Form.City}}">
+    <label for="provider">{{t .Lang "operator.provider"}}</label>
+    <input id="provider" name="provider" type="text" required maxlength="100" value="{{.Form.Provider}}">
+    <label for="email">{{t .Lang "operator.email"}}</label>
+    <input id="email" name="email" type="email" required maxlength="254" value="{{.Form.Email}}">
+
+    <h3>{{t .Lang "operator.servers"}}</h3>
+    <p class="hint m-0">{{t .Lang "operator.servers.hint"}}</p>
+    {{range $i, $row := .Rows}}
+    {{if eq $i 2}}<details><summary>{{t $.Lang "operator.servers.more"}}</summary>{{end}}
+    <fieldset class="form-stack">
+      <legend class="font-semibold">{{t $.Lang "operator.server"}} {{.N}}</legend>
+      <label for="s{{$i}}_cores">{{t $.Lang "operator.server.cores"}}</label>
+      <input id="s{{$i}}_cores" name="s{{$i}}_cores" type="number" min="0" max="1024" {{if eq $i 0}}required{{end}} value="{{if .Plan.Cores}}{{.Plan.Cores}}{{end}}">
+      <label for="s{{$i}}_ram">{{t $.Lang "operator.server.ram"}}</label>
+      <input id="s{{$i}}_ram" name="s{{$i}}_ram" type="number" min="0" max="65536" value="{{if .Plan.RAMGB}}{{.Plan.RAMGB}}{{end}}">
+      <label for="s{{$i}}_disk">{{t $.Lang "operator.server.disk"}}</label>
+      <input id="s{{$i}}_disk" name="s{{$i}}_disk" type="number" min="0" max="1000000" value="{{if .Plan.DiskGB}}{{.Plan.DiskGB}}{{end}}">
+      <label class="flex items-center gap-2 text-base text-ink"><input type="checkbox" class="size-5 min-h-0 p-0" name="s{{$i}}_ssd" {{if .Plan.DiskSSD}}checked{{end}}> {{t $.Lang "operator.server.ssd"}}</label>
+      <label for="s{{$i}}_bw">{{t $.Lang "operator.server.bw"}}</label>
+      <input id="s{{$i}}_bw" name="s{{$i}}_bw" type="number" min="0" max="400000" value="{{if .Plan.BandwidthMbps}}{{.Plan.BandwidthMbps}}{{end}}">
+      <label class="flex items-center gap-2 text-base text-ink"><input type="checkbox" class="size-5 min-h-0 p-0" name="s{{$i}}_ipv6" {{if .Plan.IPv6}}checked{{end}}> {{t $.Lang "operator.server.ipv6"}}</label>
+      <span>{{t $.Lang "operator.server.roles"}}</span>
+      {{range $.Roles}}<label class="flex items-center gap-2 text-base text-ink"><input type="checkbox" class="size-5 min-h-0 p-0" name="s{{$i}}_roles" value="{{.}}" {{if index $row.Roles .}}checked{{end}}> {{t $.Lang (print "operator.role." .)}}</label>{{end}}
+    </fieldset>
+    {{end}}
+    {{if gt (len .Rows) 2}}</details>{{end}}
+
+    <label for="notes">{{t .Lang "operator.notes"}}</label>
+    <textarea id="notes" name="notes" rows="3" maxlength="2000">{{.Form.Notes}}</textarea>
+    <label class="flex items-center gap-2 text-base text-ink"><input type="checkbox" class="size-5 min-h-0 p-0" name="terms" required> {{t .Lang "operator.accept"}} <a href="/operators">{{t .Lang "operator.terms.link"}}</a></label>
+    <button type="submit" class="btn primary">{{t .Lang "operator.submit"}}</button>
+  </form>
+</section>
+{{else}}
+<section aria-labelledby="wait-h" class="mb-9">
+  <div class="section-head"><h2 id="wait-h">{{t .Lang "operator.waitlist"}}</h2><p>{{t .Lang "operator.notwanted"}}</p></div>
+  <form method="post" action="/account/operator/waitlist" class="form-stack max-w-md card pad">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <label for="w-country">{{t .Lang "operator.country"}}</label>
+    <input id="w-country" name="country" type="text" required minlength="2" maxlength="2" class="uppercase" value="{{.Form.Country}}">
+    <label for="w-city">{{t .Lang "operator.city"}}</label>
+    <input id="w-city" name="city" type="text" maxlength="64" value="{{.Form.City}}">
+    <label for="w-email">{{t .Lang "operator.email"}}</label>
+    <input id="w-email" name="email" type="email" required maxlength="254" value="{{.Form.Email}}">
+    <button type="submit" class="btn primary">{{t .Lang "operator.waitlist.join"}}</button>
+  </form>
+  {{if and .Locations .NotWanted}}<p class="mt-3"><a href="/account/operator">{{t .Lang "operator.back"}}</a></p>{{end}}
+</section>
+{{end}}
+{{end}}
+
+{{end}}
+{{template "footer" .}}

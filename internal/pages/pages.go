@@ -57,7 +57,12 @@ type Server struct {
 	// Playtime marks titles tested from online play; nil leaves the titles page on player reports.
 	Playtime core.Playtime
 	DB       store.Store
-	Media    *media.Service
+	// Federation is the core's node register: the operator figures and the
+	// coverage plan. Operators holds the applications. Either nil says
+	// "applications are not available".
+	Federation core.Federation
+	Operators  store.OperatorStore
+	Media      *media.Service
 	// Adapter answers what only the Switch adapter knows: the friend code.
 	Adapter *adapter.Client
 	// WFC resolves Wii/DS friend codes for the link flow; nil hides the form.
@@ -387,6 +392,11 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /terms", s.staticPage("terms.html", "footer.terms"))
 	mux.HandleFunc("GET /privacy", s.staticPage("privacy.html", "footer.privacy"))
 	mux.HandleFunc("GET /legal", s.staticPage("legal.html", "footer.legal"))
+	mux.HandleFunc("GET /operators", s.handleOperatorsTerms)
+	mux.HandleFunc("GET /account/operator", s.handleOperator)
+	mux.HandleFunc("POST /account/operator", s.handleOperatorApply)
+	mux.HandleFunc("POST /account/operator/waitlist", s.handleOperatorWaitlist)
+	mux.HandleFunc("POST /account/operator/reply", s.handleOperatorReply)
 	mux.HandleFunc("GET /.well-known/security.txt", handleSecurityTxt)
 	mux.HandleFunc("GET /features", s.handleFeatures)
 	mux.HandleFunc("GET /downloads", s.handleDownloads)

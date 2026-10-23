@@ -1,0 +1,58 @@
+<!-- OWNER REVIEW: drafted without a lawyer. Have it reviewed before relying on it. -->
+{{/* English only on purpose, like terms.html. The figures are the core's
+     (Federation.GetRequirements); nothing here repeats them by hand. */}}
+{{template "header" .}}
+<div class="page-head">
+  <h1>{{t .Lang "footer.operators"}}</h1>
+  <p>Last updated 23 October 2026.</p>
+  {{if ne .Lang "en"}}<p lang="{{.Lang}}">{{t .Lang "legal.english"}}</p>{{end}}
+</div>
+<article class="legal" lang="en">
+<p>These terms apply to anyone who runs an OpenPak region node (“operator”): one or more servers that relay game traffic for players near them, while accounts, friends and matchmaking stay with OpenPak. They add to the <a href="/terms">Terms of use</a>. You accept them when you apply from your <a href="/account/operator">account page</a>, and again each time a server you run joins the network.</p>
+
+<h2 id="approval">Approval</h2>
+<ul>
+  <li>A node serves nobody until OpenPak approves it. Approval is a decision by a person at OpenPak; meeting the figures below makes a node eligible, not approved.</li>
+  <li>OpenPak only takes applications for the locations it lists as wanted, and may keep you on a waitlist for anywhere else.</li>
+  <li>Each server gets its own key. Keep keys secret; if one leaks, tell us and we revoke that server.</li>
+</ul>
+
+<h2 id="hardware">Hardware and network minimums</h2>
+{{with .Req}}
+<table>
+  <thead><tr><th>Requirement</th><th>Minimum</th><th>Counted</th></tr></thead>
+  <tbody>
+    <tr><td>CPU cores</td><td>{{.NodeCores}} per node, {{.ServerCores}} per server</td><td>all servers together; and each server</td></tr>
+    <tr><td>RAM</td><td>{{.NodeRAMGB}} GB per node, {{.ServerRAMGB}} GB per server</td><td>all servers together; and each server</td></tr>
+    <tr><td>Storage</td><td>{{.NodeDiskGB}} GB NVMe or SSD per node</td><td>all servers together</td></tr>
+    <tr><td>Address</td><td>its own public IPv4 per server, no carrier-grade NAT; IPv6 wanted too</td><td>each server</td></tr>
+    <tr><td>Bandwidth</td><td>{{.ServerBandwidthMbps}} Mbps symmetric per server</td><td>each server; it does not add up across servers</td></tr>
+    <tr><td>Availability</td><td>{{.AvailabilityPct}} %</td><td>the node</td></tr>
+  </tbody>
+</table>
+<p>Each server reports its hardware every minute and runs a short bandwidth test against OpenPak once a day (at least {{.MeasuredMbps}} Mbps each way, measured by us). A server that stops reporting for {{$.Stale}}, or whose test is older than {{$.MaxAge}}, takes the node out of rotation until it is back; its approval is kept. Figures within {{.SlackPct}} % count, because the system reports a little less memory and disk than the box is sold with.</p>
+{{else}}
+<p>The current figures could not be loaded. Your <a href="/account/operator">account page</a> shows them, or write to <a href="mailto:{{contactEmail}}">{{contactEmail}}</a>.</p>
+{{end}}
+<p>Hardware and address reports are self-declared by your servers and can be faked, so they are not proof: we use them only to decide whether a node is in rotation, and approval stays a decision by a person at OpenPak. Do not misreport them.</p>
+
+<h2 id="data">Player data</h2>
+<ul>
+  <li>Do not log or keep player data beyond what running the relay needs at that moment. No packet captures, no IP address logs kept past their operational use, no per-player records.</li>
+  <li>Do not share, sell or analyse traffic or anything you learn from it.</li>
+  <li>Operational logs (errors, totals) are fine; keep them only as long as you need them to run the node.</li>
+</ul>
+
+<h2 id="traffic">No interference</h2>
+<p>Relay traffic exactly as it arrives. Do not modify, inject, block, delay or reorder it, do not run modified OpenPak software on a node, and do not use the shared secrets a node holds for anything else.</p>
+
+<h2 id="revocation">Revocation</h2>
+<p>OpenPak may remove a server or a node from rotation, revoke its keys or end its approval at any time, with or without notice, for any reason, including a breach of these terms. You may stop running a node at any time; please tell us first so players are not sent to it.</p>
+
+<h2 id="security">Security contact</h2>
+<p>Give a contact email that someone reads. Report a compromised server, a leaked key or any security problem at once to <a href="mailto:{{contactEmail}}">{{contactEmail}}</a> or as described in our <a href="https://github.com/openpak/.github/blob/main/SECURITY.md" rel="noopener">security policy</a>. We may write to you about security issues and expect a reply.</p>
+
+<h2 id="no-warranty">No payment, no warranty</h2>
+<p>Running a node is voluntary and unpaid. OpenPak gives no warranty about the software or the network and is not liable for your hosting costs or for anything your servers do.</p>
+</article>
+{{template "footer" .}}

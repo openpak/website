@@ -1,0 +1,58 @@
+{{template "header" .}}
+{{template "adminnav" .}}
+<div class="page-head"><h1>{{t .Lang "admin.applications"}}</h1><p>{{t .Lang "admin.applications.sub"}}</p></div>
+{{template "nodetabs" .}}
+{{if .Error}}<p class="notice bad mb-6" role="alert">{{.Error}}</p>{{end}}
+{{template "nodekey" .}}
+{{if .Key}}<p class="notice mb-6">{{t .Lang "admin.applications.next"}}</p>{{end}}
+<nav aria-label="{{t .Lang "admin.applications.filter"}}" class="mb-4 flex flex-wrap gap-2 text-sm">
+  {{range arr "pending" "info" "approved" "rejected" "waitlist" ""}}<a class="btn text-sm {{if eq . $.Filter}}primary{{end}}" href="/admin/nodes/applications?status={{.}}">{{if .}}{{.}}{{else}}all{{end}}</a>{{end}}
+</nav>
+{{if .Apps}}
+<ul class="card list-none divide-y divide-line p-0">
+  {{range .Apps}}
+  <li class="p-4">
+    <span class="font-semibold">#{{.ID}} · {{if .Location}}{{.Location}} · {{end}}{{.City}}{{if .City}}, {{end}}{{.Country}}</span>
+    <span class="badge {{if eq .Status "approved"}}ok{{else if eq .Status "rejected"}}bad{{else}}warn{{end}} ml-1">{{.Status}}</span>
+    <span class="block text-sm text-muted break-anywhere">{{.Email}} · account <code>{{.AccountID}}</code> · {{.Provider}} · applied {{.CreatedAt.UTC.Format "2006-01-02"}} · terms accepted {{.TermsAt.UTC.Format "2006-01-02 15:04 UTC"}}</span>
+    {{if .Servers}}
+    <table class="mt-2 text-sm">
+      <thead><tr><th>#</th><th>cores</th><th>RAM</th><th>disk</th><th>bandwidth</th><th>IPv6</th><th>roles</th></tr></thead>
+      <tbody>{{range $i, $sv := .Servers}}<tr><td>{{$i}}</td><td>{{.Cores}}</td><td>{{.RAMGB}} GB</td><td>{{.DiskGB}} GB {{if .DiskSSD}}SSD{{else}}HDD{{end}}</td><td>{{.BandwidthMbps}} Mbps</td><td>{{if .IPv6}}yes{{else}}no{{end}}</td><td>{{range .Roles}}{{.}} {{end}}</td></tr>{{end}}</tbody>
+    </table>
+    {{end}}
+    {{if .Notes}}<p class="mt-2 text-sm">{{.Notes}}</p>{{end}}
+    {{if .AdminNote}}<p class="mt-2 text-sm"><strong>{{t $.Lang "admin.applications.note"}}:</strong> {{.AdminNote}}</p>{{end}}
+    {{if .Reply}}<p class="mt-2 text-sm"><strong>{{t $.Lang "admin.applications.reply"}}:</strong> {{.Reply}}</p>{{end}}
+    {{if .NodeID}}<p class="mt-2 text-sm">node <code>{{.NodeID}}</code></p>{{end}}
+    {{if or (eq .Status "pending") (eq .Status "info")}}
+    <details class="mt-3">
+      <summary class="text-sm">{{t $.Lang "admin.applications.decide"}}</summary>
+      <form method="post" action="/admin/nodes/applications/{{.ID}}/approve" class="form-stack max-w-md mt-3">
+        <input type="hidden" name="csrf" value="{{$.CSRF}}">
+        <label for="nid-{{.ID}}">{{t $.Lang "admin.nodes.id"}}</label>
+        <input id="nid-{{.ID}}" name="node_id" type="text" required pattern="[a-z0-9][a-z0-9-]{1,31}" maxlength="32">
+        <label for="nn-{{.ID}}">{{t $.Lang "admin.nodes.name"}}</label>
+        <input id="nn-{{.ID}}" name="name" type="text" maxlength="64" value="{{.City}}">
+        <button type="submit" class="btn text-sm primary">{{t $.Lang "admin.applications.approve"}}</button>
+      </form>
+      <form method="post" action="/admin/nodes/applications/{{.ID}}/info" class="form-stack max-w-md mt-3">
+        <input type="hidden" name="csrf" value="{{$.CSRF}}">
+        <label for="q-{{.ID}}">{{t $.Lang "admin.applications.question"}}</label>
+        <textarea id="q-{{.ID}}" name="note" rows="2" maxlength="2000" required></textarea>
+        <button type="submit" class="btn text-sm">{{t $.Lang "admin.applications.ask"}}</button>
+      </form>
+      <form method="post" action="/admin/nodes/applications/{{.ID}}/reject" class="form-stack max-w-md mt-3">
+        <input type="hidden" name="csrf" value="{{$.CSRF}}">
+        <label for="r-{{.ID}}">{{t $.Lang "admin.applications.reason"}}</label>
+        <textarea id="r-{{.ID}}" name="note" rows="2" maxlength="2000" required></textarea>
+        <button type="submit" class="btn text-sm danger">{{t $.Lang "admin.applications.reject"}}</button>
+      </form>
+    </details>
+    {{end}}
+  </li>
+  {{end}}
+</ul>
+{{else}}<p class="card p-4 text-muted">{{t .Lang "admin.applications.none"}}</p>{{end}}
+{{template "adminend"}}
+{{template "footer" .}}

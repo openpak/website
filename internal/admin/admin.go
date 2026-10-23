@@ -30,6 +30,8 @@ import (
 type Server struct {
 	// Federation is set by main; nil hides the region page's actions.
 	Federation core.Federation
+	// Operators holds region-node applications; nil hides the review page.
+	Operators store.OperatorStore
 	// Moderation is the core's account search, bans and reports; nil says
 	// "not configured" on /admin/users and /admin/reports.
 	Moderation core.Moderation
@@ -305,6 +307,14 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/nodes", s.handleNodes)
 	mux.HandleFunc("POST /admin/nodes", s.handleNodeCreate)
 	mux.HandleFunc("POST /admin/nodes/{id}/approve", s.handleNodeApprove)
+	mux.HandleFunc("POST /admin/nodes/{id}/waiver", s.handleNodeWaiver)
+	mux.HandleFunc("POST /admin/nodes/{id}/rotate-key", s.handleNodeRotateKey)
+	mux.HandleFunc("POST /admin/nodes/servers/revoke", s.handleServerRevoke)
+	mux.HandleFunc("GET /admin/nodes/applications", s.handleApplications)
+	mux.HandleFunc("POST /admin/nodes/applications/{id}/{action}", s.handleApplicationDecide)
+	mux.HandleFunc("GET /admin/nodes/locations", s.handleLocations)
+	mux.HandleFunc("POST /admin/nodes/locations", s.handleLocationSave)
+	mux.HandleFunc("POST /admin/nodes/locations/{code}/delete", s.handleLocationDelete)
 }
 
 func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
