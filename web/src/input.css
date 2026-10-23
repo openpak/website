@@ -292,6 +292,17 @@
   }
   .notice.ok  { background: var(--ok-weak);  border-color: var(--ok-line); border-left-color: var(--ok); }
   .notice.bad { background: var(--bad-weak); border-color: var(--bad-line); border-left-color: var(--bad); }
+  .notice.warn { background: var(--warn-weak); border-color: var(--warn-line); border-left-color: var(--warn); }
+  /* The public-alpha strip under the header: on every page, not dismissible. */
+  .alpha-strip { background: var(--warn-weak); border-bottom: 1px solid var(--warn-line); color: var(--ink-2); }
+  .alpha-strip .wrap { padding-top: 0.55rem; padding-bottom: 0.55rem; font-size: 0.88rem; }
+  /* Terms, privacy and legal: plain reading text at a readable measure. */
+  .legal { max-width: 44rem; line-height: 1.6; }
+  .legal h2 { margin-top: 2rem; }
+  .legal ul { padding-left: 1.25rem; list-style: disc; }
+  .legal li { margin: 0.3rem 0; }
+  .legal table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+  .legal th, .legal td { border: 1px solid var(--line); padding: 0.45rem 0.6rem; text-align: left; vertical-align: top; }
 
   /* Lists of things with a state on the right. On a phone the state wraps
      under the name instead of squeezing it. */
@@ -878,9 +889,9 @@
 
   /* Footer: quiet, on the shell. */
   .site-foot { border-top: 1px solid var(--line); margin-top: 72px; }
-  .site-foot .wrap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px 16px; padding-top: 44px; padding-bottom: 36px; }
+  .site-foot .wrap { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 16px; padding-top: 44px; padding-bottom: 36px; }
   .site-foot .wrap > :first-child { grid-column: 1 / -1; }
-  @media (min-width: 48rem) { .site-foot .wrap { grid-template-columns: 1.6fr repeat(3, minmax(0, 1fr)); } .site-foot .wrap > :first-child { grid-column: auto; } }
+  @media (min-width: 48rem) { .site-foot .wrap { grid-template-columns: 1.6fr repeat(4, minmax(0, 1fr)); } .site-foot .wrap > :first-child { grid-column: auto; } }
   .site-foot h2 { margin: 0 0 12px; font-family: var(--font-ui); font-size: .9rem; font-weight: 800; color: var(--ink); }
   .site-foot ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
   .site-foot a { color: var(--ink-2); text-decoration: none; font-size: .93rem; }

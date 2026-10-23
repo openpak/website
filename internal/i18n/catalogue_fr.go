@@ -48,7 +48,7 @@ var catalogueFR = Catalogue{
 	"landing.how":                      "Comment ça marche",
 	"landing.how.sub":                  "D'un compte tout neuf à une partie avec quelqu'un.",
 	"landing.s1.title":                 "Créer et vérifier",
-	"landing.s1.body":                  "Inscrivez-vous avec une adresse e-mail et confirmez-la. L'opérateur peut ouvrir ou fermer les inscriptions.",
+	"landing.s1.body":                  "Inscrivez-vous avec une adresse e-mail et confirmez-la. Connectez-vous ensuite à ce site pour lier vos consoles.",
 	"landing.s2.title":                 "Associer votre console",
 	"landing.s2.body":                  "Votre console ou émulateur s'associe lui-même au compte et reçoit un code ami. Chaque association est listée ici et peut être révoquée.",
 	"landing.s3.title":                 "Ajouter vos amis",
@@ -584,4 +584,17 @@ var catalogueFR = Catalogue{
 	"auth.register.tooyoung": "Vous devez avoir au moins %d ans pour créer un compte OpenPak.",
 	"auth.register.minage":   "Vous devez avoir au moins %d ans pour créer un compte.",
 	"auth.human.failed":      "Nous n’avons pas pu confirmer que vous êtes une personne. Revenez en arrière, terminez la vérification et réessayez.",
+
+	"site.alpha": "OpenPak est en alpha publique. Des choses vont casser, et les comptes, sauvegardes et liaisons peuvent être réinitialisés.",
+
+	"footer.terms":         "Conditions d’utilisation",
+	"footer.privacy":       "Politique de confidentialité",
+	"footer.legal":         "Mentions légales",
+	"footer.legal.notices": "Marques et retraits",
+	"footer.contact":       "Contact",
+	"footer.support":       "Assistance",
+	"footer.community":     "Communauté",
+	"legal.english":        "Cette page n’est disponible qu’en anglais.",
+	"auth.register.agree":  "En créant un compte, vous acceptez les Conditions d’utilisation et la Politique de confidentialité :",
+	"help.contact":         "Impossible de vous connecter, ou pas de compte ? Écrivez à",
 }

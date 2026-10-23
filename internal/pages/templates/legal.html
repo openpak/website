@@ -1,0 +1,30 @@
+<!-- OWNER REVIEW: drafted without a lawyer. Have it reviewed before relying on it. -->
+{{/* English only on purpose, like privacy.html. */}}
+{{template "header" .}}
+<div class="page-head">
+  <h1>{{t .Lang "footer.legal"}}</h1>
+  {{if ne .Lang "en"}}<p lang="{{.Lang}}">{{t .Lang "legal.english"}}</p>{{end}}
+</div>
+<article class="legal" lang="en">
+<h2 id="affiliation">No affiliation</h2>
+<p>OpenPak is an independent community project. It is not affiliated with, endorsed, sponsored or approved by Nintendo, Microsoft or Sony, or by any game publisher.</p>
+<p>Nintendo, Nintendo Switch, Wii U, Wii, Nintendo 3DS and Nintendo DS are trademarks of Nintendo. Xbox and Xbox 360 are trademarks of Microsoft. PlayStation and PlayStation 3 are trademarks of Sony Interactive Entertainment. Game titles and artwork belong to their respective owners. They are used here only to say which consoles and games work with OpenPak.</p>
+
+<h2 id="takedown">Copyright and takedown requests</h2>
+<p>OpenPak does not host or distribute games, firmware or keys. If you believe something on openpak.org or an OpenPak service infringes your copyright or other rights, email <a href="mailto:contact@openpak.org">contact@openpak.org</a> with:</p>
+<ul>
+  <li>the work you believe is infringed, and the exact address (URL) or description of the material;</li>
+  <li>your name and contact details, and on whose behalf you act;</li>
+  <li>a statement that you believe in good faith the use is not authorised by the owner, its agent or the law;</li>
+  <li>a statement that the information in your notice is accurate and that you are the owner or authorised to act for the owner, and your physical or electronic signature.</li>
+</ul>
+<p>We review every notice and remove material that infringes. If your material was removed and you believe that was a mistake, you can send a counter-notice to the same address.</p>
+<p>For our source code on GitHub, you can also use <a href="https://docs.github.com/en/site-policy/content-removal-policies/dmca-takedown-policy" rel="noopener">GitHub’s DMCA process</a>.</p>
+
+<h2 id="security">Security</h2>
+<p>Report security problems as described in our <a href="https://github.com/openpak/.github/blob/main/SECURITY.md" rel="noopener">security policy</a>; there is also a <a href="/.well-known/security.txt">security.txt</a>.</p>
+
+<h2 id="contact">Contact</h2>
+<p>The OpenPak project, <a href="mailto:contact@openpak.org">contact@openpak.org</a>. See also the <a href="/terms">Terms of use</a> and the <a href="/privacy">Privacy policy</a>.</p>
+</article>
+{{template "footer" .}}

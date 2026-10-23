@@ -48,7 +48,7 @@ var catalogueDE = Catalogue{
 	"landing.how":                      "So funktioniert es",
 	"landing.how.sub":                  "Vom neuen Konto bis zum Spielen mit anderen.",
 	"landing.s1.title":                 "Erstellen und bestätigen",
-	"landing.s1.body":                  "Registriere dich mit einer E-Mail-Adresse und bestätige sie. Der Betreiber kann Registrierungen öffnen oder schließen.",
+	"landing.s1.body":                  "Registriere dich mit einer E-Mail-Adresse und bestätige sie. Melde dich danach auf dieser Seite an, um deine Konsolen zu verknüpfen.",
 	"landing.s2.title":                 "Konsole verknüpfen",
 	"landing.s2.body":                  "Deine Konsole oder dein Emulator verknüpft sich selbst mit dem Konto und erhält einen Freundescode. Jede Verknüpfung wird hier aufgeführt und kann widerrufen werden.",
 	"landing.s3.title":                 "Freunde hinzufügen",
@@ -584,4 +584,17 @@ var catalogueDE = Catalogue{
 	"auth.register.tooyoung": "Du musst mindestens %d Jahre alt sein, um ein OpenPak-Konto zu erstellen.",
 	"auth.register.minage":   "Du musst mindestens %d Jahre alt sein, um ein Konto zu erstellen.",
 	"auth.human.failed":      "Wir konnten nicht bestätigen, dass du ein Mensch bist. Geh zurück, schließe die Prüfung ab und versuche es erneut.",
+
+	"site.alpha": "OpenPak ist in der öffentlichen Alpha. Es wird Fehler geben, und Konten, Spielstände und Verknüpfungen können zurückgesetzt werden.",
+
+	"footer.terms":         "Nutzungsbedingungen",
+	"footer.privacy":       "Datenschutzerklärung",
+	"footer.legal":         "Rechtliches",
+	"footer.legal.notices": "Marken und Löschanfragen",
+	"footer.contact":       "Kontakt",
+	"footer.support":       "Support",
+	"footer.community":     "Community",
+	"legal.english":        "Diese Seite gibt es nur auf Englisch.",
+	"auth.register.agree":  "Mit dem Erstellen eines Kontos stimmst du den Nutzungsbedingungen und der Datenschutzerklärung zu:",
+	"help.contact":         "Du kannst dich nicht anmelden oder hast kein Konto? Schreib an",
 }

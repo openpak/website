@@ -68,6 +68,7 @@ func TestWritePreview(t *testing.T) {
 		"home": "/", "features": "/features", "downloads": "/downloads",
 		"status": "/status", "login": "/login", "register": "/register",
 		"forgot": "/forgot-password", "titles": "/titles", "help": "/help",
+		"terms": "/terms", "privacy": "/privacy", "legal": "/legal",
 	} {
 		w := httptest.NewRecorder()
 		s.Handler().ServeHTTP(w, httptest.NewRequest(http.MethodGet, path, nil))

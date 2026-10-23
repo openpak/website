@@ -4,6 +4,7 @@
 {{if .Closed}}
   <p class="card mt-6 border-bad-line bg-bad-weak p-4" role="alert">{{t .Lang "auth.register.closed"}}</p>
 {{else}}
+  <p class="notice warn mt-6" role="note">{{t .Lang "site.alpha"}}</p>
   <form method="post" action="/register" class="form-stack mt-6">
     <label for="handle">Handle</label>
     <input id="handle" name="handle" type="text" required minlength="6" maxlength="15" pattern="[A-Za-z][A-Za-z0-9]{5,14}" autocomplete="username" autocapitalize="none" spellcheck="false" aria-describedby="handle-rules handle-check" autofocus>
@@ -26,6 +27,7 @@
     <p class="hint">{{t .Lang "auth.profile.why"}}</p>
     <p class="hint">{{t .Lang "auth.remember"}}</p>
     {{template "turnstile" .Turnstile}}
+    <p class="hint">{{t .Lang "auth.register.agree"}} <a href="/terms">{{t .Lang "footer.terms"}}</a> · <a href="/privacy">{{t .Lang "footer.privacy"}}</a></p>
     <button type="submit" class="btn primary">{{t .Lang "nav.register"}}</button>
   </form>
   <p class="mt-6 text-sm text-muted"><a href="/login">{{t .Lang "nav.signin"}}</a> · <a href="/forgot-password">{{t .Lang "auth.forgot"}}</a></p>

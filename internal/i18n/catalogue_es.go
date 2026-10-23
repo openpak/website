@@ -48,7 +48,7 @@ var catalogueES = Catalogue{
 	"landing.how":                      "Cómo funciona",
 	"landing.how.sub":                  "De una cuenta nueva a jugar con alguien.",
 	"landing.s1.title":                 "Crear y verificar",
-	"landing.s1.body":                  "Regístrate con un correo electrónico y confírmalo. El operador puede abrir o cerrar los registros.",
+	"landing.s1.body":                  "Regístrate con un correo electrónico y confírmalo. Después inicia sesión en este sitio para vincular tus consolas.",
 	"landing.s2.title":                 "Vincular tu consola",
 	"landing.s2.body":                  "Tu consola o emulador se vincula a la cuenta y recibe un código de amigo. Cada vínculo aparece aquí y se puede revocar.",
 	"landing.s3.title":                 "Agregar a tus amigos",
@@ -584,4 +584,17 @@ var catalogueES = Catalogue{
 	"auth.register.tooyoung": "Debes tener al menos %d años para crear una cuenta de OpenPak.",
 	"auth.register.minage":   "Debes tener al menos %d años para crear una cuenta.",
 	"auth.human.failed":      "No pudimos confirmar que eres una persona. Vuelve, completa la comprobación e inténtalo de nuevo.",
+
+	"site.alpha": "OpenPak está en alfa pública. Habrá fallos, y las cuentas, las partidas guardadas y los vínculos pueden restablecerse.",
+
+	"footer.terms":         "Condiciones de uso",
+	"footer.privacy":       "Política de privacidad",
+	"footer.legal":         "Legal",
+	"footer.legal.notices": "Marcas y retiradas",
+	"footer.contact":       "Contacto",
+	"footer.support":       "Soporte",
+	"footer.community":     "Comunidad",
+	"legal.english":        "Esta página solo está disponible en inglés.",
+	"auth.register.agree":  "Al crear una cuenta aceptas las Condiciones de uso y la Política de privacidad:",
+	"help.contact":         "¿No puedes iniciar sesión o no tienes cuenta? Escribe a",
 }

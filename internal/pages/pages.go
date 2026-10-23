@@ -384,6 +384,10 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /account/saves/manage", s.handleSavesManage)
 	mux.HandleFunc("GET /account/saves/download/{id}", s.handleSavesDownload)
 	mux.HandleFunc("POST /account/saves/download", s.handleSavesDownloadPost)
+	mux.HandleFunc("GET /terms", s.staticPage("terms.html", "footer.terms"))
+	mux.HandleFunc("GET /privacy", s.staticPage("privacy.html", "footer.privacy"))
+	mux.HandleFunc("GET /legal", s.staticPage("legal.html", "footer.legal"))
+	mux.HandleFunc("GET /.well-known/security.txt", handleSecurityTxt)
 	mux.HandleFunc("GET /features", s.handleFeatures)
 	mux.HandleFunc("GET /downloads", s.handleDownloads)
 	mux.HandleFunc("GET /status", s.handleStatus)
@@ -622,6 +626,29 @@ func (s *Server) handleDownloads(w http.ResponseWriter, r *http.Request) {
 		Emulators []download
 		Platforms []platform
 	}{s.data(r, v, i18n.T(i18n.FromRequest(r), "downloads.title")), downloads, emulators, platforms})
+}
+
+// staticPage serves a page that is only text, for signed-in and signed-out
+// visitors alike.
+func (s *Server) staticPage(name, titleKey string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		v := s.viewerOf(w, r)
+		s.render(w, http.StatusOK, name, s.data(r, v, i18n.T(i18n.FromRequest(r), titleKey)))
+	}
+}
+
+// securityTxt is RFC 9116. Expires is fixed on purpose: when it lapses, someone
+// has to look at the file again rather than a date that renews itself.
+const securityTxt = "Contact: mailto:" + ContactEmail + `
+Expires: 2027-10-23T00:00:00Z
+Policy: https://github.com/openpak/.github/blob/main/SECURITY.md
+Preferred-Languages: en
+Canonical: https://openpak.org/.well-known/security.txt
+`
+
+func handleSecurityTxt(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	_, _ = w.Write([]byte(securityTxt))
 }
 
 func (s *Server) handleRegisterForm(w http.ResponseWriter, r *http.Request) {

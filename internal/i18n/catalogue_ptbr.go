@@ -48,7 +48,7 @@ var cataloguePTBR = Catalogue{
 	"landing.how":                      "Como funciona",
 	"landing.how.sub":                  "De uma conta nova até jogar com alguém.",
 	"landing.s1.title":                 "Criar e confirmar",
-	"landing.s1.body":                  "Cadastre-se com um endereço de e-mail e confirme-o. O operador pode abrir ou fechar os cadastros.",
+	"landing.s1.body":                  "Cadastre-se com um endereço de e-mail e confirme-o. Depois entre neste site para vincular seus consoles.",
 	"landing.s2.title":                 "Vincular seu console",
 	"landing.s2.body":                  "Seu console ou emulador se vincula à conta e recebe um código de amigo. Cada vínculo é listado aqui e pode ser revogado.",
 	"landing.s3.title":                 "Adicionar seus amigos",
@@ -584,4 +584,17 @@ var cataloguePTBR = Catalogue{
 	"auth.register.tooyoung": "Você precisa ter pelo menos %d anos para criar uma conta OpenPak.",
 	"auth.register.minage":   "Você precisa ter pelo menos %d anos para criar uma conta.",
 	"auth.human.failed":      "Não conseguimos confirmar que você é uma pessoa. Volte, conclua a verificação e tente de novo.",
+
+	"site.alpha": "O OpenPak está em alfa pública. Coisas vão quebrar, e contas, saves e vínculos podem ser redefinidos.",
+
+	"footer.terms":         "Termos de uso",
+	"footer.privacy":       "Política de privacidade",
+	"footer.legal":         "Jurídico",
+	"footer.legal.notices": "Marcas e remoções",
+	"footer.contact":       "Contato",
+	"footer.support":       "Suporte",
+	"footer.community":     "Comunidade",
+	"legal.english":        "Esta página está disponível apenas em inglês.",
+	"auth.register.agree":  "Ao criar uma conta, você aceita os Termos de uso e a Política de privacidade:",
+	"help.contact":         "Não consegue entrar ou não tem conta? Escreva para",
 }

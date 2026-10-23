@@ -48,7 +48,7 @@ var catalogueIT = Catalogue{
 	"landing.how":                      "Come funziona",
 	"landing.how.sub":                  "Da un account nuovo a giocare con qualcuno.",
 	"landing.s1.title":                 "Crea e verifica",
-	"landing.s1.body":                  "Registrati con un indirizzo email e confermalo. Le registrazioni possono essere aperte o chiuse dal gestore.",
+	"landing.s1.body":                  "Registrati con un indirizzo email e confermalo. Poi accedi a questo sito per collegare le tue console.",
 	"landing.s2.title":                 "Collega la tua console",
 	"landing.s2.body":                  "La tua console o il tuo emulatore si collega all'account e riceve un codice amico. Ogni collegamento è elencato qui e può essere revocato.",
 	"landing.s3.title":                 "Aggiungi i tuoi amici",
@@ -584,4 +584,17 @@ var catalogueIT = Catalogue{
 	"auth.register.tooyoung": "Devi avere almeno %d anni per creare un account OpenPak.",
 	"auth.register.minage":   "Devi avere almeno %d anni per creare un account.",
 	"auth.human.failed":      "Non siamo riusciti a confermare che sei una persona. Torna indietro, completa la verifica e riprova.",
+
+	"site.alpha": "OpenPak è in alpha pubblica. Qualcosa si romperà, e account, salvataggi e collegamenti potrebbero essere azzerati.",
+
+	"footer.terms":         "Termini di utilizzo",
+	"footer.privacy":       "Informativa sulla privacy",
+	"footer.legal":         "Note legali",
+	"footer.legal.notices": "Marchi e rimozioni",
+	"footer.contact":       "Contatti",
+	"footer.support":       "Supporto",
+	"footer.community":     "Community",
+	"legal.english":        "Questa pagina è disponibile solo in inglese.",
+	"auth.register.agree":  "Creando un account accetti i Termini di utilizzo e l’Informativa sulla privacy:",
+	"help.contact":         "Non riesci ad accedere o non hai un account? Scrivi a",
 }

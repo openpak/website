@@ -45,4 +45,6 @@
   </form>
 </section>
 {{end}}
+{{if not .User}}
+<p class="mt-6 text-muted">{{t .Lang "help.contact"}} <a href="mailto:{{contactEmail}}">{{contactEmail}}</a> · <a href="https://github.com/openpak/.github/blob/main/SUPPORT.md" rel="noopener">{{t .Lang "footer.support"}}</a>{{with communityURL}} · <a href="{{.}}" rel="noopener">{{t $.Lang "footer.community"}}</a>{{end}}</p>{{end}}
 {{template "footer" .}}

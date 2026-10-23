@@ -1,0 +1,54 @@
+<!-- OWNER REVIEW: drafted without a lawyer. Have it reviewed before relying on it. No governing-law or jurisdiction clause by owner decision (2026-10-23). -->
+{{/* English only on purpose, like privacy.html. */}}
+{{template "header" .}}
+<div class="page-head">
+  <h1>{{t .Lang "footer.terms"}}</h1>
+  <p>Last updated 23 October 2026.</p>
+  {{if ne .Lang "en"}}<p lang="{{.Lang}}">{{t .Lang "legal.english"}}</p>{{end}}
+</div>
+<article class="legal" lang="en">
+<p>These terms apply to openpak.org, the OpenPak app, and the OpenPak online services your consoles and emulators connect to (together, “OpenPak”). OpenPak is run by <strong>the OpenPak project</strong> (“we”), reachable at <a href="mailto:contact@openpak.org">contact@openpak.org</a>. By creating an account or using OpenPak you agree to these terms and to the <a href="/privacy">Privacy policy</a>.</p>
+
+<h2 id="alpha">A public alpha, with no warranty</h2>
+<ul>
+  <li>OpenPak is in public alpha. Features are missing, things will break, and services may be down without notice.</li>
+  <li>Accounts, friend lists, console links, cloud saves and other data may be reset or lost. Keep your own copies of anything you care about, especially save files.</li>
+  <li>OpenPak is provided free of charge, “as is” and “as available”, without any warranty. To the extent the law allows, we are not liable for any loss arising from using it or being unable to use it, including lost saves or data.</li>
+</ul>
+
+<h2 id="account">Your account</h2>
+<ul>
+  <li>You must be at least 16 years old to create an account.</li>
+  <li>Give a real email address you control, and keep your password to yourself. You are responsible for what happens under your account.</li>
+  <li>Your handle is permanent. Display names, avatars, bios and mottos must not impersonate others or be offensive.</li>
+  <li>You can delete your account at any time from your account page; see the <a href="/privacy#delete">Privacy policy</a>.</li>
+</ul>
+
+<h2 id="games">Your games and consoles</h2>
+<p>OpenPak is a network service. It does not provide games, firmware, keys or any other copyrighted files, and none of its downloads contain them. You must own the consoles you connect and legitimately own the games you play, and dump any files an emulator needs from your own hardware.</p>
+
+<h2 id="conduct">What you must not do</h2>
+<ul>
+  <li>Use OpenPak to share, obtain or play pirated games, or to distribute anyone else’s copyrighted material.</li>
+  <li>Cheat in online play in ways that affect other players, or use exploits, modified clients or automation to gain an unfair advantage.</li>
+  <li>Attack, overload, probe or disrupt OpenPak or its players: no denial-of-service, no unauthorised access, no scraping that harms the service, and no getting around rate limits or bans. Security research is welcome through our <a href="https://github.com/openpak/.github/blob/main/SECURITY.md" rel="noopener">security policy</a>.</li>
+  <li>Harass, threaten or abuse other players, or send spam, illegal content or content that sexualises minors.</li>
+  <li>Create accounts in bulk, or create a new account to get around a suspension.</li>
+</ul>
+
+<h2 id="moderation">Suspension and removal</h2>
+<p>We may remove content, and suspend or close accounts, that break these terms or put the network or its players at risk. Where we can, we will tell you why. If you think we got it wrong, write to <a href="mailto:contact@openpak.org">contact@openpak.org</a>.</p>
+
+<h2 id="content">Content you share</h2>
+<p>You keep the rights to what you upload (avatars, profile text, chat, save files, help requests). You give us permission to store it, and to show or deliver it to the people it is meant for, only as needed to run OpenPak.</p>
+
+<h2 id="code">Open source</h2>
+<p>OpenPak’s server software is free software, published at <a href="https://github.com/openpak" rel="noopener">github.com/openpak</a> under the GNU Affero General Public License version 3 (AGPL-3.0), unless a repository says otherwise. These terms cover the service we run; your rights to the code come from its licence.</p>
+
+<h2 id="trademarks">Trademarks</h2>
+<p>OpenPak is not affiliated with, endorsed or sponsored by Nintendo, Microsoft or Sony. See the <a href="/legal">Legal</a> page.</p>
+
+<h2 id="changes">Changes and ending</h2>
+<p>We may change these terms; the date at the top says when they last changed, and for significant changes we will post a notice on the site. We may stop running OpenPak, or any part of it, at any time. If you do not accept changed terms, stop using OpenPak and delete your account.</p>
+</article>
+{{template "footer" .}}

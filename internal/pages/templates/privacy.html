@@ -1,0 +1,98 @@
+<!-- OWNER REVIEW: drafted without a lawyer, from what the code collects as of 2026-10-23. Have it reviewed before relying on it, and update it when the data changes. -->
+{{/* English only on purpose: a privacy policy is one text the operator stands
+     behind, and five unreviewed translations would be five more. Each fact
+     here is traceable to code; see the website and account repositories. */}}
+{{template "header" .}}
+<div class="page-head">
+  <h1>{{t .Lang "footer.privacy"}}</h1>
+  <p>Last updated 23 October 2026.</p>
+  {{if ne .Lang "en"}}<p lang="{{.Lang}}">{{t .Lang "legal.english"}}</p>{{end}}
+</div>
+<article class="legal" lang="en">
+<p>This policy explains what personal data OpenPak handles, why, and what you can do about it. OpenPak is a community-run replacement online network for game consoles and emulators, operated by <strong>the OpenPak project</strong> (“we”). You can reach us at <a href="mailto:contact@openpak.org">contact@openpak.org</a>.</p>
+<p class="notice warn">OpenPak is in public alpha. Data may be reset while the network is being built; we will say so on this site before a planned reset.</p>
+
+<h2 id="data">What we collect</h2>
+<h3>When you create an account</h3>
+<ul>
+  <li><strong>Email address</strong>, to sign you in, confirm the address, and send password-reset and email-change links.</li>
+  <li><strong>Password</strong>, stored only as a salted bcrypt hash; we cannot read it.</li>
+  <li><strong>Handle</strong> (your permanent ID) and an optional <strong>display name</strong>.</li>
+  <li><strong>Country</strong> and <strong>date of birth</strong>. Consoles ask for both when they link an account, and the date of birth is how we check the minimum age (16).</li>
+</ul>
+<h3>When you use your account</h3>
+<ul>
+  <li><strong>Profile</strong>: avatar picture, bio and motto, if you set them. Your handle, display name and avatar are visible to other players.</li>
+  <li><strong>Two-step sign-in</strong>: if you turn it on, an encrypted authenticator secret and hashed recovery codes.</li>
+  <li><strong>Sessions</strong>: a record of each signed-in browser, app or device so you can see and revoke them. We do not store IP addresses or browser details with sessions.</li>
+  <li><strong>Linked consoles and emulators</strong>: the identifier your console or emulator uses for its user (for example a console user ID or a Wii/DS friend code), and the friend codes derived from it.</li>
+  <li><strong>Friends and social</strong>: friend requests, friends, blocks, game invitations, and chat messages you send through OpenPak (text, and drawings, screenshots or game data where a console sends them).</li>
+  <li><strong>Presence and play history</strong>: whether you are online, which game you are playing, on which console or emulator, and when each play session started and ended. Your friends see your presence; we use the history for player counts and to mark which games work.</li>
+  <li><strong>Cloud saves</strong>: game save files your console or emulator uploads, with their size, checksum and the device they came from. We keep the newest two versions of each save (plus any you pin). If you choose to store saves with your own Google Drive, OneDrive, S3 or WebDAV storage, we keep an encrypted credential for it and the files go to that provider.</li>
+  <li><strong>Parental controls</strong>: if you pair a console, the settings and device records the console exchanges with OpenPak.</li>
+  <li><strong>Help requests</strong>: the messages and files you send us, with your account, display name and email address.</li>
+  <li><strong>Crash and error reports</strong>: when a console, emulator or the app reports an error, the software version, operating system or firmware, game ID, error code and message, a device ID, and any attached log. A report is tied to your account only if you were signed in.</li>
+  <li><strong>Votes and compatibility reports</strong> you submit on the titles page.</li>
+  <li><strong>App notifications</strong>: if you allow notifications in the OpenPak app, a push token for your device.</li>
+  <li><strong>Moderation</strong>: reports made by or about you, and any suspension, with its reason.</li>
+</ul>
+<h3>Network data</h3>
+<p>Every connection to OpenPak carries your IP address. The website keeps it only in memory, for rate limiting, for up to about an hour; its logs record no IP addresses or email addresses. Game servers need your address to connect you to a game. In many games the console connects <strong>directly to the other players</strong>, so they can see your IP address, just as with the original networks.</p>
+<p>We do not use analytics, advertising or tracking of any kind, and we do not sell or share personal data for marketing.</p>
+
+<h2 id="why">Why, and on what basis</h2>
+<table>
+  <thead><tr><th>Purpose</th><th>Lawful basis (GDPR)</th></tr></thead>
+  <tbody>
+    <tr><td>Running your account, linking consoles, friends, presence, invitations, chat, cloud saves and online play</td><td>Performance of our agreement with you (the <a href="/terms">Terms</a>)</td></tr>
+    <tr><td>Checking the minimum age</td><td>Legal obligation and legitimate interests</td></tr>
+    <tr><td>Security: rate limiting, bot checks, two-step sign-in, abuse prevention, moderation and suspensions</td><td>Legitimate interests in keeping the network safe and usable</td></tr>
+    <tr><td>Crash reports, player counts and game compatibility</td><td>Legitimate interests in making the network work</td></tr>
+    <tr><td>Help requests</td><td>Performance of our agreement, and legitimate interests</td></tr>
+    <tr><td>App notifications; external save storage</td><td>Your consent, which you can withdraw in the app or by disconnecting the storage</td></tr>
+  </tbody>
+</table>
+
+<h2 id="who">Who else handles it</h2>
+<ul>
+  <li><strong>Cloudflare</strong> sits in front of openpak.org: it carries all web traffic (and so sees IP addresses and requests), protects the site from attacks, and runs the human check on the signup and password-reset forms (Turnstile).</li>
+  <li><strong>An email delivery provider</strong> sends our account emails.</li>
+  <li><strong>Our server hosting provider</strong> runs the machines the network is on.</li>
+  <li><strong>Google Firebase Cloud Messaging</strong> delivers app notifications: the push token, and a short message such as “Alice wants to be friends”.</li>
+  <li><strong>Storage you choose</strong> (Google Drive, OneDrive, S3, WebDAV) receives your saves if you set it up.</li>
+  <li><strong>Other players</strong> see your handle, display name, avatar, presence and, in direct-connection games, your IP address.</li>
+</ul>
+<p>Some of these providers are in the United States or other countries outside the European Economic Area. Where that happens, the transfer relies on the provider’s standard contractual clauses or an adequacy decision.</p>
+<!-- OWNER REVIEW: name the email provider and the hosting provider, and confirm each has a data processing agreement in place. -->
+
+<h2 id="retention">How long we keep it</h2>
+<p>We are early, and we would rather tell you exactly where things stand than promise schedules the code does not yet keep:</p>
+<ul>
+  <li>Sign-in sessions last 30 days. Email confirmation, password-reset and email-change links expire after 24 hours. Two-step sign-in challenges expire after 10 minutes. Expired records are not yet purged automatically.</li>
+  <li>Cloud saves keep the newest two versions of each save, within a storage allowance.</li>
+  <li>Account data, friends, play history, chat messages, help requests and crash reports are kept while your account exists. There is no automatic expiry for them yet, and unconfirmed accounts are not yet removed automatically.</li>
+  <li>When an account is deleted, its handle stays reserved for 90 days so nobody can take it over immediately.</li>
+</ul>
+
+<h2 id="delete">Deleting your account</h2>
+<p>Sign in, open <a href="/account">your account</a>, and use <em>Delete account</em> (the app has the same option). You confirm with your password, and with your second factor if you use one. From that moment the account is closed: every session is signed out and nobody can sign in to it.</p>
+<p>During the alpha, the final erasure is carried out by hand by the team: the email address, password, display name, country, date of birth, bio, motto, avatar, sessions, play history, two-step sign-in data and console links are erased, and the account record that remains is anonymised. We do this within one month of your request. Your cloud saves, chat messages, help requests and crash reports are not yet erased by the same step: if you want those gone too, write to <a href="mailto:contact@openpak.org">contact@openpak.org</a> from your account’s address and we will remove them. Friend links, blocks and reports that other players hold point only at the anonymised record.</p>
+
+<h2 id="rights">Your rights</h2>
+<p>You can ask us for a copy of your data, to correct it, to delete it, to restrict or object to how we use it, and to receive it in a portable form; and you can withdraw any consent you gave. Much of this you can do yourself on your account page; for the rest, email <a href="mailto:contact@openpak.org">contact@openpak.org</a>. We answer within one month. You also have the right to complain to your data protection authority.</p>
+
+<h2 id="cookies">Cookies</h2>
+<p>openpak.org sets only the cookies it needs to work:</p>
+<ul>
+  <li><code>opak_session</code>: keeps you signed in. Set when you sign in, lasts up to 30 days, removed when you sign out.</li>
+  <li><code>lang</code>: remembers the language you chose in the footer. Set only when you choose one, lasts one year.</li>
+</ul>
+<p>Cloudflare may set its own strictly necessary security cookies while checking for bots. There are no analytics or advertising cookies, so there is nothing to consent to.</p>
+
+<h2 id="children">Children</h2>
+<p>You must be at least 16 to create an OpenPak account. If you believe a younger child has an account, tell us and we will delete it.</p>
+
+<h2 id="changes">Changes</h2>
+<p>We will update this page when what we collect changes, and change the date at the top. For significant changes we will also post a notice on the site.</p>
+</article>
+{{template "footer" .}}

@@ -67,7 +67,7 @@ var languages = map[string]Catalogue{
 		"landing.how":              "How it works",
 		"landing.how.sub":          "From a cold account to playing with someone.",
 		"landing.s1.title":         "Create and verify",
-		"landing.s1.body":          "Register with an email address and confirm it. Registrations can be opened or closed by the operator.",
+		"landing.s1.body":          "Register with an email address and confirm it. Then sign in here to link your consoles.",
 		"landing.s2.title":         "Link your console",
 		"landing.s2.body":          "Your console or emulator links itself to the account and gets a friend code. Every link is listed here and can be revoked.",
 		"landing.s3.title":         "Add your friends",
@@ -990,6 +990,19 @@ var languages = map[string]Catalogue{
 		"auth.register.tooyoung": "You must be at least %d years old to create an OpenPak account.",
 		"auth.register.minage":   "You must be at least %d to create an account.",
 		"auth.human.failed":      "We could not confirm you are a person. Go back, complete the check and try again.",
+
+		"site.alpha": "OpenPak is in public alpha. Things will break, and accounts, saves and links may be reset.",
+
+		"footer.terms":         "Terms of use",
+		"footer.privacy":       "Privacy policy",
+		"footer.legal":         "Legal",
+		"footer.legal.notices": "Trademarks and takedowns",
+		"footer.contact":       "Contact",
+		"footer.support":       "Support",
+		"footer.community":     "Community",
+		"legal.english":        "This page is available in English only.",
+		"auth.register.agree":  "By creating an account you agree to the Terms of use and the Privacy policy:",
+		"help.contact":         "Can't sign in, or not a member? Write to",
 	},
 }
 

@@ -85,6 +85,7 @@
   </div>
 </header>
 
+<div class="alpha-strip" role="note"><div class="wrap">{{t .Lang "site.alpha"}}</div></div>
 {{if .Banner}}<div class="border-b border-line bg-accent-weak text-ink-2" role="note"><div class="wrap py-2.5 text-sm">{{.Banner}}</div></div>{{end}}
 
 <main id="main" class="flex-1 {{if ne .Path "/"}}wrap pt-6 sm:pt-8{{end}}">
@@ -123,6 +124,14 @@
       <li><a href="https://github.com/openpak" rel="noopener">{{t .Lang "footer.source"}}</a></li>
       <li><a href="/feed/news.xml">{{t .Lang "footer.feed.news"}}</a></li>
       <li><a href="/feed/titles.xml">{{t .Lang "footer.feed.titles"}}</a></li>
+      <li><a href="mailto:{{contactEmail}}">{{t .Lang "footer.contact"}}</a></li>
+      <li><a href="https://github.com/openpak/.github/blob/main/SUPPORT.md" rel="noopener">{{t .Lang "footer.support"}}</a></li>
+      {{with communityURL}}<li><a href="{{.}}" rel="noopener">{{t $.Lang "footer.community"}}</a></li>{{end}}
+    </ul></nav>
+    <nav aria-labelledby="foot-legal"><h2 id="foot-legal">{{t .Lang "footer.legal"}}</h2><ul>
+      <li><a href="/terms">{{t .Lang "footer.terms"}}</a></li>
+      <li><a href="/privacy">{{t .Lang "footer.privacy"}}</a></li>
+      <li><a href="/legal">{{t .Lang "footer.legal.notices"}}</a></li>
     </ul></nav>
     <div class="foot-bottom">
       <span>© OpenPak · AGPL-3.0</span>
