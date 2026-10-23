@@ -208,13 +208,14 @@ func run(log *slog.Logger) error {
 	supportSvc := &support.Service{DB: db, Files: files, Push: pushSender, Log: log}
 
 	// Account erasure: once a closed account's grace period is over, erase it
-	// in every service, then in the core. Saves and chat must be configured
-	// for an account to finish: an unconfigured service fails its step, and
-	// the account waits (closed, not restorable) until it is.
+	// in every service, then in the core. Saves, chat and mods must be
+	// configured for an account to finish: an unconfigured service fails its
+	// step, and the account waits (closed, not restorable) until it is.
 	finaliser := &erasure.Finaliser{Core: coreGRPC, Lock: db, Interval: cfg.ErasureInterval, Log: log,
 		Steps: []erasure.Step{
 			{Name: "saves", Erase: savesCli.WipeAccount},
 			{Name: "chat", Erase: chatCli.EraseAccount},
+			erasure.ModsStep(os.Getenv("MODS_INTERNAL_URL"), os.Getenv("MODS_INTERNAL_KEY"), &http.Client{Timeout: time.Minute}),
 			erasure.WebsiteStep(db, files, mediaSvc, log),
 		}}
 	go finaliser.Run(ctx)

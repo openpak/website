@@ -39,7 +39,7 @@ func TestLegalPages(t *testing.T) {
 	s, _, _ := newTestServer(t)
 	for path, want := range map[string][]string{
 		"/terms":   {"Terms of use", "the OpenPak project", "at least 16", "AGPL", "pirated"},
-		"/privacy": {"Privacy policy", "the OpenPak project", "opak_session", "Cloudflare", "Oracle Cloud", "Zoho Mail", "smtp.zoho.eu", "federation node operators", "GitHub", "essential cookies only", "Delete account", "contact@openpak.org"},
+		"/privacy": {"Privacy policy", "the OpenPak project", "opak_session", "Cloudflare", "Oracle Cloud", "Zoho Mail", "smtp.zoho.eu", "federation node operators", "GitHub", "essential cookies only", "Delete account", "contact@openpak.org", "deleted user", "Backups are kept for up to 14 days"},
 		"/legal":   {"Nintendo", "Microsoft", "Sony", "takedown", "contact@openpak.org", "Name and logo", "based on OpenPak software"},
 	} {
 		body := get(t, s, path).Body.String()
