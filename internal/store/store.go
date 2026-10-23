@@ -92,6 +92,8 @@ type Store interface {
 
 	SavePushToken(ctx context.Context, accountID, token, platform string) error
 	DeletePushToken(ctx context.Context, token string) error
+	DeleteMediaForAccount(ctx context.Context, accountID string) error
+	RevokePushTokensForAccount(ctx context.Context, accountID string) error
 	PushTokensForAccount(ctx context.Context, accountID string) ([]PushToken, error)
 	// PushCursor/SetPushCursor persist how far the notifier has read the core's
 	// event stream, so a restart resumes instead of replaying or skipping.

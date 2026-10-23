@@ -370,6 +370,29 @@ func (m *Memory) DeletePushToken(_ context.Context, token string) error {
 	return nil
 }
 
+func (m *Memory) DeleteMediaForAccount(_ context.Context, accountID string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for k := range m.media {
+		if k[0] == accountID {
+			delete(m.media, k)
+		}
+	}
+	return nil
+}
+
+func (m *Memory) RevokePushTokensForAccount(_ context.Context, accountID string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for tok, owner := range m.pushOwner {
+		if owner == accountID {
+			delete(m.pushTokens, tok)
+			delete(m.pushOwner, tok)
+		}
+	}
+	return nil
+}
+
 func (m *Memory) PushTokensForAccount(_ context.Context, accountID string) ([]PushToken, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()

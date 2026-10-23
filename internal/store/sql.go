@@ -338,6 +338,20 @@ func (s *PG) DeletePushToken(ctx context.Context, token string) error {
 	return err
 }
 
+// DeleteMediaForAccount drops the account's avatar metadata (account erasure).
+func (s *PG) DeleteMediaForAccount(ctx context.Context, accountID string) error {
+	_, err := s.pool.Exec(ctx, `DELETE FROM media WHERE account_id=$1`, accountID)
+	return err
+}
+
+// RevokePushTokensForAccount silences every install of a deleted account: a
+// token that survives deletion would keep delivering another person's
+// notifications to the device.
+func (s *PG) RevokePushTokensForAccount(ctx context.Context, accountID string) error {
+	_, err := s.pool.Exec(ctx, `DELETE FROM push_tokens WHERE account_id=$1`, accountID)
+	return err
+}
+
 func (s *PG) PushTokensForAccount(ctx context.Context, accountID string) ([]PushToken, error) {
 	rows, err := s.pool.Query(ctx, `SELECT token, platform FROM push_tokens WHERE account_id=$1`, accountID)
 	if err != nil {

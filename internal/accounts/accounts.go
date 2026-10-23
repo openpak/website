@@ -103,6 +103,10 @@ func Delete(ctx context.Context, id core.Identity, db store.Store, accountID, pa
 	// fails to delete here dies on its next use anyway.
 	_ = db.DeleteWebSessionsForAccount(ctx, accountID)
 	_ = db.RevokeAPITokensForAccount(ctx, accountID)
+	// A closed account gets no more notifications: a surviving push token would
+	// keep delivering them to the device. The app registers again after a
+	// restore. Everything restorable (avatar, tickets, saves) waits for erasure.
+	_ = db.RevokePushTokensForAccount(ctx, accountID)
 	return nil
 }
 
