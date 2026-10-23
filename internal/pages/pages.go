@@ -27,6 +27,7 @@ import (
 	"github.com/openpak/website/internal/accounts"
 	"github.com/openpak/website/internal/adapter"
 	"github.com/openpak/website/internal/chat"
+	"github.com/openpak/website/internal/clientip"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/media"
@@ -869,13 +870,8 @@ func (s *Server) handleResetSubmit(w http.ResponseWriter, r *http.Request) {
 	redirectMsg(w, r, "/login", "pwreset")
 }
 
-func clientKey(r *http.Request) string {
-	host := r.RemoteAddr
-	if i := strings.LastIndex(host, ":"); i > 0 {
-		host = host[:i]
-	}
-	return host
-}
+// clientKey is the visitor's address behind Cloudflare and Traefik (internal/clientip).
+func clientKey(r *http.Request) string { return clientip.Of(r) }
 
 func normalizeEmail(s string) string {
 	return strings.ToLower(strings.TrimSpace(s))

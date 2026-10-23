@@ -24,6 +24,7 @@ import (
 	"github.com/openpak/website/internal/adapter"
 	"github.com/openpak/website/internal/attachments"
 	"github.com/openpak/website/internal/chat"
+	"github.com/openpak/website/internal/clientip"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/netprofile"
@@ -766,18 +767,8 @@ func friendCode(subject string) string {
 	return "SW-" + string(hex[0:4]) + "-" + string(hex[4:8]) + "-" + string(hex[8:12])
 }
 
-func clientKey(r *http.Request) string {
-	host := r.RemoteAddr
-	if i := len(host) - 1; i > 0 {
-		for i >= 0 && host[i] != ':' {
-			i--
-		}
-		if i > 0 {
-			return host[:i]
-		}
-	}
-	return host
-}
+// clientKey is the visitor's address behind Cloudflare and Traefik (internal/clientip).
+func clientKey(r *http.Request) string { return clientip.Of(r) }
 
 // newID mints a random token id for the store (the raw bearer is hashed;
 // the id is only for revocation).

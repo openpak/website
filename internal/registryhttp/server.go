@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/openpak/website/internal/clientip"
 	"github.com/openpak/website/internal/ratelimit"
 	"github.com/openpak/website/internal/registry"
 )
@@ -53,18 +54,8 @@ func New(svc *registry.Service, ci registry.CIVerifier, log *slog.Logger) *Serve
 // fetch-tool tests mount the real routes against a memory registry).
 func (s *Server) SetLog(l *slog.Logger) { s.log = l }
 
-func clientKey(r *http.Request) string {
-	host := r.RemoteAddr
-	if i := len(host) - 1; i > 0 {
-		for i >= 0 && host[i] != ':' {
-			i--
-		}
-		if i > 0 {
-			return host[:i]
-		}
-	}
-	return host
-}
+// clientKey is the visitor's address behind Cloudflare and Traefik (internal/clientip).
+func clientKey(r *http.Request) string { return clientip.Of(r) }
 
 // newID mints a random request id for error answers.
 func newID() string {
