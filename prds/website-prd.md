@@ -163,7 +163,7 @@ The site is built with **Tailwind** from `web/src/input.css`, mobile-first, usin
 binary so the repository gains a stylesheet and not a node toolchain; the built CSS is committed
 so the image still builds with nothing but Go. The palette did not move — it stays as custom
 properties mapped onto the colour utilities, shared with the app and the console link pages. See
-[../docs/design.md](../../docs/design.md).
+internal research notes.
 
 `/status` is now about **games and players**, not internal components: what is running, who is
 online, which console networks exist and how far each one is. Player counts come from the same

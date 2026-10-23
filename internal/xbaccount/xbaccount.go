@@ -1,6 +1,6 @@
 // Package xbaccount is the website's client for xb-account, the original-Xbox identity service.
 // The one thing the site does there is change the gamertag of the signed-in account
-// (docs/xbox/account-service-protocol.md, "Gamertag is its own field"). The service listens on
+// (internal research notes, "Gamertag is its own field"). The service listens on
 // a private mTLS address and accepts this call only from the SPIFFE identity
 // spiffe://openpak/xb-provisioner, so the client certificate configured here must carry it.
 // Reading the gamertag needs no call: it is the public code of the account's "xbox" link in core.

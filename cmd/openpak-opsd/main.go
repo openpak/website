@@ -25,7 +25,7 @@ import (
 )
 
 // defaultAddr is the website block's first spare port (20010 +3, see
-// docs/ports.md): opsd only exists for the website, so it lives in its block
+// the port plan (https://docs.openpak.org/contributors/ports/)): opsd only exists for the website, so it lives in its block
 // rather than taking a service block of its own. Loopback by default — the
 // operator widens it on purpose.
 const defaultAddr = "127.0.0.1:20013"

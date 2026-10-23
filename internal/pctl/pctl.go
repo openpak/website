@@ -2,7 +2,7 @@
 // signed-in account. The device records live with the console-facing service,
 // because that is what the console asks; the website only decides who is asking
 // and relays. Contract: the docs repo's
-// docs/switch/parental-controls-firmware-2026-09-26.md, and nx-baas's README
+// internal research notes, and nx-baas's README
 // internal-API table.
 package pctl
 
