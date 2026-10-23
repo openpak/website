@@ -1003,6 +1003,10 @@ var languages = map[string]Catalogue{
 		"legal.english":        "This page is available in English only.",
 		"auth.register.agree":  "By creating an account you agree to the Terms of use and the Privacy policy:",
 		"help.contact":         "Can't sign in, or not a member? Write to",
+
+		"downloads.app":      "Phone app",
+		"downloads.app.sub":  "Your account, friends, chat, saves and voice chat on your phone.",
+		"downloads.kind.app": "App",
 	},
 }
 

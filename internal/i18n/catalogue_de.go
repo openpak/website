@@ -597,4 +597,8 @@ var catalogueDE = Catalogue{
 	"legal.english":        "Diese Seite gibt es nur auf Englisch.",
 	"auth.register.agree":  "Mit dem Erstellen eines Kontos stimmst du den Nutzungsbedingungen und der Datenschutzerklärung zu:",
 	"help.contact":         "Du kannst dich nicht anmelden oder hast kein Konto? Schreib an",
+
+	"downloads.app":      "Handy-App",
+	"downloads.app.sub":  "Dein Konto, Freunde, Chat, Spielstände und Sprachchat auf dem Handy.",
+	"downloads.kind.app": "App",
 }

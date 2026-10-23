@@ -597,4 +597,8 @@ var cataloguePTBR = Catalogue{
 	"legal.english":        "Esta página está disponível apenas em inglês.",
 	"auth.register.agree":  "Ao criar uma conta, você aceita os Termos de uso e a Política de privacidade:",
 	"help.contact":         "Não consegue entrar ou não tem conta? Escreva para",
+
+	"downloads.app":      "App para celular",
+	"downloads.app.sub":  "Sua conta, amigos, chat, saves e chat de voz no celular.",
+	"downloads.kind.app": "App",
 }

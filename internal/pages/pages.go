@@ -443,7 +443,7 @@ func (s *Server) handleLanding(w http.ResponseWriter, r *http.Request) {
 	}
 	// News is a nice-to-have on this page: unset or failing, the section is
 	// simply not drawn.
-	view := landing{baseData: d, TitlesTotal: len(titles), News: s.News.Latest(r.Context(), 3), Platforms: platforms[:8]}
+	view := landing{baseData: d, TitlesTotal: len(titles), News: s.News.Latest(r.Context(), 3), Platforms: platformsAt(s.consoleStages(r.Context()))[:8]}
 	byID := map[string]store.Request{}
 	for _, t := range titles {
 		if t.Name == "" {
@@ -574,48 +574,33 @@ type download struct {
 	Name, Console, Kind, Status, URL, Icon string
 }
 
-// Only released public downloads are linked; private repositories and unpublished
-// builds remain visible without sending visitors to a missing release page.
+// Each client links to its repository's latest GitHub release. Name, console,
+// kind, status, URL, icon; a client with no URL shows "Not public yet".
 var emulators = []download{
-	{"Harbor", "Switch", "downloads.kind.emulator", "", "", "/static/clients/harbor.svg"},
-	{"Quay", "Wii U", "downloads.kind.emulator", "", "", "/static/clients/quay.svg"},
-	{"Azahar", "3DS", "downloads.kind.emulator", "", "", "/static/clients/azahar.png"},
-	{"Marina", "Wii", "downloads.kind.emulator", "", "", "/static/clients/marina.svg"},
-	{"melonDS", "DS", "downloads.kind.emulator", "", "", "/static/clients/melonds.png"},
-	{"Berth", "Xbox", "downloads.kind.emulator", "", "", "/static/clients/berth.svg"},
-	{"Wharf", "Xbox 360", "downloads.kind.emulator", "", "", "/static/clients/wharf.svg"},
-	{"Pier", "PS3", "downloads.kind.emulator", "", "", "/static/clients/pier.svg"},
+	{"Harbor", "Switch", "downloads.kind.emulator", "", "https://github.com/openpak/harbor/releases/latest", "/static/clients/harbor.svg"},
+	{"Quay", "Wii U", "downloads.kind.emulator", "", "https://github.com/openpak/quay/releases/latest", "/static/clients/quay.svg"},
+	{"Azahar", "3DS", "downloads.kind.emulator", "", "https://github.com/openpak/azahar/releases/latest", "/static/clients/azahar.png"},
+	{"Marina", "Wii", "downloads.kind.emulator", "", "https://github.com/openpak/marina/releases/latest", "/static/clients/marina.svg"},
+	{"melonDS", "DS", "downloads.kind.emulator", "", "https://github.com/openpak/melonds/releases/latest", "/static/clients/melonds.png"},
+	{"Berth", "Xbox", "downloads.kind.emulator", "", "https://github.com/openpak/berth/releases/latest", "/static/clients/berth.svg"},
+	{"Wharf", "Xbox 360", "downloads.kind.emulator", "", "https://github.com/openpak/wharf/releases/latest", "/static/clients/wharf.svg"},
+	{"Pier", "PS3", "downloads.kind.emulator", "", "https://github.com/openpak/pier/releases/latest", "/static/clients/pier.svg"},
 }
 
 var downloads = []download{
-	{"OpenPak setup", "Switch", "downloads.kind.patch", "", "", ""},
+	{"OpenPak setup", "Switch", "downloads.kind.patch", "", "https://github.com/openpak/openpak-nro/releases/latest", ""},
 	{"Inkay", "Wii U", "downloads.kind.patch", "", "https://github.com/openpak/nn-inkay/releases/latest", ""},
 	{"nimbus", "3DS", "downloads.kind.patch", "", "https://github.com/openpak/nn-nimbus/releases/latest", ""},
 	{"WFC patcher", "Wii", "downloads.kind.patch", "", "https://github.com/openpak/nn-wfc-patcher-wii/releases/latest", ""},
-	{"WFC patcher", "DS", "downloads.kind.patch", "", "", ""},
+	{"WFC patcher", "DS", "downloads.kind.patch", "", "https://github.com/openpak/nn-wfc-patcher-ds/releases/latest", ""},
 	{"OpenPak patch", "Xbox", "downloads.kind.patch", "", "", ""},
 	{"OpenPak patch", "Xbox 360", "downloads.kind.patch", "", "", ""},
 	{"OpenPak patch", "PS3", "downloads.kind.patch", "", "", ""},
 }
 
-// platform is one console family and how far OpenPak is with it; the status words and
-// colours are the titles list's.
-type platform struct{ Name, Console, Status string }
-
-var platforms = []platform{
-	{"Nintendo Switch", "Switch", "live"},
-	{"Wii U", "Wii U", "live"},
-	{"Nintendo 3DS", "3DS", "live"},
-	{"Wii", "Wii", "live"},
-	{"Nintendo DS", "DS", "live"},
-	{"Xbox", "Xbox", "live"},
-	{"PlayStation 3", "PS3", "live"},
-	{"Xbox 360", "Xbox 360", "live"},
-	{"PlayStation Portable", "PSP", "planned"},
-	{"PlayStation Vita", "Vita", "planned"},
-	{"PlayStation 4", "PS4", "planned"},
-	{"PlayStation 5", "PS5", "planned"},
-	{"Xbox One", "Xbox One", "planned"},
+// apps is the phone app.
+var apps = []download{
+	{"OpenPak", "Android", "downloads.kind.app", "", "https://github.com/openpak/app/releases/latest", "/static/icon.svg"},
 }
 
 func (s *Server) handleDownloads(w http.ResponseWriter, r *http.Request) {
@@ -624,8 +609,9 @@ func (s *Server) handleDownloads(w http.ResponseWriter, r *http.Request) {
 		baseData
 		Downloads []download
 		Emulators []download
+		Apps      []download
 		Platforms []platform
-	}{s.data(r, v, i18n.T(i18n.FromRequest(r), "downloads.title")), downloads, emulators, platforms})
+	}{s.data(r, v, i18n.T(i18n.FromRequest(r), "downloads.title")), downloads, emulators, apps, platformsAt(s.consoleStages(r.Context()))})
 }
 
 // staticPage serves a page that is only text, for signed-in and signed-out

@@ -597,4 +597,8 @@ var catalogueES = Catalogue{
 	"legal.english":        "Esta página solo está disponible en inglés.",
 	"auth.register.agree":  "Al crear una cuenta aceptas las Condiciones de uso y la Política de privacidad:",
 	"help.contact":         "¿No puedes iniciar sesión o no tienes cuenta? Escribe a",
+
+	"downloads.app":      "App para el móvil",
+	"downloads.app.sub":  "Tu cuenta, amigos, chat, partidas guardadas y chat de voz en el móvil.",
+	"downloads.kind.app": "App",
 }

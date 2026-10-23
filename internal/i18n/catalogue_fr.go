@@ -597,4 +597,8 @@ var catalogueFR = Catalogue{
 	"legal.english":        "Cette page n’est disponible qu’en anglais.",
 	"auth.register.agree":  "En créant un compte, vous acceptez les Conditions d’utilisation et la Politique de confidentialité :",
 	"help.contact":         "Impossible de vous connecter, ou pas de compte ? Écrivez à",
+
+	"downloads.app":      "Application mobile",
+	"downloads.app.sub":  "Votre compte, vos amis, le chat, les sauvegardes et le chat vocal sur votre téléphone.",
+	"downloads.kind.app": "Application",
 }

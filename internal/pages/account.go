@@ -778,8 +778,10 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	// actually deployed. A network still being written says so; showing it as
 	// green because nothing has failed yet would be the one lie a status page
 	// must not tell.
+	stages := s.consoleStages(ctx)
 	for _, n := range networks {
-		row := networkRow{Name: n.Name, State: n.State, Live: n.State == "live"}
+		state := n.stateAt(stages)
+		row := networkRow{Name: n.Name, State: state, Live: state == "live"}
 		for _, ns := range n.Namespaces {
 			row.Players += perNetwork[ns]
 		}

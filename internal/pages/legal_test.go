@@ -1,10 +1,13 @@
 package pages
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/openpak/website/internal/store"
 )
 
 func get(t *testing.T, s *Server, path string) *httptest.ResponseRecorder {
@@ -90,4 +93,62 @@ func TestHelpContactSignedOut(t *testing.T) {
 	if !strings.Contains(body, `<a href="mailto:contact@openpak.org">contact@openpak.org</a>`) {
 		t.Error("signed-out help should show the contact address")
 	}
+}
+
+// Platform badges and status-page networks come from the /features rows.
+func TestConsoleStagesFollowFeatures(t *testing.T) {
+	s, _, db := newTestServer(t)
+	_ = db.SeedRequests(context.Background(), []store.Request{
+		{Kind: "feature", Name: "Sign-in", Console: "Switch", Status: "working"},
+		{Kind: "feature", Name: "Friends", Console: "Switch", Status: "partial"},
+		{Kind: "feature", Name: "Matchmaking", Console: "Wii U / 3DS", Status: "beta"},
+		{Kind: "feature", Name: "WFC", Console: "Wii U / 3DS / Wii / DS", Status: "alpha"},
+		{Kind: "feature", Name: "Xbox Live", Console: "Xbox 360", Status: "planned"},
+		{Kind: "feature", Name: "Broken thing", Console: "PS3", Status: "broken"},
+	})
+	st := consoleStages(mustFeatures(t, db))
+	for console, want := range map[string]string{"Switch": "live", "Wii U": "beta", "3DS": "beta", "Wii": "alpha", "DS": "alpha", "Xbox 360": "planned"} {
+		if st[console] != want {
+			t.Errorf("%s: %q, want %q", console, st[console], want)
+		}
+	}
+	if _, ok := st["PS3"]; ok {
+		t.Error("a broken feature says nothing about how far a console is")
+	}
+	byName := map[string]network{}
+	for _, n := range networks {
+		byName[n.Name] = n
+	}
+	for name, want := range map[string]string{"Switch": "live", "Wii U / 3DS": "beta", "Wii / DS": "building", "Xbox 360": "planned", "PlayStation 3": "planned", "Xbox": "planned"} {
+		if got := byName[name].stateAt(st); got != want {
+			t.Errorf("network %s: %q, want %q", name, got, want)
+		}
+	}
+	body := get(t, s, "/downloads").Body.String()
+	if !strings.Contains(body, "openpak-nro/releases/latest") || !strings.Contains(body, "openpak/app/releases/latest") {
+		t.Error("downloads should link the Switch setup app and the phone app")
+	}
+}
+
+// Without feature rows, nothing unfinished is drawn as live.
+func TestFallbackStagesAreHonest(t *testing.T) {
+	for _, n := range networks {
+		if n.Name != "Switch" && n.State == "live" {
+			t.Errorf("%s falls back to live", n.Name)
+		}
+	}
+	for _, p := range platformsAt(nil) {
+		if p.Console != "Switch" && p.Status == "live" {
+			t.Errorf("%s falls back to live", p.Name)
+		}
+	}
+}
+
+func mustFeatures(t *testing.T, db *store.Memory) []store.Request {
+	t.Helper()
+	f, err := db.ListRequests(context.Background(), "feature", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return f
 }

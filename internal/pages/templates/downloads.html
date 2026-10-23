@@ -24,6 +24,24 @@
   </ul>
 </section>
 
+<section class="section" aria-labelledby="app-h">
+  <div class="section-top"><div><h2 id="app-h">{{t .Lang "downloads.app"}}</h2><p>{{t .Lang "downloads.app.sub"}}</p></div></div>
+  <ul class="dlgrid">
+    {{range .Apps}}
+    <li class="card dl">
+      <div class="flex items-center gap-3">
+        <img class="client-mark" src="{{.Icon}}" alt="" width="64" height="64">
+        <div class="min-w-0"><div class="kind">{{.Console}} · {{t $.Lang .Kind}}</div><h3 class="break-anywhere">{{.Name}}</h3></div>
+      </div>
+      <div class="foot">
+        <span></span>
+        <a class="btn primary" href="{{.URL}}" rel="noopener"><svg class="ico sm" aria-hidden="true"><use href="#i-dl"/></svg>{{t $.Lang "downloads.get"}}</a>
+      </div>
+    </li>
+    {{end}}
+  </ul>
+</section>
+
 <section class="section" aria-labelledby="dl-h">
   <div class="section-top"><div><h2 id="dl-h">{{t .Lang "downloads.console"}}</h2><p>{{t .Lang "downloads.console.sub"}}</p></div></div>
   <ul class="dlgrid">
