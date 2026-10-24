@@ -16,7 +16,7 @@ const ContactEmail = "contact@openpak.org"
 
 // CommunityURL is the community invite link (Discord) shown in the footer and on
 // /help. Empty draws nothing; set it here once an invite exists.
-const CommunityURL = ""
+const CommunityURL = "https://discord.gg/nMhjnsB6F6"
 
 // LoadTemplates parses the embedded page templates with the i18n function
 // bound as `t` (WEB-09: one string catalogue).
