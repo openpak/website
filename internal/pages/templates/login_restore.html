@@ -4,6 +4,7 @@
   <p class="muted">{{.Message}}</p>
   <form method="post" action="/login/restore" class="form-stack mt-6">
     <input type="hidden" name="email" value="{{.Email}}">
+    {{with .Next}}<input type="hidden" name="next" value="{{.}}">{{end}}
     <label for="password">{{t .Lang "auth.password"}}</label>
     <input id="password" name="password" type="password" required autocomplete="current-password" autofocus>
     <button type="submit" class="btn primary">{{t .Lang "auth.restore.submit"}}</button>

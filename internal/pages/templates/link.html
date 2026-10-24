@@ -1,0 +1,35 @@
+{{template "header" .}}
+<div class="mx-auto w-full max-w-sm">
+  <h1>{{t .Lang "link.title"}}</h1>
+  {{if eq .Step "signin"}}
+  <p class="muted">{{t .Lang "link.signin.sub"}}</p>
+  {{with .Code}}<p class="mt-4">{{t $.Lang "link.code"}}: <strong><code>{{.}}</code></strong></p>{{end}}
+  <p class="mt-6"><a class="btn primary" href="{{.LoginHref}}">{{t .Lang "nav.signin"}}</a></p>
+  <p class="mt-6 text-sm text-muted"><a href="/register">{{t .Lang "nav.register"}}</a></p>
+  {{else if eq .Step "confirm"}}
+  <p class="mt-4" id="link-q">{{.Question}}</p>
+  <p class="hint">{{t .Lang "link.code"}}: <code>{{.Code}}</code>{{with .Expires}} · {{t $.Lang "link.expires"}} <time datetime="{{.}}">{{.}}</time>{{end}}</p>
+  <p class="hint">{{t .Lang "link.confirm.note"}}</p>
+  <form method="post" action="/link/approve" class="form-stack mt-6" aria-labelledby="link-q">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <input type="hidden" name="code" value="{{.Code}}">
+    <input type="hidden" name="client_id" value="{{.ClientID}}">
+    <button type="submit" class="btn primary">{{t .Lang "link.approve"}}</button>
+    <a class="btn ghost" href="/link">{{t .Lang "link.cancel"}}</a>
+  </form>
+  {{else if eq .Step "done"}}
+  <p class="notice ok mt-4" role="status">{{.Done}}</p>
+  <p class="mt-6"><a class="btn" href="/account">{{t .Lang "nav.account"}}</a></p>
+  {{else}}
+  <p class="muted">{{t .Lang "link.enter.sub"}}</p>
+  {{with .Error}}<p class="notice bad mt-4" role="alert" id="link-err">{{.}}</p>{{end}}
+  <form method="post" action="/link" class="form-stack mt-6">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <label for="code">{{t .Lang "link.code"}}</label>
+    <input id="code" name="code" type="text" required value="{{.Code}}" maxlength="20" autocomplete="off" autocapitalize="characters" spellcheck="false" autofocus{{if .Error}} aria-invalid="true" aria-describedby="link-err"{{end}}>
+    <p class="hint">{{t .Lang "link.code.hint"}}</p>
+    <button type="submit" class="btn primary">{{t .Lang "link.continue"}}</button>
+  </form>
+  {{end}}
+</div>
+{{template "footer" .}}

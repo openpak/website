@@ -5,6 +5,7 @@ package pages
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -42,6 +43,7 @@ import (
 	"github.com/openpak/website/internal/titleart"
 	"github.com/openpak/website/internal/turnstile"
 	"github.com/openpak/website/internal/wfc"
+	"github.com/openpak/website/internal/xbl"
 )
 
 // Server wires the page handlers.
@@ -92,8 +94,13 @@ type Server struct {
 	Turnstile *turnstile.Verifier
 	// MinAge is the youngest age that may register (WEBSITE_MIN_AGE); 0 is off.
 	MinAge int
-	tmpl   *template.Template
-	log    *slog.Logger
+	// XBL is xbl's private approval API for /link (device-code sign-in); nil
+	// makes the page say linking is unavailable.
+	XBL *xbl.Client
+	// LinkLimit caps /link code attempts, per account and per address; nil allows all.
+	LinkLimit *ratelimit.Limiter
+	tmpl      *template.Template
+	log       *slog.Logger
 }
 
 // New compiles templates and returns the server.
@@ -413,11 +420,14 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /help/{id}", s.handleHelpTicket)
 	mux.HandleFunc("POST /help/{id}", s.handleHelpReply)
 	mux.HandleFunc("GET /help/attachments/{msg}", s.handleHelpAttachment)
-	// Console linking: the page itself lives in the Switch adapter, but a phone must reach it
-	// under a name with a certificate it trusts — a QR pointing at a bare IP means a warning
-	// page, and one pointing at accounts.nintendo.com only resolves on the console.
+	// /link itself is the device-code page (a game shows a code; link.go). The Switch
+	// adapter's console-link pages, when mounted, keep the paths below it: a phone must reach
+	// them under a name with a certificate it trusts — a QR pointing at a bare IP means a
+	// warning page, and one pointing at accounts.nintendo.com only resolves on the console.
+	mux.HandleFunc("GET /link", s.handleLinkForm)
+	mux.HandleFunc("POST /link", s.handleLinkCheck)
+	mux.HandleFunc("POST /link/approve", s.handleLinkApprove)
 	if adapter := os.Getenv("ADAPTER_LINK_URL"); adapter != "" {
-		mux.Handle("/link", adapterProxy(adapter))
 		mux.Handle("/link/", adapterProxy(adapter))
 	}
 	// The mod catalogue is its own service; the emulator and the app reach it under openpak.org
@@ -754,11 +764,15 @@ func (s *Server) handleVerify(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleLoginForm(w http.ResponseWriter, r *http.Request) {
+	next := linkNext(r.URL.Query().Get("next"))
 	if v := s.viewerOf(w, r); v != nil {
-		http.Redirect(w, r, "/account", http.StatusSeeOther)
+		http.Redirect(w, r, cmp.Or(next, "/account"), http.StatusSeeOther)
 		return
 	}
-	s.render(w, http.StatusOK, "login.html", s.data(r, nil, i18n.T(i18n.FromRequest(r), "auth.login.title")))
+	s.render(w, http.StatusOK, "login.html", struct {
+		baseData
+		Next string
+	}{s.data(r, nil, i18n.T(i18n.FromRequest(r), "auth.login.title")), next})
 }
 
 func (s *Server) handleLoginSubmit(w http.ResponseWriter, r *http.Request) {
@@ -806,6 +820,7 @@ type loginRestoreView struct {
 	baseData
 	Email   string
 	Message string
+	Next    string // where to go once signed in (linkNext); "" is /account
 }
 
 func (s *Server) renderLoginRestore(w http.ResponseWriter, r *http.Request, email string, eraseAfter time.Time) {
@@ -818,6 +833,7 @@ func (s *Server) renderLoginRestore(w http.ResponseWriter, r *http.Request, emai
 		baseData: s.data(r, nil, i18n.T(lang, "auth.restore.title")),
 		Email:    email,
 		Message:  strings.ReplaceAll(i18n.T(lang, "auth.restore.sub"), "{date}", when),
+		Next:     linkNext(r.PostFormValue("next")),
 	})
 }
 
@@ -843,10 +859,12 @@ type login2FAView struct {
 	baseData
 	Challenge string
 	Error     string
+	Next      string // carried from the first step (linkNext)
 }
 
 func (s *Server) renderLogin2FA(w http.ResponseWriter, r *http.Request, status int, challenge, errKey string) {
-	v := login2FAView{baseData: s.data(r, nil, i18n.T(i18n.FromRequest(r), "auth.2fa.title")), Challenge: challenge}
+	v := login2FAView{baseData: s.data(r, nil, i18n.T(i18n.FromRequest(r), "auth.2fa.title")), Challenge: challenge,
+		Next: linkNext(r.PostFormValue("next"))}
 	if errKey != "" {
 		v.Error = i18n.T(i18n.FromRequest(r), errKey)
 	}
@@ -920,7 +938,7 @@ func (s *Server) finishLogin(w http.ResponseWriter, r *http.Request, coreSession
 		return
 	}
 	s.Sessions.SetCookie(w, coreSession)
-	http.Redirect(w, r, "/account", http.StatusSeeOther)
+	http.Redirect(w, r, cmp.Or(linkNext(r.PostFormValue("next")), "/account"), http.StatusSeeOther)
 }
 
 func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {

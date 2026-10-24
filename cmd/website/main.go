@@ -3,6 +3,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -35,6 +36,7 @@ import (
 	"github.com/openpak/website/internal/store"
 	"github.com/openpak/website/internal/support"
 	"github.com/openpak/website/internal/turnstile"
+	"github.com/openpak/website/internal/xbl"
 )
 
 func main() {
@@ -128,6 +130,14 @@ func run(log *slog.Logger) error {
 		log.Info("chat: CHAT_URL not set; the chat page says so and the API answers 503")
 	}
 	pageSrv.Chat = chatCli
+
+	// /link: xbl's private approval API (device-code sign-in for games). The key
+	// defaults to the shared WEBSITE_INTERNAL_KEY, which xbl also defaults to.
+	pageSrv.XBL = xbl.New(os.Getenv("XBL_INTERNAL_URL"), cmp.Or(os.Getenv("XBL_INTERNAL_KEY"), os.Getenv("WEBSITE_INTERNAL_KEY")))
+	if pageSrv.XBL == nil {
+		log.Info("link: XBL_INTERNAL_URL not set; /link says linking is unavailable")
+	}
+	pageSrv.LinkLimit = ratelimit.New(20, 10*time.Minute)
 
 	apiSrv := api.New(coreHTTP, coreGRPC, coreGRPC, coreGRPC, coreGRPC, db, sessions, mediaSvc, log)
 	apiSrv.Federation = coreGRPC

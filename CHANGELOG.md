@@ -13,6 +13,7 @@ release, taken from git history. `git log` stays the source of truth.
 
 ## Unreleased
 
+- `/link`: the page where a game's device-code sign-in (Minecraft Dungeons first) is approved, now in the site layout with the site's own sign-in. Signed out it offers sign-in and comes back (`/login?next=`, kept through two-factor and restore; only `/link?code=` is accepted); signed in it takes the code (prefilled from `?code=` or `?otc=`), asks "Link <title> to <account>?", and approves through xbl's private API (`XBL_INTERNAL_URL`). Expired, unknown and already-used codes each say so; attempts are limited per account and per address. The Switch adapter's pages, when mounted, keep `/link/…` only.
 - `/press`: a press kit (description, fact sheet with live title counts per console, logo and emulator icon downloads, credits, contact, disclaimer), linked from the footer. Screenshots are still to come.
 - **Turnstile for the app.** `POST /api/v1/register` and `POST /api/v1/password/forgot` now take a
   `turnstile_token` and, when `WEBSITE_TURNSTILE_SITE_KEY`/`WEBSITE_TURNSTILE_SECRET` are set,
