@@ -36,6 +36,7 @@ import (
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/store"
 	"github.com/openpak/website/internal/support"
+	"github.com/openpak/website/internal/turnstile"
 	"github.com/openpak/website/internal/voice"
 	"github.com/openpak/website/internal/wfc"
 )
@@ -99,7 +100,10 @@ type Server struct {
 	MailLimit *ratelimit.Limiter
 	// MinAge is the youngest age that may register (WEBSITE_MIN_AGE); 0 is off.
 	MinAge int
-	log    *slog.Logger
+	// Turnstile guards /register and /password/forgot as it guards the
+	// website's forms; nil (not configured) lets them through as before.
+	Turnstile *turnstile.Verifier
+	log       *slog.Logger
 }
 
 // New builds the API server.
@@ -159,6 +163,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	d("/me/links/{namespace}", s.auth(s.handleUnlink))
 	// Public: signing up and asking for a reset mail are what someone without
 	// an account, or without its password, does.
+	g("/auth/config", s.handleAuthConfig)
 	h("/register", s.handleRegister)
 	g("/handle/check", s.handleCheck)
 	h("/password/forgot", s.handleForgotPassword)
@@ -270,6 +275,8 @@ var errorCodes = map[string]string{
 	"attachments are not available on this deployment":                    "attachments_unavailable",
 	"session not found":                                                   "not_found",
 	"the PIN must be four digits":                                         "invalid_pin",
+	"the human check did not pass; try again":                             "turnstile_failed",
+	"the human check is not answering; try again":                         "turnstile_unavailable",
 	"a console name is at most 32 characters, with no control characters": "invalid_name",
 }
 

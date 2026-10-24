@@ -11,12 +11,43 @@ import (
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/store"
+	"github.com/openpak/website/internal/turnstile"
 	"github.com/openpak/website/internal/wfc"
 )
 
 // The account actions the website had and the app did not: creating an account, the
 // forgotten-password mail and the reset, changing the password, deleting the account, linking
 // a Wii/DS and unlinking a console.
+
+// handleAuthConfig: GET /api/v1/auth/config, public. What the app needs to know before it
+// shows the signup and reset forms: whether they want a Turnstile answer, and where the
+// widget page is. The widget page is on this site, so its hostname is the one the
+// Turnstile widget already allows.
+func (s *Server) handleAuthConfig(w http.ResponseWriter, r *http.Request) {
+	ts := map[string]any{"enabled": s.Turnstile != nil}
+	if s.Turnstile != nil {
+		ts["site_key"] = s.Turnstile.Key()
+		ts["widget_path"] = "/turnstile-widget"
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"turnstile": ts})
+}
+
+// humanCheck verifies the request's turnstile_token when Turnstile is configured, the
+// check the website's forms make, with the same client address, and answers the request
+// itself when it fails. Cloudflare not answering is a refusal too: the check fails closed.
+func (s *Server) humanCheck(w http.ResponseWriter, r *http.Request, token string) bool {
+	err := s.Turnstile.Verify(r.Context(), token, clientKey(r))
+	switch {
+	case err == nil:
+		return true
+	case errors.Is(err, turnstile.ErrFailed):
+		writeError(w, http.StatusBadRequest, "the human check did not pass; try again")
+	default:
+		s.log.Error("turnstile", "err", err)
+		writeError(w, http.StatusServiceUnavailable, "the human check is not answering; try again")
+	}
+	return false
+}
 
 // handleRegister: POST /api/v1/register. The same answer whether or not the email is
 // taken; the core resends to a taken-but-unverified address, so nothing is enumerable.
@@ -36,8 +67,9 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 		Handle      string `json:"handle"`
 		Country     string `json:"country"`
 		Birthday    string `json:"birthday"`
+		Turnstile   string `json:"turnstile_token"`
 	}
-	if !decodeSmall(w, r, &req) {
+	if !decodeSmall(w, r, &req) || !s.humanCheck(w, r, req.Turnstile) {
 		return
 	}
 	email := strings.ToLower(strings.TrimSpace(req.Email))
@@ -77,9 +109,10 @@ func (s *Server) handleForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req struct {
-		Email string `json:"email"`
+		Email     string `json:"email"`
+		Turnstile string `json:"turnstile_token"`
 	}
-	if !decodeSmall(w, r, &req) {
+	if !decodeSmall(w, r, &req) || !s.humanCheck(w, r, req.Turnstile) {
 		return
 	}
 	if email := strings.ToLower(strings.TrimSpace(req.Email)); accounts.MailAllowed(s.MailLimit, email) {

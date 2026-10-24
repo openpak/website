@@ -344,6 +344,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /account/2fa/disable", s.handle2FADisable)
 	mux.HandleFunc("POST /logout", s.handleLogout)
 	mux.HandleFunc("GET /forgot-password", s.handleForgotForm)
+	mux.HandleFunc("GET /turnstile-widget", s.handleTurnstileWidget)
 	mux.HandleFunc("POST /forgot-password", s.handleForgotSubmit)
 	mux.HandleFunc("GET /reset-password", s.handleResetForm)
 	mux.HandleFunc("POST /reset-password", s.handleResetSubmit)

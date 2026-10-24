@@ -120,3 +120,28 @@ func TestNoTurnstileByDefault(t *testing.T) {
 		t.Error("an unconfigured site must not draw the widget or widen the CSP")
 	}
 }
+
+// /turnstile-widget is the widget alone for the app's webview, and only exists
+// when Turnstile is configured.
+func TestTurnstileWidgetPage(t *testing.T) {
+	s, _, _ := newTestServer(t)
+	rec := httptest.NewRecorder()
+	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/turnstile-widget", nil))
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("unconfigured: %d", rec.Code)
+	}
+	s.Turnstile = turnstile.New("site-key-1", "secret")
+	rec = httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/turnstile-widget", nil)
+	req.Header.Set("Accept-Language", "de")
+	s.Handler().ServeHTTP(rec, req)
+	body := rec.Body.String()
+	if rec.Code != http.StatusOK || !strings.Contains(body, `data-sitekey="site-key-1"`) ||
+		!strings.Contains(body, `data-callback="openpakTurnstileDone"`) || !strings.Contains(body, "/static/turnstile-widget.js") ||
+		!strings.Contains(body, `data-language="de"`) {
+		t.Fatalf("widget page: %d %s", rec.Code, body)
+	}
+	if csp := rec.Header().Get("Content-Security-Policy"); !strings.Contains(csp, "script-src 'self' https://challenges.cloudflare.com") {
+		t.Errorf("CSP does not allow the widget: %s", csp)
+	}
+}

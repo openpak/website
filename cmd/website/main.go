@@ -146,6 +146,7 @@ func run(log *slog.Logger) error {
 	apiSrv.AdminIDs = cfg.AdminAccountIDs
 	apiSrv.MailLimit = pageSrv.MailLimit // one mail budget per address across site and app
 	apiSrv.MinAge = cfg.MinAge
+	apiSrv.Turnstile = pageSrv.Turnstile // one key pair for the forms, the app and the widget page
 
 	// The network profile (PRD prds/network-profile-service-prd.md): generated from
 	// the live Traefik routing, so adding a title is a server deploy, not six

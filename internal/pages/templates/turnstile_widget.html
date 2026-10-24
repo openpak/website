@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+{{/* The Turnstile widget alone, for the app's webview (handleTurnstileWidget). No
+     layout: the app draws its own chrome around it. */}}
+<html lang="{{.Lang}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>OpenPak</title>
+<link rel="stylesheet" href="/static/site.css?v={{.Asset}}">
+<script src="/static/turnstile-widget.js?v={{.Asset}}"></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</head>
+<body>
+<div class="cf-turnstile" data-sitekey="{{.Key}}" data-language="{{.Lang}}" data-theme="auto" data-size="flexible"
+     data-callback="openpakTurnstileDone" data-error-callback="openpakTurnstileError" data-expired-callback="openpakTurnstileExpired"></div>
+</body>
+</html>

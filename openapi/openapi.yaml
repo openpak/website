@@ -714,6 +714,33 @@ paths:
                   unlinked: { type: boolean }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { description: No console is linked in that namespace. }
+  /auth/config:
+    get:
+      summary: What the signup and reset forms need
+      security: []
+      description: |
+        Public. Whether `/register` and `/password/forgot` want a Cloudflare
+        Turnstile answer. When `enabled`, a client shows the widget page at
+        `widget_path` on this site (in a webview; the page posts
+        `{"kind":"token"|"error"|"expired","token":"..."}` to the
+        `OpenPakTurnstile` JavaScript channel) and sends the token as
+        `turnstile_token`. A token is single use.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [turnstile]
+                properties:
+                  turnstile:
+                    type: object
+                    required: [enabled]
+                    properties:
+                      enabled: { type: boolean }
+                      site_key: { type: string, description: "Present when enabled." }
+                      widget_path: { type: string, examples: ["/turnstile-widget"], description: "Present when enabled." }
   /register:
     post:
       summary: Create an account
@@ -721,7 +748,8 @@ paths:
       description: |
         Public. The answer is the same whether or not the address is taken, so
         it cannot be used to discover accounts; a verification mail follows,
-        and the account can mint a token once verified.
+        and the account can mint a token once verified. When Turnstile is on
+        (see `/auth/config`) a passed `turnstile_token` is required.
       requestBody:
         required: true
         content:
@@ -736,13 +764,15 @@ paths:
                 handle: { type: string, pattern: "^[A-Za-z][A-Za-z0-9]{5,14}$", description: "Permanent case-insensitively unique public account identifier." }
                 country: { type: string, minLength: 2, maxLength: 2, examples: ["IE"] }
                 birthday: { type: string, format: date, examples: ["1990-01-01"] }
+                turnstile_token: { type: string, description: "The Turnstile answer; required when /auth/config says enabled." }
       responses:
         "202":
           description: Accepted; check the inbox
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Message" }
-        "400": { description: Invalid, reserved or profane handle. }
+        "400": { description: "Invalid, reserved or profane handle, or `turnstile_failed`: no or a refused Turnstile answer." }
+        "503": { description: "`turnstile_unavailable`: Cloudflare did not answer; the check fails closed." }
         "409": { description: Handle unavailable. }
         "403": { description: Registrations are closed. }
         "429": { $ref: "#/components/responses/RateLimited" }
@@ -773,7 +803,8 @@ paths:
       security: []
       description: |
         Public, and the same answer whether or not the address has an account.
-        The mail links to the website's reset page.
+        The mail links to the website's reset page. When Turnstile is on (see
+        `/auth/config`) a passed `turnstile_token` is required.
       requestBody:
         required: true
         content:
@@ -783,12 +814,15 @@ paths:
               required: [email]
               properties:
                 email: { type: string, format: email }
+                turnstile_token: { type: string, description: "The Turnstile answer; required when /auth/config says enabled." }
       responses:
         "202":
           description: Accepted
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Message" }
+        "400": { description: "`turnstile_failed`: no or a refused Turnstile answer." }
+        "503": { description: "`turnstile_unavailable`: Cloudflare did not answer; the check fails closed." }
         "429": { $ref: "#/components/responses/RateLimited" }
   /password/reset:
     post:

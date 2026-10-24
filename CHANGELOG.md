@@ -13,6 +13,14 @@ release, taken from git history. `git log` stays the source of truth.
 
 ## Unreleased
 
+- **Turnstile for the app.** `POST /api/v1/register` and `POST /api/v1/password/forgot` now take a
+  `turnstile_token` and, when `WEBSITE_TURNSTILE_SITE_KEY`/`WEBSITE_TURNSTILE_SECRET` are set,
+  verify it with the client address exactly like the website's forms (400 `turnstile_failed`;
+  503 `turnstile_unavailable` when Cloudflare does not answer, failing closed). Unconfigured,
+  they behave as before. New public `GET /api/v1/auth/config` says whether Turnstile is on, with
+  the site key and the widget path; `GET /turnstile-widget` is the widget alone for the app's
+  webview, handing the token over its `OpenPakTurnstile` channel (`static/turnstile-widget.js`).
+  Served from openpak.org, so the Turnstile widget needs no new hostname.
 - **Automatic account erasure.** `internal/erasure` runs every `WEBSITE_ERASURE_INTERVAL` (1h)
   under a Postgres advisory lock: for each closed account whose grace period is over (the core's
   `ListDueAccountDeletions`) it erases saves (`DELETE /internal/accounts/{a}/saves`), chat
