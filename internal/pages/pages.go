@@ -391,9 +391,9 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /account/saves/manage", s.handleSavesManage)
 	mux.HandleFunc("GET /account/saves/download/{id}", s.handleSavesDownload)
 	mux.HandleFunc("POST /account/saves/download", s.handleSavesDownloadPost)
-	mux.HandleFunc("GET /terms", s.staticPage("terms.html", "footer.terms"))
-	mux.HandleFunc("GET /privacy", s.staticPage("privacy.html", "footer.privacy"))
-	mux.HandleFunc("GET /legal", s.staticPage("legal.html", "footer.legal"))
+	mux.HandleFunc("GET /terms", s.staticPage("terms", "footer.terms"))
+	mux.HandleFunc("GET /privacy", s.staticPage("privacy", "footer.privacy"))
+	mux.HandleFunc("GET /legal", s.staticPage("legal", "footer.legal"))
 	mux.HandleFunc("GET /operators", s.handleOperatorsTerms)
 	mux.HandleFunc("GET /account/operator", s.handleOperator)
 	mux.HandleFunc("POST /account/operator", s.handleOperatorApply)
@@ -631,8 +631,17 @@ func (s *Server) handleDownloads(w http.ResponseWriter, r *http.Request) {
 func (s *Server) staticPage(name, titleKey string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		v := s.viewerOf(w, r)
-		s.render(w, http.StatusOK, name, s.data(r, v, i18n.T(i18n.FromRequest(r), titleKey)))
+		s.render(w, http.StatusOK, legalTemplate(name, i18n.FromRequest(r)), s.data(r, v, i18n.T(i18n.FromRequest(r), titleKey)))
 	}
+}
+
+// legalTemplate picks the template for a legal page: the English text is
+// <name>.html, each translation <name>_<lang>.html (e.g. terms_pt-BR.html).
+func legalTemplate(name, lang string) string {
+	if lang == "en" || lang == "" {
+		return name + ".html"
+	}
+	return name + "_" + lang + ".html"
 }
 
 // securityTxt is RFC 9116. Expires is fixed on purpose: when it lapses, someone

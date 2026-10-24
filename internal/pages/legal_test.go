@@ -2,11 +2,13 @@ package pages
 
 import (
 	"context"
+	"regexp"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/store"
 )
 
@@ -54,14 +56,6 @@ func TestLegalPages(t *testing.T) {
 		if strings.Contains(body, "OWNER REVIEW") {
 			t.Errorf("%s: the review note must stay in the template, not reach visitors", path)
 		}
-	}
-	// A translated shell says the text itself is English.
-	rec := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodGet, "/privacy", nil)
-	r.Header.Set("Accept-Language", "de")
-	s.Handler().ServeHTTP(rec, r)
-	if !strings.Contains(rec.Body.String(), "nur auf Englisch") {
-		t.Error("German visitors should be told the policy is English only")
 	}
 }
 
@@ -161,4 +155,104 @@ func mustFeatures(t *testing.T, db *store.Memory) []store.Request {
 		t.Fatal(err)
 	}
 	return f
+}
+
+var idAttr = regexp.MustCompile(`<h[23] id="([a-z-]+)"`)
+
+func getLang(t *testing.T, s *Server, path, lang string) string {
+	t.Helper()
+	rec := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, path, nil)
+	r.Header.Set("Accept-Language", lang)
+	s.Handler().ServeHTTP(rec, r)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("%s [%s]: %d", path, lang, rec.Code)
+	}
+	return rec.Body.String()
+}
+
+// Every language renders every legal page as a full translation: the same
+// sections, the live values, the contact address and the pointer to the
+// authoritative English text.
+func TestLegalPagesTranslated(t *testing.T) {
+	s, _, _ := newTestServer(t)
+	s.Federation = &pagesFed{}
+	for _, path := range []string{"/terms", "/privacy", "/legal", "/operators"} {
+		en := getLang(t, s, path, "en")
+		wantIDs := idAttr.FindAllStringSubmatch(en, -1)
+		if len(wantIDs) == 0 {
+			t.Fatalf("%s: no sections in English", path)
+		}
+		if strings.Contains(en, "available in English only") || strings.Contains(en, "legal-translation") {
+			t.Errorf("%s: English page carries a translation notice", path)
+		}
+		for _, lang := range []string{"de", "es", "fr", "it", "pt-BR"} {
+			body := getLang(t, s, path, lang)
+			notice := i18n.T(lang, "legal.translation")
+			if notice == "legal.translation" || !strings.Contains(body, notice) {
+				t.Errorf("%s [%s]: authoritative-text notice missing", path, lang)
+			}
+			if !strings.Contains(body, `href="/lang?l=en&amp;back=`+path+`"`) {
+				t.Errorf("%s [%s]: no link to the English version", path, lang)
+			}
+			if strings.Contains(body, i18n.T(lang, "legal.english")) && i18n.T(lang, "legal.english") != "legal.english" {
+				t.Errorf("%s [%s]: still says English only", path, lang)
+			}
+			if strings.Contains(body, "OWNER REVIEW") || strings.Contains(body, "{{") {
+				t.Errorf("%s [%s]: review note or raw template leaked", path, lang)
+			}
+			if !strings.Contains(body, `<article class="legal" lang="`+lang+`">`) {
+				t.Errorf("%s [%s]: article not marked with its language", path, lang)
+			}
+			if path != "/operators" && !strings.Contains(body, "contact@openpak.org") {
+				t.Errorf("%s [%s]: contact address missing", path, lang)
+			}
+			got := idAttr.FindAllStringSubmatch(body, -1)
+			if len(got) != len(wantIDs) {
+				t.Errorf("%s [%s]: %d sections, English has %d", path, lang, len(got), len(wantIDs))
+				continue
+			}
+			for i := range got {
+				if got[i][1] != wantIDs[i][1] {
+					t.Errorf("%s [%s]: section %d is #%s, want #%s", path, lang, i, got[i][1], wantIDs[i][1])
+				}
+			}
+			if strings.Count(body, "<li>") != strings.Count(en, "<li>") {
+				t.Errorf("%s [%s]: list items differ from English", path, lang)
+			}
+			if strings.Count(body, "<a href") < strings.Count(en, "<a href") {
+				t.Errorf("%s [%s]: links missing", path, lang)
+			}
+			if path == "/operators" {
+				for _, v := range []string{"160", "1000", "99.5", "mailto:contact@openpak.org"} {
+					if !strings.Contains(body, v) {
+						t.Errorf("%s [%s]: live value %q missing", path, lang, v)
+					}
+				}
+				for _, w := range []string{"72", "3 "} {
+					if !strings.Contains(body, w) {
+						t.Errorf("%s [%s]: %q missing", path, lang, w)
+					}
+				}
+			}
+			if path == "/privacy" {
+				for _, v := range []string{"opak_session", "Cloudflare", "Oracle Cloud", "Zoho Mail", "GitHub", "16"} {
+					if !strings.Contains(body, v) {
+						t.Errorf("%s [%s]: %q missing", path, lang, v)
+					}
+				}
+			}
+		}
+	}
+}
+
+// Register carries the minimum age in every language.
+func TestRegisterMinAgeTranslated(t *testing.T) {
+	s, _, _ := newTestServer(t)
+	for _, lang := range []string{"de", "es", "fr", "it", "pt-BR"} {
+		body := getLang(t, s, "/register", lang)
+		if !strings.Contains(body, i18n.T(lang, "auth.register.agree")) {
+			t.Errorf("register [%s]: terms agreement not translated", lang)
+		}
+	}
 }

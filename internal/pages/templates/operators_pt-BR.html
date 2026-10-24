@@ -1,0 +1,72 @@
+{{template "header" .}}
+<div class="page-head">
+  <h1>{{t .Lang "footer.operators"}}</h1>
+  <p>Última atualização: 23 de outubro de 2026.</p>
+  <p class="notice" lang="pt-BR">{{t .Lang "legal.translation"}} <a href="/lang?l=en&amp;back=/operators" lang="en">{{t .Lang "legal.translation.link"}}</a></p>
+</div>
+<article class="legal" lang="pt-BR">
+<p>Estes termos se aplicam a quem opera um nó regional do OpenPak (“operador”): um ou mais servidores que retransmitem o tráfego de jogos para jogadores próximos a eles, enquanto contas, amigos e matchmaking permanecem com o OpenPak. Eles complementam os <a href="/terms">Termos de uso</a>. Você os aceita ao se candidatar pela sua <a href="/account/operator">página da conta</a> e novamente sempre que um servidor que você opera ingressa na rede.</p>
+
+<h2 id="approval">Aprovação</h2>
+<ul>
+  <li>Um nó não atende ninguém até que o OpenPak o aprove. A aprovação é uma decisão de uma pessoa no OpenPak; atender aos números abaixo torna um nó elegível, não aprovado.</li>
+  <li>Dentro da política de localização abaixo, o OpenPak aprova nós para as localizações que indica como desejadas e pode manter você em lista de espera para qualquer outra.</li>
+  <li>Cada servidor recebe sua própria chave. Mantenha as chaves em segredo; se uma vazar, avise-nos e revogaremos esse servidor.</li>
+</ul>
+
+<h2 id="location">Política de localização</h2>
+<p>São aceitas candidaturas de todas as localizações, exceto nós na China continental e na Rússia. As exigências de licenciamento, os firewalls nacionais, as sanções e as leis de vigilância desses países conflitam com estes termos, por isso não podemos aceitar um nó em nenhum deles. Os jogadores de lá são atendidos por regiões vizinhas.</p>
+
+<h2 id="hardware">Mínimos de hardware e de rede</h2>
+<ul>
+  <li>Cada servidor deve ser dedicado ao OpenPak: não execute mais nada na máquina.</li>
+  <li>O OpenPak Node OS (Fedora CoreOS) é a instalação preferida.</li>
+</ul>
+{{with .Req}}
+<table>
+  <thead><tr><th>Requisito</th><th>Mínimo</th><th>Contagem</th></tr></thead>
+  <tbody>
+    <tr><td>Núcleos de CPU</td><td>{{.NodeCores}} por nó, {{.ServerCores}} por servidor</td><td>todos os servidores juntos; e cada servidor</td></tr>
+    <tr><td>RAM</td><td>{{.NodeRAMGB}} GB por nó, {{.ServerRAMGB}} GB por servidor</td><td>todos os servidores juntos; e cada servidor</td></tr>
+    <tr><td>Armazenamento</td><td>{{.NodeDiskGB}} GB NVMe ou SSD por nó</td><td>todos os servidores juntos</td></tr>
+    <tr><td>Endereço</td><td>IPv4 público próprio por servidor, sem NAT de operadora (CGNAT); IPv6 também é desejado</td><td>cada servidor</td></tr>
+    <tr><td>Largura de banda</td><td>{{.ServerBandwidthMbps}} Mbps simétricos por servidor</td><td>cada servidor; não se soma entre servidores</td></tr>
+    <tr><td>Disponibilidade</td><td>{{.AvailabilityPct}} %</td><td>o nó</td></tr>
+  </tbody>
+</table>
+<p>Cada servidor informa seu hardware a cada minuto e executa uma curta medição de largura de banda contra o OpenPak uma vez por dia (pelo menos {{.MeasuredMbps}} Mbps em cada sentido, medidos por nós). Um servidor que deixe de informar por {{$.Stale}}, ou cuja medição seja mais antiga que {{$.MaxAge}}, tira o nó de rotação até voltar; a aprovação é mantida. Valores dentro de {{.SlackPct}} % são aceitos, porque o sistema informa um pouco menos de memória e disco do que a máquina tem quando é vendida.</p>
+{{else}}
+<p>Não foi possível carregar os valores atuais. Sua <a href="/account/operator">página da conta</a> os mostra, ou escreva para <a href="mailto:{{contactEmail}}">{{contactEmail}}</a>.</p>
+{{end}}
+<p>Os relatórios de hardware e de endereço são autodeclarados por seus servidores e podem ser falsificados, portanto não são prova: nós os usamos apenas para decidir se um nó está em rotação, e a aprovação continua sendo uma decisão de uma pessoa no OpenPak. Não os informe incorretamente.</p>
+
+<h2 id="data">Dados dos jogadores</h2>
+<ul>
+  <li>Não registre nem guarde dados de jogadores além do que a operação da retransmissão precisa naquele momento. Sem capturas de pacotes, sem registros de endereços IP mantidos além do uso operacional, sem registros por jogador.</li>
+  <li>Não compartilhe, venda nem analise o tráfego ou qualquer coisa que você aprenda com ele.</li>
+  <li>Registros operacionais (erros, totais) são aceitáveis; guarde-os apenas pelo tempo necessário para operar o nó e nunca por mais de 7 dias.</li>
+</ul>
+
+<h2 id="dpa">Acordo de tratamento de dados</h2>
+<p>Em relação aos dados de jogadores que um nó trata, você os processa em nome do OpenPak e concorda com o seguinte:</p>
+<ul>
+  <li>Você processa endereços IP de jogadores e tráfego de jogo apenas para hospedar salas no seu nó.</li>
+  <li>Você não registra nada além do necessário à operação e exclui esses registros em até 7 dias.</li>
+  <li>Você não usa os dados para nenhuma outra finalidade.</li>
+  <li>Você notifica o OpenPak sobre qualquer incidente de segurança que afete dados de jogadores em até 72 horas após tomar conhecimento dele, em <a href="mailto:{{contactEmail}}">{{contactEmail}}</a>.</li>
+  <li>Ao deixar de operar um nó, ou quando sua aprovação terminar, você exclui todos os dados de jogadores que ainda mantiver.</li>
+</ul>
+
+<h2 id="traffic">Sem interferência</h2>
+<p>Retransmita o tráfego exatamente como ele chega. Não o modifique, injete, bloqueie, atrase nem reordene, não execute software OpenPak modificado em um nó e não use os segredos compartilhados que um nó possui para nenhuma outra finalidade.</p>
+
+<h2 id="revocation">Revogação</h2>
+<p>O OpenPak pode retirar um servidor ou um nó de rotação, revogar suas chaves ou encerrar sua aprovação a qualquer momento, com ou sem aviso, por qualquer motivo, inclusive por violação destes termos. Você pode deixar de operar um nó a qualquer momento; avise-nos antes, para que os jogadores não sejam enviados a ele.</p>
+
+<h2 id="security">Contato de segurança</h2>
+<p>Informe um e-mail de contato que alguém leia. Relate imediatamente um servidor comprometido, uma chave vazada ou qualquer problema de segurança para <a href="mailto:{{contactEmail}}">{{contactEmail}}</a> ou conforme descrito em nossa <a href="https://github.com/openpak/.github/blob/main/SECURITY.md" rel="noopener">política de segurança</a>. Podemos escrever a você sobre questões de segurança e esperamos uma resposta.</p>
+
+<h2 id="no-warranty">Sem pagamento, sem garantia</h2>
+<p>Operar um nó é voluntário e não remunerado. O OpenPak não oferece nenhuma garantia sobre o software ou a rede e não se responsabiliza por seus custos de hospedagem nem por nada que seus servidores façam.</p>
+</article>
+{{template "footer" .}}

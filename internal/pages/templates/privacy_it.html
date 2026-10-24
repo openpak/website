@@ -1,0 +1,100 @@
+{{template "header" .}}
+<div class="page-head">
+  <h1>{{t .Lang "footer.privacy"}}</h1>
+  <p>Ultimo aggiornamento: 23 ottobre 2026.</p>
+  <p class="notice" lang="it">{{t .Lang "legal.translation"}} <a href="/lang?l=en&amp;back=/privacy" lang="en">{{t .Lang "legal.translation.link"}}</a></p>
+</div>
+<article class="legal" lang="it">
+<p>Questa informativa spiega quali dati personali tratta OpenPak, perché, e cosa puoi fare al riguardo. OpenPak è una rete online sostitutiva gestita dalla comunità per console e emulatori, gestita da <strong>il progetto OpenPak</strong> («noi»). Puoi contattarci all’indirizzo <a href="mailto:contact@openpak.org">contact@openpak.org</a>.</p>
+<p class="notice warn">OpenPak è in alpha pubblica. I dati possono essere azzerati mentre la rete viene costruita; lo comunicheremo su questo sito prima di un azzeramento pianificato.</p>
+
+<h2 id="data">Cosa raccogliamo</h2>
+<h3>Quando crei un account</h3>
+<ul>
+  <li><strong>Indirizzo email</strong>, per farti accedere, confermare l’indirizzo e inviare i link per il ripristino della password e la modifica dell’email.</li>
+  <li><strong>Password</strong>, memorizzata solo come hash bcrypt con salt; non possiamo leggerla.</li>
+  <li><strong>Handle</strong> (il tuo ID permanente) e un <strong>nome visualizzato</strong> facoltativo.</li>
+  <li><strong>Paese</strong> e <strong>data di nascita</strong>. Le console richiedono entrambi quando collegano un account, e la data di nascita è il modo in cui verifichiamo l’età minima (16 anni).</li>
+</ul>
+<h3>Quando usi il tuo account</h3>
+<ul>
+  <li><strong>Profilo</strong>: immagine avatar, biografia e motto, se li imposti. Il tuo handle, il nome visualizzato e l’avatar sono visibili agli altri giocatori.</li>
+  <li><strong>Accesso in due passaggi</strong>: se lo attivi, un segreto dell’autenticatore cifrato e codici di recupero sotto forma di hash.</li>
+  <li><strong>Sessioni</strong>: un registro di ogni browser, app o dispositivo con accesso effettuato, così puoi vederli e revocarli. Non memorizziamo indirizzi IP né dettagli del browser insieme alle sessioni.</li>
+  <li><strong>Console ed emulatori collegati</strong>: l’identificatore che la tua console o il tuo emulatore usa per il suo utente (ad esempio un ID utente della console o un codice amico Wii/DS) e i codici amico da esso derivati.</li>
+  <li><strong>Amici e social</strong>: richieste di amicizia, amici, blocchi, inviti ai giochi e messaggi di chat che invii tramite OpenPak (testo, e disegni, schermate o dati di gioco quando una console li invia).</li>
+  <li><strong>Presenza e cronologia di gioco</strong>: se sei online, a quale gioco stai giocando, su quale console o emulatore, e quando è iniziata e finita ogni sessione di gioco. I tuoi amici vedono la tua presenza; usiamo la cronologia per i conteggi dei giocatori e per indicare quali giochi funzionano.</li>
+  <li><strong>Salvataggi nel cloud</strong>: i file di salvataggio dei giochi che la tua console o il tuo emulatore carica, con dimensione, checksum e dispositivo di provenienza. Conserviamo le due versioni più recenti di ogni salvataggio (più quelle che fissi). Se scegli di archiviare i salvataggi sul tuo Google Drive, OneDrive, S3 o WebDAV, conserviamo una credenziale cifrata per esso e i file vanno a quel fornitore.</li>
+  <li><strong>Controlli parentali</strong>: se abbini una console, le impostazioni e i record dei dispositivi che la console scambia con OpenPak.</li>
+  <li><strong>Richieste di assistenza</strong>: i messaggi e i file che ci invii, con il tuo account, nome visualizzato e indirizzo email.</li>
+  <li><strong>Segnalazioni di arresti anomali ed errori</strong>: quando una console, un emulatore o l’app segnala un errore, la versione del software, il sistema operativo o firmware, l’ID del gioco, il codice e il messaggio di errore, un ID del dispositivo ed eventuali log allegati. Una segnalazione è collegata al tuo account solo se avevi effettuato l’accesso.</li>
+  <li><strong>Voti e segnalazioni di compatibilità</strong> che invii nella pagina dei titoli.</li>
+  <li><strong>Notifiche dell’app</strong>: se consenti le notifiche nell’app OpenPak, un token push per il tuo dispositivo.</li>
+  <li><strong>Moderazione</strong>: segnalazioni fatte da te o su di te, ed eventuali sospensioni, con il relativo motivo.</li>
+</ul>
+<h3>Dati di rete</h3>
+<p>Ogni connessione a OpenPak porta con sé il tuo indirizzo IP. Il sito web lo conserva solo in memoria, per la limitazione della frequenza, per circa un’ora al massimo; i suoi log non registrano indirizzi IP né indirizzi email. I server di gioco hanno bisogno del tuo indirizzo per collegarti a una partita. In molti giochi la console si connette <strong>direttamente agli altri giocatori</strong>, che quindi possono vedere il tuo indirizzo IP, proprio come sulle reti originali.</p>
+<p>Non usiamo analisi statistiche, pubblicità né tracciamento di alcun tipo, e non vendiamo né condividiamo dati personali a fini di marketing.</p>
+
+<h2 id="why">Perché, e su quale base</h2>
+<table>
+  <thead><tr><th>Finalità</th><th>Base giuridica (GDPR)</th></tr></thead>
+  <tbody>
+    <tr><td>Gestione del tuo account, collegamento delle console, amici, presenza, inviti, chat, salvataggi nel cloud e gioco online</td><td>Esecuzione del nostro contratto con te (i <a href="/terms">Termini</a>)</td></tr>
+    <tr><td>Verifica dell’età minima</td><td>Obbligo legale e legittimo interesse</td></tr>
+    <tr><td>Sicurezza: limitazione della frequenza, controlli anti-bot, accesso in due passaggi, prevenzione degli abusi, moderazione e sospensioni</td><td>Legittimo interesse a mantenere la rete sicura e utilizzabile</td></tr>
+    <tr><td>Segnalazioni di arresti anomali, conteggi dei giocatori e compatibilità dei giochi</td><td>Legittimo interesse a far funzionare la rete</td></tr>
+    <tr><td>Richieste di assistenza</td><td>Esecuzione del nostro contratto e legittimo interesse</td></tr>
+    <tr><td>Notifiche dell’app; archiviazione esterna dei salvataggi</td><td>Il tuo consenso, che puoi revocare nell’app o scollegando l’archiviazione</td></tr>
+  </tbody>
+</table>
+
+<h2 id="who">Chi altro li tratta</h2>
+<ul>
+  <li><strong>Cloudflare</strong> gestisce il DNS di openpak.org e si pone davanti al sito come proxy e protezione anti-bot: trasporta tutto il traffico web e quindi vede indirizzi IP e richieste. Quando Turnstile (il suo controllo anti-bot) è attivo, funziona solo nei moduli di registrazione e di ripristino della password.</li>
+  <li><strong>Oracle Cloud</strong> ospita i server che contengono i dati degli account.</li>
+  <li><strong>Zoho Mail</strong> invia le nostre email di verifica e di ripristino della password (tramite smtp.zoho.eu), quindi riceve il tuo indirizzo email e il messaggio.</li>
+  <li><strong>Gli operatori dei nodi regionali della federazione</strong>, approvati da OpenPak, ospitano stanze di gioco per i giocatori vicini. Vedono gli indirizzi IP e il traffico di gioco dei giocatori nelle stanze che ospitano, e nulla sugli account. Li trattano in base all’accordo sul trattamento dei dati contenuto nei <a href="/operators#dpa">termini per gli operatori</a>.</li>
+  <li><strong>Google Firebase Cloud Messaging</strong> recapita le notifiche dell’app: il token push e un breve messaggio come «Alice vuole diventare tua amica».</li>
+  <li><strong>L’archiviazione che scegli</strong> (Google Drive, OneDrive, S3, WebDAV) riceve i tuoi salvataggi se la configuri.</li>
+  <li><strong>Gli altri giocatori</strong> vedono il tuo handle, il nome visualizzato, l’avatar, la presenza e, nei giochi a connessione diretta, il tuo indirizzo IP.</li>
+</ul>
+<p>I download delle app e degli strumenti OpenPak sono forniti da <strong>GitHub</strong>, secondo i termini e l’informativa sulla privacy di GitHub.</p>
+<p>Alcuni di questi fornitori si trovano negli Stati Uniti o in altri paesi al di fuori dello Spazio economico europeo. In tal caso, il trasferimento si basa sulle clausole contrattuali tipo del fornitore o su una decisione di adeguatezza.</p>
+
+<h2 id="retention">Per quanto tempo li conserviamo</h2>
+<p>Siamo agli inizi, e preferiamo dirti esattamente a che punto siamo piuttosto che promettere tempi che il codice non rispetta ancora:</p>
+<ul>
+  <li>Le sessioni di accesso durano 30 giorni. I link di conferma email, ripristino della password e modifica dell’email scadono dopo 24 ore. Le richieste dell’accesso in due passaggi scadono dopo 10 minuti. I record scaduti non vengono ancora eliminati automaticamente.</li>
+  <li>I salvataggi nel cloud conservano le due versioni più recenti di ogni salvataggio, entro un limite di spazio.</li>
+  <li>I dati dell’account, gli amici, la cronologia di gioco, i messaggi di chat, le richieste di assistenza e le segnalazioni di arresti anomali vengono conservati finché esiste il tuo account. Per ora non c’è alcuna scadenza automatica, e gli account non confermati non vengono ancora rimossi automaticamente.</li>
+  <li>Quando elimini il tuo account, questo viene chiuso subito e conservato, intatto, per 30 giorni in modo che tu possa cambiare idea; poi viene cancellato ovunque in modo automatico (vedi sotto).</li>
+  <li>Dopo la cancellazione, il tuo handle resta riservato per 90 giorni, così che nessuno possa subentrarvi subito.</li>
+  <li>I backup sono conservati fino a 14 giorni; un account cancellato scompare da essi entro 14 giorni e non viene mai ripristinato da essi.</li>
+</ul>
+
+<h2 id="delete">Eliminare il tuo account</h2>
+<p>Accedi, apri <a href="/account">il tuo account</a> e usa <em>Elimina account</em> (l’app offre la stessa opzione). Confermi con la tua password, e con il secondo fattore se ne usi uno. Da quel momento l’account è chiuso: tutte le sessioni vengono disconnesse, nessuno può usarlo, scompare dalle liste dei tuoi amici e l’app smette di inviare notifiche ai tuoi dispositivi.</p>
+<p><strong>Per 30 giorni puoi annullare l’operazione.</strong> Accedi di nuovo con il tuo indirizzo email e la tua password e ti verrà proposto di ripristinare l’account, così com’era; puoi anche chiederci di ripristinarlo. Durante questi 30 giorni non viene cancellato nulla.</p>
+<p><strong>Dopo 30 giorni l’account viene cancellato ovunque, in modo automatico.</strong> Nessuno deve intervenire e non può più essere ripristinato. La cancellazione comprende il tuo indirizzo email, la password, il nome visualizzato, il paese, la data di nascita, la biografia, il motto e l’avatar; le tue sessioni, i dati dell’accesso in due passaggi e le registrazioni per le notifiche dell’app; i collegamenti delle tue console, la presenza e la cronologia di gioco; i tuoi amici, le richieste di amicizia, i blocchi e gli inviti ai giochi, in entrambe le direzioni; i tuoi messaggi di chat, in entrambe le direzioni; i tuoi salvataggi nel cloud e qualsiasi credenziale di archiviazione che ci hai dato; le tue richieste di assistenza con le risposte e gli allegati, e le segnalazioni di arresti anomali collegate al tuo account; i tuoi voti e le segnalazioni di compatibilità. Se uno dei nostri servizi non è raggiungibile, la cancellazione viene ritentata ogni ora finché tutti non hanno finito. In seguito, accedere con il tuo vecchio indirizzo funziona esattamente come per un indirizzo che non ha mai avuto un account, e resta solo un record anonimizzato senza dati personali, in modo che il tuo handle possa essere riservato per 90 giorni.</p>
+<p>Le mod che hai pubblicato restano disponibili agli altri giocatori, attribuite a «utente eliminato» e non più collegate a te. I tuoi preferiti tra le mod, e le proposte di mod mai pubblicate, rifiutate o rimosse, vengono cancellati.</p>
+<p>I record di moderazione (le segnalazioni presentate da altri giocatori sull’account e i ban) sono conservati come traccia di controllo per la sicurezza e, dopo la cancellazione, rimandano solo al record anonimizzato.</p>
+
+<h2 id="rights">I tuoi diritti</h2>
+<p>Puoi chiederci una copia dei tuoi dati, di correggerli, di cancellarli, di limitarne o opporti al loro uso e di riceverli in forma portabile; e puoi revocare qualsiasi consenso tu abbia dato. Molte di queste cose puoi farle da solo nella pagina del tuo account; per il resto, scrivi a <a href="mailto:contact@openpak.org">contact@openpak.org</a>. Rispondiamo entro un mese. Hai anche il diritto di presentare reclamo alla tua autorità per la protezione dei dati.</p>
+
+<h2 id="cookies">Cookie</h2>
+<p>openpak.org imposta solo cookie essenziali:</p>
+<ul>
+  <li><code>opak_session</code>: ti mantiene connesso. Impostato quando accedi, dura fino a 30 giorni, rimosso quando esci.</li>
+  <li><code>lang</code>: ricorda la lingua che hai scelto nel piè di pagina. Impostato solo quando ne scegli una, dura un anno.</li>
+</ul>
+<p>Nessun altro cookie viene impostato, né da noi né da Cloudflare. Turnstile, quando è attivo, funziona solo nei moduli di registrazione e di ripristino della password. Non ci sono cookie di analisi o pubblicitari, quindi non c’è nulla a cui acconsentire.</p>
+
+<h2 id="children">Minori</h2>
+<p>Devi avere almeno 16 anni per creare un account OpenPak. Se ritieni che un bambino più piccolo abbia un account, comunicacelo e lo elimineremo.</p>
+
+<h2 id="changes">Modifiche</h2>
+<p>Aggiorneremo questa pagina quando ciò che raccogliamo cambia, e cambieremo la data in cima. Per le modifiche significative pubblicheremo anche un avviso sul sito.</p>
+</article>
+{{template "footer" .}}

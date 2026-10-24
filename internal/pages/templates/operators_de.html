@@ -1,0 +1,72 @@
+{{template "header" .}}
+<div class="page-head">
+  <h1>{{t .Lang "footer.operators"}}</h1>
+  <p>Zuletzt aktualisiert am 23. Oktober 2026.</p>
+  <p class="notice" lang="de">{{t .Lang "legal.translation"}} <a href="/lang?l=en&amp;back=/operators" lang="en">{{t .Lang "legal.translation.link"}}</a></p>
+</div>
+<article class="legal" lang="de">
+<p>Diese Bedingungen gelten für alle, die einen OpenPak-Regionalknoten betreiben („Betreiber“): einen oder mehrere Server, die Spielverkehr für Spieler in ihrer Nähe weiterleiten, während Konten, Freunde und Matchmaking bei OpenPak bleiben. Sie ergänzen die <a href="/terms">Nutzungsbedingungen</a>. Du akzeptierst sie, wenn du dich von deiner <a href="/account/operator">Kontoseite</a> aus bewirbst, und erneut jedes Mal, wenn ein von dir betriebener Server dem Netzwerk beitritt.</p>
+
+<h2 id="approval">Zulassung</h2>
+<ul>
+  <li>Ein Knoten bedient niemanden, bis OpenPak ihn zugelassen hat. Die Zulassung ist die Entscheidung einer Person bei OpenPak; das Erreichen der unten genannten Werte macht einen Knoten teilnahmeberechtigt, nicht zugelassen.</li>
+  <li>Im Rahmen der unten stehenden Standortrichtlinie lässt OpenPak Knoten für die Standorte zu, die es als gewünscht aufführt, und kann dich für alle anderen auf eine Warteliste setzen.</li>
+  <li>Jeder Server erhält seinen eigenen Schlüssel. Halte Schlüssel geheim; wenn einer bekannt wird, sag uns Bescheid, und wir widerrufen diesen Server.</li>
+</ul>
+
+<h2 id="location">Standortrichtlinie</h2>
+<p>Bewerbungen werden aus allen Ländern angenommen, außer für Knoten auf dem chinesischen Festland und in Russland. Lizenzvorschriften, nationale Firewalls, Sanktionen und Überwachungsgesetze dort stehen im Widerspruch zu diesen Bedingungen, daher können wir in keinem von beiden einen Knoten akzeptieren. Spieler dort werden aus benachbarten Regionen bedient.</p>
+
+<h2 id="hardware">Mindestanforderungen an Hardware und Netzwerk</h2>
+<ul>
+  <li>Jeder Server muss OpenPak gewidmet sein: Betreibe auf dem Rechner nichts anderes.</li>
+  <li>OpenPak Node OS (Fedora CoreOS) ist die bevorzugte Installation.</li>
+</ul>
+{{with .Req}}
+<table>
+  <thead><tr><th>Anforderung</th><th>Minimum</th><th>Gezählt</th></tr></thead>
+  <tbody>
+    <tr><td>CPU-Kerne</td><td>{{.NodeCores}} pro Knoten, {{.ServerCores}} pro Server</td><td>alle Server zusammen; und jeder Server</td></tr>
+    <tr><td>RAM</td><td>{{.NodeRAMGB}} GB pro Knoten, {{.ServerRAMGB}} GB pro Server</td><td>alle Server zusammen; und jeder Server</td></tr>
+    <tr><td>Speicher</td><td>{{.NodeDiskGB}} GB NVMe oder SSD pro Knoten</td><td>alle Server zusammen</td></tr>
+    <tr><td>Adresse</td><td>eine eigene öffentliche IPv4 pro Server, kein Carrier-Grade-NAT; IPv6 ebenfalls erwünscht</td><td>jeder Server</td></tr>
+    <tr><td>Bandbreite</td><td>{{.ServerBandwidthMbps}} Mbit/s symmetrisch pro Server</td><td>jeder Server; sie addiert sich nicht über mehrere Server</td></tr>
+    <tr><td>Verfügbarkeit</td><td>{{.AvailabilityPct}} %</td><td>der Knoten</td></tr>
+  </tbody>
+</table>
+<p>Jeder Server meldet seine Hardware jede Minute und führt einmal täglich einen kurzen Bandbreitentest gegen OpenPak durch (mindestens {{.MeasuredMbps}} Mbit/s in jede Richtung, von uns gemessen). Ein Server, der {{$.Stale}} lang nichts meldet oder dessen Test älter ist als {{$.MaxAge}}, nimmt den Knoten aus der Rotation, bis er wieder da ist; die Zulassung bleibt bestehen. Werte innerhalb von {{.SlackPct}} % zählen, weil das System etwas weniger Arbeitsspeicher und Speicherplatz meldet, als der Rechner verkauft wird.</p>
+{{else}}
+<p>Die aktuellen Werte konnten nicht geladen werden. Deine <a href="/account/operator">Kontoseite</a> zeigt sie, oder schreibe an <a href="mailto:{{contactEmail}}">{{contactEmail}}</a>.</p>
+{{end}}
+<p>Hardware- und Adressmeldungen werden von deinen Servern selbst angegeben und können gefälscht werden, sind also kein Beweis: Wir nutzen sie nur, um zu entscheiden, ob ein Knoten in der Rotation ist, und die Zulassung bleibt die Entscheidung einer Person bei OpenPak. Melde sie nicht falsch.</p>
+
+<h2 id="data">Spielerdaten</h2>
+<ul>
+  <li>Protokolliere oder speichere keine Spielerdaten über das hinaus, was der Betrieb des Relays im jeweiligen Moment erfordert. Keine Paketmitschnitte, keine Protokolle von IP-Adressen über ihren betrieblichen Nutzen hinaus, keine Datensätze pro Spieler.</li>
+  <li>Gib den Datenverkehr oder alles, was du daraus erfährst, nicht weiter, verkaufe oder analysiere es nicht.</li>
+  <li>Betriebsprotokolle (Fehler, Summen) sind in Ordnung; bewahre sie nur so lange auf, wie du sie für den Betrieb des Knotens brauchst, und nie länger als 7 Tage.</li>
+</ul>
+
+<h2 id="dpa">Auftragsverarbeitungsvertrag</h2>
+<p>Die Spielerdaten, die ein Knoten verarbeitet, verarbeitest du im Auftrag von OpenPak, und du stimmst Folgendem zu:</p>
+<ul>
+  <li>Du verarbeitest IP-Adressen von Spielern und Spielverkehr nur, um Räume auf deinem Knoten zu hosten.</li>
+  <li>Du protokollierst nichts über den betrieblichen Bedarf hinaus und löschst diese Protokolle innerhalb von 7 Tagen.</li>
+  <li>Du verwendest die Daten für nichts anderes.</li>
+  <li>Du meldest OpenPak jeden Sicherheitsvorfall, der Spielerdaten betrifft, innerhalb von 72 Stunden nach Kenntnis an <a href="mailto:{{contactEmail}}">{{contactEmail}}</a>.</li>
+  <li>Wenn du den Betrieb eines Knotens einstellst oder deine Zulassung endet, löschst du alle Spielerdaten, die du noch hältst.</li>
+</ul>
+
+<h2 id="traffic">Keine Eingriffe</h2>
+<p>Leite den Datenverkehr genau so weiter, wie er ankommt. Verändere, injiziere, blockiere, verzögere oder vertausche ihn nicht, betreibe auf einem Knoten keine veränderte OpenPak-Software und nutze die gemeinsamen Geheimnisse, die ein Knoten hält, für nichts anderes.</p>
+
+<h2 id="revocation">Widerruf</h2>
+<p>OpenPak kann einen Server oder Knoten jederzeit mit oder ohne Vorankündigung und aus jedem Grund, einschließlich eines Verstoßes gegen diese Bedingungen, aus der Rotation nehmen, seine Schlüssel widerrufen oder seine Zulassung beenden. Du kannst den Betrieb eines Knotens jederzeit einstellen; sag uns bitte vorher Bescheid, damit keine Spieler mehr dorthin geschickt werden.</p>
+
+<h2 id="security">Sicherheitskontakt</h2>
+<p>Gib eine Kontakt-E-Mail-Adresse an, die jemand liest. Melde einen kompromittierten Server, einen bekannt gewordenen Schlüssel oder jedes andere Sicherheitsproblem sofort an <a href="mailto:{{contactEmail}}">{{contactEmail}}</a> oder wie in unserer <a href="https://github.com/openpak/.github/blob/main/SECURITY.md" rel="noopener">Sicherheitsrichtlinie</a> beschrieben. Wir können dir zu Sicherheitsfragen schreiben und erwarten eine Antwort.</p>
+
+<h2 id="no-warranty">Keine Vergütung, keine Gewährleistung</h2>
+<p>Der Betrieb eines Knotens ist freiwillig und unbezahlt. OpenPak übernimmt keine Gewährleistung für die Software oder das Netzwerk und haftet weder für deine Hosting-Kosten noch für das, was deine Server tun.</p>
+</article>
+{{template "footer" .}}

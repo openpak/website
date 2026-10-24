@@ -1,0 +1,72 @@
+{{template "header" .}}
+<div class="page-head">
+  <h1>{{t .Lang "footer.operators"}}</h1>
+  <p>Última actualización: 23 de octubre de 2026.</p>
+  <p class="notice" lang="es">{{t .Lang "legal.translation"}} <a href="/lang?l=en&amp;back=/operators" lang="en">{{t .Lang "legal.translation.link"}}</a></p>
+</div>
+<article class="legal" lang="es">
+<p>Estas condiciones se aplican a cualquiera que opere un nodo regional de OpenPak («operador»): uno o más servidores que retransmiten el tráfico de juego de los jugadores cercanos, mientras que las cuentas, los amigos y el emparejamiento siguen en OpenPak. Complementan las <a href="/terms">Condiciones de uso</a>. Las aceptas al presentar tu solicitud desde la <a href="/account/operator">página de tu cuenta</a>, y de nuevo cada vez que un servidor que operas se une a la red.</p>
+
+<h2 id="approval">Aprobación</h2>
+<ul>
+  <li>Un nodo no da servicio a nadie hasta que OpenPak lo aprueba. La aprobación es una decisión de una persona de OpenPak; cumplir las cifras de abajo hace que un nodo sea apto, no que esté aprobado.</li>
+  <li>Dentro de la política de ubicación de abajo, OpenPak aprueba nodos para las ubicaciones que indica como deseadas, y puede mantenerte en lista de espera para cualquier otra.</li>
+  <li>Cada servidor recibe su propia clave. Mantén las claves en secreto; si una se filtra, avísanos y revocaremos ese servidor.</li>
+</ul>
+
+<h2 id="location">Política de ubicación</h2>
+<p>Se aceptan solicitudes de todas las ubicaciones, excepto nodos situados en la China continental y en Rusia. Las normas de licencias, los cortafuegos nacionales, las sanciones y las leyes de vigilancia de esos países entran en conflicto con estas condiciones, por lo que no podemos aceptar un nodo en ninguno de los dos. Los jugadores de allí se atienden desde regiones vecinas.</p>
+
+<h2 id="hardware">Mínimos de hardware y de red</h2>
+<ul>
+  <li>Cada servidor debe estar dedicado a OpenPak: no ejecutes nada más en el equipo.</li>
+  <li>La instalación preferida es OpenPak Node OS (Fedora CoreOS).</li>
+</ul>
+{{with .Req}}
+<table>
+  <thead><tr><th>Requisito</th><th>Mínimo</th><th>Cómputo</th></tr></thead>
+  <tbody>
+    <tr><td>Núcleos de CPU</td><td>{{.NodeCores}} por nodo, {{.ServerCores}} por servidor</td><td>todos los servidores juntos; y cada servidor</td></tr>
+    <tr><td>RAM</td><td>{{.NodeRAMGB}} GB por nodo, {{.ServerRAMGB}} GB por servidor</td><td>todos los servidores juntos; y cada servidor</td></tr>
+    <tr><td>Almacenamiento</td><td>{{.NodeDiskGB}} GB NVMe o SSD por nodo</td><td>todos los servidores juntos</td></tr>
+    <tr><td>Dirección</td><td>su propia IPv4 pública por servidor, sin NAT de operador (CGNAT); también se desea IPv6</td><td>cada servidor</td></tr>
+    <tr><td>Ancho de banda</td><td>{{.ServerBandwidthMbps}} Mbps simétricos por servidor</td><td>cada servidor; no se suma entre servidores</td></tr>
+    <tr><td>Disponibilidad</td><td>{{.AvailabilityPct}} %</td><td>el nodo</td></tr>
+  </tbody>
+</table>
+<p>Cada servidor informa de su hardware cada minuto y ejecuta una breve prueba de ancho de banda contra OpenPak una vez al día (al menos {{.MeasuredMbps}} Mbps en cada sentido, medidos por nosotros). Un servidor que deja de informar durante {{$.Stale}}, o cuya prueba tiene más de {{$.MaxAge}}, saca al nodo de la rotación hasta que vuelva; su aprobación se mantiene. Cuentan las cifras dentro de un {{.SlackPct}} %, porque el sistema informa de algo menos de memoria y de disco que con los que se vende el equipo.</p>
+{{else}}
+<p>No se pudieron cargar las cifras actuales. La <a href="/account/operator">página de tu cuenta</a> las muestra, o escribe a <a href="mailto:{{contactEmail}}">{{contactEmail}}</a>.</p>
+{{end}}
+<p>Los informes de hardware y de dirección los declaran los propios servidores y pueden falsearse, por lo que no son una prueba: los usamos solo para decidir si un nodo está en rotación, y la aprobación sigue siendo una decisión de una persona de OpenPak. No los falsees.</p>
+
+<h2 id="data">Datos de los jugadores</h2>
+<ul>
+  <li>No registres ni conserves datos de jugadores más allá de lo que el relé necesita en ese momento. Nada de capturas de paquetes, de registros de direcciones IP conservados más allá de su uso operativo ni de registros por jugador.</li>
+  <li>No compartas, vendas ni analices el tráfico ni nada que averigües a partir de él.</li>
+  <li>Los registros operativos (errores, totales) están permitidos; conserva solo el tiempo que los necesites para operar el nodo, y nunca más de 7 días.</li>
+</ul>
+
+<h2 id="dpa">Acuerdo de encargado del tratamiento de datos</h2>
+<p>Respecto a los datos de jugadores que maneja un nodo, los tratas por cuenta de OpenPak y aceptas lo siguiente:</p>
+<ul>
+  <li>Tratas las direcciones IP de los jugadores y el tráfico de juego únicamente para alojar salas en tu nodo.</li>
+  <li>No registras nada más allá de la necesidad operativa, y eliminas esos registros en un plazo de 7 días.</li>
+  <li>No usas los datos para nada más.</li>
+  <li>Notificas a OpenPak cualquier incidente de seguridad que afecte a datos de jugadores en las 72 horas siguientes a conocerlo, en <a href="mailto:{{contactEmail}}">{{contactEmail}}</a>.</li>
+  <li>Cuando dejas de operar un nodo, o termina tu aprobación, eliminas todos los datos de jugadores que aún conserves.</li>
+</ul>
+
+<h2 id="traffic">Sin interferencias</h2>
+<p>Retransmite el tráfico exactamente como llega. No lo modifiques, inyectes, bloquees, retrases ni reordenes, no ejecutes software de OpenPak modificado en un nodo y no uses para nada más los secretos compartidos que guarda un nodo.</p>
+
+<h2 id="revocation">Revocación</h2>
+<p>OpenPak puede retirar de la rotación un servidor o un nodo, revocar sus claves o poner fin a su aprobación en cualquier momento, con o sin aviso, por cualquier motivo, incluido el incumplimiento de estas condiciones. Puedes dejar de operar un nodo en cualquier momento; avísanos antes para que no se envíe jugadores a él.</p>
+
+<h2 id="security">Contacto de seguridad</h2>
+<p>Indica un correo electrónico de contacto que alguien lea. Comunica de inmediato un servidor comprometido, una clave filtrada o cualquier problema de seguridad a <a href="mailto:{{contactEmail}}">{{contactEmail}}</a> o como se describe en nuestra <a href="https://github.com/openpak/.github/blob/main/SECURITY.md" rel="noopener">política de seguridad</a>. Podemos escribirte sobre cuestiones de seguridad y esperamos una respuesta.</p>
+
+<h2 id="no-warranty">Sin pago, sin garantía</h2>
+<p>Operar un nodo es voluntario y no está remunerado. OpenPak no ofrece ninguna garantía sobre el software ni sobre la red y no es responsable de tus costes de alojamiento ni de nada de lo que hagan tus servidores.</p>
+</article>
+{{template "footer" .}}

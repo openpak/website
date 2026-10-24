@@ -1,6 +1,7 @@
 package pages
 
 import (
+	"fmt"
 	"net/http"
 	"net/mail"
 	"strconv"
@@ -326,22 +327,23 @@ type operatorsTermsView struct {
 	Stale, MaxAge string
 }
 
-// humanDur prints 3m as "3 minutes" and 72h as "72 hours".
-func humanDur(d time.Duration) string {
+// humanDur prints 3m as "3 minutes" and 72h as "72 hours", in lang.
+func humanDur(lang string, d time.Duration) string {
 	if d >= time.Hour && d%time.Hour == 0 {
-		return strconv.Itoa(int(d/time.Hour)) + " hours"
+		return fmt.Sprintf(i18n.T(lang, "legal.dur.hours"), int(d/time.Hour))
 	}
-	return strconv.Itoa(int(d/time.Minute)) + " minutes"
+	return fmt.Sprintf(i18n.T(lang, "legal.dur.minutes"), int(d/time.Minute))
 }
 
 func (s *Server) handleOperatorsTerms(w http.ResponseWriter, r *http.Request) {
 	v := s.viewerOf(w, r)
-	view := operatorsTermsView{baseData: s.data(r, v, i18n.T(i18n.FromRequest(r), "footer.operators"))}
+	lang := i18n.FromRequest(r)
+	view := operatorsTermsView{baseData: s.data(r, v, i18n.T(lang, "footer.operators"))}
 	if s.Federation != nil {
 		if rq, err := s.Federation.NodeRequirements(r.Context()); err == nil {
 			view.Req = &rq
-			view.Stale, view.MaxAge = humanDur(rq.ReportStale), humanDur(rq.SelfTestMaxAge)
+			view.Stale, view.MaxAge = humanDur(lang, rq.ReportStale), humanDur(lang, rq.SelfTestMaxAge)
 		}
 	}
-	s.render(w, http.StatusOK, "operators.html", view)
+	s.render(w, http.StatusOK, legalTemplate("operators", lang), view)
 }

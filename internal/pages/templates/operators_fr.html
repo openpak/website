@@ -1,0 +1,72 @@
+{{template "header" .}}
+<div class="page-head">
+  <h1>{{t .Lang "footer.operators"}}</h1>
+  <p>Dernière mise à jour : 23 octobre 2026.</p>
+  <p class="notice" lang="fr">{{t .Lang "legal.translation"}} <a href="/lang?l=en&amp;back=/operators" lang="en">{{t .Lang "legal.translation.link"}}</a></p>
+</div>
+<article class="legal" lang="fr">
+<p>Les présentes conditions s’appliquent à quiconque exploite un nœud régional OpenPak (« opérateur ») : un ou plusieurs serveurs qui relaient le trafic de jeu pour les joueurs situés à proximité, tandis que les comptes, les amis et le matchmaking restent chez OpenPak. Elles complètent les <a href="/terms">Conditions d’utilisation</a>. Vous les acceptez lorsque vous déposez votre candidature depuis votre <a href="/account/operator">page de compte</a>, puis de nouveau chaque fois qu’un serveur que vous exploitez rejoint le réseau.</p>
+
+<h2 id="approval">Approbation</h2>
+<ul>
+  <li>Un nœud ne sert personne tant qu’OpenPak ne l’a pas approuvé. L’approbation est une décision prise par une personne chez OpenPak ; satisfaire les valeurs ci-dessous rend un nœud éligible, pas approuvé.</li>
+  <li>Dans le cadre de la politique de localisation ci-dessous, OpenPak approuve les nœuds pour les emplacements qu’il indique comme recherchés, et peut vous placer sur liste d’attente pour tout autre emplacement.</li>
+  <li>Chaque serveur reçoit sa propre clé. Gardez les clés secrètes ; si l’une d’elles fuit, prévenez-nous et nous révoquerons ce serveur.</li>
+</ul>
+
+<h2 id="location">Politique de localisation</h2>
+<p>Les candidatures sont acceptées depuis tous les emplacements, à l’exception des nœuds situés en Chine continentale et en Russie. Les régimes de licences, les pare-feu nationaux, les sanctions et les lois de surveillance qui y sont en vigueur entrent en conflit avec ces conditions ; nous ne pouvons donc accepter de nœud dans aucun de ces deux pays. Les joueurs de ces pays sont servis depuis les régions voisines.</p>
+
+<h2 id="hardware">Minimums de matériel et de réseau</h2>
+<ul>
+  <li>Chaque serveur doit être dédié à OpenPak : n’y exécutez rien d’autre.</li>
+  <li>OpenPak Node OS (Fedora CoreOS) est l’installation recommandée.</li>
+</ul>
+{{with .Req}}
+<table>
+  <thead><tr><th>Exigence</th><th>Minimum</th><th>Pris en compte</th></tr></thead>
+  <tbody>
+    <tr><td>Cœurs de processeur</td><td>{{.NodeCores}} par nœud, {{.ServerCores}} par serveur</td><td>tous les serveurs ensemble ; et chaque serveur</td></tr>
+    <tr><td>RAM</td><td>{{.NodeRAMGB}} Go par nœud, {{.ServerRAMGB}} Go par serveur</td><td>tous les serveurs ensemble ; et chaque serveur</td></tr>
+    <tr><td>Stockage</td><td>{{.NodeDiskGB}} Go NVMe ou SSD par nœud</td><td>tous les serveurs ensemble</td></tr>
+    <tr><td>Adresse</td><td>sa propre adresse IPv4 publique par serveur, sans NAT de niveau opérateur ; IPv6 également souhaitée</td><td>chaque serveur</td></tr>
+    <tr><td>Bande passante</td><td>{{.ServerBandwidthMbps}} Mbit/s symétriques par serveur</td><td>chaque serveur ; elle ne s’additionne pas entre serveurs</td></tr>
+    <tr><td>Disponibilité</td><td>{{.AvailabilityPct}} %</td><td>le nœud</td></tr>
+  </tbody>
+</table>
+<p>Chaque serveur signale son matériel toutes les minutes et exécute une fois par jour un court test de bande passante vers OpenPak (au moins {{.MeasuredMbps}} Mbit/s dans chaque sens, mesurés par nos soins). Un serveur qui cesse de se signaler pendant {{$.Stale}}, ou dont le test date de plus de {{$.MaxAge}}, retire le nœud de la rotation jusqu’à son retour ; son approbation est conservée. Les valeurs à {{.SlackPct}} % près sont acceptées, car le système signale un peu moins de mémoire et de disque que ce avec quoi la machine est vendue.</p>
+{{else}}
+<p>Les valeurs actuelles n’ont pas pu être chargées. Votre <a href="/account/operator">page de compte</a> les affiche, ou écrivez à <a href="mailto:{{contactEmail}}">{{contactEmail}}</a>.</p>
+{{end}}
+<p>Les rapports de matériel et d’adresse sont déclarés par vos propres serveurs et peuvent être falsifiés ; ils ne constituent donc pas une preuve : nous ne les utilisons que pour décider si un nœud est en rotation, et l’approbation reste une décision prise par une personne chez OpenPak. Ne les falsifiez pas.</p>
+
+<h2 id="data">Données des joueurs</h2>
+<ul>
+  <li>Ne journalisez ni ne conservez de données de joueurs au-delà de ce dont le relais a besoin à un instant donné. Pas de captures de paquets, pas de journaux d’adresses IP conservés au-delà de leur usage opérationnel, pas de fiches par joueur.</li>
+  <li>Ne partagez pas, ne vendez pas et n’analysez pas le trafic ni rien de ce que vous en apprenez.</li>
+  <li>Les journaux opérationnels (erreurs, totaux) sont acceptables ; ne les conservez que le temps nécessaire à l’exploitation du nœud, et jamais plus de 7 jours.</li>
+</ul>
+
+<h2 id="dpa">Accord de traitement des données</h2>
+<p>Pour les données des joueurs qu’un nœud traite, vous les traitez pour le compte d’OpenPak et vous acceptez ce qui suit :</p>
+<ul>
+  <li>Vous traitez les adresses IP des joueurs et le trafic de jeu uniquement pour héberger des salons sur votre nœud.</li>
+  <li>Vous ne journalisez rien au-delà du besoin opérationnel, et vous supprimez ces journaux sous 7 jours.</li>
+  <li>Vous n’utilisez les données à aucune autre fin.</li>
+  <li>Vous informez OpenPak de tout incident de sécurité affectant des données de joueurs dans les 72 heures suivant sa découverte, à l’adresse <a href="mailto:{{contactEmail}}">{{contactEmail}}</a>.</li>
+  <li>Lorsque vous cessez d’exploiter un nœud, ou que votre approbation prend fin, vous supprimez toutes les données de joueurs que vous détenez encore.</li>
+</ul>
+
+<h2 id="traffic">Aucune interférence</h2>
+<p>Relayez le trafic exactement tel qu’il arrive. Ne le modifiez pas, n’y injectez rien, ne le bloquez pas, ne le retardez pas et ne le réordonnez pas ; n’exécutez pas de logiciel OpenPak modifié sur un nœud ; et n’utilisez les secrets partagés qu’un nœud détient pour rien d’autre.</p>
+
+<h2 id="revocation">Révocation</h2>
+<p>OpenPak peut retirer un serveur ou un nœud de la rotation, révoquer ses clés ou mettre fin à son approbation à tout moment, avec ou sans préavis, pour quelque motif que ce soit, y compris un manquement aux présentes conditions. Vous pouvez cesser d’exploiter un nœud à tout moment ; prévenez-nous d’abord afin que les joueurs n’y soient plus dirigés.</p>
+
+<h2 id="security">Contact de sécurité</h2>
+<p>Indiquez une adresse e-mail de contact qui est lue. Signalez immédiatement un serveur compromis, une clé divulguée ou tout problème de sécurité à <a href="mailto:{{contactEmail}}">{{contactEmail}}</a> ou comme décrit dans notre <a href="https://github.com/openpak/.github/blob/main/SECURITY.md" rel="noopener">politique de sécurité</a>. Nous pouvons vous écrire au sujet de problèmes de sécurité et nous attendons une réponse.</p>
+
+<h2 id="no-warranty">Ni rémunération, ni garantie</h2>
+<p>L’exploitation d’un nœud est volontaire et non rémunérée. OpenPak ne donne aucune garantie quant au logiciel ou au réseau et n’est pas responsable de vos frais d’hébergement ni de ce que font vos serveurs.</p>
+</article>
+{{template "footer" .}}
