@@ -83,6 +83,21 @@ type Ceiling struct {
 	Version   int                 `json:"version"`
 	Issued    string              `json:"issued"`
 	Platforms map[string][]string `json:"platforms"`
+	// IPRedirects is optional: per platform, the hard-coded IPv4 destinations a
+	// client rewrites (a title that dials an address, never a name, so DNS
+	// cannot reach it). Clients that predate it ignore it.
+	IPRedirects map[string][]IPRedirect `json:"ip_redirects,omitempty"`
+}
+
+// IPRedirect sends a title that dials From ("a.b.c.d:port") to To instead.
+// Proto is "tcp" or "udp".
+// Title (16 hex digits) is the program the rule is for; a console's bsd
+// mitm takes over only that program's sockets, so console rules need it.
+type IPRedirect struct {
+	From  string `json:"from"`
+	To    string `json:"to"`
+	Proto string `json:"proto"`
+	Title string `json:"title,omitempty"`
 }
 
 // VerifyCeiling checks an envelope against the pinned keys and returns the
@@ -156,6 +171,67 @@ func (c *Ceiling) Validate() error {
 			seen[f] = true
 		}
 	}
+	for _, p := range sortedKeys(c.IPRedirects) {
+		if !slices.Contains(PlatformsAllowed, p) {
+			return fmt.Errorf("ceiling: ip_redirects platform %q is not one of %s", p, strings.Join(PlatformsAllowed, ", "))
+		}
+		seen := map[string]bool{}
+		for _, r := range c.IPRedirects[p] {
+			if r.Proto != "tcp" && r.Proto != "udp" {
+				return fmt.Errorf("ceiling: ip_redirects %s: proto %q is not tcp or udp", p, r.Proto)
+			}
+			for _, ep := range []string{r.From, r.To} {
+				if err := ValidIPv4Endpoint(ep); err != nil {
+					return fmt.Errorf("ceiling: ip_redirects %s: %w", p, err)
+				}
+			}
+			if r.Title != "" {
+				if len(r.Title) != 16 || strings.Trim(strings.ToLower(r.Title), "0123456789abcdef") != "" {
+					return fmt.Errorf("ceiling: ip_redirects %s: title %q is not 16 hex digits", p, r.Title)
+				}
+			}
+			if key := r.Proto + " " + r.From; seen[key] {
+				return fmt.Errorf("ceiling: ip_redirects %s lists %s %s twice", p, r.Proto, r.From)
+			} else {
+				seen[key] = true
+			}
+		}
+	}
+	return nil
+}
+
+// ValidIPv4Endpoint is the ip_redirects endpoint rule: a dotted-quad IPv4
+// address without leading zeros, a colon and a port from 1 to 65535.
+func ValidIPv4Endpoint(ep string) error {
+	host, port, ok := strings.Cut(ep, ":")
+	if !ok || strings.Contains(port, ":") {
+		return fmt.Errorf("endpoint %q is not address:port", ep)
+	}
+	num := func(s string, max int) bool {
+		if s == "" || len(s) > 5 || (len(s) > 1 && s[0] == '0') {
+			return false
+		}
+		n := 0
+		for _, r := range s {
+			if r < '0' || r > '9' {
+				return false
+			}
+			n = n*10 + int(r-'0')
+		}
+		return n <= max
+	}
+	octets := strings.Split(host, ".")
+	if len(octets) != 4 {
+		return fmt.Errorf("endpoint %q has no dotted-quad IPv4 address", ep)
+	}
+	for _, o := range octets {
+		if !num(o, 255) {
+			return fmt.Errorf("endpoint %q has no dotted-quad IPv4 address", ep)
+		}
+	}
+	if !num(port, 65535) || port == "0" {
+		return fmt.Errorf("endpoint %q has no port from 1 to 65535", ep)
+	}
 	return nil
 }
 
@@ -228,6 +304,19 @@ func CeilingPayload(c *Ceiling) ([]byte, error) {
 		fams = slices.Clone(fams)
 		sort.Strings(fams)
 		out.Platforms[p] = fams
+	}
+	for p, rules := range c.IPRedirects {
+		if out.IPRedirects == nil {
+			out.IPRedirects = map[string][]IPRedirect{}
+		}
+		rules = slices.Clone(rules)
+		sort.Slice(rules, func(i, j int) bool {
+			if rules[i].Proto != rules[j].Proto {
+				return rules[i].Proto < rules[j].Proto
+			}
+			return rules[i].From < rules[j].From
+		})
+		out.IPRedirects[p] = rules
 	}
 	return json.Marshal(&out)
 }

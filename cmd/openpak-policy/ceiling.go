@@ -187,6 +187,12 @@ func cloneCeiling(c *netprofile.Ceiling) *netprofile.Ceiling {
 	for p, f := range c.Platforms {
 		n.Platforms[p] = slices.Clone(f)
 	}
+	for p, r := range c.IPRedirects {
+		if n.IPRedirects == nil {
+			n.IPRedirects = map[string][]netprofile.IPRedirect{}
+		}
+		n.IPRedirects[p] = slices.Clone(r)
+	}
 	return n
 }
 

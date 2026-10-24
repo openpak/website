@@ -266,3 +266,45 @@ platforms:
 		t.Fatalf("fallback: %v", sw.Redirect.Suffixes)
 	}
 }
+
+func TestCeilingIPRedirects(t *testing.T) {
+	base := func(r ...IPRedirect) *Ceiling {
+		return &Ceiling{Type: CeilingType, Version: 12, Issued: "2026-10-24T00:00:00Z",
+			Platforms:   map[string][]string{"switch": {".nintendo.net"}},
+			IPRedirects: map[string][]IPRedirect{"switch": r}}
+	}
+	good := base(IPRedirect{From: "192.0.2.7:23002", To: "203.0.113.10:22690", Proto: "tcp"},
+		IPRedirect{From: "192.0.2.7:23001", To: "203.0.113.10:22690", Proto: "tcp"})
+	if err := good.Validate(); err != nil {
+		t.Fatalf("valid ip_redirects rejected: %v", err)
+	}
+	payload, err := CeilingPayload(good)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(payload), `"ip_redirects":{"switch":[{"from":"192.0.2.7:23001"`) {
+		t.Fatalf("ip_redirects not kept (sorted) in the signed payload: %s", payload)
+	}
+	noIP, _ := CeilingPayload(&Ceiling{Type: CeilingType, Version: 1, Issued: "2026-10-24T00:00:00Z",
+		Platforms: map[string][]string{"switch": {".nintendo.net"}}})
+	if strings.Contains(string(noIP), "ip_redirects") {
+		t.Fatalf("an empty ip_redirects must not appear: %s", noIP)
+	}
+	for _, bad := range []IPRedirect{
+		{From: "192.0.2.7", To: "203.0.113.10:22690", Proto: "tcp"},
+		{From: "192.0.2.07:23001", To: "203.0.113.10:22690", Proto: "tcp"},
+		{From: "192.0.2.7:23001", To: "203.0.113.10:0", Proto: "tcp"},
+		{From: "192.0.2.7:23001", To: "example.org:22690", Proto: "tcp"},
+		{From: "192.0.2.7:23001", To: "203.0.113.10:22690", Proto: "sctp"},
+		{From: "192.0.2.7:23001", To: "203.0.113.10:22690", Proto: "tcp", Title: "0100C6800B93400"},
+	} {
+		if err := base(bad).Validate(); err == nil {
+			t.Errorf("accepted malformed %+v", bad)
+		}
+	}
+	dup := base(IPRedirect{From: "192.0.2.7:23001", To: "203.0.113.10:22690", Proto: "tcp"},
+		IPRedirect{From: "192.0.2.7:23001", To: "203.0.113.11:22690", Proto: "tcp"})
+	if err := dup.Validate(); err == nil {
+		t.Error("accepted a duplicate from")
+	}
+}
