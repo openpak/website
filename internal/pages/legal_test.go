@@ -135,7 +135,7 @@ func TestConsoleStagesFollowFeatures(t *testing.T) {
 		t.Error("/features should show the in-development badge in words")
 	}
 	body := get(t, s, "/downloads").Body.String()
-	if !strings.Contains(body, "openpak-nro/releases/latest") || !strings.Contains(body, "openpak/app/releases/latest") {
+	if !strings.Contains(body, "switch-patcher/releases/latest") || !strings.Contains(body, "openpak/app/releases/latest") {
 		t.Error("downloads should link the Switch setup app and the phone app")
 	}
 }

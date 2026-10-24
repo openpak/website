@@ -599,11 +599,11 @@ var emulators = []download{
 }
 
 var downloads = []download{
-	{"OpenPak setup", "Switch", "downloads.kind.patch", "", "https://github.com/openpak/openpak-nro/releases/latest", ""},
-	{"Inkay", "Wii U", "downloads.kind.patch", "", "https://github.com/openpak/nn-inkay/releases/latest", ""},
-	{"nimbus", "3DS", "downloads.kind.patch", "", "https://github.com/openpak/nn-nimbus/releases/latest", ""},
-	{"WFC patcher", "Wii", "downloads.kind.patch", "", "https://github.com/openpak/nn-wfc-patcher-wii/releases/latest", ""},
-	{"WFC patcher", "DS", "downloads.kind.patch", "", "https://github.com/openpak/nn-wfc-patcher-ds/releases/latest", ""},
+	{"OpenPak Switch Patcher", "Switch", "downloads.kind.patch", "", "https://github.com/openpak/switch-patcher/releases/latest", ""},
+	{"OpenPak Wii U Patcher", "Wii U", "downloads.kind.patch", "", "https://github.com/openpak/wiiu-patcher/releases/latest", ""},
+	{"OpenPak 3DS Patcher", "3DS", "downloads.kind.patch", "", "https://github.com/openpak/3ds-patcher/releases/latest", ""},
+	{"OpenPak Wii Patcher", "Wii", "downloads.kind.patch", "", "https://github.com/openpak/wii-patcher/releases/latest", ""},
+	{"OpenPak DS Patcher", "DS", "downloads.kind.patch", "", "https://github.com/openpak/ds-patcher/releases/latest", ""},
 	{"OpenPak patch", "Xbox", "downloads.kind.patch", "", "", ""},
 	{"OpenPak patch", "Xbox 360", "downloads.kind.patch", "", "", ""},
 	{"OpenPak patch", "PS3", "downloads.kind.patch", "", "", ""},
