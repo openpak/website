@@ -4,19 +4,14 @@ on:
     tags: ['v*.*.*']
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   test:
-    # The OpenPak self-hosted runner, like the release jobs: GitHub-hosted minutes are not
-    # used for private repositories.
-    runs-on: [self-hosted, linux, podman]
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
-      - name: Scratch in the runner's temp, not the machine's shared /tmp
-        # /tmp is a RAM disk every build on the machine shares; when it filled on
-        # 2026-09-24 a compiler died and a job hung for hours instead of failing.
-        run: |
-          mkdir -p "$RUNNER_TEMP/scratch"
-          echo "TMPDIR=$RUNNER_TEMP/scratch" >> "$GITHUB_ENV"
       # The account-core contracts are vendored in internal/accountpb, so no
       # sibling checkout is needed (and a private cross-repo checkout would need
       # a PAT anyway). See internal/accountpb/README.md.
@@ -25,6 +20,3 @@ jobs:
           go-version: "1.27.x"
       - run: go vet ./...
       - run: go test -race ./...
-      - name: Clear scratch
-        if: always()
-        run: rm -rf "$RUNNER_TEMP/scratch"

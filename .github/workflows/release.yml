@@ -2,33 +2,39 @@ name: release
 
 # Tag a release (v1.2.3) and this publishes ghcr.io/openpak/<repo>:1.2.3, :1.2 and :latest for
 # amd64 and arm64. Deployed hosts run podman-auto-update against :latest, so pushing a tag is
-# the deploy. Runs on the OpenPak self-hosted runner (podman + qemu binfmt), so it costs no
-# GitHub-hosted minutes; this repository is private and those are metered.
+# the deploy. Each arch builds natively on a GitHub-hosted runner and pushes by digest only;
+# the publish job then writes the one multi-arch manifest under the release tags.
+#
+# Manual run with dry_run=true builds both arches and pushes nothing.
 on:
   push:
     tags: ['v*.*.*']
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build every arch, push nothing
+        type: boolean
+        default: false
 
 permissions:
   contents: read
   packages: write
 
+env:
+  IMG: ghcr.io/${{ github.repository }}
+  PUSH: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+
 jobs:
   # The pinned fetch tool of build-time integration (03, BUILD-009): pilot
   # release workflows download a tagged binary and verify its checksum, so
   # the tool's revision is part of every certified release's provenance.
+  # This is the only job that creates a release.
   network-tool:
-    runs-on: [self-hosted, linux, podman]
+    runs-on: ubuntu-24.04
     permissions:
       contents: write # release assets only
     steps:
       - uses: actions/checkout@v5
-      - name: Scratch in the runner's temp, not the machine's shared /tmp
-        # /tmp is a RAM disk every build on the machine shares; when it filled on
-        # 2026-09-24 a compiler died and a job hung for hours instead of failing.
-        run: |
-          mkdir -p "$RUNNER_TEMP/scratch"
-          echo "TMPDIR=$RUNNER_TEMP/scratch" >> "$GITHUB_ENV"
       - uses: actions/setup-go@v5
         with:
           go-version: "1.27.x"
@@ -49,48 +55,76 @@ jobs:
               -o "dist/openpak-opsd-linux-$arch" ./cmd/openpak-opsd
           done
           (cd dist && sha256sum openpak-network-* openpak-opsd-* > checksums.txt)
-      - if: startsWith(github.ref, 'refs/tags/v')
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -e
-          gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
-            gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
-              --title "openpak-network $GITHUB_REF_NAME" \
-              --notes "Static openpak-network fetch tool builds; pin one via its checksums.txt (03 BUILD-009)."
-          gh release upload "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --clobber
-      - name: Clear scratch
-        if: always()
-        run: rm -rf "$RUNNER_TEMP/scratch"
+      - if: startsWith(github.ref, 'refs/tags/v') && env.PUSH == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: openpak-network ${{ github.ref_name }}
+          body: Static openpak-network fetch tool builds; pin one via its checksums.txt (03 BUILD-009).
+          files: dist/*
+          overwrite_files: true
 
-  image:
-    runs-on: [self-hosted, linux, podman]
+  build:
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v5
-      - name: Scratch in the runner's temp, not the machine's shared /tmp
-        # /tmp is a RAM disk every build on the machine shares; when it filled on
-        # 2026-09-24 a compiler died and a job hung for hours instead of failing.
+      - uses: docker/setup-buildx-action@v3
+      - if: env.PUSH == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/${{ matrix.arch }}
+          provenance: false
+          cache-from: type=gha,scope=${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
+          outputs: ${{ env.PUSH == 'true' && format('type=image,name={0},push-by-digest=true,name-canonical=true,push=true', env.IMG) || 'type=cacheonly' }}
+      - if: env.PUSH == 'true'
         run: |
-          mkdir -p "$RUNNER_TEMP/scratch"
-          echo "TMPDIR=$RUNNER_TEMP/scratch" >> "$GITHUB_ENV"
-      - run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u "${{ github.actor }}" --password-stdin
+          mkdir -p "$RUNNER_TEMP/digests"
+          touch "$RUNNER_TEMP/digests/${DIGEST#sha256:}"
         env:
-          REGISTRY_AUTH_FILE: ${{ runner.temp }}/auth.json # job-scoped login; never the runner user's own
-      # REGISTRY_AUTH_FILE lives on the steps, not the job: the runner context
-      # does not exist at job-env parse time, and a workflow that cannot parse
-      # dispatches nothing — this is why v0.39.0's tag produced no run.
-      - run: |
+          DIGEST: ${{ steps.build.outputs.digest }}
+      - if: env.PUSH == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: digest-${{ matrix.arch }}
+          path: ${{ runner.temp }}/digests/*
+          retention-days: 1
+
+  publish:
+    needs: build
+    if: github.event_name == 'push' || !inputs.dry_run
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: digest-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/digests
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - working-directory: ${{ runner.temp }}/digests
+        run: |
           set -e
-          IMG="ghcr.io/${{ github.repository }}"
           case "${GITHUB_REF_NAME}" in v*) VER="${GITHUB_REF_NAME#v}";; *) VER="";; esac
-          podman manifest rm "$IMG:build" 2>/dev/null || true
-          podman build --platform linux/amd64,linux/arm64 --manifest "$IMG:build" .
           TAGS="latest"; [ -n "$VER" ] && TAGS="$TAGS $VER $(echo "$VER" | cut -d. -f1,2)"
-          for t in $TAGS; do podman manifest push --all "$IMG:build" "docker://$IMG:$t"; done
-          podman manifest rm "$IMG:build"
+          ARGS=""; for t in $TAGS; do ARGS="$ARGS -t $IMG:$t"; done
+          # shellcheck disable=SC2046,SC2086
+          docker buildx imagetools create $ARGS $(printf "$IMG@sha256:%s " *)
           echo "pushed $IMG: $TAGS"
-        env:
-          REGISTRY_AUTH_FILE: ${{ runner.temp }}/auth.json # job-scoped login; never the runner user's own
-      - name: Clear scratch
-        if: always()
-        run: rm -rf "$RUNNER_TEMP/scratch"
