@@ -1,0 +1,86 @@
+{{template "header" .}}
+<div class="page-head">
+  <h1>{{t .Lang "press.title"}}</h1>
+  <p class="lede">For writers, video makers and newsletters covering OpenPak.</p>
+</div>
+{{if ne .Lang "en"}}<p class="notice">{{t .Lang "press.english"}}</p>{{end}}
+<article class="legal" lang="en">
+<h2 id="about">About OpenPak</h2>
+<p>OpenPak is an open replacement online network for consoles whose official online services are shutting down or already gone. It runs the services that let those consoles and their games go online again: accounts, friends, presence, matchmaking, cloud saves, news and shops. Players keep their own console, its real firmware and their own games; only the network side is replaced. OpenPak serves the Nintendo Switch, Wii U, 3DS, Wii and DS, has Xbox, Xbox 360 and PlayStation 3 in development, and keeps its own emulator forks that go online through it the way a real console would. Its code is free software under the AGPL-3.0, and anyone may run their own network from it. OpenPak is in public alpha: things break, and accounts and saves may be reset.</p>
+
+<h2 id="facts">Fact sheet</h2>
+<table>
+  <tr><th scope="row">Name</th><td>OpenPak</td></tr>
+  <tr><th scope="row">Founded</th><td>2026</td></tr>
+  <tr><th scope="row">Stage</th><td>Public alpha</td></tr>
+  <tr><th scope="row">Licence</th><td>AGPL-3.0 for OpenPak’s own code. Forked components (emulators, and services built on other projects) keep their upstream licence.</td></tr>
+  <tr><th scope="row">Cost</th><td>Free. No charge for the account or the network.</td></tr>
+  <tr><th scope="row">Website</th><td><a href="https://openpak.org">openpak.org</a></td></tr>
+  <tr><th scope="row">Documentation</th><td><a href="https://docs.openpak.org" rel="noopener">docs.openpak.org</a></td></tr>
+  <tr><th scope="row">Source code</th><td><a href="https://github.com/openpak" rel="noopener">github.com/openpak</a>, one repository per service</td></tr>
+  <tr><th scope="row">Service status</th><td><a href="https://status.openpak.org" rel="noopener">status.openpak.org</a></td></tr>
+  <tr><th scope="row">Contact</th><td><a href="mailto:{{contactEmail}}">{{contactEmail}}</a></td></tr>
+</table>
+
+<h2 id="platforms">Platforms</h2>
+<table>
+  <tr><th scope="col">Platform</th><th scope="col">State</th></tr>
+  <tr><td>Nintendo Switch</td><td>Working: accounts, console link, friends, Nintendo Switch Online membership check, avatars. Presence, invitations, matchmaking and cloud saves are partial.</td></tr>
+  <tr><td>Wii U and 3DS</td><td>Beta: accounts, friends, NAT check. Miiverse, SpotPass and eShop are alpha.</td></tr>
+  <tr><td>Wii and DS</td><td>Beta: Nintendo Wi-Fi Connection.</td></tr>
+  <tr><td>Xbox, Xbox 360, PlayStation 3</td><td>In development.</td></tr>
+  <tr><td>PSP, PS2, PS Vita</td><td>Planned.</td></tr>
+</table>
+<p>Live feature status: <a href="/features">openpak.org/features</a>.</p>
+
+<h2 id="titles">Games in the catalogue</h2>
+<p>Counted from the live catalogue at <a href="/titles">openpak.org/titles</a>. <em>Working</em> has been played online through OpenPak; <em>beta</em> and <em>alpha</em> have a server that is still being proven; <em>planned</em> has no server yet.</p>
+{{if .Counts}}<table>
+  <tr><th scope="col">Console</th><th scope="col">Working</th><th scope="col">Beta</th><th scope="col">Alpha</th><th scope="col">Planned</th></tr>
+  {{range .Counts}}<tr><td>{{.Console}}</td><td>{{.Working}}</td><td>{{.Beta}}</td><td>{{.Alpha}}</td><td>{{.Planned}}</td></tr>
+  {{end}}<tr><th scope="row">All consoles</th><td><b>{{.Total.Working}}</b></td><td><b>{{.Total.Beta}}</b></td><td><b>{{.Total.Alpha}}</b></td><td><b>{{.Total.Planned}}</b></td></tr>
+</table>{{else}}<p>The catalogue is not available right now. See <a href="/titles">openpak.org/titles</a>.</p>{{end}}
+
+<h2 id="emulators">Emulators</h2>
+<p>OpenPak keeps its own emulator forks. They boot the console’s own firmware where they can and go online through OpenPak the way a real console would. Each is an independent project and not an official release of its upstream.</p>
+<table>
+  <tr><th scope="col">Emulator</th><th scope="col">Console</th><th scope="col">Based on</th></tr>
+  <tr><td>Harbor</td><td>Switch</td><td>Eden</td></tr>
+  <tr><td>Quay</td><td>Wii U</td><td>Cemu</td></tr>
+  <tr><td>Marina</td><td>Wii</td><td>Dolphin</td></tr>
+  <tr><td>Azahar for OpenPak</td><td>3DS</td><td>Azahar</td></tr>
+  <tr><td>melonDS for OpenPak</td><td>DS</td><td>melonDS</td></tr>
+  <tr><td>Wharf</td><td>Xbox 360</td><td>Xenia Edge</td></tr>
+  <tr><td>Berth</td><td>Xbox</td><td>xemu</td></tr>
+  <tr><td>Pier</td><td>PlayStation 3</td><td>RPCS3</td></tr>
+</table>
+<p>Harbor is the furthest along (alpha, test builds published); the others are early or experimental. See <a href="/downloads">downloads</a>.</p>
+
+<h2 id="logos">Logo and icons</h2>
+<ul>
+  <li>OpenPak logo: <a href="/static/icon.svg" download="openpak-icon.svg">SVG</a> · <a href="/static/press/openpak-icon-512.png" download>PNG, 512 px</a> · <a href="/static/press/openpak-icon-1024.png" download>PNG, 1024 px</a></li>
+  <li>Emulator icons (SVG): <a href="/static/clients/harbor.svg" download>Harbor</a> · <a href="/static/clients/quay.svg" download>Quay</a> · <a href="/static/clients/marina.svg" download>Marina</a> · <a href="/static/clients/wharf.svg" download>Wharf</a> · <a href="/static/clients/berth.svg" download>Berth</a> · <a href="/static/clients/pier.svg" download>Pier</a></li>
+</ul>
+<p>Use the logo to refer to OpenPak. Please do not alter it or use it for another network: only OpenPak and its approved federation nodes may use the name and logo (see <a href="/legal#name">name and logo</a>).</p>
+
+<h2 id="screenshots">Screenshots</h2>
+{{/* {{SCREENSHOTS}}: the owner adds screenshots here (console and emulator, with alt text). */}}
+<p>Screenshots are coming. Until then, write to <a href="mailto:{{contactEmail}}">{{contactEmail}}</a>.</p>
+
+<h2 id="credits">Standing on shoulders</h2>
+<p>OpenPak builds on the work of <a href="https://github.com/PretendoNetwork" rel="noopener">Pretendo Network</a> (including <a href="https://github.com/PretendoNetwork/nex-go" rel="noopener">nex-go</a>), <a href="https://github.com/WiiLink24" rel="noopener">WiiLink</a>, <a href="https://github.com/kinnay" rel="noopener">Kinnay</a> (NintendoClients and the Game Server List), and the upstream emulator projects listed above. Forked code keeps its original licence and credits.</p>
+
+<h2 id="rules">What OpenPak does not do</h2>
+<ul>
+  <li>It never ships games, firmware, keys or console data, and never explains how to get them. Players use their own console and their own games.</li>
+  <li>On Switch, Wii U and 3DS it changes where the console connects and leaves game code alone. Wii and DS games have no other way in, so their patchers redirect each game.</li>
+  <li>Implementations it may not legally copy are used only for facts (ports, wire formats), never for code.</li>
+</ul>
+
+<h2 id="contact">Contact</h2>
+<p>Press and general questions: <a href="mailto:{{contactEmail}}">{{contactEmail}}</a>.</p>
+
+<h2 id="disclaimer">Disclaimer</h2>
+<p>OpenPak is an independent community project. It is not affiliated with, endorsed by or sponsored by Nintendo, Microsoft or Sony. All trademarks belong to their owners.</p>
+</article>
+{{template "footer" .}}

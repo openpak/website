@@ -395,6 +395,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /privacy", s.staticPage("privacy", "footer.privacy"))
 	mux.HandleFunc("GET /legal", s.staticPage("legal", "footer.legal"))
 	mux.HandleFunc("GET /operators", s.handleOperatorsTerms)
+	mux.HandleFunc("GET /press", s.handlePress)
 	mux.HandleFunc("GET /account/operator", s.handleOperator)
 	mux.HandleFunc("POST /account/operator", s.handleOperatorApply)
 	mux.HandleFunc("POST /account/operator/waitlist", s.handleOperatorWaitlist)

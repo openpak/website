@@ -13,6 +13,7 @@ release, taken from git history. `git log` stays the source of truth.
 
 ## Unreleased
 
+- `/press`: a press kit (description, fact sheet with live title counts per console, logo and emulator icon downloads, credits, contact, disclaimer), linked from the footer. Screenshots are still to come.
 - **Turnstile for the app.** `POST /api/v1/register` and `POST /api/v1/password/forgot` now take a
   `turnstile_token` and, when `WEBSITE_TURNSTILE_SITE_KEY`/`WEBSITE_TURNSTILE_SECRET` are set,
   verify it with the client address exactly like the website's forms (400 `turnstile_failed`;
