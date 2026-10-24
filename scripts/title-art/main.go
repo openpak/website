@@ -22,7 +22,9 @@
 //     the per-console insets in crops below, overridden per row by the crop column
 //     ("t=0.1 l=0.12 y=0.2 z=0.9": insets as fractions of the cover, then where the
 //     square sits in what remains, 0 top/left to 1 bottom/right, and z<1 zooms in).
-//     A cover whose extras cannot be cropped out without cutting the logo gets no row.
+//     A cover whose extras cannot be cropped out without cutting the logo gets no row; or
+//   - file:<name>, a square of the game's official art kept in scripts/title-art/art/ when
+//     neither source has one (same whitelist); it is downscaled whole like a grid.
 //
 // Run from the repository root:
 //
@@ -108,7 +110,9 @@ type row struct {
 	Console, Name, Source, Author, Crop string
 }
 
-func (r row) square() bool { return strings.Contains(r.Source, "steamgriddb.com") }
+func (r row) square() bool {
+	return strings.Contains(r.Source, "steamgriddb.com") || strings.HasPrefix(r.Source, "file:")
+}
 
 func main() {
 	manifest := flag.String("manifest", "scripts/title-art/titles.tsv", "the title → art table")
@@ -365,6 +369,16 @@ type fetcher struct {
 const maxBytes = 25 << 20
 
 func (f *fetcher) get(u string, header map[string]string) ([]byte, error) {
+	if name, ok := strings.CutPrefix(u, "file:"); ok {
+		if name == "" || strings.ContainsAny(name, `/\`) || strings.HasPrefix(name, ".") {
+			return nil, fmt.Errorf("%s: a file source is a bare name in scripts/title-art/art", u)
+		}
+		b, err := os.ReadFile(filepath.Join("scripts", "title-art", "art", name))
+		if err == nil && len(b) > maxBytes {
+			return nil, fmt.Errorf("%s: over %d bytes", u, maxBytes)
+		}
+		return b, err
+	}
 	sum := sha256.Sum256([]byte(u))
 	path := filepath.Join(f.dir, hex.EncodeToString(sum[:12]))
 	if b, err := os.ReadFile(path); err == nil {
