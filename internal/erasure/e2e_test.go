@@ -30,7 +30,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 
-	accountv1 "github.com/openpak/website/internal/accountpb"
+	accountv1 "github.com/openpak/account-api/openpak/account/v1"
 	"github.com/openpak/website/internal/attachments"
 	"github.com/openpak/website/internal/chat"
 	"github.com/openpak/website/internal/core"

@@ -4,9 +4,9 @@
 
 ## Building
 
-Everything needed is in this repository. The account core's contract stubs are
-vendored in `internal/accountpb` (see its README for how to refresh them when
-the core's contracts move), so no sibling checkout of `account` is required —
+Everything needed is in this repository. The account core's contract stubs come from
+the public `github.com/openpak/account-api` module (bump it in `go.mod` when the
+core's contracts move), so no sibling checkout of `account` is required —
 locally or in CI.
 
 ```

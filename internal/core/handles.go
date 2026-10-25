@@ -3,7 +3,7 @@ package core
 import (
 	"context"
 	"errors"
-	accountv1 "github.com/openpak/website/internal/accountpb"
+	accountv1 "github.com/openpak/account-api/openpak/account/v1"
 	"time"
 )
 

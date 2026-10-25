@@ -12,9 +12,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
-      # The account-core contracts are vendored in internal/accountpb, so no
-      # sibling checkout is needed (and a private cross-repo checkout would need
-      # a PAT anyway). See internal/accountpb/README.md.
+      # The account-core contracts come from the public github.com/openpak/account-api
+      # module, so no sibling checkout is needed.
       - uses: actions/setup-go@v5
         with:
           go-version: "1.27.x"

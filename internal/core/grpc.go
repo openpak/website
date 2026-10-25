@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	accountv1 "github.com/openpak/website/internal/accountpb"
+	accountv1 "github.com/openpak/account-api/openpak/account/v1"
 )
 
 // The account core's interceptor reads the internal credential from the

@@ -5,6 +5,7 @@ go 1.27.0
 require (
 	github.com/coder/websocket v1.8.15
 	github.com/jackc/pgx/v5 v5.11.0
+	github.com/openpak/account-api v0.1.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
 	github.com/sigstore/sigstore v1.10.10
 	github.com/theupdateframework/go-tuf/v2 v2.4.2
@@ -36,4 +37,4 @@ require (
 )
 
 // The account core is consumed strictly through its versioned contracts: the
-// generated protobuf stubs are vendored in internal/accountpb (see its README).
+// generated protobuf stubs come from github.com/openpak/account-api.

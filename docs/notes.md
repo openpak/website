@@ -15,7 +15,6 @@ cmd/openpak-opsd/       per-host agent behind /admin/services (docs/opsd.md)
 cmd/openpak-policy/     operator console for v2 policy: publish, rollback, withdraw, inspect
 cmd/openpak-network/    CI-side fetch tool: authenticate, fetch, verify a v2 bundle
 internal/accounts/      account actions shared by the pages and the API
-internal/accountpb/     vendored account-core gRPC stubs + .proto sources
 internal/adapter/       client for the Switch (and Wii U/3DS) adapter internal API
 internal/admin/         role-gated operator/moderation pages under /admin
 internal/attachments/   ticket and crash-report files on disk (WEBSITE_ATTACHMENTS_DIR)
