@@ -79,7 +79,7 @@ diagnostic or the website itself wants and no emulator does.
   "platform": "switch",
 
   "server": {
-    "address": "145.241.199.19",   // what a redirected name resolves to
+    "address": "PROD_HOST",   // what a redirected name resolves to
     "https_port": 443,             // consoles cannot be told a port; this is for clients that can
     "http_port": 80
   },

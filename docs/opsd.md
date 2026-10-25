@@ -110,7 +110,7 @@ Key and settings in `~/.config/openpak-opsd.env` (mode 0600):
 OPSD_KEY=<openssl rand -hex 32>
 OPSD_ADDR=<private or gateway address>:20013
 OPSD_HOST_NAME=openpak-home
-OPSD_NETWORK_MAP=/home/openpak/.config/openpak-opsd-networks.json
+OPSD_NETWORK_MAP=~/.config/openpak-opsd-networks.json
 ```
 
 `~/.config/systemd/user/openpak-opsd.service` — a plain user service, not a quadlet, since it
