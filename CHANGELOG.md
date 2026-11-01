@@ -13,6 +13,10 @@ release, taken from git history. `git log` stays the source of truth.
 
 ## Unreleased
 
+- **Rewards redesign.** `/account/rewards` is now a header (balance, today's cap, next step) over four
+  tabs: Missions, Shop (tile shelf and a confirm dialog), Collection (Founder seal, equip) and Settings,
+  with typed success and error messages and every string in all six languages. `/admin/rewards` moved
+  into the admin package and the System Settings nav. Shared rewards fake: `internal/rewards/rewardstest`.
 - **Companion sources.** Mario Kart Wii course rankings (wfc-race v0.2.0 JSON endpoint),
   Pokémon Global Showcase rankings and GTS listings on DS and 3DS Pokémon titles, and PS3
   trophies at `/account/trophies` (`GET /api/v1/me/trophies`). See docs/companion.md.

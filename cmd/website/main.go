@@ -263,6 +263,7 @@ func run(log *slog.Logger) error {
 	adminSrv.Federation = coreGRPC
 	adminSrv.Operators = db
 	adminSrv.Moderation = coreGRPC
+	adminSrv.Rewards = pageSrv.Rewards // nil without REWARDS_URL: the section is left out
 	adminSrv.Erasure = coreGRPC
 	// The monitor's sources. Each is optional and reads as "not configured"
 	// when absent; a typed nil must not reach an interface field, or it would

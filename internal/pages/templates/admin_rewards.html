@@ -1,38 +1,59 @@
 {{template "header" .}}
-{{/* The rewards abuse queue and totals. Admin-only (the handler answers 404 to anyone else). */}}
-<div class="page-head">
-  <h1>Rewards</h1>
-  <p class="lede">Abuse flags raised by the rewards service, and the totals.</p>
-</div>
-{{if not .Available}}<p class="empty">Rewards is not configured on this deployment (REWARDS_URL).</p>
-{{else if .Failed}}<p class="empty">The rewards service did not answer, or REWARDS_ADMIN_KEY is wrong.</p>
+{{template "adminnav" .}}
+{{/* The rewards abuse queue and totals, in the System Settings shell like the other admin pages: the
+     totals as the monitor's rows, the flags as the reports queue's list. */}}
+<div class="page-head"><h1>{{t .Lang "admin.rewards"}}</h1><p>{{t .Lang "admin.rewards.sub"}}</p></div>
+
+{{if .Failed}}
+<p class="notice bad mb-6" role="alert">{{t .Lang "admin.rewards.failed"}}</p>
 {{else}}
-<div class="statgrid">
-  <div class="stat"><b>{{.Stats.Accounts}}</b><span>accounts</span></div>
-  <div class="stat"><b>{{.Stats.PointsIssued}}</b><span>points issued</span></div>
-  <div class="stat"><b>{{.Stats.PointsSpent}}</b><span>points spent</span></div>
-  <div class="stat"><b>{{.Stats.IssuedToday}}</b><span>issued today</span></div>
-  <div class="stat"><b>{{.Stats.OpenFlags}}</b><span>open flags</span></div>
-  <div class="stat"><b>{{.Stats.FrozenAccounts}}</b><span>frozen</span></div>
+<h2 class="mb-3 text-base">{{t .Lang "admin.rewards.totals"}}</h2>
+<div class="mb-9">
+  <div class="state-row ok"><span class="name">{{t .Lang "admin.rewards.accounts"}}</span><span class="pill">{{.Stats.Accounts}}</span></div>
+  <div class="state-row ok"><span class="name">{{t .Lang "admin.rewards.issued"}}</span><span class="pill">{{.Stats.PointsIssued}}</span></div>
+  <div class="state-row ok"><span class="name">{{t .Lang "admin.rewards.spent"}}</span><span class="pill">{{.Stats.PointsSpent}}</span></div>
+  <div class="state-row ok"><span class="name">{{t .Lang "admin.rewards.today"}}</span><span class="pill">{{.Stats.IssuedToday}}</span></div>
+  <div class="state-row {{if .Stats.OpenFlags}}warn{{else}}ok{{end}}"><span class="name">{{t .Lang "admin.rewards.flags.open"}}</span><span class="pill">{{.Stats.OpenFlags}}</span></div>
+  <div class="state-row {{if .Stats.FrozenAccounts}}bad{{else}}ok{{end}}"><span class="name">{{t .Lang "admin.rewards.frozen"}}</span><span class="pill">{{.Stats.FrozenAccounts}}</span></div>
 </div>
-<div class="mb-4 flex gap-2">
-  <a class="btn text-sm {{if not .All}}primary{{end}}" href="/admin/rewards">Open</a>
-  <a class="btn text-sm {{if .All}}primary{{end}}" href="/admin/rewards?all=1">All</a>
-</div>
-<section aria-labelledby="flags-h">
-  <div class="section-head"><h2 id="flags-h">Flags</h2></div>
-  {{if not .Flags}}<p class="empty">Nothing in the queue.</p>{{else}}
-  <div class="card"><ul class="cardrows">
-    {{range .Flags}}
-    <li>
-      <span class="nm">{{.Reason}} <span class="sub">#{{.ID}}</span><br><span class="sub">{{.AccountID}} · {{.RaisedAt.Format "2006-01-02 15:04"}}{{with .Detail}} · {{.}}{{end}}</span></span>
-      <span class="val">{{if .ResolvedAt}}<span class="badge ok">resolved</span>{{else}}
-        <form method="post" action="/admin/rewards/flags/resolve" class="flex gap-2"><input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="id" value="{{.ID}}">
-          <input class="field" name="note" placeholder="note" aria-label="note" maxlength="200"><button type="submit" class="small primary">Resolve</button></form>{{end}}</span>
-    </li>
+
+<h2 class="mb-3 text-base">{{t .Lang "admin.rewards.flags"}}</h2>
+<p class="mb-4 text-sm text-muted">{{t .Lang "admin.rewards.flags.help"}}</p>
+<nav class="mb-4 flex flex-wrap gap-2" aria-label="{{t .Lang "admin.rewards.filter"}}">
+  <a class="btn text-sm {{if not .All}}primary{{end}}" href="/admin/rewards"{{if not .All}} aria-current="page"{{end}}>{{t .Lang "admin.rewards.open"}}</a>
+  <a class="btn text-sm {{if .All}}primary{{end}}" href="/admin/rewards?all=1"{{if .All}} aria-current="page"{{end}}>{{t .Lang "admin.rewards.all"}}</a>
+</nav>
+{{if .Flags}}
+<ul class="card mb-9 list-none divide-y divide-line p-0">
+  {{range .Flags}}
+  <li class="flex flex-wrap items-center gap-3 p-4">
+    <span class="min-w-0">
+      <span class="font-semibold break-anywhere">{{.ReasonLabel}}</span>
+      <span class="badge ml-1">#{{.ID}}</span>
+      {{if .ResolvedAt}}<span class="badge ok">{{t $.Lang "admin.rewards.resolved"}}</span>{{else}}<span class="badge warn">{{t $.Lang "admin.rewards.open"}}</span>{{end}}
+      {{with .Detail}}<span class="block break-anywhere">{{.}}</span>{{end}}
+      <span class="block text-sm text-muted break-anywhere">{{t $.Lang "admin.rewards.account"}} <a href="/admin/users?q={{.AccountID}}">{{.AccountID}}</a> · {{.RaisedAt.Format "2 Jan 2006 15:04"}} UTC</span>
+      {{if .ResolvedAt}}<span class="block text-sm text-muted break-anywhere">{{.ResolvedBy}} · {{.ResolvedAt.Format "2 Jan 2006 15:04"}} UTC</span>{{end}}
+    </span>
+    {{if not .ResolvedAt}}
+    <form method="post" action="/admin/rewards/flags/resolve" class="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="id" value="{{.ID}}">
+      <label class="sr-only" for="note-{{.ID}}">{{t $.Lang "admin.rewards.note"}}</label>
+      <input id="note-{{.ID}}" name="note" class="field min-w-0 flex-1 sm:w-56 sm:flex-none" placeholder="{{t $.Lang "admin.rewards.note"}}" maxlength="200">
+      <button type="submit" class="btn text-sm">{{t $.Lang "admin.rewards.resolve"}}</button>
+    </form>
     {{end}}
-  </ul></div>
+  </li>
   {{end}}
-</section>
+</ul>
+{{else}}<p class="card mb-9 p-4 text-muted">{{t .Lang "admin.rewards.flags.none"}}</p>{{end}}
+
+<h2 class="mb-3 text-base">{{t .Lang "admin.rewards.redemptions"}}</h2>
+{{if .Redemption}}
+<div>
+  {{range .Redemption}}<div class="state-row idle"><span class="name break-anywhere">{{.Item}}</span><span class="pill">{{.Count}}</span></div>{{end}}
+</div>
+{{else}}<p class="card p-4 text-muted">{{t .Lang "admin.rewards.redemptions.none"}}</p>{{end}}
 {{end}}
+{{template "adminend"}}
 {{template "footer" .}}

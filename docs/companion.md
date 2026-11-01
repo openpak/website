@@ -74,11 +74,20 @@ with the network. Per-day usage of supervised consoles is the parental page
 
 ## Rewards
 
-`/account/rewards` shows points, missions (claim), the shop (redeem), the inventory (equip) and
-the showcase/pause settings, through the rewards service (`internal/rewards`). The person's own
-account-core session is the bearer, so the service decides who is asking. Item previews are
-proxied at `/account/rewards/preview/{id}`. `/admin/rewards` (admins only) shows the totals and
-the abuse flags queue with a resolve form; it uses the admin key and the admin's account id.
+`/account/rewards` is one page with four tabs (`?tab=missions|shop|collection|settings`, the companion
+pages' tab strip): a header with the Pak Points balance, today's play points against the cap and one
+suggested next step; Missions (ready to claim, in progress, completed, recent points); Shop (a tile shelf
+filterable by `?kind=`, each tile opening a confirm dialog from `#r-<item id>`, which needs
+`/static/rewards.js` like the titles page needs `titles.js`); Collection (the Founder seal, then owned
+items by kind, equip and unequip); Settings (showcase visibility, pause earning). Actions are POSTs that
+redirect back to a tab with a typed message (`m=`, success `notice ok`, error `notice bad`). The person's
+own account-core session is the bearer, so the service decides who is asking. Item previews are
+proxied at `/account/rewards/preview/{id}`; art is shown as square tiles (badges, icons) or wide cards
+(themes), whatever its size. `/admin/rewards` (admins only, in the admin System Settings shell and nav, left
+out when `REWARDS_URL` is unset) shows the totals, the abuse flags queue with a resolve form and
+redemptions by item; it uses the admin key and the admin's account id. Previews:
+`TestWritePreviewRewards` (set `REWARDS_ART_DIR` to the item art) and the admin `TestWritePreview`, both
+against `internal/rewards/rewardstest`, a fake of the service.
 
 Environment: `REWARDS_URL` (private address, `http://openpak-rewards:20180`),
 `REWARDS_INTERNAL_KEY`, `REWARDS_ADMIN_KEY`. Without `REWARDS_URL` the page says rewards are not

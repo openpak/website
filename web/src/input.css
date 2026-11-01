@@ -954,3 +954,49 @@
   .cardrows .bar { grid-column: 1 / -1; }
   .fgrid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); list-style: none; margin: 0; padding: 0; }
 }
+
+/* Rewards (/account/rewards). The page is made of the account and titles pages' own parts (page-head,
+   card, minis, the companion tab strip, cardrows, the game tiles and their detail dialog, notice);
+   these are the few shapes that had no home yet. */
+@layer components {
+  /* A small primary button keeps the primary's text colour (the small rule above is for quiet ones). */
+  main button.small.primary { color: #fff; }
+  @media (prefers-color-scheme: dark) { main button.small.primary { color: #15172e; } }
+  .ctabs .ct { margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--accent); color: #fff; font-size: .74rem; font-weight: 800; }
+  @media (prefers-color-scheme: dark) { .ctabs .ct { color: #15172e; } }
+
+  /* The header card: the balance, with the equipped badge beside it, and today's progress. */
+  .rwhead { display: grid; gap: 18px; padding: 20px; }
+  @media (min-width: 48rem) { .rwhead { grid-template-columns: minmax(0, 1fr) minmax(0, 24rem); align-items: center; gap: 32px; padding: 26px; } }
+  .rwbal { display: flex; align-items: center; gap: 18px; min-width: 0; }
+  .rwbal .medal { flex: none; width: 80px; height: 80px; border-radius: 50%; object-fit: cover; }
+  .rwbal .medal.blank { display: grid; place-items: center; background: var(--paper-2); box-shadow: 0 0 0 4px var(--raised), 0 0 0 5px var(--line-2); }
+  .rwbal b { display: block; font-family: var(--font-ui); font-size: clamp(2.3rem, 8vw, 3.2rem); font-weight: 800; line-height: 1.05; font-variant-numeric: tabular-nums; }
+  .rwbal div > span { font-family: var(--font-ui); font-weight: 700; color: var(--muted); }
+  .rwtoday { min-width: 0; }
+  .rwtoday .row { display: flex; justify-content: space-between; gap: 12px; font-family: var(--font-ui); font-weight: 700; font-size: .9rem; }
+  .rwtoday .bar { height: 8px; margin-top: 8px; }
+  .rwtoday .hint { margin: 8px 0 0; }
+  .rwtoday .hint:empty { display: none; }
+
+  /* The Founder seal, kept apart from the other badges. */
+  .rwfounder { display: flex; align-items: center; gap: 22px; padding: 20px; margin-bottom: 28px; }
+  .rwfounder .seal { flex: none; width: 7rem; height: 7rem; }
+  .rwfounder h2 { margin: 0 0 4px; }
+  .rwfounder p { margin: 0 0 12px; color: var(--muted); max-width: 32rem; }
+  @media (max-width: 30rem) { .rwfounder { flex-direction: column; text-align: center; } .rwfounder p { margin-inline: auto; } }
+
+  /* A theme's preview is wide: two columns of the shelf, and a wide picture in its dialog. */
+  .gtiles:has(.wide) { grid-auto-flow: dense; }
+  .gtile.wide { grid-column: span 2; }
+  .gtile.wide .art { aspect-ratio: 16 / 10; }
+  .gtile.owned .art > img { opacity: .8; }
+  .tdialog .tart.wide { width: 14rem; aspect-ratio: 16 / 10; }
+  @media (max-width: 40rem) { .tdialog .tart.wide { width: 100%; max-width: 20rem; } }
+  .art-placeholder.txt { padding: 14px; }
+  .tdialog .art-placeholder.txt > b { display: -webkit-box; }
+
+  .rwcheck { display: flex; align-items: flex-start; gap: 12px; }
+  .rwcheck b { display: block; }
+  .form-stack .rwcheck + .rwcheck { margin-top: 1rem; }
+}

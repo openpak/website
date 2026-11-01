@@ -21,6 +21,7 @@ import (
 	"github.com/openpak/website/internal/i18n"
 	newsv1 "github.com/openpak/website/internal/newspb"
 	"github.com/openpak/website/internal/pages"
+	"github.com/openpak/website/internal/rewards"
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/store"
 	"github.com/openpak/website/internal/support"
@@ -71,6 +72,8 @@ type Server struct {
 	ConsoleNews *ConsoleNewsAPI
 	// Store is nx-baas's store admin API behind /admin/store; nil hides the section.
 	Store *StoreAPI
+	// Rewards is the points service behind /admin/rewards (the abuse queue and totals); nil hides the section.
+	Rewards *rewards.Client
 	// CrashFiles holds crash-report attachments; nil means reports carry none.
 	CrashFiles *attachments.Store
 
@@ -94,7 +97,7 @@ func New(tpl *template.Template, coreEvents core.Events, db store.Store, session
 type base struct {
 	// The optional sections this deployment configures, so the overview can
 	// leave the others' cards out too.
-	ShowConsoleNews, ShowStore bool
+	ShowConsoleNews, ShowStore, ShowRewards bool
 	// Same fingerprint the public pages use: _layout.html is shared, and without this field
 	// every admin page fails to render.
 	Asset  string
@@ -133,6 +136,7 @@ var adminNav = []struct{ href, key string }{
 	{"/admin/config", "admin.nav.config"},
 	{"/admin/events", "admin.nav.events"},
 	{"/admin/users", "admin.nav.users"},
+	{"/admin/rewards", "admin.rewards"},
 	{"/admin/reports", "admin.reports"},
 	{"/admin/tickets", "admin.tickets"},
 	{"/admin/crashes", "admin.crashes"},
@@ -162,6 +166,9 @@ func (s *Server) hiddenSections() []string {
 	}
 	if s.Store == nil {
 		out = append(out, "/admin/store")
+	}
+	if s.Rewards == nil {
+		out = append(out, "/admin/rewards")
 	}
 	return out
 }
@@ -195,7 +202,7 @@ func (s *Server) authorize(w http.ResponseWriter, r *http.Request) (store.WebSes
 func (s *Server) page(r *http.Request, ws store.WebSession, title string) base {
 	return base{Asset: pages.AssetVersion(), Admin: true, Path: r.URL.Path, Lang: "en", Title: title,
 		User: adminUser{ws.DisplayName, ws.Email}, CSRF: s.Sessions.CSRFToken(ws.CoreSessionID),
-		Nav: navFor(r.URL.Path, s.hiddenSections()...), ShowConsoleNews: s.ConsoleNews != nil, ShowStore: s.Store != nil, Updates: s.pendingUpdates(r.Context())}
+		Nav: navFor(r.URL.Path, s.hiddenSections()...), ShowConsoleNews: s.ConsoleNews != nil, ShowStore: s.Store != nil, ShowRewards: s.Rewards != nil, Updates: s.pendingUpdates(r.Context())}
 }
 
 func (s *Server) pendingUpdates(ctx context.Context) int {
@@ -269,6 +276,8 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/config", s.handleConfigSave)
 	mux.HandleFunc("GET /admin/events", s.handleEvents)
 	mux.HandleFunc("GET /admin/users", s.handleUsers)
+	mux.HandleFunc("GET /admin/rewards", s.handleRewards)
+	mux.HandleFunc("POST /admin/rewards/flags/resolve", s.handleRewardsResolve)
 	mux.HandleFunc("POST /admin/users/{id}/ban", s.handleBan)
 	mux.HandleFunc("POST /admin/users/{id}/restore", s.handleRestore)
 	mux.HandleFunc("GET /admin/reports", s.handleReports)

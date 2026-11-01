@@ -137,6 +137,8 @@ type Stats struct {
 	IssuedToday    int `json:"issued_today"`
 	OpenFlags      int `json:"open_flags"`
 	FrozenAccounts int `json:"frozen_accounts"`
+	// Redemptions counts redemptions per item id.
+	Redemptions map[string]int64 `json:"redemptions_by_item"`
 }
 
 func (c *Client) do(ctx context.Context, method, path string, hdr map[string]string, in, out any) error {

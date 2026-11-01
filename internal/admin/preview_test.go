@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/openpak/website/internal/rewards/rewardstest"
 	"github.com/openpak/website/internal/store"
 )
 
@@ -21,15 +22,18 @@ func TestWritePreview(t *testing.T) {
 	}
 	s, db, _ := newAdmin(t)
 	_ = db.PutWebSession(context.Background(), store.WebSession{CoreSessionID: "sess-admin", AccountID: "acct-admin", DisplayName: "Root"})
+	st := rewardstest.NewState()
+	s.Rewards = rewardstest.New(t, st)
 	mux := http.NewServeMux()
 	s.RegisterRoutes(mux)
-	for _, p := range []string{"", "monitor", "services", "news", "titles", "users", "tickets", "crashes", "config", "events"} {
+	for _, p := range []string{"", "monitor", "services", "news", "titles", "users", "tickets", "crashes", "config", "events", "rewards", "rewards?all=1&m=resolved", "rewards?down"} {
+		st.Down = p == "rewards?down"
 		rec := httptest.NewRecorder()
-		mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, strings.TrimSuffix("/admin/"+p, "/"), nil))
+		mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, strings.TrimSuffix("/admin/"+strings.Replace(p, "?down", "", 1), "/"), nil))
 		html := strings.ReplaceAll(rec.Body.String(), `"/static/`, `"static/`)
 		name := "admin"
 		if p != "" {
-			name += "-" + p
+			name += "-" + strings.NewReplacer("?", "-", "&", "-", "=", "-").Replace(p)
 		}
 		if err := os.WriteFile(filepath.Join(dir, name+".html"), []byte(html), 0o644); err != nil {
 			t.Fatal(err)

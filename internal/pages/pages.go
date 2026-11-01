@@ -409,8 +409,6 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /account/rewards/equip", s.handleRewardsEquip)
 	mux.HandleFunc("POST /account/rewards/settings", s.handleRewardsSettings)
 	mux.HandleFunc("GET /account/rewards/preview/{id}", s.handleRewardsPreview)
-	mux.HandleFunc("GET /admin/rewards", s.handleAdminRewards)
-	mux.HandleFunc("POST /admin/rewards/flags/resolve", s.handleAdminRewardsResolve)
 	mux.HandleFunc("GET /account/sso/authorize", s.handleSSOAuthorize)
 	mux.HandleFunc("GET /account/sso/logout", s.handleSSOLogoutForm)
 	mux.HandleFunc("POST /account/sso/logout", s.handleSSOLogout)
