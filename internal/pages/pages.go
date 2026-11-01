@@ -402,6 +402,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /titles/{slug}", s.handleCompanion)
 	mux.HandleFunc("GET /titles/{slug}/{tab}", s.handleCompanion)
 	mux.HandleFunc("GET /account/activity", s.handleActivity)
+	mux.HandleFunc("GET /account/trophies", s.handleTrophies)
 	mux.HandleFunc("GET /account/rewards", s.handleRewards)
 	mux.HandleFunc("POST /account/rewards/claim", s.handleRewardsClaim)
 	mux.HandleFunc("POST /account/rewards/redeem", s.handleRewardsRedeem)

@@ -25,6 +25,8 @@ type Feature string
 const (
 	FeatureRankings Feature = "rankings"
 	FeatureStats    Feature = "stats" // "my stats": needs a signed-in account
+	// FeatureListings is a public list of things players put up (GTS listings, user content), as a card.
+	FeatureListings Feature = "listings"
 )
 
 // Entry is one row of a ranking. Value is the sortable number (a time in
@@ -96,16 +98,27 @@ type StatsSource interface {
 	Stats(ctx context.Context, accountID string) (Card, error)
 }
 
+// ListingsSource is what a title implements to have a public Listings tab.
+type ListingsSource interface {
+	Listings(ctx context.Context) (Card, error)
+}
+
 // Source is one title's companion data. Names match the catalogue exactly
-// (case-insensitive); Console "" matches any console.
+// (case-insensitive); Console "" matches any console. Match, when set, replaces both
+// (a family of titles, such as every DS Pokémon game).
 type Source struct {
 	Names    []string
 	Console  string
+	Match    func(name, console string) bool
 	Rankings RankingSource
 	Stats    StatsSource
+	Listings ListingsSource
 }
 
 func (s Source) matches(name, console string) bool {
+	if s.Match != nil {
+		return s.Match(name, console)
+	}
 	if s.Console != "" && !strings.EqualFold(s.Console, console) {
 		return false
 	}
@@ -139,7 +152,10 @@ type Service struct {
 	// catalogue and the live lookups; main wires them. Unset, the catalogue alone names.
 	Catalogue func(ctx context.Context) map[string]string
 	Namer     func(ctx context.Context, catalogue map[string]string, namespace, titleID string) (name string, icon bool)
-	sources   []Source
+	// TrophySource and PSN back the PS3 trophy page (/account/trophies); nil is ErrUnavailable.
+	TrophySource TrophySource
+	PSN          PSNLinker
+	sources      []Source
 }
 
 // New returns a Service over the catalogue db. Register adds the titles.
@@ -157,6 +173,9 @@ func (s *Service) titleOf(r store.Request, slug string) Title {
 		t.source = src
 		if src.Rankings != nil {
 			t.Features = append(t.Features, FeatureRankings)
+		}
+		if src.Listings != nil {
+			t.Features = append(t.Features, FeatureListings)
 		}
 		if src.Stats != nil {
 			t.Features = append(t.Features, FeatureStats)
@@ -213,6 +232,9 @@ func (s *Service) Ranking(ctx context.Context, t Title, board, accountID string)
 	if err != nil {
 		return Ranking{}, err
 	}
+	if len(boards) == 0 {
+		return Ranking{Boards: []Board{}, Entries: []Entry{}}, nil
+	}
 	if board == "" && len(boards) > 0 {
 		board = boards[0].ID
 	}
@@ -235,6 +257,14 @@ func (s *Service) Ranking(ctx context.Context, t Title, board, accountID string)
 		}
 	}
 	return out, nil
+}
+
+// Listings serves the public Listings tab.
+func (s *Service) Listings(ctx context.Context, t Title) (Card, error) {
+	if t.source.Listings == nil {
+		return Card{}, ErrNotFound
+	}
+	return t.source.Listings.Listings(ctx)
 }
 
 // Stats serves the "my stats" tab for a signed-in account.

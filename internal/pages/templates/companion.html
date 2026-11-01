@@ -31,6 +31,10 @@
 {{else if eq .Tab "rankings"}}
   {{if .Failed}}<p class="empty">{{t .Lang "companion.rankings.unavailable"}}</p>
   {{else}}{{template "ranking-board" .Board}}{{end}}
+{{else if eq .Tab "listings"}}
+  {{if .Failed}}<p class="empty">{{t .Lang "companion.listings.unavailable"}}</p>
+  {{else if not .Card.C.Rows}}{{template "stat-card" .Card}}<p class="empty">{{t .Lang "companion.listings.empty"}}</p>
+  {{else}}{{template "stat-card" .Card}}{{end}}
 {{else if eq .Tab "stats"}}
   {{if not .User}}<p class="empty">{{t .Lang "companion.stats.signin"}}</p>
   {{else if .Failed}}<p class="empty">{{t .Lang "companion.stats.unavailable"}}</p>

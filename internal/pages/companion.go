@@ -75,6 +75,13 @@ func (s *Server) handleCompanion(w http.ResponseWriter, r *http.Request) {
 			page.Failed = true
 		}
 		page.Board = rankView{Lang: d.Lang, Slug: t.Slug, R: rk}
+	case "listings":
+		card, err := s.Companion.Listings(r.Context(), t)
+		if err != nil {
+			s.log.Warn("companion listings", "title", t.Name, "err", err)
+			page.Failed = true
+		}
+		page.Card = cardView{Lang: d.Lang, C: card}
 	case "stats":
 		if v != nil {
 			card, err := s.Companion.Stats(r.Context(), t, accountID)
@@ -178,4 +185,30 @@ func Duration(lang string, seconds int64) string {
 		return fmt.Sprintf(i18n.T(lang, "activity.m"), m)
 	}
 	return fmt.Sprintf(i18n.T(lang, "activity.hm"), h, m)
+}
+
+// trophiesPage is /account/trophies.
+type trophiesPage struct {
+	baseData
+	Card   cardView
+	Failed bool
+}
+
+// handleTrophies is the PS3 trophy page of the signed-in account, from the trophy service.
+func (s *Server) handleTrophies(w http.ResponseWriter, r *http.Request) {
+	v := s.requireViewer(w, r)
+	if v == nil {
+		return
+	}
+	d := s.data(r, v, i18n.T(i18n.FromRequest(r), "trophies.title"))
+	page := trophiesPage{baseData: d, Card: cardView{Lang: d.Lang}}
+	if s.Companion == nil {
+		page.Failed = true
+	} else if card, err := s.Companion.Trophies(r.Context(), v.AccountID); err != nil {
+		s.log.Warn("trophies", "err", err)
+		page.Failed = true
+	} else {
+		page.Card.C = card
+	}
+	s.render(w, http.StatusOK, "trophies.html", page)
 }

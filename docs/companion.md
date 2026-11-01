@@ -11,6 +11,8 @@ per title.
 | `/titles/<slug>` | Title header, tab strip, the features the title has | no |
 | `/titles/<slug>/rankings?board=<id>` | A ranking board: podium, list, "around you", board picker | no (marks your own rows when signed in) |
 | `/titles/<slug>/stats` | The signed-in player's stats for the title (a stat card) | yes |
+| `/titles/<slug>/listings` | A title's public listings as a card (Pokémon GTS) | no |
+| `/account/trophies` | PS3 trophies: totals by grade, points, one row per game | yes |
 | `/account/activity` | Play activity: time, sessions and last played per title and network | yes |
 
 A title appears in the titles page's details dialog with a "Rankings and stats" button only
@@ -30,6 +32,8 @@ because `/api/v1/titles/` belongs to the mod catalogue.
 | `GET /api/v1/companion/titles/{slug}` | none | one title; 404 if it has no feature |
 | `GET /api/v1/companion/titles/{slug}/rankings?board=` | none (optional bearer marks your rows) | `{boards,board,label,entries,around,updated}` |
 | `GET /api/v1/companion/titles/{slug}/stats` | bearer | `{heading,linked,stats,rows}` |
+| `GET /api/v1/companion/titles/{slug}/listings` | none | `{heading,linked,stats,rows}` |
+| `GET /api/v1/me/trophies` | bearer | `{heading,linked,stats,rows}`; `heading` is the PSN online id |
 | `GET /api/v1/me/activity` | bearer | `{titles,total_seconds,sessions,networks}` |
 
 Errors are the usual `{"error","code"}`. `503` means the deployment does not have that backend,
@@ -79,3 +83,30 @@ the abuse flags queue with a resolve form; it uses the admin key and the admin's
 Environment: `REWARDS_URL` (private address, `http://openpak-rewards:20180`),
 `REWARDS_INTERNAL_KEY`, `REWARDS_ADMIN_KEY`. Without `REWARDS_URL` the page says rewards are not
 available.
+
+## Data sources and configuration
+
+| Feature | Backend API read | Website environment |
+| --- | --- | --- |
+| Mario Kart Wii rankings (32 course boards, worldwide) | wfc-race `GET /api/mkw/leaderboard` (v0.2.0), header `X-WFC-Internal-Key` | `WFC_RACE_URL` (`http://openpak-wfc-race:20208`), `WFC_INTERNAL_KEY` |
+| Pokémon (DS and 3DS titles): Global Showcase rankings and GTS listings | pokemon-global-link public JSON `/api/v1/showcase`, `/gts/listings`, `/battle/formats` | `POKEMON_GLOBAL_LINK_URL` (`http://openpak-pokemon-global-link:20160`) |
+| PS3 trophies | np-trophy `GET /v1/users/{account}/trophies`, bearer key; the PSN id from the core's `np` link | `NP_TROPHY_URL` (`http://openpak-np-trophy:8530`), `NP_TROPHY_KEY` |
+| Play activity | the account core's `GetPlayHistory` (gRPC) | the core connection the site already has |
+| Rewards | rewards service `/v1/me...` and admin routes | `REWARDS_URL`, `REWARDS_INTERNAL_KEY`, `REWARDS_ADMIN_KEY` |
+
+A source whose URL is unset is left out. Pokémon species are PKHeX ids and the service sends no
+names, so rows read "Pokémon #25". The PS3 trophy service stores unlocks only, so a game is its
+trophy set id and there are no trophy names or icons. Mario Kart Wii needs no pid-to-name
+mapping: the player's Mii name comes from the stored player info. Ghost download is not on the
+site: wfc-sake only serves the nearest slower ghost, not a chosen player's.
+
+## Not built, and why
+
+- Xbox 360 gamercard and achievements: x360-progress and x360-profile answer only console
+  requests, and x360-progress is a stub that returns empty lists and stores nothing, so there is
+  no achievement or gamerscore data to read.
+- Mario Kart 8 Deluxe, Mario Tennis Aces, ARMS rankings: the Switch NEX server (`switch-nexd`)
+  acknowledges score uploads without storing them and has no read API, so no ranking exists.
+- Monster Hunter Generations Ultimate events and guild cards, Mario vs. Donkey Kong: Tipping Stars
+  levels: no read API, no evidence of stored data, and the code has no guild-card or level
+  semantics.

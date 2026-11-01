@@ -15,6 +15,8 @@ import (
 //	GET /api/v1/companion/titles/{slug}/rankings      a ranking board; ?board= picks one (public;
 //	                                                  with a bearer token the player's own rows are marked)
 //	GET /api/v1/companion/titles/{slug}/stats         the signed-in player's stats for the title (bearer)
+//	GET /api/v1/companion/titles/{slug}/listings      a title's public listings, as a card (public)
+//	GET /api/v1/me/trophies                           the signed-in player's PS3 trophies, as a card (bearer)
 //	GET /api/v1/me/activity                           the signed-in player's play history (bearer)
 //
 // They live under /companion/ because /api/v1/titles/ belongs to the mod catalogue when one is mounted.
@@ -23,7 +25,9 @@ func (s *Server) registerCompanion(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/companion/titles/{slug}", s.handleCompanionTitle)
 	mux.HandleFunc("GET /api/v1/companion/titles/{slug}/rankings", s.handleCompanionRankings)
 	mux.HandleFunc("GET /api/v1/companion/titles/{slug}/stats", s.auth(s.handleCompanionStats))
+	mux.HandleFunc("GET /api/v1/companion/titles/{slug}/listings", s.handleCompanionListings)
 	mux.HandleFunc("GET /api/v1/me/activity", s.auth(s.handleActivity))
+	mux.HandleFunc("GET /api/v1/me/trophies", s.auth(s.handleTrophies))
 }
 
 type companionTitle struct {
@@ -129,6 +133,34 @@ func (s *Server) handleActivity(w http.ResponseWriter, r *http.Request, tok stor
 	out, err := s.Companion.Activity(r.Context(), tok.AccountID)
 	if err != nil {
 		s.companionError(w, "play activity", err)
+		return
+	}
+	w.Header().Set("Cache-Control", "private, no-store")
+	writeJSON(w, http.StatusOK, out)
+}
+
+func (s *Server) handleCompanionListings(w http.ResponseWriter, r *http.Request) {
+	t, ok := s.companionTitle(w, r)
+	if !ok {
+		return
+	}
+	out, err := s.Companion.Listings(r.Context(), t)
+	if err != nil {
+		s.companionError(w, "listings", err)
+		return
+	}
+	w.Header().Set("Cache-Control", "public, max-age=15")
+	writeJSON(w, http.StatusOK, out)
+}
+
+func (s *Server) handleTrophies(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	if s.Companion == nil {
+		writeError(w, http.StatusServiceUnavailable, "trophies are not available on this deployment")
+		return
+	}
+	out, err := s.Companion.Trophies(r.Context(), tok.AccountID)
+	if err != nil {
+		s.companionError(w, "trophies", err)
 		return
 	}
 	w.Header().Set("Cache-Control", "private, no-store")

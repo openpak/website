@@ -1,0 +1,14 @@
+{{template "header" .}}
+<div class="page-head">
+  <h1>{{t .Lang "trophies.title"}}</h1>
+  <p class="lede">{{t .Lang "trophies.sub"}}</p>
+</div>
+{{if .Failed}}<p class="empty">{{t .Lang "trophies.unavailable"}}</p>
+{{else if not .Card.C.Linked}}<p class="empty">{{t .Lang "trophies.unlinked"}}</p>
+{{else}}
+{{with .Card.C.Heading}}<p class="pstrip">{{printf (t $.Lang "trophies.psn") .}}</p>{{end}}
+{{template "stat-card" .Card}}
+{{if not .Card.C.Rows}}<p class="empty">{{t .Lang "trophies.empty"}}</p>{{end}}
+<p class="hint mt-6">{{t .Lang "trophies.note"}}</p>
+{{end}}
+{{template "footer" .}}

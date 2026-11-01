@@ -13,6 +13,9 @@ release, taken from git history. `git log` stays the source of truth.
 
 ## Unreleased
 
+- **Companion sources.** Mario Kart Wii course rankings (wfc-race v0.2.0 JSON endpoint),
+  Pokémon Global Showcase rankings and GTS listings on DS and 3DS Pokémon titles, and PS3
+  trophies at `/account/trophies` (`GET /api/v1/me/trophies`). See docs/companion.md.
 - **Sign-in for subdomains.** `GET /account/sso/authorize`, `POST /internal/sso/token`,
   `/account/sso/logout`: an authorization-code flow (60 s single-use code, exact https redirect
   allowlist per client, optional PKCE) so splatnet, mktv, mario-maker and rewards reuse the

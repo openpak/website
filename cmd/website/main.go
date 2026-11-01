@@ -161,7 +161,7 @@ func run(log *slog.Logger) error {
 	comp.History = coreGRPC
 	comp.Catalogue = func(ctx context.Context) map[string]string { return pages.TitleCatalogue(ctx, db) }
 	comp.Namer = pages.FriendGame
-	registerCompanionTitles(comp, log)
+	registerCompanionTitles(comp, coreGRPC, log)
 	// Rewards: points, missions, shop. REWARDS_URL is the private address (http://openpak-rewards:20180).
 	pageSrv.Rewards = rewards.New(os.Getenv("REWARDS_URL"), os.Getenv("REWARDS_INTERNAL_KEY"), os.Getenv("REWARDS_ADMIN_KEY"))
 	if pageSrv.Rewards == nil {

@@ -135,3 +135,34 @@ func TestActivityPage(t *testing.T) {
 		t.Errorf("no backend: %d", w.Code)
 	}
 }
+
+type testListings struct{}
+
+func (testListings) Listings(context.Context) (companion.Card, error) {
+	return companion.Card{Linked: true, Stats: []companion.Stat{{Key: "companion.listings.open", Value: "1"}},
+		Rows: []companion.Row{{Title: "Pokémon #25 · Lv. 30", Sub: "Gen 6", Value: "PIKA", Percent: -1}}}, nil
+}
+
+type testTrophies struct{}
+
+func (testTrophies) Trophies(context.Context, string) ([]companion.TrophyGame, error) {
+	return []companion.TrophyGame{{CommunicationID: "NPWR12345_00", Trophies: []companion.Trophy{{Grade: "G", EarnedAt: time.Now()}}}}, nil
+}
+
+func TestListingsAndTrophies(t *testing.T) {
+	s, _ := companionServer(t)
+	s.Companion.Register(companion.Source{Names: []string{"Halo 3"}, Listings: testListings{}})
+	w := getPath(s, "/titles/halo-3/listings")
+	if w.Code != 200 || !strings.Contains(w.Body.String(), "Pokémon #25") || !strings.Contains(w.Body.String(), "PIKA") {
+		t.Fatalf("listings: %d %s", w.Code, w.Body.String())
+	}
+	s.Companion.TrophySource = testTrophies{}
+	s.Companion.PSN = func(context.Context, string) string { return "psn_user" }
+	rec := login(t, s, "a@x.test", "password-A-1")
+	w = authedRequest(s, rec, http.MethodGet, "/account/trophies", nil)
+	for _, want := range []string{"NPWR12345_00", "psn_user", "90", "Gold"} {
+		if !strings.Contains(w.Body.String(), want) {
+			t.Errorf("trophies page lacks %q", want)
+		}
+	}
+}

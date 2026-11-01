@@ -70,12 +70,15 @@ func TestWritePreview(t *testing.T) {
 		{Name: "Ana", Display: "1:23.456", Region: "EU"}, {Name: "Bo", Display: "1:24.000"}, {Name: "Cy", Display: "1:25.500"},
 		{Name: "Di", Display: "1:26.000", Note: "Funky Kong"}, {Name: "Ed", Display: "1:27.250", Me: true}}},
 		Stats: testStats{linked: true}})
+	comp.Register(companion.Source{Names: []string{"Halo 3"}, Listings: testListings{}})
+	comp.TrophySource = testTrophies{}
+	comp.PSN = func(context.Context, string) string { return "psn_player" }
 	s.Companion = comp
 
 	rec := login(t, s, "a@x.test", "password-A-1")
 
 	for name, path := range map[string]string{
-		"companion-overview": "/titles/mario-kart-wii", "companion-rankings": "/titles/mario-kart-wii/rankings",
+		"companion-overview": "/titles/mario-kart-wii", "companion-listings": "/titles/halo-3/listings", "companion-rankings": "/titles/mario-kart-wii/rankings",
 		"home": "/", "features": "/features", "downloads": "/downloads",
 		"status": "/status", "login": "/login", "register": "/register",
 		"forgot": "/forgot-password", "titles": "/titles", "help": "/help",
@@ -88,7 +91,7 @@ func TestWritePreview(t *testing.T) {
 	// Signed-in pages need the session cookie the login handed back.
 	for name, path := range map[string]string{
 		"account": "/account", "friends": "/account/friends", "saves": "/account/saves",
-		"parental": "/account/parental", "activity": "/account/activity",
+		"parental": "/account/parental", "activity": "/account/activity", "trophies": "/account/trophies",
 		"companion-stats": "/titles/mario-kart-wii/stats",
 	} {
 		w := authedRequest(s, rec, http.MethodGet, path, nil)

@@ -2540,6 +2540,43 @@ paths:
         "404": { description: No such title, or it has no stats. }
         "502": { description: The title's backend did not answer. }
         "503": { description: Title pages are not configured on this deployment. }
+  /companion/titles/{slug}/listings:
+    get:
+      summary: A title's public listings
+      description: |
+        What players have put up for the title (for Pokémon, the open Global Trade Station listings), as a card:
+        `stats` are headline figures and `rows` the listings. Species are PKHeX ids; the service reports no names.
+        Public; cached for 15 seconds.
+      security: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompanionCard" }
+        "404": { description: No such title, or it has no listings. }
+        "502": { description: The title's backend did not answer. }
+        "503": { description: Title pages are not configured on this deployment. }
+  /me/trophies:
+    get:
+      summary: PlayStation 3 trophies
+      description: |
+        The trophies the signed-in account has earned, from the PS3 trophy service, as a card: `stats` are the totals
+        (`trophies.total`, `trophies.points`, `trophies.platinum|gold|silver|bronze`), `rows` one per game by its
+        communication id with the count earned and the date of the latest. The service stores unlocks only, so there
+        are no trophy names, icons or per-game totals. `heading` is the linked PSN online id; `linked` is false when
+        there is neither a link nor a trophy.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompanionCard" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "502": { description: The trophy service did not answer. }
+        "503": { description: Trophies are not configured on this deployment. }
   /me/activity:
     get:
       summary: Play activity
@@ -2633,7 +2670,7 @@ components:
         title_id: { type: string }
         features:
           type: array
-          items: { type: string, enum: [rankings, stats] }
+          items: { type: string, enum: [rankings, stats, listings] }
     CompanionEntry:
       type: object
       required: [rank, name, value, display]
