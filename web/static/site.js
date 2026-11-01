@@ -60,6 +60,14 @@
   }
   window.addEventListener("hashchange", focusTarget);
   focusTarget();
+  // On a phone the account (and admin) section list is a row that scrolls sideways: bring the current
+  // page's entry to the middle of it. Set directly, not animated, so reduced motion is respected.
+  document.querySelectorAll(".side nav, .settings-nav").forEach(function (nav) {
+    var cur = nav.querySelector("[aria-current]");
+    if (!cur || nav.scrollWidth <= nav.clientWidth) return;
+    var n = nav.getBoundingClientRect(), c = cur.getBoundingClientRect();
+    nav.scrollLeft += c.left - n.left - (n.width - c.width) / 2;
+  });
   // The language picker submits as soon as a language is chosen.
   document.querySelectorAll("[data-autosubmit]").forEach(function (b) {
     var sel = b.form && b.form.querySelector("select");
