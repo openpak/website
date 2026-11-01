@@ -2467,6 +2467,95 @@ paths:
         "401": { description: Wrong or missing key. }
         "413": { description: The attachment is larger than 20 MB. }
         "503": { description: WEBSITE_INTERNAL_KEY is not set on the website. }
+  /companion/titles:
+    get:
+      summary: Titles that have a companion page
+      description: |
+        The catalogue titles that offer rankings or per-player stats, with the features each has.
+        The same titles have a page at `/titles/{slug}` on the website. Public.
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [titles]
+                properties:
+                  titles:
+                    type: array
+                    items: { $ref: "#/components/schemas/CompanionTitle" }
+        "503": { description: Title pages are not configured on this deployment. }
+  /companion/titles/{slug}:
+    get:
+      summary: One companion title
+      description: The slug is the lower-case title name with hyphens; a game on two consoles has the console appended (`minecraft-switch`). A title with no companion feature is 404. Public.
+      security: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompanionTitle" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { description: Title pages are not configured on this deployment. }
+  /companion/titles/{slug}/rankings:
+    get:
+      summary: A ranking board
+      description: |
+        One board of the title's rankings (a course, a mode, a season). `boards` lists every board; `board`
+        picks one, the first when absent. `value` is the sortable number (a time in milliseconds, points)
+        and `display` is how the title shows it. Public; with a bearer token the caller's own rows carry
+        `me: true` and `around` holds their slice of the board when they are outside the top rows. Cached for 30 seconds.
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+        - { name: board, in: query, schema: { type: string } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompanionRanking" }
+        "404": { description: No such title, no rankings for it, or no such board. }
+        "502": { description: The title's backend did not answer. }
+        "503": { description: Title pages are not configured on this deployment. }
+  /companion/titles/{slug}/stats:
+    get:
+      summary: The signed-in player's stats for a title
+      description: |
+        A card of headline figures (`stats`) and a list (`rows`), the same shape for a game's own stats and for
+        trophies. `linked` is false when the account has no identity on the title's network yet; then the lists are empty.
+        The `key` of a stat is a stable id the client translates.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompanionCard" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { description: No such title, or it has no stats. }
+        "502": { description: The title's backend did not answer. }
+        "503": { description: Title pages are not configured on this deployment. }
+  /me/activity:
+    get:
+      summary: Play activity
+      description: |
+        What the signed-in account has played, from the account core's play log: one entry per title and network,
+        newest first, with time played, sessions and first and last played. The core keeps it for every account;
+        it holds at most the 20 most recent titles per network. `title` is empty for a title the catalogue does not
+        know. Per-day usage of supervised consoles is `GET /me/parental-controls/{moonID}/activity`.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PlayActivity" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "503": { description: The core cannot be reached, or play history is not configured. }
 components:
   securitySchemes:
     bearerAuth:
@@ -2533,6 +2622,87 @@ components:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
   schemas:
+    CompanionTitle:
+      type: object
+      required: [slug, name, console, status, features]
+      properties:
+        slug: { type: string, example: mario-kart-wii }
+        name: { type: string }
+        console: { type: string }
+        status: { type: string }
+        title_id: { type: string }
+        features:
+          type: array
+          items: { type: string, enum: [rankings, stats] }
+    CompanionEntry:
+      type: object
+      required: [rank, name, value, display]
+      properties:
+        rank: { type: integer }
+        name: { type: string }
+        value: { type: integer, format: int64 }
+        display: { type: string }
+        region: { type: string }
+        note: { type: string }
+        me: { type: boolean }
+    CompanionRanking:
+      type: object
+      required: [boards, board, label, entries]
+      properties:
+        boards:
+          type: array
+          items:
+            type: object
+            required: [id, label]
+            properties: { id: { type: string }, label: { type: string } }
+        board: { type: string }
+        label: { type: string }
+        entries: { type: array, items: { $ref: "#/components/schemas/CompanionEntry" } }
+        around: { type: array, items: { $ref: "#/components/schemas/CompanionEntry" } }
+        updated: { type: string, format: date-time }
+    CompanionCard:
+      type: object
+      required: [stats, rows, linked]
+      properties:
+        heading: { type: string }
+        linked: { type: boolean }
+        stats:
+          type: array
+          items:
+            type: object
+            required: [key, value, n]
+            properties: { key: { type: string }, value: { type: string }, n: { type: integer, format: int64 } }
+        rows:
+          type: array
+          items:
+            type: object
+            required: [title, percent]
+            properties:
+              title: { type: string }
+              sub: { type: string }
+              value: { type: string }
+              percent: { type: integer, description: "0 to 100 for a progress bar; -1 for none." }
+    PlayActivity:
+      type: object
+      required: [titles, total_seconds, sessions, networks]
+      properties:
+        total_seconds: { type: integer, format: int64 }
+        sessions: { type: integer }
+        networks: { type: array, items: { type: string } }
+        titles:
+          type: array
+          items:
+            type: object
+            required: [network, title_id, title, sessions, seconds, first_played, last_played]
+            properties:
+              network: { type: string, description: "The core's network id: switch, wiiu, 3ds, wfc, xbox, x360, np." }
+              title_id: { type: string }
+              title: { type: string }
+              icon: { type: boolean, description: "GET /titles/icon/{title_id} on the website draws it." }
+              sessions: { type: integer }
+              seconds: { type: integer, format: int64 }
+              first_played: { type: string, format: date-time }
+              last_played: { type: string, format: date-time }
     CatalogWrite:
       type: object
       additionalProperties: false

@@ -1,0 +1,38 @@
+{{template "header" .}}
+{{/* The rewards abuse queue and totals. Admin-only (the handler answers 404 to anyone else). */}}
+<div class="page-head">
+  <h1>Rewards</h1>
+  <p class="lede">Abuse flags raised by the rewards service, and the totals.</p>
+</div>
+{{if not .Available}}<p class="empty">Rewards is not configured on this deployment (REWARDS_URL).</p>
+{{else if .Failed}}<p class="empty">The rewards service did not answer, or REWARDS_ADMIN_KEY is wrong.</p>
+{{else}}
+<div class="statgrid">
+  <div class="stat"><b>{{.Stats.Accounts}}</b><span>accounts</span></div>
+  <div class="stat"><b>{{.Stats.PointsIssued}}</b><span>points issued</span></div>
+  <div class="stat"><b>{{.Stats.PointsSpent}}</b><span>points spent</span></div>
+  <div class="stat"><b>{{.Stats.IssuedToday}}</b><span>issued today</span></div>
+  <div class="stat"><b>{{.Stats.OpenFlags}}</b><span>open flags</span></div>
+  <div class="stat"><b>{{.Stats.FrozenAccounts}}</b><span>frozen</span></div>
+</div>
+<div class="mb-4 flex gap-2">
+  <a class="btn text-sm {{if not .All}}primary{{end}}" href="/admin/rewards">Open</a>
+  <a class="btn text-sm {{if .All}}primary{{end}}" href="/admin/rewards?all=1">All</a>
+</div>
+<section aria-labelledby="flags-h">
+  <div class="section-head"><h2 id="flags-h">Flags</h2></div>
+  {{if not .Flags}}<p class="empty">Nothing in the queue.</p>{{else}}
+  <div class="card"><ul class="cardrows">
+    {{range .Flags}}
+    <li>
+      <span class="nm">{{.Reason}} <span class="sub">#{{.ID}}</span><br><span class="sub">{{.AccountID}} · {{.RaisedAt.Format "2006-01-02 15:04"}}{{with .Detail}} · {{.}}{{end}}</span></span>
+      <span class="val">{{if .ResolvedAt}}<span class="badge ok">resolved</span>{{else}}
+        <form method="post" action="/admin/rewards/flags/resolve" class="flex gap-2"><input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="id" value="{{.ID}}">
+          <input class="field" name="note" placeholder="note" aria-label="note" maxlength="200"><button type="submit" class="small primary">Resolve</button></form>{{end}}</span>
+    </li>
+    {{end}}
+  </ul></div>
+  {{end}}
+</section>
+{{end}}
+{{template "footer" .}}

@@ -283,7 +283,12 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 		ByVotes     bool
 		Back        string
 	}
-	s.render(w, http.StatusOK, "titles.html", titlesPage{d, titleRows(reqs, tallies, plays, links, playability), requestable, consoles, statuses, allStatuses, byVotes, backPath("/titles", byVotes)})
+	rows := titleRows(reqs, tallies, plays, links, playability)
+	slugs := s.companionSlugs(r.Context())
+	for i := range rows {
+		rows[i].Companion = slugs[rows[i].ID]
+	}
+	s.render(w, http.StatusOK, "titles.html", titlesPage{d, rows, requestable, consoles, statuses, allStatuses, byVotes, backPath("/titles", byVotes)})
 }
 
 // allStatuses is every status the title forms offer, in rank order. The word means the same
@@ -428,8 +433,10 @@ func badgeClass(status string) string {
 type titleRow struct {
 	store.Request
 	Compat []compatCell
-	links  map[string]string // shop key -> product page
-	play   map[string]string // client -> playability
+	// Companion is the slug of the title's companion page (/titles/<slug>), "" when it has none.
+	Companion string
+	links     map[string]string // shop key -> product page
+	play      map[string]string // client -> playability
 }
 
 // playabilityPick is one line of the admin playability form: a client the title can run on,

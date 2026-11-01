@@ -1,0 +1,14 @@
+{{template "header" .}}
+<div class="page-head">
+  <h1>{{t .Lang "activity.title"}}</h1>
+  <p class="lede">{{t .Lang "activity.sub"}}</p>
+</div>
+{{if .Failed}}
+<p class="empty">{{t .Lang "activity.unavailable"}}</p>
+{{else if not .Card.C.Rows}}
+<p class="empty">{{t .Lang "activity.empty"}}</p>
+{{else}}
+{{template "stat-card" .Card}}
+{{end}}
+<p class="hint mt-6">{{t .Lang "activity.note"}} <a href="/account/parental">{{t .Lang "activity.parental"}}</a></p>
+{{template "footer" .}}

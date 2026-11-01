@@ -1,0 +1,98 @@
+{{template "header" .}}
+<div class="page-head">
+  <h1>{{t .Lang "rewards.title"}}</h1>
+  <p class="lede">{{t .Lang "rewards.sub"}}</p>
+</div>
+{{if not .Available}}<p class="empty">{{t .Lang "rewards.unavailable"}}</p>
+{{else if .Failed}}<p class="empty">{{t .Lang "rewards.unavailable"}}</p>
+{{else}}
+{{$l := .Lang}}
+<div class="statgrid">
+  <div class="stat"><b>{{.Me.Account.Balance}}</b><span>{{t $l "rewards.balance"}}</span></div>
+  <div class="stat"><b>{{.Me.Account.LifetimeEarned}}</b><span>{{t $l "rewards.earned"}}</span></div>
+  <div class="stat"><b>{{.Me.Today.PlayPoints}} / {{.Me.Today.PlayCap}}</b><span>{{t $l "rewards.today"}}</span></div>
+</div>
+{{if .Me.Account.Frozen}}<p class="badge bad" role="status">{{t $l "rewards.frozen"}}</p>{{end}}
+{{if .Me.Account.Paused}}<p class="badge warn" role="status">{{t $l "rewards.paused"}}</p>{{end}}
+
+<section aria-labelledby="missions-h" class="mb-9">
+  <div class="section-head"><h2 id="missions-h">{{t $l "rewards.missions"}}</h2></div>
+  {{if not .Missions}}<p class="empty">{{t $l "rewards.empty.missions"}}</p>{{else}}
+  <div class="card"><ul class="cardrows">
+    {{range .Missions}}
+    <li>
+      <span class="nm">{{.Title}}<br><span class="sub">{{.Label}}{{with .Reward}} · {{.}}{{end}}</span></span>
+      <span class="val">
+        {{if .Claimed}}<span class="badge ok">{{t $l "rewards.claimed"}}</span>
+        {{else if .CanClaim}}<form method="post" action="/account/rewards/claim"><input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="mission" value="{{.ID}}"><input type="hidden" name="period" value="{{.Period}}"><button type="submit" class="small primary">{{t $l "rewards.claim"}}</button></form>
+        {{else if .Locked}}<span class="badge">{{t $l "rewards.locked"}}</span>{{end}}
+      </span>
+      <progress class="bar" max="100" value="{{.Percent}}" aria-hidden="true"></progress>
+    </li>
+    {{end}}
+  </ul></div>
+  {{end}}
+</section>
+
+<section aria-labelledby="shop-h" class="mb-9">
+  <div class="section-head"><h2 id="shop-h">{{t $l "rewards.shop"}}</h2></div>
+  {{if not .Shop}}<p class="empty">{{t $l "rewards.empty.shop"}}</p>{{else}}
+  <ul class="fgrid">
+    {{range .Shop}}
+    <li class="card p-4">
+      {{if .HasPreview}}<img src="/account/rewards/preview/{{.ID}}" alt="" width="96" height="96" loading="lazy" class="mb-3">{{end}}
+      <b class="font-ui">{{.Name}}</b>
+      {{with .Description}}<p class="hint m-0">{{.}}</p>{{end}}
+      <p class="mt-3 mb-0">
+        {{if .Owned}}<span class="badge ok">{{t $l "rewards.owned"}}</span>
+        {{else if .Price}}
+        <form method="post" action="/account/rewards/redeem" class="flex items-center gap-3">
+          <input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="item" value="{{.ID}}">
+          <button type="submit" class="small {{if .Affordable}}primary{{end}}"{{if not .Affordable}} disabled{{end}}>{{t $l "rewards.redeem"}}</button>
+          <span class="sub">{{printf (t $l "rewards.points") (deref .Price)}}</span>
+        </form>
+        {{end}}
+      </p>
+    </li>
+    {{end}}
+  </ul>
+  {{end}}
+</section>
+
+<section aria-labelledby="inv-h" class="mb-9">
+  <div class="section-head"><h2 id="inv-h">{{t $l "rewards.inventory"}}</h2></div>
+  {{if not .Inventory}}<p class="empty">{{t $l "rewards.empty.inventory"}}</p>{{else}}
+  <div class="card"><ul class="cardrows">
+    {{range .Inventory}}
+    <li>
+      <span class="nm">{{.Name}}<br><span class="sub">{{.Kind}}</span></span>
+      <span class="val"><form method="post" action="/account/rewards/equip"><input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="slot" value="{{.Kind}}">
+        {{if .Equipped}}<input type="hidden" name="item" value=""><button type="submit" class="small">{{t $l "rewards.unequip"}}</button>
+        {{else}}<input type="hidden" name="item" value="{{.ID}}"><button type="submit" class="small primary">{{t $l "rewards.equip"}}</button>{{end}}
+      </form></span>
+    </li>
+    {{end}}
+  </ul></div>
+  {{end}}
+</section>
+
+<section aria-labelledby="set-h" class="mb-9">
+  <div class="section-head"><h2 id="set-h">{{t $l "rewards.settings"}}</h2></div>
+  <form method="post" action="/account/rewards/settings" class="form-stack max-w-md">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <label class="flex items-center gap-2"><input type="checkbox" name="showcase" value="1"{{if .Me.Account.ShowcasePublic}} checked{{end}}> {{t $l "rewards.showcase"}}</label>
+    <label class="flex items-center gap-2"><input type="checkbox" name="paused" value="1"{{if .Me.Account.Paused}} checked{{end}}> {{t $l "rewards.pause"}}</label>
+    <button type="submit" class="primary">{{t $l "rewards.save"}}</button>
+  </form>
+</section>
+
+{{with .Ledger}}
+<section aria-labelledby="led-h">
+  <div class="section-head"><h2 id="led-h">{{t $l "rewards.ledger"}}</h2></div>
+  <div class="card"><ul class="cardrows">
+    {{range .}}<li><span class="nm">{{.Source}}{{with .Ref}} <span class="sub">{{.}}</span>{{end}}<br><span class="sub">{{date $l .CreatedAt}}</span></span><span class="val">{{if gt .Delta 0}}+{{end}}{{.Delta}}</span></li>{{end}}
+  </ul></div>
+</section>
+{{end}}
+{{end}}
+{{template "footer" .}}

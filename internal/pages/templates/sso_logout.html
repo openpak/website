@@ -1,0 +1,12 @@
+{{template "header" .}}
+<div class="page-head">
+  <h1>{{t .Lang "sso.logout.title"}}</h1>
+  <p class="lede">{{t .Lang "sso.logout.body"}}</p>
+</div>
+<form method="post" action="/account/sso/logout" class="actions">
+  <input type="hidden" name="csrf" value="{{.CSRF}}">
+  <input type="hidden" name="redirect_uri" value="{{.RedirectURI}}">
+  <button type="submit" class="primary">{{t .Lang "sso.logout.confirm"}}</button>
+  <a class="btn" href="{{.RedirectURI}}">{{t .Lang "sso.logout.cancel"}}</a>
+</form>
+{{template "footer" .}}

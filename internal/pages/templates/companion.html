@@ -1,0 +1,41 @@
+{{template "header" .}}
+{{/* A title's companion page: its art and name, a tab per feature, the signed-in player's
+     strip, and the tab's content. Which tabs exist is the title's registration in the
+     companion service, not this template. */}}
+<p class="mb-3"><a class="link-arrow" href="/titles">&larr; {{t .Lang "companion.back"}}</a></p>
+<header class="chead">
+  <span class="tart title-art">{{template "title-art" (arr .Lang .Title.Console .Title.Name .Title.TitleID "")}}</span>
+  <div>
+    <h1>{{.Title.Name}}</h1>
+    <p class="tmeta"><span class="console">{{range consoleSlugs .Title.Console}}<img src="/static/consoles/{{.}}.svg" alt="" width="32" height="22">{{end}}{{.Title.Console}}</span><span class="badge {{badgeClass .Title.Status}}">{{statusText .Title.Status}}</span></p>
+  </div>
+</header>
+
+<nav class="ctabs" aria-label="{{t .Lang "companion.nav"}}">
+  <a href="/titles/{{.Title.Slug}}"{{if eq .Tab "overview"}} aria-current="page"{{end}}>{{t .Lang "companion.tab.overview"}}</a>
+  {{range .Title.Features}}<a href="/titles/{{$.Title.Slug}}/{{.}}"{{if eq (printf "%s" .) $.Tab}} aria-current="page"{{end}}>{{t $.Lang (printf "companion.tab.%s" .)}}</a>{{end}}
+</nav>
+
+<div class="pstrip">
+  {{if .User}}{{$n := .User.DisplayName}}{{if not $n}}{{$n = .User.Email}}{{end}}<span>{{printf (t .Lang "companion.player.in") $n}}</span>
+  {{else}}<span>{{t .Lang "companion.player.out"}}</span><a class="btn primary" href="/login">{{t .Lang "companion.signin"}}</a>{{end}}
+</div>
+
+{{if eq .Tab "overview"}}
+<p class="lede mb-6">{{t .Lang "companion.overview"}}</p>
+<ul class="fgrid">
+  {{range .Title.Features}}
+  <li><a class="card p-5 block no-underline" href="/titles/{{$.Title.Slug}}/{{.}}"><b class="font-ui">{{t $.Lang (printf "companion.tab.%s" .)}}</b></a></li>
+  {{end}}
+</ul>
+{{else if eq .Tab "rankings"}}
+  {{if .Failed}}<p class="empty">{{t .Lang "companion.rankings.unavailable"}}</p>
+  {{else}}{{template "ranking-board" .Board}}{{end}}
+{{else if eq .Tab "stats"}}
+  {{if not .User}}<p class="empty">{{t .Lang "companion.stats.signin"}}</p>
+  {{else if .Failed}}<p class="empty">{{t .Lang "companion.stats.unavailable"}}</p>
+  {{else if not .Card.C.Linked}}<p class="empty">{{t .Lang "companion.stats.unlinked"}}</p>
+  {{else if and (not .Card.C.Rows) (not .Card.C.Stats)}}<p class="empty">{{t .Lang "companion.stats.empty"}}</p>
+  {{else}}{{template "stat-card" .Card}}{{end}}
+{{end}}
+{{template "footer" .}}

@@ -15,10 +15,12 @@ import (
 	"time"
 
 	"github.com/openpak/website/internal/accounts"
+	"github.com/openpak/website/internal/adapter"
 	"github.com/openpak/website/internal/admin"
 	"github.com/openpak/website/internal/api"
 	"github.com/openpak/website/internal/attachments"
 	"github.com/openpak/website/internal/chat"
+	"github.com/openpak/website/internal/companion"
 	"github.com/openpak/website/internal/config"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/erasure"
@@ -31,8 +33,10 @@ import (
 	"github.com/openpak/website/internal/pctl"
 	"github.com/openpak/website/internal/push"
 	"github.com/openpak/website/internal/ratelimit"
+	"github.com/openpak/website/internal/rewards"
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/session"
+	"github.com/openpak/website/internal/sso"
 	"github.com/openpak/website/internal/store"
 	"github.com/openpak/website/internal/support"
 	"github.com/openpak/website/internal/turnstile"
@@ -152,6 +156,27 @@ func run(log *slog.Logger) error {
 	apiSrv.Parental = parentalCli
 	pageSrv.Parental = parentalCli
 	apiSrv.SaveTitle = pages.SaveTitle
+	// Title companion pages and the play history: one service behind the site and the API.
+	comp := companion.New(db)
+	comp.History = coreGRPC
+	comp.Catalogue = func(ctx context.Context) map[string]string { return pages.TitleCatalogue(ctx, db) }
+	comp.Namer = pages.FriendGame
+	registerCompanionTitles(comp, log)
+	// Rewards: points, missions, shop. REWARDS_URL is the private address (http://openpak-rewards:20180).
+	pageSrv.Rewards = rewards.New(os.Getenv("REWARDS_URL"), os.Getenv("REWARDS_INTERNAL_KEY"), os.Getenv("REWARDS_ADMIN_KEY"))
+	if pageSrv.Rewards == nil {
+		log.Info("rewards: REWARDS_URL not set; /account/rewards says it is not available")
+	}
+	// Subsite sign-in: only clients with SSO_CLIENT_<NAME>_SECRET set are registered.
+	pageSrv.SSO = sso.New(sso.FromEnv())
+	if !pageSrv.SSO.Enabled() {
+		log.Info("sso: no SSO_CLIENT_*_SECRET set; /account/sso is off")
+	}
+	if u := os.Getenv("NN_ACCOUNT_INTERNAL_URL"); u != "" {
+		pageSrv.NNAdapter = adapter.New(u, os.Getenv("NN_ACCOUNT_INTERNAL_KEY"))
+	}
+	pageSrv.Companion = comp
+	apiSrv.Companion = comp
 	apiSrv.Chat = chatCli
 	apiSrv.AdminIDs = cfg.AdminAccountIDs
 	apiSrv.MailLimit = pageSrv.MailLimit // one mail budget per address across site and app

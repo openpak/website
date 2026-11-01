@@ -61,7 +61,15 @@ func linkCode(raw string) string {
 // optional, well-formed code. Anything else (other paths, hosts) is dropped.
 func linkNext(raw string) string {
 	u, err := url.Parse(raw)
-	if err != nil || u.Scheme != "" || u.Host != "" || u.Path != "/link" {
+	if err != nil || u.Scheme != "" || u.Host != "" {
+		return ""
+	}
+	// A subsite's sign-in comes back to /account/sso/authorize after the login; the handler
+	// there validates client and redirect_uri itself, so only the path is allowed through here.
+	if u.Path == "/account/sso/authorize" && len(u.RawQuery) <= 1024 {
+		return "/account/sso/authorize?" + u.RawQuery
+	}
+	if u.Path != "/link" {
 		return ""
 	}
 	if c := linkCode(u.Query().Get("code")); c != "" {

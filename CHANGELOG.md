@@ -13,6 +13,18 @@ release, taken from git history. `git log` stays the source of truth.
 
 ## Unreleased
 
+- **Sign-in for subdomains.** `GET /account/sso/authorize`, `POST /internal/sso/token`,
+  `/account/sso/logout`: an authorization-code flow (60 s single-use code, exact https redirect
+  allowlist per client, optional PKCE) so splatnet, mktv, mario-maker and rewards reuse the
+  openpak.org login. See docs/sso.md.
+- **Rewards.** `/account/rewards` (points, missions, shop, inventory) and `/admin/rewards` (flags
+  queue) over the rewards service.
+- **Title companion pages.** `/titles/<slug>` with tabs per feature (rankings, "my stats"), a shared
+  rankings component (podium, list, around you, board picker) and a shared stat card, plus the JSON
+  beside them under `/api/v1/companion/titles/...`. Titles opt in through `internal/companion`; a
+  title with no feature has no page. See docs/companion.md.
+- **Play activity.** `/account/activity` and `GET /api/v1/me/activity`: what the signed-in account
+  played per title and network, from the account core's play log (`GetPlayHistory`).
 - `/link`: the page where a game's device-code sign-in (Minecraft Dungeons first) is approved, now in the site layout with the site's own sign-in. Signed out it offers sign-in and comes back (`/login?next=`, kept through two-factor and restore; only `/link?code=` is accepted); signed in it takes the code (prefilled from `?code=` or `?otc=`), asks "Link <title> to <account>?", and approves through xbl's private API (`XBL_INTERNAL_URL`). Expired, unknown and already-used codes each say so; attempts are limited per account and per address. The Switch adapter's pages, when mounted, keep `/link/…` only.
 - `/press`: a press kit (description, fact sheet with live title counts per console, logo and emulator icon downloads, credits, contact, disclaimer), linked from the footer. Screenshots are still to come.
 - **Turnstile for the app.** `POST /api/v1/register` and `POST /api/v1/password/forgot` now take a

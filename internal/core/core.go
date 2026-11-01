@@ -333,6 +333,20 @@ type PlayTally struct {
 	Total, Longest                 time.Duration
 }
 
+// PlayHistory is what one account played, from the core's play_sessions: one entry per title, newest
+// first. The core keeps it for every account, supervised or not, and answers per network (namespace).
+type PlayHistory interface {
+	PlayHistory(ctx context.Context, accountID, namespace string, limit int) ([]PlayEntry, error)
+}
+
+// PlayEntry is one title in an account's history on one network.
+type PlayEntry struct {
+	Namespace, TitleID string
+	Sessions           int
+	Total              time.Duration
+	First, Last        time.Time
+}
+
 // TitlePlayers is how many people are in one title. The second return of
 // PlayerCounts is players per adapter namespace, keyed by namespace.
 type TitlePlayers struct {

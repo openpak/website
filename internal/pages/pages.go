@@ -30,14 +30,17 @@ import (
 	"github.com/openpak/website/internal/adapter"
 	"github.com/openpak/website/internal/chat"
 	"github.com/openpak/website/internal/clientip"
+	"github.com/openpak/website/internal/companion"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/news"
 	"github.com/openpak/website/internal/pctl"
 	"github.com/openpak/website/internal/ratelimit"
+	"github.com/openpak/website/internal/rewards"
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/session"
+	"github.com/openpak/website/internal/sso"
 	"github.com/openpak/website/internal/store"
 	"github.com/openpak/website/internal/support"
 	"github.com/openpak/website/internal/titleart"
@@ -56,6 +59,16 @@ type Server struct {
 	Links      core.Links
 	Events     core.Events
 	Invites    core.InvitationsView
+	// Rewards is the points, missions and shop service; nil renders the page as "not available".
+	Rewards *rewards.Client
+	// SSO signs subsites (splatnet.openpak.org, ...) in with this site's login; nil or with no
+	// client registered, the /account/sso routes are 404.
+	SSO *sso.Service
+	// NNAdapter is nn-account, which knows the Wii U / 3DS PID of an account; nil leaves it out of SSO.
+	NNAdapter *adapter.Client
+	// Companion serves the per-title pages (rankings, stats) and the play history; nil leaves
+	// /titles/<slug> a 404 and the activity page "not available".
+	Companion *companion.Service
 	// Playtime marks titles tested from online play; nil leaves the titles page on player reports.
 	Playtime core.Playtime
 	DB       store.Store
@@ -386,6 +399,21 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /account/parental/name", s.handleParentalName)
 	mux.HandleFunc("GET /account/parental/{moonID}/players/{playerID}/image", s.handleParentalPlayerImage)
 	mux.HandleFunc("GET /titles/icon/{id}", s.handleSwitchIcon)
+	mux.HandleFunc("GET /titles/{slug}", s.handleCompanion)
+	mux.HandleFunc("GET /titles/{slug}/{tab}", s.handleCompanion)
+	mux.HandleFunc("GET /account/activity", s.handleActivity)
+	mux.HandleFunc("GET /account/rewards", s.handleRewards)
+	mux.HandleFunc("POST /account/rewards/claim", s.handleRewardsClaim)
+	mux.HandleFunc("POST /account/rewards/redeem", s.handleRewardsRedeem)
+	mux.HandleFunc("POST /account/rewards/equip", s.handleRewardsEquip)
+	mux.HandleFunc("POST /account/rewards/settings", s.handleRewardsSettings)
+	mux.HandleFunc("GET /account/rewards/preview/{id}", s.handleRewardsPreview)
+	mux.HandleFunc("GET /admin/rewards", s.handleAdminRewards)
+	mux.HandleFunc("POST /admin/rewards/flags/resolve", s.handleAdminRewardsResolve)
+	mux.HandleFunc("GET /account/sso/authorize", s.handleSSOAuthorize)
+	mux.HandleFunc("GET /account/sso/logout", s.handleSSOLogoutForm)
+	mux.HandleFunc("POST /account/sso/logout", s.handleSSOLogout)
+	mux.HandleFunc("POST /internal/sso/token", s.handleSSOToken)
 	mux.HandleFunc("POST /account/saves/storage", s.handleSavesStorage)
 	mux.HandleFunc("POST /account/saves/storage/disconnect", s.handleSavesDisconnect)
 	mux.HandleFunc("POST /account/saves/storage/move", s.handleSavesMove)

@@ -1,0 +1,137 @@
+package pages
+
+import (
+	"context"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/openpak/website/internal/companion"
+	"github.com/openpak/website/internal/core"
+	"github.com/openpak/website/internal/store"
+)
+
+type testBoards struct{ entries []companion.Entry }
+
+func (testBoards) Boards(context.Context) ([]companion.Board, error) {
+	return []companion.Board{{ID: "one", Label: "Board One"}, {ID: "two", Label: "Board Two"}}, nil
+}
+func (b testBoards) Ranking(context.Context, string, string) (companion.Ranking, error) {
+	return companion.Ranking{Entries: b.entries}, nil
+}
+
+type testStats struct{ linked bool }
+
+func (s testStats) Stats(context.Context, string) (companion.Card, error) {
+	return companion.Card{Linked: s.linked, Stats: []companion.Stat{{Key: "activity.games", Value: "7"}},
+		Rows: []companion.Row{{Title: "Row one", Value: "3", Percent: 40}}}, nil
+}
+
+type testHistory struct{}
+
+func (testHistory) PlayHistory(_ context.Context, _, ns string, _ int) ([]core.PlayEntry, error) {
+	if ns != "switch" {
+		return nil, nil
+	}
+	return []core.PlayEntry{{Namespace: "switch", TitleID: "0100E65002BB8000", Sessions: 2, Total: 95 * time.Minute,
+		First: time.Now().Add(-72 * time.Hour), Last: time.Now().Add(-time.Hour)}}, nil
+}
+
+func companionServer(t *testing.T) (*Server, *fakeCore) {
+	t.Helper()
+	s, fc, db := newTestServer(t)
+	seedTwoAccounts(fc)
+	_ = db.SeedRequests(context.Background(), []store.Request{
+		{Kind: "title", Name: "Mario Kart Wii", Console: "Wii", Status: "beta"},
+		{Kind: "title", Name: "Stardew Valley", Console: "Switch", Status: "live", TitleID: "0100E65002BB8000", TitleIDs: []string{"0100E65002BB8000"}},
+		{Kind: "title", Name: "Halo 3", Console: "Xbox 360", Status: "beta"},
+	})
+	c := companion.New(db)
+	c.History = testHistory{}
+	c.Register(companion.Source{Names: []string{"Mario Kart Wii"}, Rankings: testBoards{entries: []companion.Entry{
+		{Name: "Ana", Display: "1:23.456"}, {Name: "Bo", Display: "1:24.000"}, {Name: "Cy", Display: "1:25.500"},
+		{Name: "Di", Display: "1:26.000"}, {Name: "Ed", Display: "1:27.250", Me: true}}}, Stats: testStats{linked: true}})
+	s.Companion = c
+	return s, fc
+}
+
+func getPath(s *Server, path string) *httptest.ResponseRecorder {
+	w := httptest.NewRecorder()
+	s.Handler().ServeHTTP(w, httptest.NewRequest(http.MethodGet, path, nil))
+	return w
+}
+
+func TestCompanionPages(t *testing.T) {
+	s, _ := companionServer(t)
+
+	w := getPath(s, "/titles/mario-kart-wii")
+	if w.Code != 200 || !strings.Contains(w.Body.String(), "Mario Kart Wii") || !strings.Contains(w.Body.String(), `href="/titles/mario-kart-wii/rankings"`) {
+		t.Fatalf("overview: %d %s", w.Code, w.Body.String())
+	}
+	w = getPath(s, "/titles/mario-kart-wii/rankings?board=two")
+	body := w.Body.String()
+	for _, want := range []string{"Board Two", "podium", "Ana", "1:27.250", `aria-current="true"`, "Sign in"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("rankings page lacks %q", want)
+		}
+	}
+	if w = getPath(s, "/titles/mario-kart-wii/rankings?board=nope"); w.Code != 404 {
+		t.Errorf("unknown board: %d", w.Code)
+	}
+	if w = getPath(s, "/titles/halo-3"); w.Code != 404 {
+		t.Errorf("a title with no feature has a page: %d", w.Code)
+	}
+	if w = getPath(s, "/titles/mario-kart-wii/gallery"); w.Code != 404 {
+		t.Errorf("unregistered tab: %d", w.Code)
+	}
+	// The icon route must keep winning over /titles/{slug}/{tab}.
+	if w = getPath(s, "/titles/icon/0100E65002BB8000"); w.Code == 404 && strings.Contains(w.Body.String(), "Mario") {
+		t.Errorf("icon route shadowed")
+	}
+	// Signed out, the stats tab asks for a sign-in.
+	if w = getPath(s, "/titles/mario-kart-wii/stats"); w.Code != 200 || !strings.Contains(w.Body.String(), "Sign in to see your stats") {
+		t.Errorf("stats signed out: %d", w.Code)
+	}
+}
+
+func TestCompanionStatsSignedIn(t *testing.T) {
+	s, _ := companionServer(t)
+	rec := login(t, s, "a@x.test", "password-A-1")
+	w := authedRequest(s, rec, http.MethodGet, "/titles/mario-kart-wii/stats", nil)
+	if w.Code != 200 || !strings.Contains(w.Body.String(), "Row one") || !strings.Contains(w.Body.String(), `value="40"`) {
+		t.Fatalf("stats: %d %s", w.Code, w.Body.String())
+	}
+}
+
+func TestTitlesPageLinksToCompanion(t *testing.T) {
+	s, _ := companionServer(t)
+	body := getPath(s, "/titles").Body.String()
+	if !strings.Contains(body, `href="/titles/mario-kart-wii"`) {
+		t.Error("titles dialog has no link to the companion page")
+	}
+	if strings.Contains(body, `href="/titles/halo-3"`) {
+		t.Error("a title with no feature is linked")
+	}
+}
+
+func TestActivityPage(t *testing.T) {
+	s, _ := companionServer(t)
+	if w := getPath(s, "/account/activity"); w.Code != http.StatusSeeOther {
+		t.Fatalf("signed out: %d", w.Code)
+	}
+	rec := login(t, s, "a@x.test", "password-A-1")
+	w := authedRequest(s, rec, http.MethodGet, "/account/activity", nil)
+	body := w.Body.String()
+	for _, want := range []string{"Stardew Valley", "1 h 35 min", "Nintendo Switch", "2 sessions"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("activity page lacks %q:\n%s", want, body)
+		}
+	}
+	s.Companion.History = nil
+	w = authedRequest(s, rec, http.MethodGet, "/account/activity", nil)
+	if w.Code != 200 || !strings.Contains(w.Body.String(), "not available") {
+		t.Errorf("no backend: %d", w.Code)
+	}
+}

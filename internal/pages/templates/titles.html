@@ -76,6 +76,7 @@
       <button type="button" class="tclose" data-close aria-label="{{t $.Lang "titles.request.close"}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     </header>
     <div class="tbody">
+    {{with .Companion}}<p class="mt-4"><a class="btn primary" href="/titles/{{.}}">{{t $.Lang "companion.open"}}</a></p>{{end}}
     <h3>{{t $.Lang "titles.compat.title"}}</h3>
     <p class="text-sm text-muted">{{t $.Lang "titles.compat.sub"}}</p>
     <div class="table-wrap"><table class="compat">

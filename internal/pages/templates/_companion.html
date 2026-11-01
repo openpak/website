@@ -1,0 +1,62 @@
+{{/* The shared pieces of the title companion pages and the play activity page: the rankings
+     board (podium, list, "around you") and the stat card. Both take a view struct from
+     companion.go and render with the site's existing surfaces, so a new title adds data,
+     not markup. */}}
+
+{{define "ranking-board"}}
+{{$l := .Lang}}
+{{if gt (len .R.Boards) 1}}
+<ul class="board-pick" aria-label="{{t $l "companion.rankings.boards"}}">
+  {{range .R.Boards}}<li><a href="/titles/{{$.Slug}}/rankings?board={{.ID}}"{{if eq .ID $.R.Board}} aria-current="true"{{end}}>{{.Label}}</a></li>{{end}}
+</ul>
+{{end}}
+<section aria-labelledby="board-h">
+  <div class="section-head"><h2 id="board-h">{{.R.Label}}</h2></div>
+  {{if not .R.Entries}}
+  <p class="empty">{{t $l "companion.rankings.empty"}}</p>
+  {{else}}
+  {{$podium := ge (len .R.Entries) 3}}
+  {{if $podium}}
+  <ol class="podium">
+    {{range slice .R.Entries 0 3}}
+    <li{{if .Me}} class="me"{{end}}><span class="pos">#{{.Rank}}</span><span class="who">{{.Name}}</span><span class="val">{{.Display}}</span></li>
+    {{end}}
+  </ol>
+  {{end}}
+  {{$rest := .R.Entries}}{{if $podium}}{{$rest = slice .R.Entries 3}}{{end}}
+  {{if $rest}}
+  <div class="card"><ol class="ranklist">
+    {{range $rest}}
+    <li{{if .Me}} class="me"{{end}}><span class="rk">{{.Rank}}</span><span class="nm">{{.Name}}{{if or .Region .Note}}<small>{{.Region}}{{if and .Region .Note}} · {{end}}{{.Note}}</small>{{end}}</span><span class="sc">{{.Display}}</span></li>
+    {{end}}
+  </ol></div>
+  {{end}}
+  {{end}}
+  {{with .R.Around}}
+  <div class="section-head mt-6"><h3>{{t $l "companion.rankings.around"}}</h3></div>
+  <div class="card"><ol class="ranklist">
+    {{range .}}<li{{if .Me}} class="me"{{end}}><span class="rk">{{.Rank}}</span><span class="nm">{{.Name}}</span><span class="sc">{{.Display}}</span></li>{{end}}
+  </ol></div>
+  {{end}}
+</section>
+{{end}}
+
+{{define "stat-card"}}
+{{$l := .Lang}}
+{{with .C.Stats}}
+<div class="statgrid">
+  {{range .}}<div class="stat"><b>{{.Value}}</b><span>{{t $l .Key}}</span></div>{{end}}
+</div>
+{{end}}
+{{if .C.Rows}}
+<div class="card"><ul class="cardrows">
+  {{range .C.Rows}}
+  <li>
+    <span class="nm">{{.Title}}{{with .Sub}}<br><span class="sub">{{.}}</span>{{end}}</span>
+    <span class="val">{{.Value}}</span>
+    {{if ge .Percent 0}}<progress class="bar" max="100" value="{{.Percent}}" aria-hidden="true"></progress>{{end}}
+  </li>
+  {{end}}
+</ul></div>
+{{end}}
+{{end}}

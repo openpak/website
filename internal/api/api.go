@@ -25,6 +25,7 @@ import (
 	"github.com/openpak/website/internal/attachments"
 	"github.com/openpak/website/internal/chat"
 	"github.com/openpak/website/internal/clientip"
+	"github.com/openpak/website/internal/companion"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/netprofile"
@@ -85,6 +86,8 @@ type Server struct {
 	CrashLimit *ratelimit.Limiter // per client, public crash reports
 	// Support is the help-ticket service; nil answers 503 on /me/tickets.
 	Support *support.Service
+	// Companion serves the per-title rankings and stats and the play history; nil answers 503.
+	Companion *companion.Service
 	// News is the public news feed; nil answers an empty list on /news.
 	News *news.Feed
 	// BCAT relays public emulator delivery to the dataset service; nil returns 503.
@@ -144,6 +147,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	s.registerChat(mux)
 	s.registerVoice(mux)
 	s.registerParental(mux)
+	s.registerCompanion(mux)
 	s.registerEmulator(mux)
 	s.registerBCAT(mux)
 	g("/me/friends/requests", s.auth(s.handleRequests))

@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/openpak/website/internal/companion"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/store"
 )
@@ -62,9 +63,19 @@ func TestWritePreview(t *testing.T) {
 		Namespace: "switch", ExpiresAt: time.Now().Add(4 * time.Minute),
 	}}
 
+	// The companion pages, with sample boards and a card so the components are on screen.
+	comp := companion.New(db)
+	comp.History = testHistory{}
+	comp.Register(companion.Source{Names: []string{"Mario Kart Wii"}, Rankings: testBoards{entries: []companion.Entry{
+		{Name: "Ana", Display: "1:23.456", Region: "EU"}, {Name: "Bo", Display: "1:24.000"}, {Name: "Cy", Display: "1:25.500"},
+		{Name: "Di", Display: "1:26.000", Note: "Funky Kong"}, {Name: "Ed", Display: "1:27.250", Me: true}}},
+		Stats: testStats{linked: true}})
+	s.Companion = comp
+
 	rec := login(t, s, "a@x.test", "password-A-1")
 
 	for name, path := range map[string]string{
+		"companion-overview": "/titles/mario-kart-wii", "companion-rankings": "/titles/mario-kart-wii/rankings",
 		"home": "/", "features": "/features", "downloads": "/downloads",
 		"status": "/status", "login": "/login", "register": "/register",
 		"forgot": "/forgot-password", "titles": "/titles", "help": "/help",
@@ -77,7 +88,8 @@ func TestWritePreview(t *testing.T) {
 	// Signed-in pages need the session cookie the login handed back.
 	for name, path := range map[string]string{
 		"account": "/account", "friends": "/account/friends", "saves": "/account/saves",
-		"parental": "/account/parental",
+		"parental": "/account/parental", "activity": "/account/activity",
+		"companion-stats": "/titles/mario-kart-wii/stats",
 	} {
 		w := authedRequest(s, rec, http.MethodGet, path, nil)
 		write(t, dir, name, w.Body.String())

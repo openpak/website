@@ -457,6 +457,24 @@ func (g *GRPC) Playtime(ctx context.Context) ([]PlayTally, error) {
 	return out, nil
 }
 
+// PlayHistory reads what an account played on one network, newest title first (the core caps it at 20).
+func (g *GRPC) PlayHistory(ctx context.Context, accountID, namespace string, limit int) ([]PlayEntry, error) {
+	resp, err := accountv1.NewSessionsClient(g.conn).GetPlayHistory(ctx, &accountv1.GetPlayHistoryRequest{
+		AccountId: accountID, Namespace: namespace, Limit: int32(limit)})
+	if err != nil {
+		return nil, mapGRPC(err)
+	}
+	out := make([]PlayEntry, 0, len(resp.GetEntries()))
+	for _, e := range resp.GetEntries() {
+		out = append(out, PlayEntry{
+			Namespace: namespace, TitleID: e.GetTitleId(), Sessions: int(e.GetSessions()),
+			Total: time.Duration(e.GetTotalSeconds()) * time.Second,
+			First: time.Unix(e.GetFirstPlayedUnix(), 0).UTC(), Last: time.Unix(e.GetLastPlayedUnix(), 0).UTC(),
+		})
+	}
+	return out, nil
+}
+
 // --- InvitationsView ---
 
 // ListPending reads the invitations waiting for an account. It calls
