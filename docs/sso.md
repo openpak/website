@@ -24,9 +24,16 @@ session leaves openpak.org.
        Authorization: Basic base64(<client id>:<client secret>)     (or client_id / client_secret fields)
        code=<code>&redirect_uri=<the same url>[&code_verifier=<verifier>]
 
-   `200 {"account_id": "...", "display_name": "...", "wiiu_pid": 1800000123 | null}`.
-   `wiiu_pid` is the account's Wii U / 3DS PID (its PNID, created if needed) when nn-account
-   answers; `null` otherwise. Errors are `{"error": "invalid_client" | "invalid_grant" |
+   `200 {"account_id": "...", "display_name": "...", "wiiu_pid": 1800000123 | null,
+   "switch_pid": "12297829382472990721" | null, "wfc_user_id": "8899001122" | null}`.
+   `wiiu_pid` is the account's Wii U PID (its PNID, created if needed) when nn-account
+   answers; `null` otherwise. nn-account gives an account one PNID for both families, so the same
+   number is the 3DS PID: there is no separate `n3ds_pid`, use `wiiu_pid` for 3DS too.
+   `switch_pid` is the NEX principal id of the account's active Switch link (the 16-hex network
+   service account id read as a number, as switch-nex does) as a decimal string, `null` without
+   a link. `wfc_user_id` is the console user id of the account's active Wii/DS (WFC) link as a
+   decimal string, `null` without one. New fields are only ever added. Errors are
+   `{"error": "invalid_client" | "invalid_grant" |
    "invalid_request" | "rate_limited" | "temporarily_unavailable"}` (401, 400, 400, 429, 502).
 4. The subsite starts its own session for `account_id`.
 

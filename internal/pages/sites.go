@@ -28,6 +28,9 @@ var openSites = []openSite{
 var titleSites = map[[2]string]string{
 	{"Splatoon", "Wii U"}:                         "opensplat",
 	{"Mario Kart 8", "Wii U"}:                     "openkart",
+	{"Mario Kart 8 Deluxe", "Switch"}:             "openkart",
+	{"Mario Kart 7", "3DS"}:                       "openkart",
+	{"Mario Kart Wii", "Wii"}:                     "openkart",
 	{"Super Mario Maker", "Wii U"}:                "openmaker",
 	{"Super Mario Maker for Nintendo 3DS", "3DS"}: "openmaker",
 	{"Super Mario Maker", "3DS"}:                  "openmaker",

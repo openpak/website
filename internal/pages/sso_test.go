@@ -76,6 +76,12 @@ func TestSSOFlow(t *testing.T) {
 	if _, has := out["wiiu_pid"]; !has {
 		t.Errorf("wiiu_pid is not in the answer: %s", w.Body.String())
 	}
+	if v, has := out["switch_pid"]; !has || v != "1250999896491" { // the seeded Switch link, 0x123456789ab
+		t.Errorf("switch_pid: %s", w.Body.String())
+	}
+	if v, has := out["wfc_user_id"]; !has || v != nil {
+		t.Errorf("wfc_user_id should be null without a link: %s", w.Body.String())
+	}
 	if w = exchange(s, form, "sekret"); w.Code != http.StatusBadRequest {
 		t.Fatalf("code reuse: %d", w.Code)
 	}
@@ -142,5 +148,29 @@ func TestSSOOff(t *testing.T) {
 	s, _, _ := newTestServer(t)
 	if w := getPath(s, authorizeURL(nil)); w.Code != http.StatusNotFound {
 		t.Errorf("sso off: %d", w.Code)
+	}
+}
+
+// The Switch and WFC links show up as the NEX principal id (decimal) and the console user id.
+func TestSSOTokenLinkedIDs(t *testing.T) {
+	for _, c := range []struct{ subject, want string }{
+		{"aaaaaaaaaaaa0001", "12297829382472990721"}, {"not-hex", ""}, {"0000000000000000", ""},
+	} {
+		s, fc := ssoServer(t)
+		fc.links["acct-a@x.test"] = c.subject
+		fc.wfcLinks["acct-a@x.test"] = "8899001122"
+		rec := login(t, s, "a@x.test", "password-A-1")
+		w := authedRequest(s, rec, http.MethodGet, authorizeURL(nil), nil)
+		back, _ := url.Parse(w.Header().Get("Location"))
+		w = exchange(s, url.Values{"code": {back.Query().Get("code")}, "redirect_uri": {ssoCB}}, "sekret")
+		var out map[string]any
+		_ = json.Unmarshal(w.Body.Bytes(), &out)
+		var want any
+		if c.want != "" {
+			want = c.want
+		}
+		if w.Code != 200 || out["switch_pid"] != want || out["wfc_user_id"] != "8899001122" {
+			t.Errorf("%s: %d %s", c.subject, w.Code, w.Body.String())
+		}
 	}
 }

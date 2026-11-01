@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/openpak/website/internal/core"
@@ -116,9 +117,18 @@ func (s *Server) handleSSOToken(w http.ResponseWriter, r *http.Request) {
 		ssoJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant"})
 		return
 	}
-	out := map[string]any{"account_id": g.AccountID, "display_name": acct.DisplayName, "wiiu_pid": nil}
+	out := map[string]any{"account_id": g.AccountID, "display_name": acct.DisplayName, "wiiu_pid": nil,
+		"switch_pid": nil, "wfc_user_id": nil}
 	if pid := s.wiiuPID(r, g.AccountID); pid != 0 {
 		out["wiiu_pid"] = pid
+	}
+	if pid := s.switchNEXPID(r, g.AccountID); pid != "" {
+		out["switch_pid"] = pid
+	}
+	if s.Links != nil {
+		if link, err := s.Links.ActiveLinkByAccount(r.Context(), "wfc", g.AccountID); err == nil && link.SubjectID != "" {
+			out["wfc_user_id"] = link.SubjectID
+		}
 	}
 	ssoJSON(w, http.StatusOK, out)
 }
@@ -139,6 +149,24 @@ func (s *Server) wiiuPID(r *http.Request, accountID string) int64 {
 		return int64(f)
 	}
 	return 0
+}
+
+// switchNEXPID is the NEX principal id Switch titles know the account by: the account's active
+// "switch" link subject (the 16-hex baas_user_id) read as a number, as a decimal string. Empty
+// when there is no link or the subject is not a nonzero 64-bit hex number.
+func (s *Server) switchNEXPID(r *http.Request, accountID string) string {
+	if s.Links == nil {
+		return ""
+	}
+	link, err := s.Links.ActiveLinkByAccount(r.Context(), "switch", accountID)
+	if err != nil {
+		return ""
+	}
+	n, err := strconv.ParseUint(link.SubjectID, 16, 64)
+	if err != nil || n == 0 {
+		return ""
+	}
+	return strconv.FormatUint(n, 10)
 }
 
 type ssoLogoutPage struct {

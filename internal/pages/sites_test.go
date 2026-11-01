@@ -50,7 +50,8 @@ func TestSiteFor(t *testing.T) {
 	for _, c := range []struct{ name, console, want string }{
 		{"Splatoon", "Wii U", "opensplat"}, {"Mario Kart 8", "Wii U", "openkart"},
 		{"Super Mario Maker", "Wii U", "openmaker"}, {"Super Mario Maker", "3DS", "openmaker"},
-		{"Super Mario Maker 2", "Switch", "openmaker"}, {"Splatoon 2", "Switch", ""}, {"Mario Kart 8 Deluxe", "Switch", ""},
+		{"Super Mario Maker 2", "Switch", "openmaker"}, {"Splatoon 2", "Switch", ""}, {"Mario Kart 8 Deluxe", "Switch", "openkart"},
+		{"Mario Kart 7", "3DS", "openkart"}, {"Mario Kart Wii", "Wii", "openkart"}, {"Mario Kart DS", "DS", ""},
 	} {
 		got := ""
 		if o := siteFor(c.name, c.console); o != nil {

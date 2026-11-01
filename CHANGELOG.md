@@ -11,6 +11,13 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.74.1
+
+- SSO token answer gains `switch_pid` (NEX principal id, decimal string) and `wfc_user_id`
+  (console user id, decimal string), each null without an active link. No `n3ds_pid`: the
+  PNID is one for Wii U and 3DS, `wiiu_pid` serves both.
+- OpenKart lists Mario Kart 8, 8 Deluxe, 7 and Wii; their game pages get the Open OpenKart button.
+
 ## Unreleased
 
 - **Link Discord.** Account > Linked platforms can link a Discord account (OAuth2, `identify` only; the
