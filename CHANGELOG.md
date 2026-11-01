@@ -13,6 +13,10 @@ release, taken from git history. `git log` stays the source of truth.
 
 ## Unreleased
 
+- **Open sites directory.** `/sites` lists OpenSplat, OpenKart, OpenMaker and OpenVerse as tiles
+  (menu and footer link it); the details of Splatoon, Mario Kart 8 (Wii U) and Super Mario Maker
+  1 and 2 gain an "Open <site>" button. SSO built-in origins are now splat., kart., maker. and
+  verse.openpak.org.
 - **Companion sources.** Mario Kart Wii course rankings (wfc-race v0.2.0 JSON endpoint),
   Pokémon Global Showcase rankings and GTS listings on DS and 3DS Pokémon titles, and PS3
   trophies at `/account/trophies` (`GET /api/v1/me/trophies`). See docs/companion.md.

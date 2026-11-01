@@ -1,0 +1,28 @@
+{{template "header" .}}
+<div class="page-head">
+  <h1>{{t .Lang "sites.title"}}</h1>
+  <p class="lede">{{t .Lang "sites.sub"}}</p>
+</div>
+
+<section aria-labelledby="sites-h">
+  <h2 id="sites-h" class="sr-only">{{t .Lang "sites.title"}}</h2>
+  {{/* The Open sites, as tiles in the style of the titles shelf: the site's mark where a
+       game has its art, then what it does, which games it covers and the way in. */}}
+  <ul class="gtiles stiles">
+    {{range .Sites}}
+    {{$line := printf "sites.%s.line" .Key}}{{$games := printf "sites.%s.games" .Key}}
+    <li class="gtile stile">
+      <a class="t" href="{{.URL}}" rel="noopener" aria-label="{{.Name}}">
+        <span class="art"><img src="{{.Mark}}?v={{$.Asset}}" alt="" width="112" height="112"></span>
+      </a>
+      <div class="sbody">
+        <h3>{{.Name}}</h3>
+        <p class="sline">{{t $.Lang $line}}</p>
+        <p class="sgames"><span>{{t $.Lang "sites.games"}}</span> {{t $.Lang $games}}</p>
+      </div>
+      <div class="foot"><a class="btn primary" href="{{.URL}}" rel="noopener">{{printf (t $.Lang "sites.open") .Name}}</a></div>
+    </li>
+    {{end}}
+  </ul>
+</section>
+{{template "footer" .}}

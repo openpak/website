@@ -287,6 +287,7 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 	slugs := s.companionSlugs(r.Context())
 	for i := range rows {
 		rows[i].Companion = slugs[rows[i].ID]
+		rows[i].Site = siteFor(rows[i].Name, rows[i].Console)
 	}
 	s.render(w, http.StatusOK, "titles.html", titlesPage{d, rows, requestable, consoles, statuses, allStatuses, byVotes, backPath("/titles", byVotes)})
 }
@@ -435,8 +436,10 @@ type titleRow struct {
 	Compat []compatCell
 	// Companion is the slug of the title's companion page (/titles/<slug>), "" when it has none.
 	Companion string
-	links     map[string]string // shop key -> product page
-	play      map[string]string // client -> playability
+	// Site is the Open site that covers the title (/sites), nil when none does.
+	Site  *openSite
+	links map[string]string // shop key -> product page
+	play  map[string]string // client -> playability
 }
 
 // playabilityPick is one line of the admin playability form: a client the title can run on,

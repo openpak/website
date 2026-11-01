@@ -1,7 +1,7 @@
 # Sign-in for openpak.org subdomains (SSO)
 
-The website's session cookie is host-only, so `opensplat.openpak.org`, `openkart.openpak.org`,
-`openmaker.openpak.org`, `openverse.openpak.org` and `rewards.openpak.org` cannot see it. They sign people in through
+The website's session cookie is host-only, so `splat.openpak.org`, `kart.openpak.org`,
+`maker.openpak.org`, `verse.openpak.org` and `rewards.openpak.org` cannot see it. They sign people in through
 openpak.org instead: an authorization-code flow with a one-minute single-use code and a
 server-to-server exchange. The subsite then keeps its own session; nothing of openpak.org's
 session leaves openpak.org.
@@ -58,10 +58,10 @@ Environment of the website (the shared `.env`); a client with no secret is not r
 
 | Client | `client` (id) | Secret variable | Allowed origins (default) |
 | --- | --- | --- | --- |
-| OpenSplat | `opensplat` | `SSO_CLIENT_OPENSPLAT_SECRET` | `https://opensplat.openpak.org` |
-| OpenKart | `openkart` | `SSO_CLIENT_OPENKART_SECRET` | `https://openkart.openpak.org` |
-| OpenMaker | `openmaker` | `SSO_CLIENT_OPENMAKER_SECRET` | `https://openmaker.openpak.org` |
-| OpenVerse | `openverse` | `SSO_CLIENT_OPENVERSE_SECRET` | `https://openverse.openpak.org` |
+| OpenSplat | `opensplat` | `SSO_CLIENT_OPENSPLAT_SECRET` | `https://splat.openpak.org` |
+| OpenKart | `openkart` | `SSO_CLIENT_OPENKART_SECRET` | `https://kart.openpak.org` |
+| OpenMaker | `openmaker` | `SSO_CLIENT_OPENMAKER_SECRET` | `https://maker.openpak.org` |
+| OpenVerse | `openverse` | `SSO_CLIENT_OPENVERSE_SECRET` | `https://verse.openpak.org` |
 | Rewards | `rewards` | `SSO_CLIENT_REWARDS_SECRET` | `https://rewards.openpak.org` |
 
 `SSO_CLIENT_<NAME>_REDIRECTS` (comma-separated https origins) replaces the default, for example

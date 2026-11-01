@@ -698,6 +698,17 @@
                 background: color-mix(in srgb, var(--raised) 90%, transparent); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
   .gtile .cap .sub { font-family: var(--font-ui); font-weight: 700; font-size: .8rem; color: var(--ink-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .gtile .cap .badge { flex: none; padding-block: 0; font-size: .74rem; }
+  /* /sites: the same tile, with the site's mark on the art and a few lines under it. */
+  .stiles { grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
+  .stile .art { aspect-ratio: auto; height: 9.5rem; }
+  .stile a.t { flex: none; }
+  .stile .art > img { width: 112px; height: 112px; object-fit: contain; }
+  .stile .sbody { flex: 1; display: flex; flex-direction: column; gap: 6px; padding: 14px 14px 12px; }
+  .stile .sbody h3 { margin: 0; font-size: 1.15rem; }
+  .stile .sbody p { margin: 0; }
+  .stile .sline { color: var(--ink-2); }
+  .stile .sgames { color: var(--muted); font-size: .85rem; }
+  .stile .sgames span { font-weight: 700; color: var(--ink-2); }
   .gtile .foot { margin-top: auto; padding: 0 12px 12px; }
   .gtile .foot form, .gtile .foot .btn, .gtile .foot button { width: 100%; }
   .gtile .foot .btn, .gtile .foot button { min-height: 38px; padding: 0 .8rem; font-size: .84rem; }
