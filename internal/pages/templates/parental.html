@@ -24,7 +24,7 @@
   {{range .Invites}}
   <div class="card pad mb-5">
     <p class="m-0">{{printf (t $.Lang "parental.acct.invites.from") (or .Who.Name .Who.Handle)}}</p>
-    <form method="post" action="/account/parental/accounts/accept#accounts" class="btn-row mt-4">
+    <form method="post" action="/account/parental/accounts/accept#accounts" class="flex gap-2 mt-4">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
       <input type="hidden" name="member" value="{{.MemberID}}">
       <input type="hidden" name="supervisor" value="{{.SupervisorID}}">
