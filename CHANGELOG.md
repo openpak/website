@@ -18,7 +18,7 @@ release, taken from git history. `git log` stays the source of truth.
   trophies at `/account/trophies` (`GET /api/v1/me/trophies`). See docs/companion.md.
 - **Sign-in for subdomains.** `GET /account/sso/authorize`, `POST /internal/sso/token`,
   `/account/sso/logout`: an authorization-code flow (60 s single-use code, exact https redirect
-  allowlist per client, optional PKCE) so splatnet, mktv, mario-maker and rewards reuse the
+  allowlist per client, optional PKCE) so opensplat, openkart, openmaker, openverse and rewards reuse the
   openpak.org login. See docs/sso.md.
 - **Rewards.** `/account/rewards` (points, missions, shop, inventory) and `/admin/rewards` (flags
   queue) over the rewards service.

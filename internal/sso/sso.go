@@ -1,5 +1,5 @@
-// Package sso lets sites on other openpak.org subdomains (SplatNet, Mario Kart TV, Mario Maker,
-// rewards) sign people in with their openpak.org login. The website's session cookie is host-only,
+// Package sso lets sites on other openpak.org subdomains (OpenSplat, OpenKart, OpenMaker,
+// OpenVerse, rewards) sign people in with their openpak.org login. The website's session cookie is host-only,
 // so a subdomain cannot see it; instead the subsite sends the browser to /account/sso/authorize,
 // gets back a single-use code of about a minute, and its server exchanges the code at
 // POST /internal/sso/token using its own client secret. The subsite then keeps its own session.
@@ -27,14 +27,15 @@ const CodeTTL = 60 * time.Second
 type Client struct {
 	ID      string
 	Secret  string
-	Origins []string // exact https origins a code may be sent to, "https://splatnet.openpak.org"
+	Origins []string // exact https origins a code may be sent to, "https://opensplat.openpak.org"
 }
 
 // builtin names the subsites and the host each gets unless its REDIRECTS variable says otherwise.
 var builtin = []struct{ ID, Env, Host string }{
-	{"splatnet", "SPLATNET", "splatnet.openpak.org"},
-	{"mktv", "MKTV", "mktv.openpak.org"},
-	{"mario-maker", "MARIO_MAKER", "mario-maker.openpak.org"},
+	{"opensplat", "OPENSPLAT", "opensplat.openpak.org"},
+	{"openkart", "OPENKART", "openkart.openpak.org"},
+	{"openmaker", "OPENMAKER", "openmaker.openpak.org"},
+	{"openverse", "OPENVERSE", "openverse.openpak.org"},
 	{"rewards", "REWARDS", "rewards.openpak.org"},
 }
 

@@ -88,7 +88,7 @@ available.
 
 | Feature | Backend API read | Website environment |
 | --- | --- | --- |
-| Mario Kart Wii rankings (32 course boards, worldwide) | wfc-race `GET /api/mkw/leaderboard` (v0.2.0), header `X-WFC-Internal-Key` | `WFC_RACE_URL` (`http://openpak-wfc-race:20208`), `WFC_INTERNAL_KEY` |
+| Mario Kart Wii rankings (32 course boards, worldwide) | wfc-race `GET /api/mkw/leaderboard` (v0.2.0), header `X-WFC-Internal-Key` | `WFC_RACE_URL` (`http://openpak-wfc-race:20208`), `WFC_RACE_INTERNAL_KEY` (falls back to `WFC_INTERNAL_KEY`) |
 | Pokémon (DS and 3DS titles): Global Showcase rankings and GTS listings | pokemon-global-link public JSON `/api/v1/showcase`, `/gts/listings`, `/battle/formats` | `POKEMON_GLOBAL_LINK_URL` (`http://openpak-pokemon-global-link:20160`) |
 | PS3 trophies | np-trophy `GET /v1/users/{account}/trophies`, bearer key; the PSN id from the core's `np` link | `NP_TROPHY_URL` (`http://openpak-np-trophy:8530`), `NP_TROPHY_KEY` |
 | Play activity | the account core's `GetPlayHistory` (gRPC) | the core connection the site already has |

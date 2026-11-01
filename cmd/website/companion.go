@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"log/slog"
 	"os"
@@ -20,7 +21,7 @@ func registerCompanionTitles(c *companion.Service, links core.Links, log *slog.L
 		log.Info("companion: POKEMON_GLOBAL_LINK_URL not set; no Pokémon rankings or trades")
 	}
 	// Mario Kart Wii time trials: wfc-race's JSON leaderboard.
-	if mkw := companion.NewMKWRace(os.Getenv("WFC_RACE_URL"), os.Getenv("WFC_INTERNAL_KEY")); mkw != nil {
+	if mkw := companion.NewMKWRace(os.Getenv("WFC_RACE_URL"), cmp.Or(os.Getenv("WFC_RACE_INTERNAL_KEY"), os.Getenv("WFC_INTERNAL_KEY"))); mkw != nil {
 		c.Register(companion.Source{Names: []string{"Mario Kart Wii"}, Console: "Wii", Rankings: mkw})
 	} else {
 		log.Info("companion: WFC_RACE_URL not set; no Mario Kart Wii rankings")
