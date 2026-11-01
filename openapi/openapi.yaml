@@ -2262,6 +2262,137 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "502": { $ref: "#/components/responses/SavesError" }
         "503": { $ref: "#/components/responses/SavesUnavailable" }
+  /pakka/state:
+    get:
+      summary: Whether the signed-in account may chat with Pakka, and whether it accepted the data-use notice
+      description: |
+        Pakka is the OpenPak assistant (a Meta AI model; see the privacy page). It is refused,
+        with `eligible: false`, for child, supervised, under-18 and unknown-age accounts, with no
+        override. Everything under `/pakka` is forwarded to Pakka for the bearer's own account;
+        no account id is ever accepted from the client.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  available: { type: boolean }
+                  eligible: { type: boolean }
+                  consent: { type: boolean }
+                  notice_version: { type: string }
+                  retention_days: { type: integer }
+                  daily_cap: { type: integer }
+                  max_chars: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "502": { description: "Pakka is not answering (code unavailable)." }
+        "503": { description: "Pakka is not available on this deployment." }
+  /pakka/consent:
+    post:
+      summary: Accept the data-use notice
+      description: Required once per notice version before the first message. 403 `not_available` for an account that may not use Pakka.
+      responses:
+        "200": { description: Accepted }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { description: Not available on this account (code not_available). }
+    delete:
+      summary: Withdraw acceptance of the data-use notice
+      responses:
+        "200": { description: Withdrawn }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /pakka/conversations:
+    get:
+      summary: Your Pakka conversations, newest first
+      description: Titles only. Conversations are kept 30 days after their last message.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  conversations:
+                    type: array
+                    items: { $ref: "#/components/schemas/PakkaConversation" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    post:
+      summary: Start a conversation
+      description: 403 `consent_required` before the notice is accepted, 403 `not_available` for an account that may not use Pakka, 409 `conversation_limit` at 30 stored conversations.
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PakkaConversation" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { description: "consent_required or not_available." }
+        "409": { description: "conversation_limit." }
+  /pakka/conversations/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: One conversation with its messages
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: "#/components/schemas/PakkaConversation" }
+                  - type: object
+                    properties:
+                      messages:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id: { type: string }
+                            role: { type: string, enum: [user, assistant] }
+                            text: { type: string }
+                            at: { type: string, format: date-time }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { description: Not found, or not yours. }
+    delete:
+      summary: Delete a conversation
+      description: Removes the stored copy at once. Text already sent to the model provider follows its retention.
+      responses:
+        "200": { description: Deleted }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { description: Not found, or not yours. }
+  /pakka/conversations/{id}/messages:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    post:
+      summary: Send a message and stream Pakka's reply
+      description: |
+        Body `{"text": "..."}` (2000 characters at most). The answer is `text/event-stream`:
+        `start`, then `tool` events (`{"name"}`, while Pakka looks something up), `delta`
+        events (`{"text"}`, reply text in order), and `done` (`{"message_id"}`), or `error`
+        (`{"code"}`). Refusals before the stream are JSON: 429 `rate_limited` (6 a minute,
+        Retry-After) or `daily_cap` (100 a day), 409 `busy`, 400 `bad_message`, 403
+        `consent_required` / `not_available`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text: { type: string, maxLength: 2000 }
+      responses:
+        "200":
+          description: Event stream
+          content:
+            text/event-stream:
+              schema: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { description: "consent_required or not_available." }
+        "404": { description: Not found, or not yours. }
+        "429": { description: "rate_limited or daily_cap." }
   /me/tickets:
     get:
       summary: Your help tickets, newest activity first
@@ -2659,6 +2790,13 @@ components:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
   schemas:
+    PakkaConversation:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        created: { type: string, format: date-time }
+        updated: { type: string, format: date-time }
     CompanionTitle:
       type: object
       required: [slug, name, console, status, features]

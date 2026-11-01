@@ -1,7 +1,7 @@
 {{template "header" .}}
 <div class="page-head">
   <h1>{{t .Lang "footer.privacy"}}</h1>
-  <p>Dernière mise à jour : 23 octobre 2026.</p>
+  <p>Dernière mise à jour : 1er novembre 2026.</p>
   <p class="notice" lang="fr">{{t .Lang "legal.translation"}} <a href="/lang?l=en&amp;back=/privacy" lang="en">{{t .Lang "legal.translation.link"}}</a></p>
 </div>
 <article class="legal" lang="fr">
@@ -90,6 +90,8 @@
   <li><code>lang</code> : mémorise la langue que vous avez choisie en bas de page. Déposé uniquement lorsque vous en choisissez une, dure un an.</li>
 </ul>
 <p>Aucun autre cookie n’est déposé, ni par nous ni par Cloudflare. Turnstile, lorsqu’il est activé, ne s’exécute que sur les formulaires d’inscription et de réinitialisation du mot de passe. Il n’y a pas de cookies d’analyse d’audience ni de publicité, il n’y a donc rien à consentir.</p>
+
+{{template "pakka_privacy" .}}
 
 <h2 id="children">Enfants</h2>
 <p>Vous devez avoir au moins 16 ans pour créer un compte OpenPak. Si vous pensez qu’un enfant plus jeune possède un compte, dites-le-nous et nous le supprimerons.</p>

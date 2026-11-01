@@ -31,6 +31,7 @@ import (
 	"github.com/openpak/website/internal/netprofile"
 	"github.com/openpak/website/internal/news"
 	"github.com/openpak/website/internal/pages"
+	"github.com/openpak/website/internal/pakkachat"
 	"github.com/openpak/website/internal/pctl"
 	"github.com/openpak/website/internal/ratelimit"
 	"github.com/openpak/website/internal/saves"
@@ -84,6 +85,8 @@ type Server struct {
 	// Crashes stores crash-report files; nil keeps reports without them.
 	Crashes    *attachments.Store
 	CrashLimit *ratelimit.Limiter // per client, public crash reports
+	// Pakka is the assistant; nil answers 503 on /pakka.
+	Pakka *pakkachat.Bridge
 	// Support is the help-ticket service; nil answers 503 on /me/tickets.
 	Support *support.Service
 	// Companion serves the per-title rankings and stats and the play history; nil answers 503.
@@ -211,6 +214,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	s.registerBans(mux)
 	s.registerDiscord(mux)
 	s.registerTickets(mux)
+	s.registerPakka(mux)
 	s.registerCrashes(mux)
 	h("/me/avatar", s.auth(s.handleChooseAvatar))
 	s.registerSecurity(mux)

@@ -31,6 +31,7 @@ import (
 	"github.com/openpak/website/internal/netprofile"
 	"github.com/openpak/website/internal/news"
 	"github.com/openpak/website/internal/pages"
+	"github.com/openpak/website/internal/pakkachat"
 	"github.com/openpak/website/internal/pctl"
 	"github.com/openpak/website/internal/push"
 	"github.com/openpak/website/internal/ratelimit"
@@ -261,6 +262,13 @@ func run(log *slog.Logger) error {
 		}}
 	go finaliser.Run(ctx)
 	log.Info("erasure: finaliser started", "every", cfg.ErasureInterval)
+	// Pakka, the assistant: PAKKA_URL (http://openpak-pakka:24800) and PAKKA_CHAT_KEY; either
+	// missing and every Pakka entry point and route is absent.
+	if bridge := pakkachat.New(os.Getenv("PAKKA_URL"), os.Getenv("PAKKA_CHAT_KEY"), pageSrv.PakkaTools()); bridge != nil {
+		pageSrv.Pakka = bridge
+		apiSrv.Pakka = bridge
+		log.Info("pakka chat enabled")
+	}
 	pageSrv.Support = supportSvc
 	apiSrv.Support = supportSvc
 	apiSrv.Crashes = files

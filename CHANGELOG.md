@@ -17,6 +17,14 @@ release, taken from git history. `git log` stays the source of truth.
   token is revoked at once, one Discord account per OpenPak account, unlink, audit log). Pakka on
   Discord reads it through `GET /internal/discord/{discord_id}` (internal key). Needs
   `DISCORD_OAUTH_CLIENT_ID`/`DISCORD_OAUTH_CLIENT_SECRET`. See docs/discord-link.md.
+- **Pakka, the assistant.** A chat panel at `/account/pakka` (linked from the account menu and the
+  Help page) and `/api/v1/pakka/*` for the app, forwarded to the Pakka service with a service key,
+  the account id this site resolved, and a short-lived grant Pakka hands back to read the
+  signed-in person's own consoles, friends count, Rewards and service status
+  (`/internal/pakka/tool/*`). For accounts aged 18 or over only: child, supervised, under-18 and
+  no-birthday accounts get a plain "not available" page and no entry point. A data-use notice must be
+  accepted first (Meta's terms for the model allow training on content). New privacy section
+  (`/privacy#pakka`), docs/pakka.md. Enabled by `PAKKA_URL` and `PAKKA_CHAT_KEY`.
 - **Open sites directory.** `/sites` lists OpenSplat, OpenKart, OpenMaker and OpenVerse as tiles
   (menu and footer link it); the details of Splatoon, Mario Kart 8 (Wii U) and Super Mario Maker
   1 and 2 gain an "Open <site>" button. SSO built-in origins are now splat., kart., maker. and

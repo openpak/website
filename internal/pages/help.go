@@ -18,6 +18,7 @@ import (
 
 type helpView struct {
 	baseData
+	PakkaOK    bool
 	Tickets    []store.Ticket
 	Categories []string
 	Subject    string
@@ -49,6 +50,7 @@ func (s *Server) handleHelp(w http.ResponseWriter, r *http.Request) {
 	if c := q.Get("category"); slices.Contains(store.TicketCategories, c) {
 		d.Category = c
 	}
+	d.PakkaOK = s.pakkaOK(r.Context(), v)
 	if v != nil && s.helpOn() {
 		d.Files = s.Support.Files != nil
 		ts, err := s.DB.ListTickets(r.Context(), store.TicketFilter{AccountID: v.AccountID}, 100)

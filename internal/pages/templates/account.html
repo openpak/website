@@ -13,6 +13,7 @@
     <a href="#devices"><svg class="ico sm" aria-hidden="true"><use href="#i-gamepad"/></svg>{{t .Lang "account.links"}}</a>
     <a href="/account/saves"><svg class="ico sm" aria-hidden="true"><use href="#i-save"/></svg>{{t .Lang "nav.saves"}}</a>
     <a href="/account/chat"><svg class="ico sm" aria-hidden="true"><use href="#i-chat"/></svg>{{t .Lang "chat.title"}}</a>
+    {{if .PakkaOK}}<a href="/account/pakka"><img class="ico sm" src="/static/pakka.svg" alt="" width="16" height="16">{{t .Lang "pakka.title"}}</a>{{end}}
     <a href="/account/trophies"><svg class="ico sm" aria-hidden="true"><use href="#i-shield"/></svg>{{t .Lang "trophies.link"}}</a>
     <a href="/account/rewards"><svg class="ico sm" aria-hidden="true"><use href="#i-check"/></svg>{{t .Lang "rewards.title"}}</a>
     <a href="/account/activity"><svg class="ico sm" aria-hidden="true"><use href="#i-pulse"/></svg>{{t .Lang "activity.link"}}</a>

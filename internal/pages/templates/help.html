@@ -3,6 +3,16 @@
   <h1>{{t .Lang "help.title"}}</h1>
   <p>{{t .Lang "help.sub"}}</p>
 </div>
+{{if .PakkaOK}}
+<section class="card p-4 mb-6 pakka-cta" aria-labelledby="pakka-cta-h">
+  <img class="pakka-mark" src="/static/pakka.svg" alt="" width="48" height="48">
+  <div>
+    <h2 id="pakka-cta-h">{{t .Lang "pakka.title"}}</h2>
+    <p>{{t .Lang "pakka.cta"}}</p>
+  </div>
+  <a class="btn primary" href="/account/pakka">{{t .Lang "pakka.ask"}}</a>
+</section>
+{{end}}
 {{if .Off}}
 <p class="empty">{{t .Lang "help.off"}}</p>
 {{else if not .User}}

@@ -1,0 +1,53 @@
+{{template "header" .}}
+<div class="page-head">
+  <h1>{{t .Lang "pakka.title"}}</h1>
+  <p>{{t .Lang "pakka.sub"}}</p>
+</div>
+{{if not .Available}}
+<p class="empty">{{t .Lang "pakka.unavailable"}}</p>
+{{else if not .Eligible}}
+<section class="card p-4 pakka-cta" aria-labelledby="pakka-off-h">
+  <img class="pakka-mark" src="/static/pakka.svg" alt="" width="48" height="48">
+  <div>
+    <h2 id="pakka-off-h">{{t .Lang "pakka.off.title"}}</h2>
+    <p>{{t .Lang "pakka.off.body"}}</p>
+  </div>
+  <a class="btn" href="/help">{{t .Lang "pakka.ticket"}}</a>
+</section>
+{{else}}
+<div id="pakka" class="pakka" data-api="/account/pakka/api" data-csrf="{{.CSRF}}" data-ticket="/help" data-strings="{{.JSON}}">
+  <aside class="pakka-side card" aria-label="{{t .Lang "pakka.history"}}">
+    <button type="button" class="btn primary pakka-new" id="pakka-new">{{t .Lang "pakka.new"}}</button>
+    <h2 class="pakka-h">{{t .Lang "pakka.history"}}</h2>
+    <ul class="pakka-list" id="pakka-list"></ul>
+    <p class="hint" id="pakka-empty">{{t .Lang "pakka.empty"}}</p>
+  </aside>
+  <section class="pakka-main card" aria-labelledby="pakka-name">
+    <header class="pakka-head">
+      <img class="pakka-mark" src="/static/pakka.svg" alt="" width="40" height="40">
+      <h2 id="pakka-name">{{t .Lang "pakka.title"}}</h2>
+    </header>
+    <details class="pakka-notice" id="pakka-notice">
+      <summary>{{t .Lang "pakka.notice.view"}}</summary>
+      <h3>{{t .Lang "pakka.notice.title"}}</h3>
+      <p>{{t .Lang "pakka.notice.body"}}</p>
+      <p>{{t .Lang "pakka.notice.links"}} <a href="https://dev.meta.ai/legal/terms-of-service" rel="noopener">{{t .Lang "pakka.notice.meta"}}</a> · <a href="/privacy#pakka">{{t .Lang "pakka.notice.privacy"}}</a></p>
+      <div class="pakka-notice-actions">
+        <button type="button" class="btn primary" id="pakka-accept" hidden>{{t .Lang "pakka.notice.accept"}}</button>
+        <button type="button" class="btn" id="pakka-withdraw" hidden>{{t .Lang "pakka.notice.withdraw"}}</button>
+      </div>
+    </details>
+    <div class="pakka-log" id="pakka-log" role="log" aria-live="polite" aria-relevant="additions text" tabindex="0" aria-label="{{t .Lang "pakka.title"}}"></div>
+    <p class="notice bad pakka-err" id="pakka-err" role="alert" hidden></p>
+    <form class="pakka-form" id="pakka-form" autocomplete="off">
+      <label class="sr-only" for="pakka-input">{{t .Lang "pakka.placeholder"}}</label>
+      <textarea id="pakka-input" rows="2" maxlength="2000" placeholder="{{t .Lang "pakka.placeholder"}}" disabled></textarea>
+      <button type="submit" class="btn primary" id="pakka-send" disabled>{{t .Lang "pakka.send"}}</button>
+    </form>
+    <p class="hint pakka-foot">{{t .Lang "pakka.ai"}} {{t .Lang "pakka.retention"}} <a href="/help">{{t .Lang "pakka.ticket"}}</a></p>
+    <noscript><p class="notice warn">{{t .Lang "pakka.nojs"}}</p></noscript>
+  </section>
+</div>
+<script src="/static/pakka.js?v={{.Asset}}" defer></script>
+{{end}}
+{{template "footer" .}}

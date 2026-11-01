@@ -36,6 +36,7 @@ import (
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/news"
+	"github.com/openpak/website/internal/pakkachat"
 	"github.com/openpak/website/internal/pctl"
 	"github.com/openpak/website/internal/ratelimit"
 	"github.com/openpak/website/internal/rewards"
@@ -92,6 +93,8 @@ type Server struct {
 	Parental *pctl.Client
 	// Chat is the neutral chat service; nil renders the page as "not available".
 	Chat *chat.Client
+	// Pakka connects to the assistant; nil hides every Pakka entry point.
+	Pakka *pakkachat.Bridge
 	// Support is the help-ticket service; nil says tickets are not available.
 	Support *support.Service
 	// News is the public news feed for the landing page; nil shows none.
@@ -409,6 +412,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /titles/{slug}/{tab}", s.handleCompanion)
 	mux.HandleFunc("GET /account/activity", s.handleActivity)
 	mux.HandleFunc("GET /account/trophies", s.handleTrophies)
+	s.registerPakka(mux)
 	mux.HandleFunc("GET /account/rewards", s.handleRewards)
 	mux.HandleFunc("POST /account/rewards/claim", s.handleRewardsClaim)
 	mux.HandleFunc("POST /account/rewards/redeem", s.handleRewardsRedeem)
