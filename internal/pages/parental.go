@@ -29,6 +29,7 @@ import (
 
 type parentalView struct {
 	baseData
+	Accounts  *accountsView // supervised accounts and the OpenVerse level; nil = not configured
 	Available bool
 	Code      *pctl.Device // the live pairing code, if one is waiting
 	Consoles  []consoleView
@@ -96,6 +97,7 @@ func (s *Server) handleParental(w http.ResponseWriter, r *http.Request) {
 func (s *Server) renderParental(w http.ResponseWriter, r *http.Request, v *viewer, view parentalView) {
 	lang := i18n.FromRequest(r)
 	view.baseData = s.data(r, v, i18n.T(lang, "parental.title"))
+	view.Accounts = s.accountsSection(r.Context(), r, v)
 	devices, err := s.Parental.Devices(r.Context(), v.AccountID)
 	if err != nil {
 		if !errors.Is(err, pctl.ErrUnavailable) {

@@ -40,6 +40,7 @@ import (
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/sso"
 	"github.com/openpak/website/internal/store"
+	"github.com/openpak/website/internal/supervision"
 	"github.com/openpak/website/internal/support"
 	"github.com/openpak/website/internal/turnstile"
 	"github.com/openpak/website/internal/xbl"
@@ -156,6 +157,17 @@ func run(log *slog.Logger) error {
 		log.Info("parental controls: NX_BAAS_URL not set; the page says so and the API answers 503")
 	}
 	apiSrv.Parental = parentalCli
+	// Account-level supervision (the parental controls core): Pakka, the Discord lookup and the
+	// parent page ask it, and an unreachable core counts as supervised.
+	sup, err := supervision.New(os.Getenv("PARENTAL_GRPC_ADDR"), os.Getenv("PARENTAL_HTTP_URL"), os.Getenv("PARENTAL_INTERNAL_KEY"), os.Getenv("WEBSITE_PARENTAL_KEY"))
+	if err != nil {
+		return err
+	}
+	if sup == nil {
+		log.Warn("parental controls core: PARENTAL_GRPC_ADDR not set; supervision is not checked and the account section is hidden")
+	}
+	apiSrv.Supervision = sup
+	pageSrv.Supervision = sup
 	pageSrv.Parental = parentalCli
 	apiSrv.SaveTitle = pages.SaveTitle
 	// Title companion pages and the play history: one service behind the site and the API.

@@ -78,11 +78,11 @@ func (s *Server) handleDiscordLookup(w http.ResponseWriter, r *http.Request) {
 		"linked":       true,
 		"account_id":   l.AccountID,
 		"display_name": acct.DisplayName,
-		// The website knows an account's age, not a console supervision
-		// flag, so a child is an account that is not provably 18 or over
-		// (unknown or invalid birthday included). Pakka also refuses
-		// anything this misses; see docs/discord-link.md.
-		"supervised_or_minor":   !accounts.IsAdult(acct.Birthday, time.Now()),
+		// A child is an account that is not provably 18 or over (unknown or
+		// invalid birthday included) or that a parent supervises; a parental
+		// controls core that cannot answer counts as supervised.
+		// Pakka also refuses anything this misses; see docs/discord-link.md.
+		"supervised_or_minor":   !accounts.IsAdult(acct.Birthday, time.Now()) || s.Supervision.SupervisedOrUnknown(ctx, l.AccountID),
 		"pakka_notice_accepted": notice,
 	})
 }

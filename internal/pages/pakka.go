@@ -19,7 +19,7 @@ import (
 const PakkaMinAge = 18
 
 // PakkaEligible says whether accountID may use Pakka: an active account whose
-// recorded birthday makes it an adult. A missing or unreadable birthday, a
+// recorded birthday makes it an adult and that no parent supervises. A missing or unreadable birthday, a
 // failed lookup, and anything else uncertain all answer no. There is no
 // parental override.
 func (s *Server) PakkaEligible(ctx context.Context, accountID string) bool {
@@ -30,7 +30,12 @@ func (s *Server) PakkaEligible(ctx context.Context, accountID string) bool {
 	if err != nil || acct.Status != "active" {
 		return false
 	}
-	return AdultBirthday(acct.Birthday, time.Now())
+	if !AdultBirthday(acct.Birthday, time.Now()) {
+		return false
+	}
+	// Supervised accounts never get Pakka, with no parental override; a core that cannot
+	// answer counts as supervised.
+	return !s.Supervision.SupervisedOrUnknown(ctx, accountID)
 }
 
 // AdultBirthday reports whether a YYYY-MM-DD birthday is 18 or more years before now.

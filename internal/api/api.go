@@ -37,6 +37,7 @@ import (
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/store"
+	"github.com/openpak/website/internal/supervision"
 	"github.com/openpak/website/internal/support"
 	"github.com/openpak/website/internal/turnstile"
 	"github.com/openpak/website/internal/voice"
@@ -110,6 +111,8 @@ type Server struct {
 	// website's forms; nil (not configured) lets them through as before.
 	Turnstile *turnstile.Verifier
 	log       *slog.Logger
+	// Supervision answers whether an account is supervised (parental controls core); nil = not configured.
+	Supervision *supervision.Client
 	// PakkaNotice reports Pakka data-use notice acceptance for the Discord lookup; nil = unknown.
 	PakkaNotice PakkaNotice
 }

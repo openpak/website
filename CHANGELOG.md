@@ -18,6 +18,15 @@ release, taken from git history. `git log` stays the source of truth.
   PNID is one for Wii U and 3DS, `wiiu_pid` serves both.
 - OpenKart lists Mario Kart 8, 8 Deluxe, 7 and Wii; their game pages get the Open OpenKart button.
 
+## v0.76.0
+
+- **Supervised accounts.** Account > Parental controls gains a "Supervised accounts" section backed by the
+  parental controls core (`PARENTAL_GRPC_ADDR`, `PARENTAL_HTTP_URL`, `PARENTAL_INTERNAL_KEY`,
+  `WEBSITE_PARENTAL_KEY`): invite an account by handle, accept or decline, stop supervising, and set
+  "OpenVerse: off / read / read + post" per supervised account (default off). Translated (en, de, es, fr, it, pt-BR).
+- Pakka is never available to a supervised account (no parental override), and the Discord lookup's
+  `supervised_or_minor` is true for a supervised account. A core that cannot answer counts as supervised.
+
 ## Unreleased
 
 - **Link Discord.** Account > Linked platforms can link a Discord account (OAuth2, `identify` only; the

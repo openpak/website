@@ -44,6 +44,7 @@ import (
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/sso"
 	"github.com/openpak/website/internal/store"
+	"github.com/openpak/website/internal/supervision"
 	"github.com/openpak/website/internal/support"
 	"github.com/openpak/website/internal/titleart"
 	"github.com/openpak/website/internal/turnstile"
@@ -91,6 +92,9 @@ type Server struct {
 	// Parental relays to nx-baas's parental-controls records; nil renders the
 	// page as "not available".
 	Parental *pctl.Client
+	// Supervision is the parental controls core's account-level supervision and the
+	// parent-controlled OpenVerse level; nil = not configured (the section is hidden).
+	Supervision *supervision.Client
 	// Chat is the neutral chat service; nil renders the page as "not available".
 	Chat *chat.Client
 	// Pakka connects to the assistant; nil hides every Pakka entry point.
@@ -400,6 +404,10 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /account/chat/send", s.handleChatSend)
 	mux.HandleFunc("GET /account/saves", s.handleSaves)
 	mux.HandleFunc("GET /account/parental", s.handleParental)
+	mux.HandleFunc("POST /account/parental/accounts/invite", s.handleSupervisionInvite)
+	mux.HandleFunc("POST /account/parental/accounts/accept", s.handleSupervisionAccept)
+	mux.HandleFunc("POST /account/parental/accounts/remove", s.handleSupervisionRemove)
+	mux.HandleFunc("POST /account/parental/accounts/openverse", s.handleSupervisionOpenVerse)
 	mux.HandleFunc("POST /account/parental/pair", s.handleParentalPair)
 	mux.HandleFunc("POST /account/parental/pin", s.handleParentalPin)
 	mux.HandleFunc("POST /account/parental/pin/set", s.handleParentalSetPin)
