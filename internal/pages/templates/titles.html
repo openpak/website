@@ -26,8 +26,8 @@
     <li class="titles-row gtile {{if $later}}archived{{end}}" data-name="{{.Name}}" data-console="{{.Console}}" data-status="{{.Status}}">
       <a class="t" href="#t-{{.ID}}" aria-label="{{.Name}}, {{.Console}}, {{.Status}}" title="{{.Name}}">
         <span class="art">
-          {{template "title-art" (arr $.Lang .Console .Name .TitleID .Name)}}
-          <span class="cap"><span class="sub">{{.Console}}</span><span class="badge {{badgeClass .Status}}">{{statusText .Status}}</span></span>
+          {{template "title-art" (arr $.Lang .Console .Name .TitleID "")}}
+          <span class="cap"><span class="sub" title="{{.Console}}">{{.Name}}</span><span class="badge {{badgeClass .Status}}">{{statusText .Status}}</span></span>
         </span>
       </a>
       {{if $later}}

@@ -689,11 +689,11 @@
   .art-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 14px 14px 40px; color: var(--muted); text-align: center; font-size: .78rem; font-weight: 700; line-height: 1.3; }
   .art-placeholder .console-mark { --console-mark-size: 64px; }
   .art-placeholder > img { width: 56%; height: 52px; object-fit: contain; }
-  /* The art carries the name, so a tile shows none; a tile with no art says it here instead. */
+  /* The detail panel's no-art fallback names the title here. */
   .art-placeholder b { font-family: var(--font-ui); font-weight: 800; font-size: .92rem; color: var(--ink); overflow-wrap: anywhere;
                        display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; }
   .gtile .art > img[hidden], .art-placeholder[hidden] { display: none; }
-  /* Console and status sit on the bottom of the art, as the HOME shelf's tiles do. */
+  /* Name and status sit on the bottom of the art; the console is the name's tooltip. */
   .gtile .cap { position: absolute; inset: auto 0 0 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px;
                 background: color-mix(in srgb, var(--raised) 90%, transparent); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
   .gtile .cap .sub { font-family: var(--font-ui); font-weight: 700; font-size: .8rem; color: var(--ink-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
