@@ -127,3 +127,68 @@ func TestRewardsPage(t *testing.T) {
 	st.Down = true
 	has("/account/rewards?tab=shop", "not available right now", "Try again", `href="/account/rewards?tab=shop"`)
 }
+
+// A badge ladder is one tile in Missions (the next tier) and one in My items (the highest earned), never both
+// in the same place and never listed twice; the shop holds only what is not owned.
+func TestRewardsBadgeTiles(t *testing.T) {
+	s, fc, _ := newTestServer(t)
+	seedTwoAccounts(fc)
+	rec := login(t, s, "a@x.test", "password-A-1")
+	st := rewardstest.NewState()
+	st.Balance = 500
+	st.Counts["kart_sessions"], st.Counts["turf_sessions"] = 26, 10
+	for _, id := range []string{"kart-races-1", "kart-races-10", "kart-races-25", "splatoon-matches-1"} {
+		st.Claimed[id] = true
+	}
+	for _, m := range rewardstest.Missions {
+		if strings.HasPrefix(m.ID, "friends-played-") {
+			st.Claimed[m.ID] = true // a finished ladder
+		}
+	}
+	st.Counts["friends_played_with"] = 250
+	for _, id := range []string{"badge-kart-1", "badge-kart-10", "badge-kart-25", "badge-turf-1", "icon-tabby"} {
+		st.Owned[id] = true
+	}
+	st.Equipped["badge"] = "badge-kart-25"
+	s.Rewards = rewardstest.New(t, st)
+	get := func(path string) string { return authedRequest(s, rec, http.MethodGet, path, nil).Body.String() }
+
+	m := get("/account/rewards?tab=missions")
+	for _, want := range []string{"Badges in progress", `href="#l-kart"`, "Kart Sessions · Silver", "26 / 50", `id="l-kart"`, "Get 15 points &#43; badge", `href="#l-turf"`, "Claim 5 points", "Turf Sessions · Copper"} {
+		if !strings.Contains(m, want) {
+			t.Errorf("missions lacks %q", want)
+		}
+	}
+	if strings.Contains(m, `href="#l-friends"`) || strings.Contains(m, "Equip") {
+		t.Error("a finished ladder, or an equip button, in Missions")
+	}
+
+	my := get("/account/rewards?tab=collection")
+	for _, want := range []string{`href="#l-kart"`, "Kart Sessions · Bronze", "25 / 25", "Equipped", `href="#l-friends"`, "Completed", "Friends Played With · Diamond", "Equipped now"} {
+		if !strings.Contains(my, want) {
+			t.Errorf("my items lacks %q", want)
+		}
+	}
+	if strings.Contains(my, "/account/rewards/claim") {
+		t.Error("a claim button in My items")
+	}
+	for _, dup := range []string{`aria-label="Equip: 10 Kart Sessions"`, `aria-label="Equip: 25 Kart Sessions"`, `aria-label="Equip: 1 Turf Sessions"`} {
+		if strings.Contains(my, dup) {
+			t.Errorf("a ladder badge is listed twice: %s", dup)
+		}
+	}
+	if n := strings.Count(my, `href="#l-kart"`); n != 1 {
+		t.Errorf("the Kart ladder is %d tiles", n)
+	}
+
+	shop := get("/account/rewards?tab=shop")
+	if strings.Contains(shop, `id="r-icon-tabby"`) || !strings.Contains(shop, `id="r-icon-ember-fox"`) || strings.Contains(shop, "Owned") {
+		t.Error("the shop lists something owned, or lacks something for sale")
+	}
+
+	// Equip puts in the slot the highest tier earned.
+	form := url.Values{"slot": {"badge"}, "item": {"badge-kart-25"}}
+	if w := authedRequest(s, rec, http.MethodPost, "/account/rewards/equip", &form); w.Code != http.StatusSeeOther {
+		t.Errorf("equip: %d", w.Code)
+	}
+}

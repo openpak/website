@@ -28,9 +28,6 @@ var rewardsTabs = []string{"missions", "shop", "collection", "settings"}
 // itemKinds is the order kinds are listed in: the ones people collect first.
 var itemKinds = []string{"badge", "profile_icon", "theme", "title", "switch_icon", "x360_gamerpic", "x360_theme", "ps3_avatar", "ps3_theme"}
 
-// founderItem is the badge the first people on the network hold; the Collection shows it as a seal.
-const founderItem = "badge-founder"
-
 // platformNames are the proper names a catalogue platform is shown under; none of them is translated.
 var platformNames = map[string]string{
 	"web": "Web", "app": "App", "switch": "Switch", "xbox360": "Xbox 360", "xbox": "Xbox", "ps3": "PS3",
@@ -58,12 +55,44 @@ type itemView struct {
 	Key       string
 	Wide      bool   // themes show a wide preview, everything else a square one
 	Where     string // "Web, App, Switch"
-	Founder   bool
+}
+
+// tileView is one badge being worked towards: a ladder (one tile for the family, showing the tier being
+// worked on) or a single badge (a game's first session, a Collector).
+type tileView struct {
+	Key, Name   string
+	Label       string // "Kart Sessions · Silver"
+	Description string
+	Item        string // the badge art shown: the current tier's
+	State       string // progress, ready or done
+	Percent     int
+	Progress    string // "26 / 50"
+	Reward      string // "Get 15 points + badge"
+	ClaimText   string
+	MissionID   string
+	Period      string
+	Pips        []bool // earned tiers, in order; nil for a single badge
+	Earned      int
+	Tiers       []tierView
+	Single      bool
+	TargetText  string
+	Equipped    bool   // my items: this is what the badge slot holds
+	EquipItem   string // my items: the badge Equip puts in the slot (the highest tier earned)
+	Complete    bool   // every tier earned
+}
+
+type tierView struct {
+	Finish, Item string
+	Target       string
+	Points       string // "Get 15 points"
+	State        string // earned, current or locked
+	Ready        bool
 }
 
 type kindGroup struct {
 	Kind, Label string
-	Wide        bool // themes: wide preview cards, in a grid of their own
+	Wide        bool       // themes: wide preview cards, in a grid of their own
+	Tiles       []tileView // My items, Badges: the earned ladder and single badges
 	Items       []itemView
 }
 
@@ -90,14 +119,15 @@ type rewardsPage struct {
 	TodayPercent int
 	CapReached   bool
 	More         int
-	Medal        *itemView // the equipped badge, shown beside the balance
+	Medal        *medalView // the equipped badge, shown beside the balance
 	Owned        int
 	Ready        int
 	Affordable   int
 	NextKind     string // claim, buy or play; empty when there is nothing to suggest
 	NextText     string
 
-	// Missions.
+	// Missions: the badges being worked towards as tiles, then the other missions as rows.
+	Tiles                       []tileView
 	Claimable, InProgress, Done []missionView
 	Ledger                      []ledgerView
 
@@ -108,9 +138,18 @@ type rewardsPage struct {
 	ShopGroups []kindGroup // the same, by kind (the shelves)
 	PlayTime   string      // time played in total
 
-	// Collection.
-	Founder *itemView
-	Groups  []kindGroup
+	// My items: what is equipped in each slot, then everything owned by kind (earned ladder badges are one tile
+	// per family, in the Badges group).
+	Slots  []slotView
+	Groups []kindGroup
+}
+
+type medalView struct{ ID, Name string }
+
+// slotView is one equip slot: the item in it, if any.
+type slotView struct {
+	Kind, Label string
+	ID, Name    string
 }
 
 func (s *Server) handleRewards(w http.ResponseWriter, r *http.Request) {
@@ -156,21 +195,47 @@ func (s *Server) handleRewards(w http.ResponseWriter, r *http.Request) {
 		return out
 	}
 	shop, owned := items(catalog), items(inventory)
-	for i := range owned {
-		owned[i].Equipped = me.Equipped[owned[i].Kind] == owned[i].ID
-		owned[i].Owned = true
-		if owned[i].ID == founderItem {
-			owned[i].Founder = true
+
+	// Missions: the badge ladders and single badges become tiles (the next tier to work on in Missions, the
+	// highest tier earned in My items); the rest stay rows. Every claimable one counts towards "ready".
+	var rest []rewards.Mission
+	var own []tileView
+	page.Tiles, own, rest = tilesOf(lang, ms, me.Equipped["badge"])
+	handled := map[string]bool{} // badge items a tile stands for: never listed a second time
+	for _, t := range append(append([]tileView{}, page.Tiles...), own...) {
+		for _, tr := range t.Tiers {
+			handled[tr.Item] = true
 		}
-		if owned[i].Equipped && owned[i].Kind == "badge" && page.Medal == nil {
-			m := owned[i]
-			page.Medal = &m
+		handled[t.Item], handled[t.EquipItem] = true, true
+		page.Owned += t.Earned
+	}
+	var mine []itemView
+	for _, it := range owned {
+		if handled[it.ID] {
+			continue
+		}
+		it.Owned, it.Equipped = true, me.Equipped[it.Kind] == it.ID
+		mine = append(mine, it)
+	}
+	page.Owned += len(mine)
+	// The badge beside the balance, and the slots: whatever is equipped, named from what the page knows.
+	for _, t := range own {
+		names[t.EquipItem] = t.Label
+	}
+	if id := me.Equipped["badge"]; id != "" {
+		page.Medal = &medalView{ID: id, Name: names[id]}
+	}
+	for _, kind := range []string{"badge", "profile_icon", "theme"} {
+		sl := slotView{Kind: kind, Label: kindName(lang, "rewards.k1.", kind), ID: me.Equipped[kind]}
+		sl.Name = names[sl.ID]
+		page.Slots = append(page.Slots, sl)
+	}
+	for _, t := range page.Tiles {
+		if t.State == "ready" {
+			page.Ready++
 		}
 	}
-	page.Owned = len(owned)
-
-	// Missions: what can be claimed now, what is under way, what is done.
-	for _, m := range ms {
+	for _, m := range rest {
 		mv := missionOf(lang, m)
 		switch {
 		case m.Claimed:
@@ -188,23 +253,20 @@ func (s *Server) handleRewards(w http.ResponseWriter, r *http.Request) {
 		}
 		return x.Percent > y.Percent
 	})
-	page.Ready = len(page.Claimable)
+	page.Ready += len(page.Claimable)
 
-	// The shop lists what is for sale: not owned first, and what can be afforded before what cannot.
+	// The shop lists what is for sale and not yet owned, what can be afforded first.
 	var forSale []itemView
 	for _, it := range shop {
-		if it.HasCost {
+		if it.HasCost && !it.Owned { // what you own is in My items, never in the Shop
 			forSale = append(forSale, it)
-		}
-		if it.HasCost && !it.Owned && it.Affordable {
-			page.Affordable++
+			if it.Affordable {
+				page.Affordable++
+			}
 		}
 	}
 	sort.SliceStable(forSale, func(a, b int) bool {
 		x, y := forSale[a], forSale[b]
-		if x.Owned != y.Owned {
-			return !x.Owned
-		}
 		if x.Affordable != y.Affordable {
 			return x.Affordable
 		}
@@ -231,23 +293,23 @@ func (s *Server) handleRewards(w http.ResponseWriter, r *http.Request) {
 		page.PlayTime = Duration(lang, me.Account.LifetimePlaySeconds)
 	}
 
-	// The collection, grouped by kind, with the Founder seal kept apart.
-	for _, kind := range orderedKinds(owned) {
+	// My items, grouped by kind; the earned badge tiles lead the Badges group.
+	for _, kind := range orderedKinds(mine) {
 		g := kindGroup{Kind: kind, Label: kindName(lang, "rewards.k.", kind), Wide: kind == "theme"}
-		for _, it := range owned {
-			if it.Kind != kind {
-				continue
+		for _, it := range mine {
+			if it.Kind == kind {
+				g.Items = append(g.Items, it)
 			}
-			if it.Founder {
-				f := it
-				page.Founder = &f
-				continue
-			}
-			g.Items = append(g.Items, it)
 		}
-		if len(g.Items) > 0 {
-			page.Groups = append(page.Groups, g)
+		page.Groups = append(page.Groups, g)
+	}
+	if len(own) > 0 {
+		i := slices.IndexFunc(page.Groups, func(g kindGroup) bool { return g.Kind == "badge" })
+		if i < 0 {
+			page.Groups = append([]kindGroup{{Kind: "badge", Label: kindName(lang, "rewards.k.", "badge")}}, page.Groups...)
+			i = 0
 		}
+		page.Groups[i].Tiles = own
 	}
 
 	if tab == "missions" {
@@ -526,4 +588,131 @@ func (s *Server) handleRewardsPreview(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Security-Policy", "default-src 'none'; sandbox")
 	w.Header().Set("Cache-Control", "public, max-age=3600")
 	_, _ = w.Write(body)
+}
+
+// tilesOf turns the badge missions into tiles and hands back the others. A ladder is the family's tier
+// missions in order of target: the tile shows the first tier not yet claimed (or the top one when all are),
+// and counts towards that tier's target. Order: ready first, then by how far along, then completed.
+func tilesOf(lang string, ms []rewards.Mission, equippedBadge string) (work, own []tileView, rest []rewards.Mission) {
+	ladders := map[string][]rewards.Mission{}
+	var singles []rewards.Mission
+	for _, m := range ms {
+		ref, ok := ladderOf[m.ID]
+		switch {
+		case !ok:
+			rest = append(rest, m)
+		case ref.Finish == "":
+			singles = append(singles, m)
+		default:
+			ladders[ref.Family] = append(ladders[ref.Family], m)
+		}
+	}
+	for _, fam := range ladderOrder {
+		tiers := ladders[fam]
+		if len(tiers) == 0 {
+			continue
+		}
+		sort.Slice(tiers, func(a, b int) bool { return tiers[a].Target < tiers[b].Target })
+		t := tileView{Key: fam, Name: i18n.T(lang, "rewards.fam."+fam)}
+		cur := len(tiers) - 1
+		for i, m := range tiers {
+			if !m.Claimed {
+				cur = i
+				break
+			}
+		}
+		for i, m := range tiers {
+			ref := ladderOf[m.ID]
+			item := ref.Item
+			if m.RewardItem != "" {
+				item = m.RewardItem
+			}
+			tv := tierView{Finish: i18n.T(lang, "rewards.finish."+ref.Finish), Item: item, Target: strconv.FormatInt(m.Target, 10), State: "locked"}
+			if m.RewardPoints > 0 {
+				tv.Points = fmt.Sprintf(i18n.T(lang, "rewards.tile.get"), m.RewardPoints)
+			}
+			switch {
+			case m.Claimed:
+				tv.State = "earned"
+				t.Earned++
+			case i == cur:
+				tv.State, tv.Ready = "current", m.Claimable && !m.Locked
+			}
+			t.Pips = append(t.Pips, m.Claimed)
+			t.Tiers = append(t.Tiers, tv)
+		}
+		t.Complete = t.Earned == len(tiers)
+		if t.Earned > 0 { // the highest tier earned is what My items shows
+			best := t.Earned - 1
+			o := t
+			o.Item, o.EquipItem = t.Tiers[best].Item, t.Tiers[best].Item
+			o.Label = t.Name + " · " + t.Tiers[best].Finish
+			o.Progress = fmt.Sprintf("%s / %s", t.Tiers[best].Target, t.Tiers[best].Target)
+			o.Percent, o.State = 100, "earned"
+			o.Equipped = equippedBadge == o.EquipItem
+			if o.Complete {
+				o.State, o.Label = "done", t.Name+" · "+t.Tiers[best].Finish
+			}
+			own = append(own, o)
+		}
+		if !t.Complete { // the next tier is what Missions shows
+			fillTile(lang, &t, tiers[cur], t.Tiers[cur].Item)
+			t.Label = t.Name + " · " + t.Tiers[cur].Finish
+			work = append(work, t)
+		}
+	}
+	for _, m := range singles {
+		ref := ladderOf[m.ID]
+		item := ref.Item
+		if m.RewardItem != "" {
+			item = m.RewardItem
+		}
+		t := tileView{Key: m.ID, Name: m.Title, Label: m.Title, Single: true, Description: m.Description}
+		fillTile(lang, &t, m, item)
+		if strings.HasPrefix(m.Metric, "family_games:") {
+			t.Progress = fmt.Sprintf(i18n.T(lang, "rewards.games"), min(m.Progress, m.Target), m.Target)
+		}
+		if m.Claimed {
+			t.State, t.Earned, t.Complete, t.Percent = "done", 1, true, 100
+			t.EquipItem, t.Equipped = item, equippedBadge == item
+			t.Progress = fmt.Sprintf("%d / %d", m.Target, m.Target)
+			if strings.HasPrefix(m.Metric, "family_games:") {
+				t.Progress = fmt.Sprintf(i18n.T(lang, "rewards.games"), m.Target, m.Target)
+			}
+			own = append(own, t)
+			continue
+		}
+		work = append(work, t)
+	}
+	rank := map[string]int{"ready": 0, "progress": 1}
+	sort.SliceStable(work, func(a, b int) bool {
+		x, y := work[a], work[b]
+		if rank[x.State] != rank[y.State] {
+			return rank[x.State] < rank[y.State]
+		}
+		return x.Percent > y.Percent
+	})
+	return work, own, rest
+}
+
+// fillTile sets what a tile shows about the mission it is working on: the art, the progress and the reward.
+func fillTile(lang string, t *tileView, m rewards.Mission, item string) {
+	t.Item, t.MissionID, t.Period, t.State = item, m.ID, m.Period, "progress"
+	if m.Target > 0 {
+		t.Percent = int(min(m.Progress, m.Target) * 100 / m.Target)
+	}
+	t.Progress = fmt.Sprintf("%d / %d", min(m.Progress, m.Target), m.Target)
+	t.TargetText = strconv.FormatInt(m.Target, 10)
+	if m.RewardPoints > 0 {
+		t.Reward = fmt.Sprintf(i18n.T(lang, "rewards.tile.get"), m.RewardPoints)
+		t.ClaimText = fmt.Sprintf(i18n.T(lang, "rewards.claim.pts"), m.RewardPoints)
+	} else {
+		t.ClaimText = i18n.T(lang, "rewards.claim")
+	}
+	if m.RewardItem != "" {
+		t.Reward = strings.TrimSpace(t.Reward + " " + i18n.T(lang, "rewards.tile.badge"))
+	}
+	if m.Claimable && !m.Claimed && !m.Locked {
+		t.State = "ready"
+	}
 }

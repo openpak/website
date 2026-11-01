@@ -24,6 +24,7 @@ type State struct {
 	Frozen, Paused, Pub bool
 	PlayPoints, PlayCap int
 	Progress            map[string]int64
+	Counts              map[string]int64 // running counts by mission metric (ladders); wins over Progress
 	Claimed             map[string]bool
 	Owned               map[string]bool
 	Equipped            map[string]string
@@ -58,7 +59,7 @@ var Missions = []Mission{
 }
 
 func NewState() *State {
-	return &State{PlayCap: 8, Progress: map[string]int64{}, Claimed: map[string]bool{}, Owned: map[string]bool{}, Equipped: map[string]string{}}
+	return &State{PlayCap: 8, Progress: map[string]int64{}, Counts: map[string]int64{}, Claimed: map[string]bool{}, Owned: map[string]bool{}, Equipped: map[string]string{}}
 }
 
 func (st *State) items(t testing.TB) []Item {
@@ -131,6 +132,9 @@ func New(t testing.TB, st *State) *rewards.Client {
 		var out []map[string]any
 		for _, m := range Missions {
 			p := st.Progress[m.ID]
+			if c, ok := st.Counts[m.Metric]; ok {
+				p = c
+			}
 			done := p >= m.Target
 			locked := m.Requires != "" && !st.Claimed[m.Requires]
 			period := "2026-11-02"
@@ -201,6 +205,9 @@ func New(t testing.TB, st *State) *rewards.Client {
 				pts := m.Points
 				if st.Claimed[m.ID] {
 					pts = 0
+				}
+				if !st.Claimed[m.ID] && m.RewardItem != "" {
+					st.Owned[m.RewardItem] = true // the badge comes with the claim
 				}
 				st.Claimed[m.ID] = true
 				st.Balance += pts

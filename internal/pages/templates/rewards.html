@@ -24,6 +24,81 @@
 {{/* The picture of an item: its preview, or its name for a text-only one. */}}
 {{define "rw-art"}}{{if .HasPreview}}<img src="/account/rewards/preview/{{.ID}}" alt="" width="256" height="256" loading="lazy">{{else}}<span class="art-placeholder txt"><b>{{.Name}}</b></span>{{end}}{{end}}
 
+{{/* A badge tile, the shop's tile: the art, then the name and tier under it. In Missions ("work") it is the
+     next tier being worked on: progress and the reward as text, or the Claim button once reached. In My items
+     ("mine") it is the highest tier earned: its threshold reached, and the Equip button. Both open the ladder. */}}
+{{define "rw-tile"}}
+{{$l := index . 0}}{{$csrf := index . 1}}{{$t := index . 2}}{{$mode := index . 3}}{{$frozen := index . 4}}
+<li class="gtile">
+  <a class="t" href="#l-{{$t.Key}}" aria-label="{{$t.Label}}, {{$t.Progress}}" title="{{$t.Label}}">
+    <span class="art"><img src="/account/rewards/preview/{{$t.Item}}" alt="" width="256" height="256" loading="lazy"></span>
+    <span class="cap"><span class="sub">{{$t.Label}}</span></span>
+    <span class="rwmeta">
+      {{with $t.Pips}}<span class="pips" role="img" aria-label="{{printf (t $l "rewards.tier.pips") $t.Earned (len $t.Pips)}}">{{range .}}<i{{if .}} class="on"{{end}}></i>{{end}}</span>{{end}}
+      {{if eq $mode "mine"}}<span class="rwprog"><span class="whitespace-nowrap">{{$t.Progress}}</span>{{if $t.Complete}} <span class="badge ok">{{t $l "rewards.completed"}}</span>{{end}}</span>
+      {{else}}
+      {{if eq $t.State "progress"}}<progress class="bar" max="100" value="{{$t.Percent}}" aria-label="{{$t.Label}}, {{$t.Progress}}"></progress>{{end}}
+      <span class="rwprog"><span class="whitespace-nowrap">{{$t.Progress}}</span></span>
+      {{if ne $t.State "ready"}}{{with $t.Reward}}<span class="rwreward">{{.}}</span>{{end}}{{end}}
+      {{end}}
+    </span>
+  </a>
+  {{if and (eq $mode "work") (eq $t.State "ready")}}
+  <div class="foot"><form method="post" action="/account/rewards/claim" data-once><input type="hidden" name="csrf" value="{{$csrf}}"><input type="hidden" name="mission" value="{{$t.MissionID}}"><input type="hidden" name="period" value="{{$t.Period}}"><button type="submit" class="small primary"{{if $frozen}} disabled{{end}}>{{$t.ClaimText}}</button></form></div>
+  {{else if eq $mode "mine"}}
+  <div class="foot"><form method="post" action="/account/rewards/equip" data-once><input type="hidden" name="csrf" value="{{$csrf}}"><input type="hidden" name="slot" value="badge">
+    {{if $t.Equipped}}<input type="hidden" name="item" value=""><button type="submit" class="small" aria-pressed="true" title="{{t $l "rewards.unequip"}}">{{t $l "rewards.equipped"}}</button>
+    {{else}}<input type="hidden" name="item" value="{{$t.EquipItem}}"><button type="submit" class="small primary"{{if $frozen}} disabled{{end}}>{{t $l "rewards.equip"}}</button>{{end}}
+  </form></div>
+  {{end}}
+</li>
+{{end}}
+
+{{/* The ladder's dialog: every tier, with its art, threshold, points and whether it is earned. */}}
+{{define "rw-ladder"}}
+{{$l := index . 0}}{{$csrf := index . 1}}{{$t := index . 2}}{{$mode := index . 3}}{{$frozen := index . 4}}
+<dialog id="l-{{$t.Key}}" class="card tdialog" aria-labelledby="l-{{$t.Key}}-h">
+  <header class="thero">
+    <span class="tart"><img src="/account/rewards/preview/{{$t.Item}}" alt="" width="256" height="256" loading="lazy"></span>
+    <div class="tinfo">
+      <h2 id="l-{{$t.Key}}-h">{{$t.Name}}</h2>
+      <p class="tmeta"><span>{{$t.Progress}}</span>{{if $t.Complete}}<span class="badge ok">{{t $l "rewards.completed"}}</span>{{end}}</p>
+      {{with $t.Pips}}<span class="pips" role="img" aria-label="{{printf (t $l "rewards.tier.pips") $t.Earned (len $t.Pips)}}">{{range .}}<i{{if .}} class="on"{{end}}></i>{{end}}</span>{{end}}
+    </div>
+    <button type="button" class="tclose" data-close aria-label="{{t $l "rewards.dlg.close"}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </header>
+  <div class="tbody">
+    {{with $t.Description}}<p class="mt-4 mb-0">{{.}}</p>{{end}}
+    {{with $t.Tiers}}
+    <h3>{{t $l "rewards.ladder"}}</h3>
+    <ul class="rwtiers">
+      {{range .}}
+      <li class="{{.State}}">
+        <img src="/account/rewards/preview/{{.Item}}" alt="" width="48" height="48" loading="lazy">
+        <span><b>{{.Finish}}</b><span class="sub">{{.Target}}{{with .Points}} · {{.}}{{end}}</span></span>
+        {{if eq .State "earned"}}<span class="badge ok">{{t $l "rewards.tier.earned"}}</span>
+        {{else if .Ready}}<span class="badge beta">{{t $l "rewards.m.ready"}}</span>
+        {{else if eq .State "current"}}<span class="badge">{{t $l "rewards.m.progress"}}</span>
+        {{else}}<span class="badge">{{t $l "rewards.locked"}}</span>{{end}}
+      </li>
+      {{end}}
+    </ul>
+    {{end}}
+  </div>
+  <div class="actions foot">
+    <button type="button" data-close>{{t $l "rewards.dlg.close"}}</button>
+    {{if and (eq $mode "work") (eq $t.State "ready")}}
+    <form method="post" action="/account/rewards/claim" data-once class="contents"><input type="hidden" name="csrf" value="{{$csrf}}"><input type="hidden" name="mission" value="{{$t.MissionID}}"><input type="hidden" name="period" value="{{$t.Period}}"><button type="submit" class="primary"{{if $frozen}} disabled{{end}}>{{$t.ClaimText}}</button></form>
+    {{else if eq $mode "mine"}}
+    <form method="post" action="/account/rewards/equip" data-once class="contents"><input type="hidden" name="csrf" value="{{$csrf}}"><input type="hidden" name="slot" value="badge">
+      {{if $t.Equipped}}<input type="hidden" name="item" value=""><button type="submit" aria-pressed="true">{{t $l "rewards.equipped"}}</button>
+      {{else}}<input type="hidden" name="item" value="{{$t.EquipItem}}"><button type="submit" class="primary"{{if $frozen}} disabled{{end}}>{{t $l "rewards.equip"}}</button>{{end}}
+    </form>
+    {{end}}
+  </div>
+</dialog>
+{{end}}
+
 {{template "header" .}}
 {{template "acctnav" .}}
 {{$l := .Lang}}
@@ -84,15 +159,23 @@
 </nav>
 
 {{if eq .Tab "missions"}}
-{{if not (or .Claimable .InProgress .Done)}}
+{{if .Tiles}}
+<section aria-labelledby="badges-h" class="mb-9">
+  <div class="section-head"><h2 id="badges-h">{{t $l "rewards.badges"}} <span class="text-muted">{{len .Tiles}}</span></h2></div>
+  <ul class="gtiles under">{{range .Tiles}}{{template "rw-tile" (arr $l $.CSRF . "work" $.Me.Account.Frozen)}}{{end}}</ul>
+  {{range .Tiles}}{{template "rw-ladder" (arr $l $.CSRF . "work" $.Me.Account.Frozen)}}{{end}}
+</section>
+{{end}}
+{{if not (or .Claimable .InProgress .Done .Tiles)}}
 <p class="empty">{{t $l "rewards.m.empty"}}</p>
+{{else if not (or .Claimable .InProgress .Done)}}
 {{else}}
 {{if .Claimable}}
 <section aria-labelledby="ready-h" class="mb-9">
   <div class="section-head"><h2 id="ready-h">{{t $l "rewards.m.ready"}} <span class="text-muted">{{len .Claimable}}</span></h2></div>
   <div class="card"><ul class="cardrows">{{range .Claimable}}{{template "rw-mission" (arr $l $.CSRF . $.Me.Account.Frozen)}}{{end}}</ul></div>
 </section>
-{{else}}
+{{else if not .Tiles}}
 <p class="empty mb-6">{{t $l "rewards.m.none"}}</p>
 {{end}}
 {{if .InProgress}}
@@ -130,10 +213,10 @@
   <h3 class="rwgroup">{{.Label}} <span class="text-muted">{{len .Items}}</span></h3>
   <ul class="gtiles under{{if .Wide}} wide{{end}}">
     {{range .Items}}
-    <li class="gtile{{if .Owned}} owned{{end}}">
-      <a class="t" href="#r-{{.ID}}" aria-label="{{.Name}}, {{.KindLabel}}, {{if .Owned}}{{t $l "rewards.owned"}}{{else}}{{printf (t $l "rewards.points") .Cost}}{{end}}" title="{{.Name}}">
+    <li class="gtile">
+      <a class="t" href="#r-{{.ID}}" aria-label="{{.Name}}, {{.KindLabel}}, {{printf (t $l "rewards.points") .Cost}}" title="{{.Name}}">
         <span class="art">{{template "rw-art" .}}</span>
-        <span class="cap"><span class="sub">{{.Name}}</span>{{if .Owned}}<span class="badge ok">{{t $l "rewards.owned"}}</span>{{else}}<span class="badge{{if .Affordable}} beta{{end}}">{{printf (t $l "rewards.pts") .Cost}}</span>{{end}}</span>
+        <span class="cap"><span class="sub">{{.Name}}</span><span class="badge{{if .Affordable}} beta{{end}}">{{printf (t $l "rewards.pts") .Cost}}</span></span>
       </a>
     </li>
     {{end}}
@@ -147,11 +230,11 @@
       <span class="tart{{if .Wide}} wide{{end}}">{{template "rw-art" .}}</span>
       <div class="tinfo">
         <h2 id="r-{{.ID}}-h">{{.Name}}</h2>
-        <p class="tmeta"><span>{{.KindLabel}}</span>{{if .Owned}}<span class="badge ok">{{t $l "rewards.owned"}}</span>{{end}}{{if .Limited}}<span class="badge warn">{{t $l "rewards.limited"}}</span>{{end}}</p>
+        <p class="tmeta"><span>{{.KindLabel}}</span>{{if .Limited}}<span class="badge warn">{{t $l "rewards.limited"}}</span>{{end}}</p>
         <dl class="facts">
           <dt>{{t $l "rewards.dlg.price"}}</dt><dd>{{printf (t $l "rewards.points") .Cost}}</dd>
-          {{if not .Owned}}<dt>{{t $l "rewards.dlg.balance"}}</dt><dd>{{printf (t $l "rewards.points") $.Me.Account.Balance}}</dd>
-          {{if not .Need}}<dt>{{t $l "rewards.dlg.after"}}</dt><dd>{{printf (t $l "rewards.points") .After}}</dd>{{end}}{{end}}
+          <dt>{{t $l "rewards.dlg.balance"}}</dt><dd>{{printf (t $l "rewards.points") $.Me.Account.Balance}}</dd>
+          {{if not .Need}}<dt>{{t $l "rewards.dlg.after"}}</dt><dd>{{printf (t $l "rewards.points") .After}}</dd>{{end}}
           {{with .Where}}<dt>{{t $l "rewards.dlg.where"}}</dt><dd>{{.}}</dd>{{end}}
         </dl>
       </div>
@@ -159,65 +242,56 @@
     </header>
     <div class="tbody">
       {{with .Description}}<p class="mt-4 mb-0">{{.}}</p>{{end}}
-      {{if .Owned}}<p class="notice ok mt-4 mb-0" role="status">{{t $l "rewards.dlg.owned"}}</p>
-      {{else if $.Me.Account.Frozen}}<p class="notice bad mt-4 mb-0">{{t $l "rewards.frozen"}}</p>
+      {{if $.Me.Account.Frozen}}<p class="notice bad mt-4 mb-0">{{t $l "rewards.frozen"}}</p>
       {{else if .Need}}<p class="notice warn mt-4 mb-0">{{printf (t $l "rewards.dlg.short") .Need}}</p>
       {{else}}<p class="font-ui mt-4 mb-0"><b>{{printf (t $l "rewards.dlg.ask") .Cost .Name}}</b></p>{{end}}
-      {{if and .Limited (not .Owned)}}<p class="hint mb-0">{{t $l "rewards.dlg.limited"}}</p>{{end}}
+      {{if .Limited}}<p class="hint mb-0">{{t $l "rewards.dlg.limited"}}</p>{{end}}
     </div>
-    {{if .Owned}}
-    <div class="actions foot">
-      <button type="button" data-close>{{t $l "rewards.dlg.close"}}</button>
-      <a class="btn primary" href="/account/rewards?tab=collection">{{t $l "rewards.dlg.see"}}</a>
-    </div>
-    {{else}}
     <form method="post" action="/account/rewards/redeem" class="actions foot" data-once>
       <input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="item" value="{{.ID}}"><input type="hidden" name="key" value="{{.Key}}">
       <button type="button" data-close>{{t $l "rewards.dlg.cancel"}}</button>
       <button type="submit" class="primary" data-working="{{t $l "rewards.dlg.working"}}"{{if or .Need $.Me.Account.Frozen}} disabled{{end}}>{{printf (t $l "rewards.dlg.confirm") .Cost}}</button>
     </form>
-    {{end}}
   </dialog>
   {{end}}
   {{end}}
 </section>
 
 {{else if eq .Tab "collection"}}
-<p class="empty mb-6">{{t $l "rewards.collection.sub"}}</p>
-{{if not (or .Founder .Groups)}}
+<section aria-labelledby="slots-h" class="mb-9">
+  <div class="section-head"><h2 id="slots-h">{{t $l "rewards.slots"}}</h2><p>{{t $l "rewards.collection.sub"}}</p></div>
+  <ul class="rwslots">
+    {{range .Slots}}
+    <li class="card">
+      {{if .ID}}<img src="/account/rewards/preview/{{.ID}}" alt="" width="56" height="56" loading="lazy">{{else}}<span class="none" aria-hidden="true"></span>{{end}}
+      <span><span class="sub">{{.Label}}</span><b>{{if .ID}}{{.Name}}{{else}}{{t $l "rewards.slot.none"}}{{end}}</b></span>
+    </li>
+    {{end}}
+  </ul>
+</section>
+{{if not .Groups}}
 <p class="empty">{{t $l "rewards.empty.inventory"}}</p>
 <p class="actions mt-4"><a class="btn" href="/account/rewards?tab=missions">{{t $l "rewards.tab.missions"}}</a><a class="btn primary" href="/account/rewards?tab=shop">{{t $l "rewards.tab.shop"}}</a></p>
 {{end}}
-{{with .Founder}}
-<section class="card rwfounder" aria-labelledby="founder-h">
-  <img class="seal" src="/account/rewards/preview/{{.ID}}" alt="" width="112" height="112">
-  <div>
-    <h2 id="founder-h">{{t $l "rewards.founder"}}{{if .Equipped}} <span class="badge ok">{{t $l "rewards.equipped"}}</span>{{end}}</h2>
-    <p>{{t $l "rewards.founder.text"}}</p>
-    <form method="post" action="/account/rewards/equip" data-once><input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="slot" value="{{.Kind}}">
-      {{if .Equipped}}<input type="hidden" name="item" value=""><button type="submit" class="small">{{t $l "rewards.unequip"}}</button>
-      {{else}}<input type="hidden" name="item" value="{{.ID}}"><button type="submit" class="small primary"{{if $.Me.Account.Frozen}} disabled{{end}}>{{t $l "rewards.equip"}}</button>{{end}}
-    </form>
-  </div>
-</section>
-{{end}}
 {{range .Groups}}
 <section aria-labelledby="g-{{.Kind}}" class="mb-9">
-  <div class="section-head"><h2 id="g-{{.Kind}}">{{.Label}} <span class="text-muted">{{len .Items}}</span></h2></div>
+  <div class="section-head"><h2 id="g-{{.Kind}}">{{.Label}} <span class="text-muted">{{add (len .Tiles) (len .Items)}}</span></h2></div>
   <ul class="gtiles under{{if .Wide}} wide{{end}}">
+    {{range .Tiles}}{{template "rw-tile" (arr $l $.CSRF . "mine" $.Me.Account.Frozen)}}{{end}}
     {{range .Items}}
     <li class="gtile">
       <span class="art">{{template "rw-art" .}}</span>
-      <span class="cap"><span class="sub">{{.Name}}</span>{{if .Equipped}}<span class="badge ok">{{t $l "rewards.equipped"}}</span>{{end}}</span>
+      <span class="cap"><span class="sub">{{.Name}}</span></span>
       <div class="foot">
         <form method="post" action="/account/rewards/equip" data-once><input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="slot" value="{{.Kind}}">
-          {{if .Equipped}}<input type="hidden" name="item" value=""><button type="submit" class="small" aria-label="{{t $l "rewards.unequip"}}: {{.Name}}">{{t $l "rewards.unequip"}}</button>
+          {{if .Equipped}}<input type="hidden" name="item" value=""><button type="submit" class="small" aria-pressed="true" title="{{t $l "rewards.unequip"}}">{{t $l "rewards.equipped"}}</button>
           {{else}}<input type="hidden" name="item" value="{{.ID}}"><button type="submit" class="small primary" aria-label="{{t $l "rewards.equip"}}: {{.Name}}"{{if $.Me.Account.Frozen}} disabled{{end}}>{{t $l "rewards.equip"}}</button>{{end}}
         </form>
       </div>
     </li>
     {{end}}
   </ul>
+  {{range .Tiles}}{{template "rw-ladder" (arr $l $.CSRF . "mine" $.Me.Account.Frozen)}}{{end}}
 </section>
 {{end}}
 

@@ -980,17 +980,9 @@
   .rwtoday .hint { margin: 8px 0 0; }
   .rwtoday .hint:empty { display: none; }
 
-  /* The Founder seal, kept apart from the other badges. */
-  .rwfounder { display: flex; align-items: center; gap: 22px; padding: 20px; margin-bottom: 28px; }
-  .rwfounder .seal { flex: none; width: 7rem; height: 7rem; }
-  .rwfounder h2 { margin: 0 0 4px; }
-  .rwfounder p { margin: 0 0 12px; color: var(--muted); max-width: 32rem; }
-  @media (max-width: 30rem) { .rwfounder { flex-direction: column; text-align: center; } .rwfounder p { margin-inline: auto; } }
-
   /* A theme's preview is wide: two columns of the shelf, and a wide picture in its dialog. */
   .gtiles.wide { grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); }
   .gtiles.wide .art { aspect-ratio: 2 / 1; }
-  .gtile.owned .art > img { opacity: .8; }
   .gtiles.under .gtile .cap .sub { flex: 1 1 auto; white-space: normal; overflow: visible; }
   .rwgroup { margin: 28px 0 12px; font-size: 1.25rem; }
   .rwgroup:first-of-type { margin-top: 12px; }
@@ -1007,6 +999,36 @@
   .gtiles.under.wide .art > img { object-fit: cover; border-radius: 18px 18px 0 0; }
   .gtiles.under .gtile .cap { flex-wrap: wrap; row-gap: 4px; position: static; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 2px 12px 12px; }
   .gtiles.under .gtile > a.t .art, .gtiles.under .gtile > .art { border-radius: 18px 18px 0 0; }
+  /* A badge tile's meter: the tiers earned as pips, the count, and what the next tier pays. */
+  .gtile .rwmeta { display: grid; gap: 6px; padding: 0 12px 12px; }
+  .gtile .rwmeta:empty { display: none; }
+  .gtile > a.t { color: var(--ink); }
+  .pips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .pips i { width: 9px; height: 9px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--line-2); }
+  .pips i.on { background: var(--accent); box-shadow: none; }
+  .gtile .rwmeta .bar { margin-top: 0; }
+  .rwprog { display: flex; flex-wrap: wrap; row-gap: 4px; align-items: center; justify-content: space-between; gap: 8px; font-family: var(--font-ui); font-weight: 800; font-size: .9rem; font-variant-numeric: tabular-nums; }
+  .rwreward { font-family: var(--font-ui); font-weight: 700; font-size: .8rem; color: var(--muted); }
+  .gtile .foot button[aria-pressed="true"] { background: var(--ok-weak); border-color: var(--ok-line); color: var(--ok); }
+  .tdialog .actions form.contents { display: contents; }
+  .tinfo .pips { margin-top: 10px; }
+  @media (max-width: 40rem) { .tinfo .pips { justify-content: center; } }
+  .rwtiers { list-style: none; margin: 0 0 8px; padding: 0; }
+  .rwtiers li { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .rwtiers li:last-child { border-bottom: 0; }
+  .rwtiers img { width: 48px; height: 48px; object-fit: contain; }
+  .rwtiers li.locked img { opacity: .5; }
+  .rwtiers b { display: block; font-family: var(--font-ui); }
+  .rwtiers .sub { font-size: .84rem; color: var(--muted); }
+
+  /* The equip slots at the top of My items: one card each for what is on the profile now. */
+  .rwslots { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+  .rwslots li { display: flex; align-items: center; gap: 14px; padding: 12px 14px; }
+  .rwslots img, .rwslots .none { flex: none; width: 56px; height: 56px; border-radius: 12px; object-fit: contain; background: var(--paper-2); }
+  .rwslots .none { box-shadow: inset 0 0 0 2px var(--line-2); }
+  .rwslots li > span { min-width: 0; }
+  .rwslots .sub { display: block; font-family: var(--font-ui); font-weight: 700; font-size: .8rem; color: var(--muted); }
+  .rwslots b { display: block; font-family: var(--font-ui); overflow-wrap: anywhere; }
   .rwcheck { display: flex; align-items: flex-start; gap: 12px; }
   .rwcheck b { display: block; }
   .form-stack .rwcheck + .rwcheck { margin-top: 1rem; }

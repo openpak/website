@@ -4,7 +4,7 @@
 // Closing it drops the hash. The same way the titles page opens a title's details.
 (function () {
   function sync() {
-    var d = /^#r-[A-Za-z0-9_-]+$/.test(location.hash) && document.getElementById(location.hash.slice(1));
+    var d = /^#[rl]-[A-Za-z0-9_-]+$/.test(location.hash) && document.getElementById(location.hash.slice(1));
     if (d && d.showModal && !d.open) d.showModal();
   }
   Array.prototype.forEach.call(document.querySelectorAll("dialog.tdialog"), function (d) {
