@@ -4,6 +4,7 @@ package i18n
 func init() {
 	for lang, c := range map[string]Catalogue{
 		"en": {
+			"sites.verse.community": "OpenVerse community",
 			"nav.sites":             "Sites",
 			"sites.title":           "Open sites",
 			"sites.sub":             "Companion sites for the games that have one. Sign in with your OpenPak account.",
@@ -19,6 +20,7 @@ func init() {
 			"sites.openverse.games": "Wii U and 3DS",
 		},
 		"de": {
+			"sites.verse.community": "OpenVerse-Community",
 			"nav.sites":             "Seiten",
 			"sites.title":           "Open-Seiten",
 			"sites.sub":             "Begleitseiten für die Spiele, die eine haben. Melde dich mit deinem OpenPak-Konto an.",
@@ -34,6 +36,7 @@ func init() {
 			"sites.openverse.games": "Wii U und 3DS",
 		},
 		"fr": {
+			"sites.verse.community": "Communauté OpenVerse",
 			"nav.sites":             "Sites",
 			"sites.title":           "Sites Open",
 			"sites.sub":             "Des sites compagnons pour les jeux qui en ont un. Connecte-toi avec ton compte OpenPak.",
@@ -49,6 +52,7 @@ func init() {
 			"sites.openverse.games": "Wii U et 3DS",
 		},
 		"it": {
+			"sites.verse.community": "Community OpenVerse",
 			"nav.sites":             "Siti",
 			"sites.title":           "Siti Open",
 			"sites.sub":             "Siti di accompagnamento per i giochi che ne hanno uno. Accedi con il tuo account OpenPak.",
@@ -64,6 +68,7 @@ func init() {
 			"sites.openverse.games": "Wii U e 3DS",
 		},
 		"es": {
+			"sites.verse.community": "Comunidad de OpenVerse",
 			"nav.sites":             "Sitios",
 			"sites.title":           "Sitios Open",
 			"sites.sub":             "Sitios complementarios para los juegos que tienen uno. Inicia sesión con tu cuenta de OpenPak.",
@@ -79,6 +84,7 @@ func init() {
 			"sites.openverse.games": "Wii U y 3DS",
 		},
 		"pt-BR": {
+			"sites.verse.community": "Comunidade OpenVerse",
 			"nav.sites":             "Sites",
 			"sites.title":           "Sites Open",
 			"sites.sub":             "Sites complementares para os jogos que têm um. Entre com a sua conta OpenPak.",

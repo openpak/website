@@ -77,7 +77,10 @@
     </header>
     <div class="tbody">
     {{with .Companion}}<p class="mt-4"><a class="btn primary" href="/titles/{{.}}">{{t $.Lang "companion.open"}}</a></p>{{end}}
-    {{with .Site}}<p class="mt-4"><a class="btn primary" href="{{.URL}}" rel="noopener">{{printf (t $.Lang "sites.open") .Name}}</a></p>{{end}}
+    {{if or .Site .Verse}}<div class="mt-4 actions">
+      {{with .Site}}<a class="btn primary" href="{{.URL}}" rel="noopener">{{printf (t $.Lang "sites.open") .Name}}</a>{{end}}
+      {{with .Verse}}<a class="btn" href="{{.}}" rel="noopener">{{t $.Lang "sites.verse.community"}}</a>{{end}}
+    </div>{{end}}
     <h3>{{t $.Lang "titles.compat.title"}}</h3>
     <p class="text-sm text-muted">{{t $.Lang "titles.compat.sub"}}</p>
     <div class="table-wrap"><table class="compat">
