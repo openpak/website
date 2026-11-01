@@ -23,6 +23,7 @@ import (
 	"github.com/openpak/website/internal/companion"
 	"github.com/openpak/website/internal/config"
 	"github.com/openpak/website/internal/core"
+	"github.com/openpak/website/internal/discordlink"
 	"github.com/openpak/website/internal/erasure"
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/media"
@@ -169,6 +170,10 @@ func run(log *slog.Logger) error {
 	}
 	// Subsite sign-in: only clients with SSO_CLIENT_<NAME>_SECRET set are registered.
 	pageSrv.SSO = sso.New(sso.FromEnv())
+	// Discord account linking for Pakka: needs DISCORD_OAUTH_CLIENT_ID and DISCORD_OAUTH_CLIENT_SECRET.
+	if pageSrv.Discord = discordlink.FromEnv(); pageSrv.Discord == nil {
+		log.Info("discord: DISCORD_OAUTH_CLIENT_ID/SECRET not set; the Link Discord button is hidden")
+	}
 	if !pageSrv.SSO.Enabled() {
 		log.Info("sso: no SSO_CLIENT_*_SECRET set; /account/sso is off")
 	}

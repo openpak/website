@@ -32,6 +32,7 @@ import (
 	"github.com/openpak/website/internal/clientip"
 	"github.com/openpak/website/internal/companion"
 	"github.com/openpak/website/internal/core"
+	"github.com/openpak/website/internal/discordlink"
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/news"
@@ -82,6 +83,8 @@ type Server struct {
 	Adapter *adapter.Client
 	// WFC resolves Wii/DS friend codes for the link flow; nil hides the form.
 	WFC *wfc.Client
+	// Discord links a Discord account to the signed-in account; nil (no DISCORD_OAUTH_* env) hides the button.
+	Discord *discordlink.Client
 	// Saves is the cloud saves service; nil renders the page as "not available".
 	Saves *saves.Client
 	// Parental relays to nx-baas's parental-controls records; nil renders the
@@ -375,6 +378,9 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /account/sessions/revoke", s.handleRevokeSession)
 	mux.HandleFunc("POST /account/link/revoke", s.handleUnlink)
 	mux.HandleFunc("POST /account/link/wfc", s.handleLinkWFC)
+	mux.HandleFunc("POST /account/link/discord", s.handleDiscordStart)
+	mux.HandleFunc("GET /account/link/discord/callback", s.handleDiscordCallback)
+	mux.HandleFunc("POST /account/link/discord/revoke", s.handleDiscordRevoke)
 	mux.HandleFunc("POST /account/networks/{network}/{field}", s.handleNetworkField)
 	mux.HandleFunc("POST /account/avatar", s.handleAvatarUpload)
 	mux.HandleFunc("GET /media/avatars/{accountID}/{size}", s.handleAvatarServe)

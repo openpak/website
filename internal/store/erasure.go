@@ -57,6 +57,7 @@ func (s *PG) EraseAccount(ctx context.Context, accountID string) error {
 		`DELETE FROM tickets WHERE account_id=$1`, // ticket_messages cascade
 		`DELETE FROM account_bans WHERE account_id=$1`,
 		`DELETE FROM operator_applications WHERE account_id=$1`,
+		`DELETE FROM discord_links WHERE account_id=$1`,
 	} {
 		if _, err := tx.Exec(ctx, q, accountID); err != nil {
 			return err
@@ -109,6 +110,7 @@ func (m *Memory) AttachmentKeysForAccount(_ context.Context, accountID string) (
 func (m *Memory) EraseAccount(_ context.Context, accountID string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	delete(m.discord, accountID)
 	for k, ws := range m.webSessions {
 		if ws.AccountID == accountID {
 			delete(m.webSessions, k)

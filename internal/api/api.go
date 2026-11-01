@@ -107,6 +107,8 @@ type Server struct {
 	// website's forms; nil (not configured) lets them through as before.
 	Turnstile *turnstile.Verifier
 	log       *slog.Logger
+	// PakkaNotice reports Pakka data-use notice acceptance for the Discord lookup; nil = unknown.
+	PakkaNotice PakkaNotice
 }
 
 // New builds the API server.
@@ -207,6 +209,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 
 	s.registerInternal(mux)
 	s.registerBans(mux)
+	s.registerDiscord(mux)
 	s.registerTickets(mux)
 	s.registerCrashes(mux)
 	h("/me/avatar", s.auth(s.handleChooseAvatar))

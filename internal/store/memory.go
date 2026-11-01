@@ -32,7 +32,8 @@ type Memory struct {
 	pushCursor  uint64
 	bans        map[string]Ban
 	support     supportMem
-	locks       map[string]bool // TryLock leases
+	locks       map[string]bool        // TryLock leases
+	discord     map[string]DiscordLink // by account id
 }
 
 // NewMemory returns an empty in-memory store with registrations open.

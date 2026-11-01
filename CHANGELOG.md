@@ -13,6 +13,10 @@ release, taken from git history. `git log` stays the source of truth.
 
 ## Unreleased
 
+- **Link Discord.** Account > Linked platforms can link a Discord account (OAuth2, `identify` only; the
+  token is revoked at once, one Discord account per OpenPak account, unlink, audit log). Pakka on
+  Discord reads it through `GET /internal/discord/{discord_id}` (internal key). Needs
+  `DISCORD_OAUTH_CLIENT_ID`/`DISCORD_OAUTH_CLIENT_SECRET`. See docs/discord-link.md.
 - **Open sites directory.** `/sites` lists OpenSplat, OpenKart, OpenMaker and OpenVerse as tiles
   (menu and footer link it); the details of Splatoon, Mario Kart 8 (Wii U) and Super Mario Maker
   1 and 2 gain an "Open <site>" button. SSO built-in origins are now splat., kart., maker. and
