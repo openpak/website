@@ -1,4 +1,5 @@
 {{template "header" .}}
+{{template "acctnav" .}}
 <div class="page-head">
   <h1>{{t .Lang "trophies.title"}}</h1>
   <p class="lede">{{t .Lang "trophies.sub"}}</p>
@@ -11,4 +12,5 @@
 {{if not .Card.C.Rows}}<p class="empty">{{t .Lang "trophies.empty"}}</p>{{end}}
 <p class="hint mt-6">{{t .Lang "trophies.note"}}</p>
 {{end}}
+{{template "acctend"}}
 {{template "footer" .}}

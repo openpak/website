@@ -17,7 +17,7 @@
     {{else if $m.Locked}}<span class="badge">{{t $l "rewards.locked"}}</span>
     {{else}}{{$m.Label}}{{end}}
   </span>
-  {{if not $m.Locked}}<progress class="bar" max="100" value="{{$m.Percent}}" aria-label="{{$m.Title}}, {{$m.Label}}"></progress>{{end}}
+  {{if not (or $m.Locked $m.Claimed $m.CanClaim)}}<progress class="bar" max="100" value="{{$m.Percent}}" aria-label="{{$m.Title}}, {{$m.Label}}"></progress>{{end}}
 </li>
 {{end}}
 
@@ -25,6 +25,7 @@
 {{define "rw-art"}}{{if .HasPreview}}<img src="/account/rewards/preview/{{.ID}}" alt="" width="256" height="256" loading="lazy">{{else}}<span class="art-placeholder txt"><b>{{.Name}}</b></span>{{end}}{{end}}
 
 {{template "header" .}}
+{{template "acctnav" .}}
 {{$l := .Lang}}
 <div class="page-head">
   <h1>{{t $l "rewards.title"}}</h1>
@@ -65,8 +66,8 @@
 {{if .Me.Account.Paused}}<p class="notice warn mt-5" role="status">{{t $l "rewards.paused"}} <a href="/account/rewards?tab=settings">{{t $l "rewards.paused.go"}}</a></p>{{end}}
 
 <div class="minis mt-5">
-  <a class="card mini sel" href="/account/rewards?tab=missions"><b>{{.Ready}}</b><span>{{t $l "rewards.ready.count"}}</span></a>
   <a class="card mini sel" href="/account/rewards?tab=collection"><b>{{.Owned}}</b><span>{{t $l "rewards.owned.count"}}</span></a>
+  <div class="card mini"><b>{{.PlayTime}}</b><span>{{t $l "rewards.playtime"}}</span></div>
   <a class="card mini sel" href="/account/rewards?tab=missions#history"><b>{{.Me.Account.LifetimeEarned}}</b><span>{{t $l "rewards.earned"}}</span></a>
 </div>
 
@@ -125,18 +126,19 @@
   </ul>
   {{end}}
   {{if not .Shop}}<p class="empty">{{t $l "rewards.empty.shop"}}</p>{{else}}
-  <ul class="gtiles">
-    {{range .Shop}}
-    <li class="gtile{{if .Wide}} wide{{end}}{{if .Owned}} owned{{end}}">
+  {{range .ShopGroups}}
+  <h3 class="rwgroup">{{.Label}} <span class="text-muted">{{len .Items}}</span></h3>
+  <ul class="gtiles under{{if .Wide}} wide{{end}}">
+    {{range .Items}}
+    <li class="gtile{{if .Owned}} owned{{end}}">
       <a class="t" href="#r-{{.ID}}" aria-label="{{.Name}}, {{.KindLabel}}, {{if .Owned}}{{t $l "rewards.owned"}}{{else}}{{printf (t $l "rewards.points") .Cost}}{{end}}" title="{{.Name}}">
-        <span class="art">
-          {{template "rw-art" .}}
-          <span class="cap"><span class="sub">{{.Name}}</span>{{if .Owned}}<span class="badge ok">{{t $l "rewards.owned"}}</span>{{else}}<span class="badge{{if .Affordable}} beta{{end}}">{{printf (t $l "rewards.pts") .Cost}}</span>{{end}}</span>
-        </span>
+        <span class="art">{{template "rw-art" .}}</span>
+        <span class="cap"><span class="sub">{{.Name}}</span>{{if .Owned}}<span class="badge ok">{{t $l "rewards.owned"}}</span>{{else}}<span class="badge{{if .Affordable}} beta{{end}}">{{printf (t $l "rewards.pts") .Cost}}</span>{{end}}</span>
       </a>
     </li>
     {{end}}
   </ul>
+  {{end}}
 
   {{/* Each item's confirm dialog: what it is, what it costs, what is left, and the one button that spends. */}}
   {{range .Shop}}
@@ -202,13 +204,11 @@
 {{range .Groups}}
 <section aria-labelledby="g-{{.Kind}}" class="mb-9">
   <div class="section-head"><h2 id="g-{{.Kind}}">{{.Label}} <span class="text-muted">{{len .Items}}</span></h2></div>
-  <ul class="gtiles">
+  <ul class="gtiles under{{if .Wide}} wide{{end}}">
     {{range .Items}}
-    <li class="gtile{{if .Wide}} wide{{end}}">
-      <span class="art">
-        {{template "rw-art" .}}
-        <span class="cap"><span class="sub">{{.Name}}</span>{{if .Equipped}}<span class="badge ok">{{t $l "rewards.equipped"}}</span>{{end}}</span>
-      </span>
+    <li class="gtile">
+      <span class="art">{{template "rw-art" .}}</span>
+      <span class="cap"><span class="sub">{{.Name}}</span>{{if .Equipped}}<span class="badge ok">{{t $l "rewards.equipped"}}</span>{{end}}</span>
       <div class="foot">
         <form method="post" action="/account/rewards/equip" data-once><input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="slot" value="{{.Kind}}">
           {{if .Equipped}}<input type="hidden" name="item" value=""><button type="submit" class="small" aria-label="{{t $l "rewards.unequip"}}: {{.Name}}">{{t $l "rewards.unequip"}}</button>
@@ -234,4 +234,5 @@
 {{end}}
 {{end}}
 {{if and .Available (not .Failed)}}<script src="/static/rewards.js?v={{.Asset}}"></script>{{end}}
+{{template "acctend"}}
 {{template "footer" .}}

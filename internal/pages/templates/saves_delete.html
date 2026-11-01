@@ -1,4 +1,5 @@
 {{template "header" .}}
+{{template "acctnav" .}}
 <div class="page-head">
   <h1>{{if .Version}}{{t .Lang "saves.confirm.one"}}{{else}}{{t .Lang "saves.confirm.all"}}{{end}}</h1>
   <p>{{.Row.Name}}</p>
@@ -20,4 +21,5 @@
   <button type="submit" class="btn danger">{{t .Lang "saves.confirm.yes"}}</button>
   <a class="btn" href="/account/saves/manage?platform={{urlquery .Row.Platform}}&amp;title={{urlquery .Row.TitleID}}">{{t .Lang "modal.cancel"}}</a>
 </form>
+{{template "acctend"}}
 {{template "footer" .}}

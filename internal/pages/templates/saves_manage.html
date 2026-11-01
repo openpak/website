@@ -1,4 +1,5 @@
 {{template "header" .}}
+{{template "acctnav" .}}
 <div class="page-head">
   <h1>{{.Row.Name}}</h1>
   <p>{{t .Lang "saves.manage.sub"}}</p>
@@ -16,4 +17,5 @@
   {{end}}
 </ul>
 <p class="mt-6"><a class="btn danger" href="/account/saves/delete?platform={{urlquery .Row.Platform}}&amp;title={{urlquery .Row.TitleID}}">{{t .Lang "saves.delete.all"}} ({{len .Row.Versions}})</a></p>
+{{template "acctend"}}
 {{template "footer" .}}

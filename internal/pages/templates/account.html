@@ -3,29 +3,7 @@
      account with no name falls back to the address so the heading is never
      blank. The address itself is listed with the friend codes. */}}
 {{$name := .DisplayName}}{{if not $name}}{{$name = .User.DisplayName}}{{end}}{{if not $name}}{{$name = .User.Email}}{{end}}
-{{/* A section nav beside the content on a wide screen, a swipeable row of
-     links above it on a phone; both are plain anchors into this one page. */}}
-<div class="acct">
-<aside class="side">
-  <nav aria-label="{{t .Lang "nav.account"}}">
-    <a href="#top" aria-current="page"><svg class="ico sm" aria-hidden="true"><use href="#i-home"/></svg>{{t .Lang "nav.account"}}</a>
-    <a href="#friends"><svg class="ico sm" aria-hidden="true"><use href="#i-users"/></svg>{{t .Lang "friends.title"}}{{with .Incoming}}<span class="ct">{{len .}}</span>{{end}}</a>
-    <a href="#devices"><svg class="ico sm" aria-hidden="true"><use href="#i-gamepad"/></svg>{{t .Lang "account.links"}}</a>
-    <a href="/account/saves"><svg class="ico sm" aria-hidden="true"><use href="#i-save"/></svg>{{t .Lang "nav.saves"}}</a>
-    <a href="/account/chat"><svg class="ico sm" aria-hidden="true"><use href="#i-chat"/></svg>{{t .Lang "chat.title"}}</a>
-    <a href="/account/trophies"><svg class="ico sm" aria-hidden="true"><use href="#i-shield"/></svg>{{t .Lang "trophies.link"}}</a>
-    <a href="/account/rewards"><svg class="ico sm" aria-hidden="true"><use href="#i-check"/></svg>{{t .Lang "rewards.title"}}</a>
-    <a href="/account/activity"><svg class="ico sm" aria-hidden="true"><use href="#i-pulse"/></svg>{{t .Lang "activity.link"}}</a>
-    <a href="/account/parental"><svg class="ico sm" aria-hidden="true"><use href="#i-lock"/></svg>{{t .Lang "parental.title"}}</a>
-    <a href="/account/operator"><svg class="ico sm" aria-hidden="true"><use href="#i-globe"/></svg>{{t .Lang "operator.title"}}</a>
-    <span class="sep"></span>
-    <a href="#profile"><svg class="ico sm" aria-hidden="true"><use href="#i-user"/></svg>{{t .Lang "account.profile.title"}}</a>
-    <a href="#security"><svg class="ico sm" aria-hidden="true"><use href="#i-lock"/></svg>{{t .Lang "account.security"}}</a>
-    <a href="#delete"><svg class="ico sm" aria-hidden="true"><use href="#i-trash"/></svg>{{t .Lang "account.delete.title"}}</a>
-  </nav>
-</aside>
-
-<div class="acct-main" id="top">
+{{template "acctnav" .}}
 <section class="card profile" aria-labelledby="codes-h">
   <div class="inner">
     <div class="who">
@@ -424,6 +402,6 @@
       </div>
     </form>
   </section>
-</div>
+{{template "acctend"}}
 
 {{template "footer" .}}

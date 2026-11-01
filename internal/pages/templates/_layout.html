@@ -57,8 +57,8 @@
     <a href="/" class="brand"><img src="/static/icon.svg?v={{.Asset}}" alt="" width="28" height="28">OpenPak</a>
     <nav aria-label="{{t .Lang "nav.main"}}" class="navlinks">
       {{if .User}}
-        <a href="/account" {{if eq .Path "/account"}}aria-current="page"{{end}}>{{t .Lang "nav.account"}}</a>
-        <a href="/account/saves" {{if eq .Path "/account/saves"}}aria-current="page"{{end}}>{{t .Lang "nav.saves"}}</a>
+        <a href="/account" {{if and (hasPrefix .Path "/account") (not (hasPrefix .Path "/account/saves"))}}aria-current="page"{{end}}>{{t .Lang "nav.account"}}</a>
+        <a href="/account/saves" {{if hasPrefix .Path "/account/saves"}}aria-current="page"{{end}}>{{t .Lang "nav.saves"}}</a>
         {{if .Admin}}<a href="/admin" {{if hasPrefix .Path "/admin"}}aria-current="page"{{end}}>{{t .Lang "admin.title"}}</a>{{end}}
       {{else}}
         <a href="/" {{if eq .Path "/"}}aria-current="page"{{end}}>{{t .Lang "nav.home"}}</a>

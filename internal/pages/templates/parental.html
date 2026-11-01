@@ -1,4 +1,5 @@
 {{template "header" .}}
+{{template "acctnav" .}}
 {{/* The app's parental-controls screen, field for field and in its order:
      the code while one is live, then each console with its sync state,
      restrictions and their editor, players, PIN, wrong-PIN attempts and play
@@ -234,4 +235,5 @@
 </form>
 <p class="hint">{{t .Lang "parental.note"}}</p>
 {{end}}
+{{template "acctend"}}
 {{template "footer" .}}

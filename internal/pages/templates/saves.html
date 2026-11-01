@@ -1,4 +1,5 @@
 {{template "header" .}}
+{{template "acctnav" .}}
 <div class="page-head">
   <h1>{{t .Lang "saves.title"}}</h1>
   <p>{{t .Lang "saves.sub"}}</p>
@@ -162,4 +163,5 @@
 </section>
 {{end}}
 <script src="/static/saves.js?v={{.Asset}}"></script>
+{{template "acctend"}}
 {{template "footer" .}}

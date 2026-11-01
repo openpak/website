@@ -60,8 +60,17 @@ func TestRewardsPage(t *testing.T) {
 		"Recent points", "Mission", "Play for 30 minutes</span>", `aria-current="page"`, "rewards.js")
 	lacks("/account/rewards", "rewards.tab", "rewards.m.", "rewards.claim", "daily-play-30:") // no raw keys, no raw ids
 
+	// Every /account page is inside the account shell, with its own entry current.
+	for path, entry := range map[string]string{"/account/rewards": "/account/rewards", "/account/activity": "/account/activity", "/account/trophies": "/account/trophies",
+		"/account/parental": "/account/parental", "/account/saves": "/account/saves", "/account/chat": "/account/chat", "/account": "/account"} {
+		body := get(path)
+		if !strings.Contains(body, `class="acct-main"`) || !strings.Contains(body, `<a href="`+entry+`" aria-current="page">`) && !strings.Contains(body, `<a href="`+entry+`" aria-current="page"`) {
+			t.Errorf("%s is not inside the account shell with %s current", path, entry)
+		}
+	}
+
 	// The shop is a shelf of tiles with a confirm dialog each; an affordable item is a button, one that is too dear says how much is missing.
-	has("/account/rewards?tab=shop", `class="gtiles"`, `href="#r-badge-launch-season"`, `id="r-badge-launch-season"`, "100 pts",
+	has("/account/rewards?tab=shop", `class="gtiles under"`, `class="gtiles under wide"`, `href="#r-badge-launch-season"`, `id="r-badge-launch-season"`, "100 pts",
 		"Redeem for 100 points", "You need 280 more points.", `name="key"`)
 	has("/account/rewards?tab=shop&kind=theme", "Harbor")
 	lacks("/account/rewards?tab=shop&kind=theme", "Launch Season")

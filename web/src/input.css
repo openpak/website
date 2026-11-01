@@ -580,8 +580,8 @@
   /* A <progress>, not a styled div: the CSP forbids inline widths, and this is what a share of a whole is. */
   .bar { display: block; width: 100%; height: 5px; margin-top: 6px; appearance: none; border: 0; border-radius: 99px; background: var(--sunk); overflow: hidden; }
   .bar::-webkit-progress-bar { background: var(--sunk); }
-  .bar::-webkit-progress-value { background: var(--cursor); border-radius: 99px; }
-  .bar::-moz-progress-bar { background: var(--cursor); border-radius: 99px; }
+  .bar::-webkit-progress-value { background: var(--accent); border-radius: 99px; }
+  .bar::-moz-progress-bar { background: var(--accent); border-radius: 99px; }
   button.copied { color: var(--ok); border-color: var(--ok); }
 
   .section { padding: 64px 0 0; }
@@ -845,6 +845,7 @@
 
   .acct-main > section, .acct-main > .minis { margin-top: 22px; }
   .acct-main > :first-child { margin-top: 0; }
+  .acct-main > .page-head:first-child { padding-top: 0; }
   .acct-main section { scroll-margin-top: 140px; }
   .acct-main h2 { margin: 0 0 12px; font-size: 1.25rem; }
   .acct-main .section-head h2 { margin-bottom: 0; }
@@ -987,15 +988,25 @@
   @media (max-width: 30rem) { .rwfounder { flex-direction: column; text-align: center; } .rwfounder p { margin-inline: auto; } }
 
   /* A theme's preview is wide: two columns of the shelf, and a wide picture in its dialog. */
-  .gtiles:has(.wide) { grid-auto-flow: dense; }
-  .gtile.wide { grid-column: span 2; }
-  .gtile.wide .art { aspect-ratio: 16 / 10; }
+  .gtiles.wide { grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); }
+  .gtiles.wide .art { aspect-ratio: 2 / 1; }
   .gtile.owned .art > img { opacity: .8; }
-  .tdialog .tart.wide { width: 14rem; aspect-ratio: 16 / 10; }
+  .gtiles.under .gtile .cap .sub { flex: 1 1 auto; white-space: normal; overflow: visible; }
+  .rwgroup { margin: 28px 0 12px; font-size: 1.25rem; }
+  .rwgroup:first-of-type { margin-top: 12px; }
+  .tdialog .tart.wide { width: 14rem; aspect-ratio: 2 / 1; }
   @media (max-width: 40rem) { .tdialog .tart.wide { width: 100%; max-width: 20rem; } }
   .art-placeholder.txt { padding: 14px; }
   .tdialog .art-placeholder.txt > b { display: -webkit-box; }
 
+  /* Tiles whose label sits under the picture, so nothing covers the art: the whole picture is shown, framed
+     in the tile, and the name and price are a row of their own. */
+  .gtiles.under .gtile .art { padding: 12px; }
+  .gtiles.under.wide .art { padding: 0; }
+  .gtiles.under .gtile .art > img { object-fit: contain; border-radius: 14px; }
+  .gtiles.under.wide .art > img { object-fit: cover; border-radius: 18px 18px 0 0; }
+  .gtiles.under .gtile .cap { flex-wrap: wrap; row-gap: 4px; position: static; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 2px 12px 12px; }
+  .gtiles.under .gtile > a.t .art, .gtiles.under .gtile > .art { border-radius: 18px 18px 0 0; }
   .rwcheck { display: flex; align-items: flex-start; gap: 12px; }
   .rwcheck b { display: block; }
   .form-stack .rwcheck + .rwcheck { margin-top: 1rem; }

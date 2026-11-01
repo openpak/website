@@ -5,6 +5,8 @@ package i18n
 func init() {
 	for lang, c := range map[string]Catalogue{
 		"en": {
+			"rewards.hours":            "%d h",
+			"rewards.playtime":         "Time played",
 			"rewards.title":            "Rewards",
 			"rewards.sub":              "Earn Pak Points by playing on OpenPak, finish missions, and spend your points on badges, profile icons and themes.",
 			"rewards.unavailable":      "Rewards are not available right now.",
@@ -13,7 +15,6 @@ func init() {
 			"rewards.balance":          "Pak Points",
 			"rewards.earned":           "Earned in total",
 			"rewards.owned.count":      "Items you own",
-			"rewards.ready.count":      "Ready to claim",
 			"rewards.today":            "Play points today",
 			"rewards.today.of":         "%d of %d",
 			"rewards.today.cap":        "Daily limit reached. You can earn points again from midnight UTC.",
@@ -123,6 +124,8 @@ func init() {
 			"rewards.err.failed":       "That did not work. Try again in a moment.",
 		},
 		"de": {
+			"rewards.hours":            "%d Std.",
+			"rewards.playtime":         "Spielzeit",
 			"rewards.title":            "Belohnungen",
 			"rewards.sub":              "Sammle Pak Points beim Spielen auf OpenPak, schließe Missionen ab und gib deine Punkte für Abzeichen, Profilsymbole und Designs aus.",
 			"rewards.unavailable":      "Belohnungen sind gerade nicht verfügbar.",
@@ -131,7 +134,6 @@ func init() {
 			"rewards.balance":          "Pak Points",
 			"rewards.earned":           "Insgesamt verdient",
 			"rewards.owned.count":      "Deine Gegenstände",
-			"rewards.ready.count":      "Zum Abholen bereit",
 			"rewards.today":            "Spielpunkte heute",
 			"rewards.today.of":         "%d von %d",
 			"rewards.today.cap":        "Tageslimit erreicht. Ab Mitternacht UTC kannst du wieder Punkte sammeln.",
@@ -241,6 +243,8 @@ func init() {
 			"rewards.err.failed":       "Das hat nicht geklappt. Versuche es gleich noch einmal.",
 		},
 		"fr": {
+			"rewards.hours":            "%d h",
+			"rewards.playtime":         "Temps de jeu",
 			"rewards.title":            "Récompenses",
 			"rewards.sub":              "Gagne des Pak Points en jouant sur OpenPak, termine des missions et dépense tes points en badges, icônes de profil et thèmes.",
 			"rewards.unavailable":      "Les récompenses ne sont pas disponibles pour le moment.",
@@ -249,7 +253,6 @@ func init() {
 			"rewards.balance":          "Pak Points",
 			"rewards.earned":           "Gagnés au total",
 			"rewards.owned.count":      "Objets possédés",
-			"rewards.ready.count":      "À récupérer",
 			"rewards.today":            "Points de jeu aujourd’hui",
 			"rewards.today.of":         "%d sur %d",
 			"rewards.today.cap":        "Limite du jour atteinte. Tu pourras regagner des points à partir de minuit UTC.",
@@ -359,6 +362,8 @@ func init() {
 			"rewards.err.failed":       "Ça n’a pas marché. Réessaie dans un instant.",
 		},
 		"pt-BR": {
+			"rewards.hours":            "%d h",
+			"rewards.playtime":         "Tempo de jogo",
 			"rewards.title":            "Recompensas",
 			"rewards.sub":              "Ganhe Pak Points jogando no OpenPak, conclua missões e gaste seus pontos em emblemas, ícones de perfil e temas.",
 			"rewards.unavailable":      "As recompensas não estão disponíveis agora.",
@@ -367,7 +372,6 @@ func init() {
 			"rewards.balance":          "Pak Points",
 			"rewards.earned":           "Ganhos no total",
 			"rewards.owned.count":      "Itens que você tem",
-			"rewards.ready.count":      "Prontas para resgatar",
 			"rewards.today":            "Pontos de jogo hoje",
 			"rewards.today.of":         "%d de %d",
 			"rewards.today.cap":        "Limite diário atingido. Você volta a ganhar pontos à meia-noite UTC.",
@@ -477,6 +481,8 @@ func init() {
 			"rewards.err.failed":       "Não deu certo. Tente de novo em instantes.",
 		},
 		"it": {
+			"rewards.hours":            "%d h",
+			"rewards.playtime":         "Tempo di gioco",
 			"rewards.title":            "Premi",
 			"rewards.sub":              "Guadagna Pak Points giocando su OpenPak, completa le missioni e spendi i punti in badge, icone profilo e temi.",
 			"rewards.unavailable":      "I premi non sono disponibili al momento.",
@@ -485,7 +491,6 @@ func init() {
 			"rewards.balance":          "Pak Points",
 			"rewards.earned":           "Guadagnati in totale",
 			"rewards.owned.count":      "Oggetti posseduti",
-			"rewards.ready.count":      "Da riscuotere",
 			"rewards.today":            "Punti di gioco oggi",
 			"rewards.today.of":         "%d su %d",
 			"rewards.today.cap":        "Limite giornaliero raggiunto. Potrai guadagnare di nuovo punti da mezzanotte UTC.",
@@ -595,6 +600,8 @@ func init() {
 			"rewards.err.failed":       "Non ha funzionato. Riprova tra un attimo.",
 		},
 		"es": {
+			"rewards.hours":            "%d h",
+			"rewards.playtime":         "Tiempo de juego",
 			"rewards.title":            "Recompensas",
 			"rewards.sub":              "Gana Pak Points jugando en OpenPak, completa misiones y gasta tus puntos en insignias, iconos de perfil y temas.",
 			"rewards.unavailable":      "Las recompensas no están disponibles ahora.",
@@ -603,7 +610,6 @@ func init() {
 			"rewards.balance":          "Pak Points",
 			"rewards.earned":           "Ganados en total",
 			"rewards.owned.count":      "Objetos que tienes",
-			"rewards.ready.count":      "Listas para reclamar",
 			"rewards.today":            "Puntos de juego hoy",
 			"rewards.today.of":         "%d de %d",
 			"rewards.today.cap":        "Límite diario alcanzado. Podrás volver a ganar puntos desde la medianoche UTC.",

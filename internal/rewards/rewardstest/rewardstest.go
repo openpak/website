@@ -20,6 +20,7 @@ import (
 // locked from it, as the real one does.
 type State struct {
 	Balance, Lifetime   int
+	PlaySeconds         int64
 	Frozen, Paused, Pub bool
 	PlayPoints, PlayCap int
 	Progress            map[string]int64
@@ -121,7 +122,7 @@ func New(t testing.TB, st *State) *rewards.Client {
 			return
 		}
 		write(w, map[string]any{
-			"account":  map[string]any{"account_id": "a", "balance": st.Balance, "lifetime_earned": st.Lifetime, "frozen": st.Frozen, "paused": st.Paused, "showcase_public": st.Pub},
+			"account":  map[string]any{"account_id": "a", "balance": st.Balance, "lifetime_earned": st.Lifetime, "lifetime_play_seconds": st.PlaySeconds, "frozen": st.Frozen, "paused": st.Paused, "showcase_public": st.Pub},
 			"today":    map[string]any{"day": "2026-11-02", "play_points": st.PlayPoints, "play_cap": st.PlayCap},
 			"equipped": st.Equipped,
 		})

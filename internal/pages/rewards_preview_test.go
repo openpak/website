@@ -58,6 +58,7 @@ func TestWritePreviewRewards(t *testing.T) {
 		WritePreviewFile(t, dir, name, html)
 	}
 	reset := func() { *st = *rewardstest.NewState(); st.Bearer = "" }
+	played := func() { st.PlaySeconds = int64(st.Lifetime) * 900 } // about 15 minutes of play per point
 	owned := func(ids ...string) {
 		for _, id := range ids {
 			st.Owned[id] = true
@@ -74,6 +75,7 @@ func TestWritePreviewRewards(t *testing.T) {
 	// Some progress, a little earned, the Founder seal held.
 	reset()
 	st.Balance, st.Lifetime, st.PlayPoints = 46, 94, 3
+	played()
 	st.Progress["daily-play-30"], st.Progress["weekly-4-days"], st.Progress["weekly-3-titles"] = 900, 2, 1
 	st.Progress["weekly-2-networks"], st.Progress["first-online"], st.Progress["hours-10"], st.Progress["all-networks"] = 1, 60, 21600, 2
 	st.Claimed["first-online"] = true
@@ -90,6 +92,7 @@ func TestWritePreviewRewards(t *testing.T) {
 	// Rewards ready, and the day's cap reached.
 	reset()
 	st.Balance, st.Lifetime, st.PlayPoints = 120, 214, 8
+	played()
 	st.Progress["daily-play-30"], st.Progress["weekly-4-days"], st.Progress["weekly-3-titles"] = 1800, 4, 2
 	st.Progress["first-friend"], st.Progress["hours-10"], st.Progress["first-online"] = 1, 36000, 600
 	st.Progress["weekly-2-networks"], st.Progress["all-networks"] = 2, 2
@@ -103,6 +106,7 @@ func TestWritePreviewRewards(t *testing.T) {
 	// The shop, with enough points for some things.
 	reset()
 	st.Balance, st.Lifetime, st.PlayPoints = 260, 390, 5
+	played()
 	owned("badge-founder", "badge-first-link", "icon-tabby")
 	st.Equipped["badge"], st.Equipped["profile_icon"] = "badge-founder", "icon-tabby"
 	shoot("rewards-shop", "/account/rewards?tab=shop")
@@ -111,11 +115,11 @@ func TestWritePreviewRewards(t *testing.T) {
 	shoot("rewards-dialog", "/account/rewards?tab=shop#r-badge-launch-season")
 	shoot("rewards-dialog-short", "/account/rewards?tab=shop#r-theme-harbor")
 	shoot("rewards-dialog-owned", "/account/rewards?tab=shop#r-icon-tabby")
-	shoot("rewards-dialog-text", "/account/rewards?tab=shop#r-title-early-bird")
 
 	// A collection with something of each kind.
 	reset()
 	st.Balance, st.Lifetime, st.PlayPoints = 35, 880, 8
+	played()
 	owned("badge-founder", "badge-first-link", "badge-warm-up", "badge-regular", "badge-launch-season", "icon-tabby", "icon-ember-fox", "icon-pak", "theme-harbor", "theme-graphite")
 	st.Equipped["badge"], st.Equipped["profile_icon"], st.Equipped["theme"] = "badge-launch-season", "icon-pak", "theme-harbor"
 	shoot("rewards-collection", "/account/rewards?tab=collection")
@@ -127,11 +131,13 @@ func TestWritePreviewRewards(t *testing.T) {
 	// The account's own states: earning paused, rewards frozen, the service down, no service.
 	reset()
 	st.Balance, st.Lifetime, st.PlayPoints, st.Paused = 80, 200, 2, true
+	played()
 	owned("badge-founder")
 	st.Equipped["badge"] = "badge-founder"
 	shoot("rewards-paused", "/account/rewards?tab=missions")
 	reset()
 	st.Balance, st.Lifetime, st.Frozen = 80, 200, true
+	played()
 	owned("badge-founder")
 	shoot("rewards-frozen", "/account/rewards?tab=shop")
 	st.Down = true

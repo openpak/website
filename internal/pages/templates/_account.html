@@ -1,0 +1,31 @@
+{{/* The account shell: the section list on the left with the cursor's bar on the current page, the page
+     on the right (a swipeable row above it on a phone). Every /account/* page opens it with "acctnav" and
+     closes it with "acctend", so the area looks like one place, the way /admin does with "adminnav".
+     On the overview the entries that live on that page are plain anchors; elsewhere they link back to it. */}}
+{{define "acctnav"}}
+{{$h := ""}}{{if ne .Path "/account"}}{{$h = "/account"}}{{end}}
+<div class="acct">
+<aside class="side">
+  <nav aria-label="{{t .Lang "nav.account"}}">
+    <a href="{{if $h}}/account{{else}}#top{{end}}" {{if eq .Path "/account"}}aria-current="page"{{end}}><svg class="ico sm" aria-hidden="true"><use href="#i-home"/></svg>{{t .Lang "nav.account"}}</a>
+    <a href="{{$h}}#friends"><svg class="ico sm" aria-hidden="true"><use href="#i-users"/></svg>{{t .Lang "friends.title"}}{{if eq .Path "/account"}}{{with .Incoming}}<span class="ct">{{len .}}</span>{{end}}{{end}}</a>
+    <a href="{{$h}}#devices"><svg class="ico sm" aria-hidden="true"><use href="#i-gamepad"/></svg>{{t .Lang "account.links"}}</a>
+    <a href="/account/saves" {{if hasPrefix .Path "/account/saves"}}aria-current="page"{{end}}><svg class="ico sm" aria-hidden="true"><use href="#i-save"/></svg>{{t .Lang "nav.saves"}}</a>
+    <a href="/account/chat" {{if hasPrefix .Path "/account/chat"}}aria-current="page"{{end}}><svg class="ico sm" aria-hidden="true"><use href="#i-chat"/></svg>{{t .Lang "chat.title"}}</a>
+    <a href="/account/trophies" {{if hasPrefix .Path "/account/trophies"}}aria-current="page"{{end}}><svg class="ico sm" aria-hidden="true"><use href="#i-shield"/></svg>{{t .Lang "trophies.link"}}</a>
+    <a href="/account/rewards" {{if hasPrefix .Path "/account/rewards"}}aria-current="page"{{end}}><svg class="ico sm" aria-hidden="true"><use href="#i-check"/></svg>{{t .Lang "rewards.title"}}</a>
+    <a href="/account/activity" {{if hasPrefix .Path "/account/activity"}}aria-current="page"{{end}}><svg class="ico sm" aria-hidden="true"><use href="#i-pulse"/></svg>{{t .Lang "activity.link"}}</a>
+    <a href="/account/parental" {{if hasPrefix .Path "/account/parental"}}aria-current="page"{{end}}><svg class="ico sm" aria-hidden="true"><use href="#i-lock"/></svg>{{t .Lang "parental.title"}}</a>
+    <a href="/account/operator" {{if hasPrefix .Path "/account/operator"}}aria-current="page"{{end}}><svg class="ico sm" aria-hidden="true"><use href="#i-globe"/></svg>{{t .Lang "operator.title"}}</a>
+    <span class="sep"></span>
+    <a href="{{$h}}#profile"><svg class="ico sm" aria-hidden="true"><use href="#i-user"/></svg>{{t .Lang "account.profile.title"}}</a>
+    <a href="{{$h}}#security"><svg class="ico sm" aria-hidden="true"><use href="#i-lock"/></svg>{{t .Lang "account.security"}}</a>
+    <a href="{{$h}}#delete"><svg class="ico sm" aria-hidden="true"><use href="#i-trash"/></svg>{{t .Lang "account.delete.title"}}</a>
+  </nav>
+</aside>
+<div class="acct-main" id="top">
+{{end}}
+{{define "acctend"}}
+</div>
+</div>
+{{end}}

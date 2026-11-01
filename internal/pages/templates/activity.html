@@ -1,4 +1,5 @@
 {{template "header" .}}
+{{template "acctnav" .}}
 <div class="page-head">
   <h1>{{t .Lang "activity.title"}}</h1>
   <p class="lede">{{t .Lang "activity.sub"}}</p>
@@ -11,4 +12,5 @@
 {{template "stat-card" .Card}}
 {{end}}
 <p class="hint mt-6">{{t .Lang "activity.note"}} <a href="/account/parental">{{t .Lang "activity.parental"}}</a></p>
+{{template "acctend"}}
 {{template "footer" .}}

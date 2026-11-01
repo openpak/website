@@ -1,4 +1,5 @@
 {{template "header" .}}
+{{template "acctnav" .}}
 <div class="mx-auto w-full max-w-lg">
   <h1>{{t .Lang "account.2fa.title"}}</h1>
   {{if .RecoveryCodes}}
@@ -27,4 +28,5 @@
   <p class="mt-6 text-sm"><a href="/account#security">{{t .Lang "modal.cancel"}}</a></p>
   {{end}}
 </div>
+{{template "acctend"}}
 {{template "footer" .}}

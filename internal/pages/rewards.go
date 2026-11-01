@@ -63,6 +63,7 @@ type itemView struct {
 
 type kindGroup struct {
 	Kind, Label string
+	Wide        bool // themes: wide preview cards, in a grid of their own
 	Items       []itemView
 }
 
@@ -101,9 +102,11 @@ type rewardsPage struct {
 	Ledger                      []ledgerView
 
 	// Shop.
-	Kind  string // the active filter; empty for all
-	Chips []kindChip
-	Shop  []itemView
+	Kind       string // the active filter; empty for all
+	Chips      []kindChip
+	Shop       []itemView  // what the filter shows, flat (the dialogs)
+	ShopGroups []kindGroup // the same, by kind (the shelves)
+	PlayTime   string      // time played in total
 
 	// Collection.
 	Founder *itemView
@@ -213,10 +216,24 @@ func (s *Server) handleRewards(w http.ResponseWriter, r *http.Request) {
 			page.Shop = append(page.Shop, it)
 		}
 	}
+	for _, kind := range orderedKinds(page.Shop) {
+		g := kindGroup{Kind: kind, Label: kindName(lang, "rewards.k.", kind), Wide: kind == "theme"}
+		for _, it := range page.Shop {
+			if it.Kind == kind {
+				g.Items = append(g.Items, it)
+			}
+		}
+		page.ShopGroups = append(page.ShopGroups, g)
+	}
+	if h := me.Account.LifetimePlaySeconds / 3600; h >= 1 {
+		page.PlayTime = fmt.Sprintf(i18n.T(lang, "rewards.hours"), h) // whole hours: it sits in a narrow tile
+	} else {
+		page.PlayTime = Duration(lang, me.Account.LifetimePlaySeconds)
+	}
 
 	// The collection, grouped by kind, with the Founder seal kept apart.
 	for _, kind := range orderedKinds(owned) {
-		g := kindGroup{Kind: kind, Label: kindName(lang, "rewards.k.", kind)}
+		g := kindGroup{Kind: kind, Label: kindName(lang, "rewards.k.", kind), Wide: kind == "theme"}
 		for _, it := range owned {
 			if it.Kind != kind {
 				continue
