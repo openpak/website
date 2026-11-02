@@ -2633,6 +2633,90 @@ paths:
               schema: { $ref: "#/components/schemas/CompanionTitle" }
         "404": { $ref: "#/components/responses/NotFound" }
         "503": { description: Title pages are not configured on this deployment. }
+  /rankings:
+    get:
+      summary: The games that have rankings
+      description: |
+        Every game whose server keeps rankings and has at least one board with a score, with its board count.
+        Public, read-only, cached for 30 seconds. See docs/rankings-contract.md.
+      security: [{}]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  games:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        slug: { type: string }
+                        name: { type: string }
+                        console: { type: string }
+                        boards: { type: integer }
+        "503": { description: Title pages are not configured on this deployment. }
+  /rankings/{slug}:
+    get:
+      summary: One game's ranking boards
+      security: [{}]
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  slug: { type: string }
+                  name: { type: string }
+                  console: { type: string }
+                  boards:
+                    type: array
+                    items: { $ref: "#/components/schemas/RankingsBoard" }
+        "404": { description: No such game, or it has no rankings. }
+        "502": { description: The game's server did not answer. }
+        "503": { description: Title pages are not configured on this deployment. }
+  /rankings/{slug}/{board}:
+    get:
+      summary: One ranking board
+      description: |
+        Rows in rank order with player names and pictures resolved through the account core. `limit` defaults to 25
+        (at most 100). `around` is an OpenPak account id: when that player is on the board `around` holds the rows up to
+        five either side of them. `avatar` is a site-relative URL.
+      security: [{}]
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+        - { name: board, in: path, required: true, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+        - { name: offset, in: query, schema: { type: integer, minimum: 0 } }
+        - { name: around, in: query, schema: { type: string } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  slug: { type: string }
+                  board: { $ref: "#/components/schemas/RankingsBoard" }
+                  total: { type: integer }
+                  offset: { type: integer }
+                  limit: { type: integer }
+                  rows:
+                    type: array
+                    items: { $ref: "#/components/schemas/RankingsRow" }
+                  around:
+                    type: array
+                    items: { $ref: "#/components/schemas/RankingsRow" }
+        "404": { description: No such game or board. }
+        "502": { description: The game's server did not answer. }
+        "503": { description: Title pages are not configured on this deployment. }
   /companion/titles/{slug}/rankings:
     get:
       summary: A ranking board
@@ -2790,6 +2874,25 @@ components:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
   schemas:
+    RankingsBoard:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        kind: { type: string, enum: [time, score, rating] }
+        order: { type: string, enum: [asc, desc] }
+        unit: { type: string }
+        season: { type: string }
+    RankingsRow:
+      type: object
+      properties:
+        rank: { type: integer }
+        account_id: { type: string }
+        name: { type: string }
+        avatar: { type: string }
+        score: { type: integer, format: int64 }
+        display: { type: string }
+        updated_at: { type: string, format: date-time }
     PakkaConversation:
       type: object
       properties:

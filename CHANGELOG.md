@@ -11,6 +11,22 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.77.0 — 2026-11-02
+- **Rankings contract, hub and public API.** Every game server that keeps rankings serves the same
+  read-only internal endpoints (`/internal/rankings/boards`, `/boards/{id}`), documented in
+  `docs/rankings-contract.md`; `rankingsapi/rankingsapi.go` is the helper servers copy. The website reads
+  them with one generic client (`internal/companion/contract.go`) instead of per-title adapters, names the
+  players through the account core, and shows a Rankings tab only for a title whose server has scored boards.
+- New `/rankings` hub: every game with rankings, by console, with search; the Rankings tab pages
+  (`?offset=`) and shows player pictures.
+- New public `GET /api/v1/rankings`, `/rankings/{slug}`, `/rankings/{slug}/{board}` (limit, offset,
+  `around=<account id>`), cached 30 seconds.
+- Mario Kart Wii moves onto the contract (wfc-race v0.4.1); Pokémon Global Link keeps its own source.
+  Titles served: Mario Kart Wii, 7, 8 and 8 Deluxe, Pikmin 3, Splatoon (Wii U), Puyo Puyo Tetris, Sonic &
+  All-Stars Racing Transformed, Terraria (Wii U), Dr. Luigi, Dr. Mario: Miracle Cure.
+- Switch players are named through nx-baas `GET /internal/switch/player` (nx-baas v0.57.0).
+- `WFC_RACE_URL` is no longer read.
+
 ## v0.76.0 — 2026-11-02
 - Features page grouped by console, with a "Core services" group.
 - Friend codes for the Wii U, Xbox, Xbox 360 and PSN networks; five planned networks listed; console icon and filter tweaks.

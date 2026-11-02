@@ -84,7 +84,7 @@ func (p *PGL) Boards(ctx context.Context) ([]Board, error) {
 // Ranking implements RankingSource: the Pokémon usage ranking of a board. The service reports
 // PKHeX species ids and no names, so a row is "Pokémon #25"; the usage figures are what the
 // page is for.
-func (p *PGL) Ranking(ctx context.Context, board, _ string) (Ranking, error) {
+func (p *PGL) Ranking(ctx context.Context, board string, _ RankQuery) (Ranking, error) {
 	q := url.Values{"limit": {"30"}}
 	if parts := strings.Split(board, ":"); board != pglAll && len(parts) == 3 {
 		q.Set("generation", parts[0])

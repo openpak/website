@@ -65,6 +65,7 @@
         <a href="/" {{if eq .Path "/"}}aria-current="page"{{end}}>{{t .Lang "nav.home"}}</a>
       {{end}}
       <a href="/titles" {{if eq .Path "/titles"}}aria-current="page"{{end}}>{{t .Lang "nav.titles"}}</a>
+      <a href="/rankings" {{if eq .Path "/rankings"}}aria-current="page"{{end}}>{{t .Lang "nav.rankings"}}</a>
       <a href="/sites" {{if eq .Path "/sites"}}aria-current="page"{{end}}>{{t .Lang "nav.sites"}}</a>
       <a href="/features" {{if eq .Path "/features"}}aria-current="page"{{end}}>{{t .Lang "nav.features"}}</a>
       <a href="/downloads" {{if eq .Path "/downloads"}}aria-current="page"{{end}}>{{t .Lang "nav.downloads"}}</a>
@@ -111,6 +112,7 @@
     </div>
     <nav aria-labelledby="foot-net"><h2 id="foot-net">{{t .Lang "footer.network"}}</h2><ul>
       <li><a href="/titles">{{t .Lang "nav.titles"}}</a></li>
+      <li><a href="/rankings">{{t .Lang "nav.rankings"}}</a></li>
       <li><a href="/sites">{{t .Lang "nav.sites"}}</a></li>
       <li><a href="/features">{{t .Lang "nav.features"}}</a></li>
       <li><a href="/status">{{t .Lang "nav.status"}}</a></li>

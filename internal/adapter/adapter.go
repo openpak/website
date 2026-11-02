@@ -195,3 +195,24 @@ func (c *Client) CA(ctx context.Context) ([]byte, error) {
 	}
 	return io.ReadAll(io.LimitReader(resp.Body, 1<<16))
 }
+
+// Player maps a Switch NEX PID and a core account id to each other (nx-baas
+// GET /internal/switch/player). Give pid or accountID; the other half comes back. A ranking lists
+// Switch players by PID, and the core's "switch" link is keyed by BAAS user id, so this is the
+// only way from one to the other.
+func (c *Client) Player(ctx context.Context, pid, accountID string) (outAccount, outPID string, err error) {
+	q := url.Values{}
+	if pid != "" {
+		q.Set("pid", pid)
+	} else {
+		q.Set("account_id", accountID)
+	}
+	var out struct {
+		AccountID string  `json:"account_id"`
+		PID       float64 `json:"pid"`
+	}
+	if err := c.get(ctx, "/internal/switch/player?"+q.Encode(), &out); err != nil {
+		return "", "", err
+	}
+	return out.AccountID, fmt.Sprintf("%.0f", out.PID), nil
+}

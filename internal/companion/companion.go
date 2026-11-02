@@ -10,6 +10,7 @@ package companion
 import (
 	"context"
 	"errors"
+	"net/url"
 	"slices"
 	"strconv"
 	"strings"
@@ -39,12 +40,22 @@ type Entry struct {
 	Region  string `json:"region,omitempty"`
 	Note    string `json:"note,omitempty"`
 	Me      bool   `json:"me,omitempty"` // the signed-in player
+	// AccountID and Avatar are set when the player is an OpenPak account whose name and picture
+	// the website resolved; Avatar is a site-relative URL.
+	AccountID string    `json:"account_id,omitempty"`
+	Avatar    string    `json:"avatar,omitempty"`
+	Updated   time.Time `json:"updated_at,omitempty"`
 }
 
 // Board is one selectable ranking: a course, a mode, a season.
 type Board struct {
 	ID    string `json:"id"`
 	Label string `json:"label"`
+	// Kind is time, score or rating; Order is asc or desc; Unit and Season are optional.
+	Kind   string `json:"kind,omitempty"`
+	Order  string `json:"order,omitempty"`
+	Unit   string `json:"unit,omitempty"`
+	Season string `json:"season,omitempty"`
 }
 
 // Ranking is one board's table. Around is the signed-in player's slice of the
@@ -56,13 +67,29 @@ type Ranking struct {
 	Entries []Entry   `json:"entries"`
 	Around  []Entry   `json:"around,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
+	// Total, Offset and Limit describe the window of Entries when the board is paged.
+	Total  int `json:"total,omitempty"`
+	Offset int `json:"offset"`
+	Limit  int `json:"limit,omitempty"`
+}
+
+// RankQuery picks the window of a board. AccountID is "" when nobody is signed in.
+type RankQuery struct {
+	AccountID     string
+	Offset, Limit int
 }
 
 // RankingSource is what a title implements to have a Rankings tab. board is a
-// Board.ID, or "" for the first. accountID is "" when nobody is signed in.
+// Board.ID, or "" for the first.
 type RankingSource interface {
 	Boards(ctx context.Context) ([]Board, error)
-	Ranking(ctx context.Context, board, accountID string) (Ranking, error)
+	Ranking(ctx context.Context, board string, q RankQuery) (Ranking, error)
+}
+
+// Availability is optionally implemented by a RankingSource that can be reachable without having
+// any board yet (a game server that has not stored a score): such a title has no Rankings tab.
+type Availability interface {
+	Available(ctx context.Context) bool
 }
 
 // Stat is one figure of a card. Key is a stable id (and the i18n key the page
@@ -164,14 +191,14 @@ func New(db store.Store) *Service { return &Service{DB: db} }
 // Register adds a title's companion data.
 func (s *Service) Register(src Source) { s.sources = append(s.sources, src) }
 
-func (s *Service) titleOf(r store.Request, slug string) Title {
+func (s *Service) titleOf(ctx context.Context, r store.Request, slug string) Title {
 	t := Title{Request: r, Slug: slug}
 	for _, src := range s.sources {
 		if !src.matches(r.Name, r.Console) {
 			continue
 		}
 		t.source = src
-		if src.Rankings != nil {
+		if src.Rankings != nil && rankingsAvailable(ctx, src.Rankings) {
 			t.Features = append(t.Features, FeatureRankings)
 		}
 		if src.Listings != nil {
@@ -183,6 +210,11 @@ func (s *Service) titleOf(r store.Request, slug string) Title {
 		break
 	}
 	return t
+}
+
+func rankingsAvailable(ctx context.Context, r RankingSource) bool {
+	a, ok := r.(Availability)
+	return !ok || a.Available(ctx)
 }
 
 // Resolve finds the title a slug names. A title without any companion feature
@@ -197,7 +229,7 @@ func (s *Service) Resolve(ctx context.Context, slug string) (Title, error) {
 		if slugs[r.ID] != slug {
 			continue
 		}
-		if t := s.titleOf(r, slug); len(t.Features) > 0 {
+		if t := s.titleOf(ctx, r, slug); len(t.Features) > 0 {
 			return t, nil
 		}
 	}
@@ -214,7 +246,7 @@ func (s *Service) WithFeatures(ctx context.Context) (map[int64]Title, error) {
 	slugs := Slugs(reqs)
 	out := map[int64]Title{}
 	for _, r := range reqs {
-		if t := s.titleOf(r, slugs[r.ID]); len(t.Features) > 0 {
+		if t := s.titleOf(ctx, r, slugs[r.ID]); len(t.Features) > 0 {
 			out[r.ID] = t
 		}
 	}
@@ -223,7 +255,7 @@ func (s *Service) WithFeatures(ctx context.Context) (map[int64]Title, error) {
 
 // Ranking serves the Rankings tab. Only Boards and Ranking of the title's
 // source are called; the board list is always filled in.
-func (s *Service) Ranking(ctx context.Context, t Title, board, accountID string) (Ranking, error) {
+func (s *Service) Ranking(ctx context.Context, t Title, board string, q RankQuery) (Ranking, error) {
 	src := t.source.Rankings
 	if src == nil {
 		return Ranking{}, ErrNotFound
@@ -241,7 +273,7 @@ func (s *Service) Ranking(ctx context.Context, t Title, board, accountID string)
 	if !slices.ContainsFunc(boards, func(b Board) bool { return b.ID == board }) {
 		return Ranking{}, ErrNotFound
 	}
-	out, err := src.Ranking(ctx, board, accountID)
+	out, err := src.Ranking(ctx, board, q)
 	if err != nil {
 		return Ranking{}, err
 	}
@@ -253,7 +285,7 @@ func (s *Service) Ranking(ctx context.Context, t Title, board, accountID string)
 	}
 	for i := range out.Entries {
 		if out.Entries[i].Rank == 0 {
-			out.Entries[i].Rank = i + 1
+			out.Entries[i].Rank = q.Offset + i + 1
 		}
 	}
 	return out, nil
@@ -321,4 +353,46 @@ func slugify(s string) string {
 		}
 	}
 	return strings.TrimRight(b.String(), "-")
+}
+
+// QueryOf reads the window of a board from a request's query (?offset=&limit=) for a viewer
+// ("" when nobody is signed in). Bad numbers are the defaults.
+func QueryOf(q url.Values, accountID string) RankQuery {
+	n := func(k string) int {
+		v, err := strconv.Atoi(q.Get(k))
+		if err != nil || v < 0 {
+			return 0
+		}
+		return v
+	}
+	return RankQuery{AccountID: accountID, Offset: n("offset"), Limit: min(n("limit"), 100)}
+}
+
+// Ranked lists the catalogue titles that have a Rankings tab, in catalogue order.
+func (s *Service) Ranked(ctx context.Context) ([]Title, error) {
+	with, err := s.WithFeatures(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var out []Title
+	for _, t := range with {
+		if t.Has(FeatureRankings) {
+			out = append(out, t)
+		}
+	}
+	slices.SortFunc(out, func(a, b Title) int {
+		if c := strings.Compare(a.Console, b.Console); c != 0 {
+			return c
+		}
+		return strings.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
+	})
+	return out, nil
+}
+
+// BoardsOf lists a title's boards, for the rankings hub and the public API.
+func (s *Service) BoardsOf(ctx context.Context, t Title) ([]Board, error) {
+	if t.source.Rankings == nil {
+		return nil, ErrNotFound
+	}
+	return t.source.Rankings.Boards(ctx)
 }

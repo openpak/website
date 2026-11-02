@@ -26,6 +26,7 @@ func (s *Server) registerCompanion(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/companion/titles/{slug}/rankings", s.handleCompanionRankings)
 	mux.HandleFunc("GET /api/v1/companion/titles/{slug}/stats", s.auth(s.handleCompanionStats))
 	mux.HandleFunc("GET /api/v1/companion/titles/{slug}/listings", s.handleCompanionListings)
+	s.registerRankings(mux)
 	mux.HandleFunc("GET /api/v1/me/activity", s.auth(s.handleActivity))
 	mux.HandleFunc("GET /api/v1/me/trophies", s.auth(s.handleTrophies))
 }
@@ -102,7 +103,7 @@ func (s *Server) handleCompanionRankings(w http.ResponseWriter, r *http.Request)
 	if !ok {
 		return
 	}
-	out, err := s.Companion.Ranking(r.Context(), t, r.URL.Query().Get("board"), s.optionalAccount(r))
+	out, err := s.Companion.Ranking(r.Context(), t, r.URL.Query().Get("board"), companion.QueryOf(r.URL.Query(), s.optionalAccount(r)))
 	if err != nil {
 		s.companionError(w, "rankings", err)
 		return

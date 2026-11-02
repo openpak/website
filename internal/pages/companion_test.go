@@ -13,13 +13,20 @@ import (
 	"github.com/openpak/website/internal/store"
 )
 
-type testBoards struct{ entries []companion.Entry }
+type testBoards struct {
+	entries []companion.Entry
+	total   int // when set, the board is paged: this many ranks, entries is one page
+}
 
 func (testBoards) Boards(context.Context) ([]companion.Board, error) {
 	return []companion.Board{{ID: "one", Label: "Board One"}, {ID: "two", Label: "Board Two"}}, nil
 }
-func (b testBoards) Ranking(context.Context, string, string) (companion.Ranking, error) {
-	return companion.Ranking{Entries: b.entries}, nil
+func (b testBoards) Ranking(_ context.Context, _ string, q companion.RankQuery) (companion.Ranking, error) {
+	r := companion.Ranking{Entries: b.entries}
+	if b.total > 0 {
+		r.Total, r.Limit, r.Offset = b.total, len(b.entries), q.Offset
+	}
+	return r, nil
 }
 
 type testStats struct{ linked bool }
@@ -164,5 +171,17 @@ func TestListingsAndTrophies(t *testing.T) {
 		if !strings.Contains(w.Body.String(), want) {
 			t.Errorf("trophies page lacks %q", want)
 		}
+	}
+}
+
+func TestRankingsHub(t *testing.T) {
+	s, _ := companionServer(t)
+	w := getPath(s, "/rankings")
+	body := w.Body.String()
+	if w.Code != 200 || !strings.Contains(body, `href="/titles/mario-kart-wii/rankings"`) || !strings.Contains(body, "Mario Kart Wii") {
+		t.Fatalf("hub: %d %s", w.Code, body)
+	}
+	if strings.Contains(body, "Halo 3") || strings.Contains(body, "Stardew") {
+		t.Fatal("a game without rankings is on the hub")
 	}
 }

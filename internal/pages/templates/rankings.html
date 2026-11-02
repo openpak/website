@@ -1,0 +1,37 @@
+{{template "header" .}}
+<div class="page-head">
+  <h1>{{t .Lang "rankings.title"}}</h1>
+  <p class="lede">{{t .Lang "rankings.sub"}}</p>
+</div>
+
+<section aria-labelledby="rk-h">
+  <h2 id="rk-h" class="sr-only">{{t .Lang "rankings.title"}}</h2>
+  {{if .Groups}}
+  {{template "list-filters" .}}
+  <div id="titles-list">
+    {{range .Groups}}
+    <section class="mt-8" data-feature-group="{{.Console}}">
+      <h2 class="section-head">{{.Console}}</h2>
+      {{$console := .Console}}
+      <ul class="tgrid">
+        {{range .Titles}}
+        <li class="titles-row tcard" data-name="{{.Name}}" data-console="{{$console}}" data-status="{{.Status}}">
+          <span class="tart title-art">{{template "title-art" (arr $.Lang .Console .Name .TitleID "")}}</span>
+          <a class="t no-underline" href="/titles/{{.Slug}}/rankings" aria-label="{{.Name}}, {{t $.Lang "rankings.open"}}">
+            <b>{{.Name}}</b>
+            <span class="sub">{{if eq .Boards 1}}{{t $.Lang "rankings.boards.one"}}{{else}}{{printf (t $.Lang "rankings.boards.n") .Boards}}{{end}}</span>
+          </a>
+        </li>
+        {{end}}
+      </ul>
+    </section>
+    {{end}}
+  </div>
+  <p id="titles-empty" class="card p-6 text-center text-muted" hidden>{{t .Lang "rankings.none"}}</p>
+  {{else}}
+  <p class="empty">{{t .Lang "rankings.empty"}}</p>
+  {{end}}
+</section>
+
+<script src="/static/titles.js?v={{.Asset}}"></script>
+{{template "footer" .}}
