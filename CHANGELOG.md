@@ -11,8 +11,7 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
-## Unreleased
-
+## v0.76.0 — 2026-11-02
 - Features page grouped by console, with a "Core services" group.
 - Friend codes for the Wii U, Xbox, Xbox 360 and PSN networks; five planned networks listed; console icon and filter tweaks.
 
