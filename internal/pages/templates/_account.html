@@ -12,6 +12,7 @@
     <a href="{{$h}}#devices"><svg class="ico sm" aria-hidden="true"><use href="#i-gamepad"/></svg>{{t .Lang "account.links"}}</a>
     <a href="/account/saves" {{if hasPrefix .Path "/account/saves"}}aria-current="page"{{end}}><svg class="ico sm" aria-hidden="true"><use href="#i-save"/></svg>{{t .Lang "nav.saves"}}</a>
     <a href="/account/chat" {{if hasPrefix .Path "/account/chat"}}aria-current="page"{{end}}><svg class="ico sm" aria-hidden="true"><use href="#i-chat"/></svg>{{t .Lang "chat.title"}}</a>
+    {{if and .User .User.Pakka}}<a href="/account/pakka" {{if hasPrefix .Path "/account/pakka"}}aria-current="page"{{end}}><img class="ico sm" src="/static/pakka.svg" alt="" width="16" height="16">{{t .Lang "pakka.title"}}</a>{{end}}
     <a href="/account/trophies" {{if hasPrefix .Path "/account/trophies"}}aria-current="page"{{end}}><svg class="ico sm" aria-hidden="true"><use href="#i-shield"/></svg>{{t .Lang "trophies.link"}}</a>
     <a href="/account/rewards" {{if hasPrefix .Path "/account/rewards"}}aria-current="page"{{end}}><svg class="ico sm" aria-hidden="true"><use href="#i-check"/></svg>{{t .Lang "rewards.title"}}</a>
     <a href="/account/activity" {{if hasPrefix .Path "/account/activity"}}aria-current="page"{{end}}><svg class="ico sm" aria-hidden="true"><use href="#i-pulse"/></svg>{{t .Lang "activity.link"}}</a>

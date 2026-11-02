@@ -172,3 +172,73 @@ releasing a website without the in-process registry: [registry.md](registry.md).
 thing that talks to podman; the website never holds the podman socket.
 `/admin/services` asks each agent listed in `WEBSITE_OPSD_HOSTS` with the shared
 `WEBSITE_OPSD_KEY`. Install and configuration: [opsd.md](opsd.md).
+
+## Code layout
+
+```
+cmd/website/            the openpak.org server (site, portal, /admin, /api/v1)
+cmd/openpak-registry/   v2 network registry service, /api/v2/network/* (docs/registry.md)
+cmd/openpak-opsd/       per-host agent behind /admin/services (docs/opsd.md)
+cmd/openpak-policy/     operator console for v2 policy: publish, rollback, withdraw, inspect
+cmd/openpak-network/    CI-side fetch tool: authenticate, fetch, verify a v2 bundle
+internal/accounts/      account actions shared by the pages and the API
+internal/adapter/       client for the Switch (and Wii U/3DS) adapter internal API
+internal/admin/         role-gated operator/moderation pages under /admin
+internal/attachments/   ticket and crash-report files on disk (WEBSITE_ATTACHMENTS_DIR)
+internal/api/           /api/v1 mobile API (+ openapi/openapi.yaml contract)
+internal/chat/          client for the chat service's internal API
+internal/config/        environment configuration
+internal/erasure/       account-erasure finaliser: after the grace period, every service, then the core
+internal/core/          account-core clients (HTTP /v1/*, gRPC) + interfaces
+internal/fetchtool/     library behind cmd/openpak-network
+internal/i18n/          single string catalogue (WEB-09)
+internal/media/         avatar pipeline (validate, resize 256/512, storage)
+internal/metrics/       minimal /metrics + pprof listener on a service's +2 port
+internal/netprofile/    /api/v1/network profile generated from Traefik routing
+internal/news/          news service client (public read API + operator gRPC)
+internal/newspb/        generated news service gRPC stubs
+internal/pages/         server-rendered pages + embedded templates
+internal/policy/        v2 canonical policy, schemas, deterministic generation
+internal/push/          FCM notifier driven by the core event stream
+internal/ratelimit/     fixed-window limiter (login, token minting, API)
+internal/registry/      v2 revisions, promotion and TUF signing
+internal/registryhttp/  HTTP surface of the registry service (/api/v2, /internal/status)
+internal/saves/         client for the saves service's internal API
+internal/session/       cookie session wrapper, CSRF, bearer hashing
+internal/store/         website-owned Postgres (config, tokens, audit, media, titles,
+                        bans, help tickets, crash reports)
+internal/support/       help-ticket flows shared by /help, /api/v1/me/tickets, /admin/tickets
+internal/wfc/           asks nn-wfc which console a Wii/DS friend code belongs to
+web/src/                Tailwind input (input.css)
+web/static/             built site.css (committed), icon.svg, consoles/ icons,
+                        saves.js + titles.js (progressive enhancement only)
+scripts/                css.sh — rebuilds web/static/site.css with Tailwind
+```
+
+### UI
+
+One shell for every page — public and signed-in alike (`header`/`footer` in
+`internal/pages/templates/_layout.html`); the nav swaps its links for a
+session, and the moderation link appears only for accounts in
+`WEBSITE_ADMIN_ACCOUNT_IDS` (`pages.Server.AdminAccountIDs` mirrors the
+allowlist for display only; `/admin` authorization stays in `internal/admin`
+and remains fail-closed).
+
+`web/static/site.css` is the whole design system, built from `web/src/input.css`.
+The site behaves like a console's own system UI: the landing page is a HOME
+screen (a shelf of title tiles, a row of round system buttons), the account is a
+user page, and `/admin` is laid out like System Settings (`adminnav` opens that
+shell, `adminend` closes it). One element carries the personality: the
+selection cursor, a cyan ring that breathes around whatever is hovered or
+focused, which is also the keyboard focus indicator. Cyan only ever means "you
+are here"; indigo is links, primary actions and beta. Headings and UI text use
+M PLUS Rounded 1c (self-hosted in `web/static/fonts`, OFL), reading text the
+system face. All UI copy lives in `internal/i18n`, and the render CSP is
+`style-src 'self'`, so templates carry no inline `style` attributes.
+
+## Testing
+
+`go vet ./...` and `go test -race ./...` are the definition of done and run
+in CI. The register/verify/login/friend-code/link-revoke, invitation and block
+journeys are covered end to end in `internal/pages/journey_test.go` and
+`internal/api/api_test.go` against contract-faithful fakes.

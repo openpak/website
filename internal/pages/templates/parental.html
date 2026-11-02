@@ -11,6 +11,84 @@
   <p>{{t .Lang "parental.howto"}}</p>
 </div>
 
+{{with .Accounts}}
+<section aria-labelledby="accounts-h" id="accounts" class="mb-9">
+  <div class="section-head"><h2 id="accounts-h">{{t $.Lang "parental.acct.head"}}</h2></div>
+  <p class="hint">{{t $.Lang "parental.acct.intro"}}</p>
+  {{with .Notice}}<p class="badge ok" role="status">{{.}}</p>{{end}}
+  {{with .Error}}<p class="badge bad" role="alert">{{.}}</p>{{end}}
+  {{if .Unavailable}}
+  <p class="empty">{{t $.Lang "parental.acct.unavailable"}}</p>
+  {{else}}
+  {{if .Invites}}
+  <h3>{{t $.Lang "parental.acct.invites"}}</h3>
+  {{range .Invites}}
+  <div class="card p-5 mb-5">
+    <p class="m-0">{{printf (t $.Lang "parental.acct.invites.from") (or .Who.Name .Who.Handle)}}</p>
+    <form method="post" action="/account/parental/accounts/accept#accounts" class="flex gap-2 mt-4">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <input type="hidden" name="member" value="{{.MemberID}}">
+      <input type="hidden" name="supervisor" value="{{.SupervisorID}}">
+      <button type="submit" class="primary">{{t $.Lang "parental.acct.accept"}}</button>
+      <button type="submit" class="btn" formaction="/account/parental/accounts/remove#accounts">{{t $.Lang "parental.acct.decline"}}</button>
+    </form>
+  </div>
+  {{end}}
+  {{end}}
+  {{if .Parents}}
+  <h3>{{t $.Lang "parental.acct.parents"}}</h3>
+  {{range .Parents}}
+  <div class="card p-5 mb-5">
+    <p class="m-0">{{printf (t $.Lang "parental.acct.parents.of") (or .Who.Name .Who.Handle)}}{{if eq .Role "guardian"}} <span class="pill">{{t $.Lang "parental.acct.guardian"}}</span>{{end}}</p>
+    <p class="hint m-0">{{t $.Lang "parental.acct.parents.note"}}</p>
+  </div>
+  {{end}}
+  {{end}}
+  <h3>{{t $.Lang "parental.acct.children"}}</h3>
+  {{if not .Children}}{{if not .Pending}}<p class="empty">{{t $.Lang "parental.acct.none"}}</p>{{end}}{{end}}
+  {{range .Children}}
+  <article class="card p-5 mb-5" aria-label="{{or .Who.Name .Who.Handle}}">
+    <div class="state-row ok"><span class="name">{{or .Who.Name .Who.Handle}}</span>{{with .Who.Handle}}<span class="pill">@{{.}}</span>{{end}}</div>
+    <form method="post" action="/account/parental/accounts/openverse#accounts" class="form-stack max-w-md mt-4">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <input type="hidden" name="member" value="{{.MemberID}}">
+      <label for="ov-{{.MemberID}}">{{t $.Lang "parental.acct.openverse"}}</label>
+      <select id="ov-{{.MemberID}}" name="level">{{range .Options}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}</select>
+      <p class="hint">{{t $.Lang "parental.acct.openverse.hint"}}</p>
+      <button type="submit" class="primary">{{t $.Lang "parental.acct.save"}}</button>
+    </form>
+    <form method="post" action="/account/parental/accounts/remove#accounts" class="mt-4" onsubmit="return confirm(this.dataset.confirm)" data-confirm="{{t $.Lang "parental.acct.stop.confirm"}}">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <input type="hidden" name="member" value="{{.MemberID}}">
+      <input type="hidden" name="supervisor" value="{{.SupervisorID}}">
+      <button type="submit" class="btn danger">{{t $.Lang "parental.acct.stop"}}</button>
+    </form>
+  </article>
+  {{end}}
+  {{range .Pending}}
+  <div class="card p-5 mb-5">
+    <p class="m-0">{{printf (t $.Lang "parental.acct.pending.to") (or .Who.Name .Who.Handle)}}</p>
+    <p class="hint m-0">{{t $.Lang "parental.acct.pending"}}</p>
+    <form method="post" action="/account/parental/accounts/remove#accounts" class="mt-4">
+      <input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <input type="hidden" name="member" value="{{.MemberID}}">
+      <input type="hidden" name="supervisor" value="{{.SupervisorID}}">
+      <button type="submit" class="btn">{{t $.Lang "parental.acct.decline"}}</button>
+    </form>
+  </div>
+  {{end}}
+  <h3>{{t $.Lang "parental.acct.add"}}</h3>
+  <form method="post" action="/account/parental/accounts/invite#accounts" class="form-stack max-w-md">
+    <input type="hidden" name="csrf" value="{{$.CSRF}}">
+    <label for="sup-handle">{{t $.Lang "parental.acct.add.label"}}</label>
+    <input id="sup-handle" type="text" name="handle" maxlength="64" autocomplete="off" autocapitalize="off" spellcheck="false" required>
+    <p class="hint">{{t $.Lang "parental.acct.add.hint"}}</p>
+    <button type="submit" class="primary">{{t $.Lang "parental.acct.add.btn"}}</button>
+  </form>
+  {{end}}
+</section>
+{{end}}
+
 {{if not .Available}}
 <p class="empty">{{t .Lang "parental.unavailable"}}</p>
 {{else}}
@@ -18,7 +96,7 @@
 {{with .Code}}
 <section aria-labelledby="code-h" class="mb-9">
   <div class="section-head"><h2 id="code-h">{{t $.Lang "parental.code.label"}}</h2></div>
-  <div class="card pad">
+  <div class="card p-5">
     <p class="m-0"><span class="code tracking-widest">{{.PairingCode}}</span></p>
     <p class="hint m-0">{{t $.Lang "parental.code.valid"}}</p>
   </div>
@@ -31,7 +109,7 @@
   <div class="section-head"><h2 id="consoles-h">{{t .Lang "parental.consoles"}} <span class="text-muted">{{len .Consoles}}</span></h2></div>
   {{if not .Consoles}}<p class="empty">{{t .Lang "parental.none"}}</p>{{end}}
   {{range .Consoles}}
-  <article class="card pad mb-5" id="c-{{.MoonID}}" aria-labelledby="c-{{.MoonID}}-h">
+  <article class="card p-5 mb-5" id="c-{{.MoonID}}" aria-labelledby="c-{{.MoonID}}-h">
     <div class="state-row {{if .Synced}}ok{{else}}warn{{end}}">
       <span class="name" id="c-{{.MoonID}}-h">{{.Name}}</span>
       <span class="pill">{{if .Synced}}{{t $.Lang "parental.synced"}}{{else}}{{t $.Lang "parental.waiting"}}{{end}}</span>

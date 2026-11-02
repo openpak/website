@@ -44,6 +44,9 @@ func TestWritePreview(t *testing.T) {
 		{Kind: "title", Name: "Halo 3", Console: "Xbox 360", Status: "beta"},
 		{Kind: "title", Name: "Killzone 2", Console: "PS3", Status: "live"},
 		{Kind: "title", Name: "Monster Hunter Freedom Unite", Console: "PSP", Status: "beta"},
+		{Kind: "title", Name: "Splatoon", Console: "Wii U", Status: "beta"},
+		{Kind: "title", Name: "Mario Kart 8", Console: "Wii U", Status: "beta"},
+		{Kind: "title", Name: "Super Mario Maker", Console: "Wii U", Status: "beta"},
 		{Kind: "title", Name: "Wii U Chat", Console: "Wii U", Status: "beta"}, // no tile: keeps the console mark
 		{Kind: "title", Name: "Super Smash Bros. Ultimate", Console: "Switch", Status: "planned", TitleID: "01006A800016E000", TitleIDs: []string{"01006A800016E000"}},
 	})
@@ -71,6 +74,12 @@ func TestWritePreview(t *testing.T) {
 		{Name: "Di", Display: "1:26.000", Note: "Funky Kong"}, {Name: "Ed", Display: "1:27.250", Me: true}}},
 		Stats: testStats{linked: true}})
 	comp.Register(companion.Source{Names: []string{"Halo 3"}, Listings: testListings{}})
+	ranked := testBoards{total: 60, entries: []companion.Entry{
+		{Name: "Ana", Display: "1:23.456", Avatar: "/static/icon.svg"}, {Name: "Bo", Display: "1:24.000", Avatar: "/static/icon.svg"}, {Name: "Cy", Display: "1:25.500"},
+		{Name: "Di", Display: "1:26.000"}, {Name: "Ed", Display: "1:27.250", Me: true}}}
+	for _, n := range []string{"Mario Kart 8 Deluxe", "Mario Kart 7", "Mario Kart 8", "Splatoon", "Killzone 2"} {
+		comp.Register(companion.Source{Names: []string{n}, Rankings: ranked})
+	}
 	comp.TrophySource = testTrophies{}
 	comp.PSN = func(context.Context, string) string { return "psn_player" }
 	s.Companion = comp
@@ -78,8 +87,8 @@ func TestWritePreview(t *testing.T) {
 	rec := login(t, s, "a@x.test", "password-A-1")
 
 	for name, path := range map[string]string{
-		"companion-overview": "/titles/mario-kart-wii", "companion-listings": "/titles/halo-3/listings", "companion-rankings": "/titles/mario-kart-wii/rankings",
-		"home": "/", "features": "/features", "downloads": "/downloads",
+		"companion-overview": "/titles/mario-kart-wii", "companion-listings": "/titles/halo-3/listings", "companion-rankings": "/titles/mario-kart-wii/rankings", "companion-rankings-paged": "/titles/mario-kart-8-deluxe/rankings?offset=25", "rankings-hub": "/rankings",
+		"home": "/", "sites": "/sites", "features": "/features", "downloads": "/downloads",
 		"status": "/status", "login": "/login", "register": "/register",
 		"forgot": "/forgot-password", "titles": "/titles", "help": "/help",
 		"terms": "/terms", "privacy": "/privacy", "legal": "/legal",
@@ -87,6 +96,18 @@ func TestWritePreview(t *testing.T) {
 		w := httptest.NewRecorder()
 		s.Handler().ServeHTTP(w, httptest.NewRequest(http.MethodGet, path, nil))
 		write(t, dir, name, w.Body.String())
+	}
+	// A game's details open on the Splatoon (Wii U) row, to see its Open site button on screen.
+	{
+		w := httptest.NewRecorder()
+		s.Handler().ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/titles", nil))
+		html := w.Body.String()
+		if h := strings.Index(html, `-h">Splatoon</h2>`); h > 0 {
+			d := strings.LastIndex(html[:h], `<dialog `)
+			html = html[:d] + `<dialog data-preview ` + html[d+len(`<dialog `):]
+			html = strings.Replace(html, `</body>`, `<script>window.addEventListener("load",function(){document.querySelector("dialog[data-preview]").showModal()})</script></body>`, 1)
+		}
+		write(t, dir, "title-dialog", html)
 	}
 	// Signed-in pages need the session cookie the login handed back.
 	for name, path := range map[string]string{

@@ -698,6 +698,17 @@
                 background: color-mix(in srgb, var(--raised) 90%, transparent); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
   .gtile .cap .sub { font-family: var(--font-ui); font-weight: 700; font-size: .8rem; color: var(--ink-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .gtile .cap .badge { flex: none; padding-block: 0; font-size: .74rem; }
+  /* /sites: the same tile, with the site's mark on the art and a few lines under it. */
+  .stiles { grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
+  .stile .art { aspect-ratio: auto; height: 9.5rem; }
+  .stile a.t { flex: none; }
+  .stile .art > img { width: 112px; height: 112px; object-fit: contain; }
+  .stile .sbody { flex: 1; display: flex; flex-direction: column; gap: 6px; padding: 14px 14px 12px; }
+  .stile .sbody h3 { margin: 0; font-size: 1.15rem; }
+  .stile .sbody p { margin: 0; }
+  .stile .sline { color: var(--ink-2); }
+  .stile .sgames { color: var(--muted); font-size: .85rem; }
+  .stile .sgames span { font-weight: 700; color: var(--ink-2); }
   .gtile .foot { margin-top: auto; padding: 0 12px 12px; }
   .gtile .foot form, .gtile .foot .btn, .gtile .foot button { width: 100%; }
   .gtile .foot .btn, .gtile .foot button { min-height: 38px; padding: 0 .8rem; font-size: .84rem; }
@@ -940,6 +951,12 @@
   .ranklist .nm small { display: block; font-family: var(--font-sans); font-weight: 500; color: var(--muted); font-size: .8rem; }
   .ranklist .sc { font-variant-numeric: tabular-nums; font-weight: 700; }
   .ranklist li.me { background: var(--accent-weak); }
+  .ava { display: inline-block; width: 28px; height: 28px; border-radius: 50%; object-fit: cover; vertical-align: middle; margin-right: 8px; background: var(--paper-2); }
+  .podium .ava { display: block; width: 40px; height: 40px; margin: 6px auto 0; }
+  .pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; }
+  .tcard .tart { flex: none; display: grid; place-items: center; width: 52px; height: 52px; overflow: hidden; border-radius: 12px; background: var(--paper-2); }
+  .tcard .tart img[data-title-image] { width: 100%; height: 100%; object-fit: cover; }
+  .tcard a.t { text-decoration: none; color: inherit; }
   .ranklist .gap { display: block; text-align: center; color: var(--faint); padding: 4px; border-bottom: 1px solid var(--line); }
 
   .statgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); gap: 10px; margin-bottom: 18px; }
@@ -1032,4 +1049,59 @@
   .rwcheck { display: flex; align-items: flex-start; gap: 12px; }
   .rwcheck b { display: block; }
   .form-stack .rwcheck + .rwcheck { margin-top: 1rem; }
+}
+
+/* Pakka, the assistant: chat panel (account area) and the help-page prompt. The cyan cursor is only
+   ever focus (the global :focus-visible ring); the indigo accent marks the player's own words. */
+@layer components {
+  .pakka { display: grid; gap: 16px; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); align-items: start; }
+  .pakka-side, .pakka-main { padding: 14px; }
+  .pakka-main { display: flex; flex-direction: column; gap: 12px; min-height: 28rem; }
+  .pakka-h { font-size: .85rem; margin: 14px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .pakka-new { width: 100%; }
+  .pakka-side, .pakka-main, .pakka-list, .pakka-list li { min-width: 0; }
+  .pakka-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .pakka-list li { display: flex; align-items: center; gap: 2px; border-radius: 10px; }
+  .pakka-list li.is-current { background: var(--accent-weak); }
+  .pakka-list .pick, .pakka-list .del { aspect-ratio: auto; display: block; min-height: 40px; box-shadow: none; border: 0; background: transparent; border-radius: 10px; font-weight: 500; }
+  .pakka-list .pick { flex: 1; min-width: 0; text-align: left; padding: 0.5rem 0.7rem; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pakka-list .del { flex: none; padding: 0.5rem 0.8rem; color: var(--muted); }
+  .pakka-list .pick:hover, .pakka-list .del:hover { box-shadow: none; border: 0; background: var(--paper-2); }
+  .pakka-list .del:hover { color: var(--bad); }
+  .pakka-head { display: flex; align-items: center; gap: 10px; }
+  .pakka-head h2 { margin: 0; }
+  .pakka-mark { width: 40px; height: 40px; border-radius: 50%; flex: none; }
+  .pakka-cta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .pakka-cta > div { flex: 1; min-width: 14rem; }
+  .pakka-cta h2, .pakka-cta p { margin: 0; }
+  .pakka-notice { background: var(--paper-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
+  .pakka-notice summary { cursor: pointer; font-weight: 700; }
+  .pakka-notice h3 { margin: 10px 0 4px; }
+  .pakka-notice-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .pakka-log { flex: 1; min-height: 16rem; max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 4px; }
+  .pakka-msg { max-width: 85%; padding: 10px 14px; border-radius: 16px; line-height: 1.5; overflow-wrap: anywhere; white-space: pre-wrap; border: 1px solid var(--line); background: var(--paper-2); color: var(--ink); }
+  .pakka-msg.me { align-self: flex-end; background: var(--accent-weak); border-color: var(--accent-line); border-bottom-right-radius: 4px; }
+  .pakka-msg.bot { align-self: flex-start; border-bottom-left-radius: 4px; }
+  .pakka-msg .who { display: block; font-size: .78rem; font-weight: 700; color: var(--muted); margin-bottom: 2px; }
+  .pakka-msg a { color: var(--accent); }
+  .pakka-typing { align-self: flex-start; color: var(--muted); font-size: .9rem; display: inline-flex; align-items: center; gap: 8px; }
+  .pakka-dots { display: inline-flex; gap: 4px; }
+  .pakka-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: pakka-bob 1s infinite ease-in-out; }
+  .pakka-dots i:nth-child(2) { animation-delay: .15s; }
+  .pakka-dots i:nth-child(3) { animation-delay: .3s; }
+  @keyframes pakka-bob { 0%, 80%, 100% { opacity: .3; } 40% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .pakka-dots i { animation: none; opacity: .7; } }
+  .pakka-form { display: flex; gap: 8px; align-items: flex-end; }
+  .pakka-form button, .pakka-notice button, .pakka-err button { aspect-ratio: auto; }
+  .pakka-form textarea { flex: 1; min-width: 0; min-height: 3rem; max-height: 10rem; resize: vertical; font: inherit; font-size: max(1rem, 16px);
+    color: var(--ink); background: var(--paper-2); border: 1px solid var(--line-2); border-radius: 12px; padding: 0.6rem 0.9rem; }
+  .pakka-form textarea:focus { outline: none; border-color: var(--cursor); background: var(--raised); }
+  .pakka-err .retry { margin-left: 8px; }
+  .pakka-foot { margin: 0; }
+  @media (max-width: 760px) {
+    .pakka { grid-template-columns: minmax(0, 1fr); }
+    .pakka-msg { max-width: 94%; }
+    .pakka-log { max-height: 50vh; }
+    .pakka-form { flex-direction: column; align-items: stretch; }
+  }
 }

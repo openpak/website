@@ -65,7 +65,7 @@ func (s *Server) handleCompanion(w http.ResponseWriter, r *http.Request) {
 	}
 	switch tab {
 	case "rankings":
-		rk, err := s.Companion.Ranking(r.Context(), t, r.URL.Query().Get("board"), accountID)
+		rk, err := s.Companion.Ranking(r.Context(), t, r.URL.Query().Get("board"), rankQuery(r, accountID))
 		switch {
 		case errors.Is(err, companion.ErrNotFound):
 			http.NotFound(w, r)
@@ -211,4 +211,11 @@ func (s *Server) handleTrophies(w http.ResponseWriter, r *http.Request) {
 		page.Card.C = card
 	}
 	s.render(w, http.StatusOK, "trophies.html", page)
+}
+
+// rankQuery is the board window the request asks for (?offset=), for the viewer.
+func rankQuery(r *http.Request, accountID string) companion.RankQuery {
+	q := companion.QueryOf(r.URL.Query(), accountID)
+	q.Limit = 25
+	return q
 }

@@ -15,8 +15,8 @@ type fakeRank struct{}
 func (fakeRank) Boards(context.Context) ([]Board, error) {
 	return []Board{{ID: "a", Label: "Course A"}, {ID: "b", Label: "Course B"}}, nil
 }
-func (fakeRank) Ranking(_ context.Context, board, acct string) (Ranking, error) {
-	return Ranking{Entries: []Entry{{Name: "x-" + board, Value: 1, Display: "0:01.000", Me: acct == "me"}}}, nil
+func (fakeRank) Ranking(_ context.Context, board string, q RankQuery) (Ranking, error) {
+	return Ranking{Entries: []Entry{{Name: "x-" + board, Value: 1, Display: "0:01.000", Me: q.AccountID == "me"}}}, nil
 }
 
 type fakeHistory map[string][]core.PlayEntry
@@ -80,14 +80,14 @@ func TestRankingBoards(t *testing.T) {
 	svc.Register(Source{Names: []string{"Mario Kart Wii"}, Console: "Wii", Rankings: fakeRank{}})
 	ctx := context.Background()
 	title, _ := svc.Resolve(ctx, "mario-kart-wii")
-	r, err := svc.Ranking(ctx, title, "", "me")
+	r, err := svc.Ranking(ctx, title, "", RankQuery{AccountID: "me"})
 	if err != nil || r.Board != "a" || r.Label != "Course A" || len(r.Boards) != 2 || r.Entries[0].Rank != 1 || !r.Entries[0].Me {
 		t.Fatalf("default board: %+v %v", r, err)
 	}
-	if r, _ = svc.Ranking(ctx, title, "b", ""); r.Entries[0].Name != "x-b" {
+	if r, _ = svc.Ranking(ctx, title, "b", RankQuery{}); r.Entries[0].Name != "x-b" {
 		t.Fatalf("board b: %+v", r)
 	}
-	if _, err = svc.Ranking(ctx, title, "zzz", ""); !errors.Is(err, ErrNotFound) {
+	if _, err = svc.Ranking(ctx, title, "zzz", RankQuery{}); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("unknown board: %v", err)
 	}
 	if _, err = svc.Stats(ctx, title, "me"); !errors.Is(err, ErrNotFound) {

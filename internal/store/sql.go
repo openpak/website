@@ -144,6 +144,15 @@ var migrations = map[string]string{
 	"0007_request_title_ids": `ALTER TABLE requests ADD COLUMN IF NOT EXISTS title_ids text[] NOT NULL DEFAULT '{}';
 	UPDATE requests SET title_ids = ARRAY[title_id] WHERE title_id <> '' AND title_ids = '{}';
 	CREATE INDEX IF NOT EXISTS requests_title_ids_idx ON requests USING gin (title_ids);`,
+
+	// A Discord account linked to an OpenPak account by Discord OAuth2 (identify). One link per
+	// account and one account per Discord id, so Pakka on Discord can apply the account's rules.
+	"0008_discord_links": `CREATE TABLE IF NOT EXISTS discord_links (
+		account_id text PRIMARY KEY,
+		discord_id text NOT NULL UNIQUE,
+		username   text NOT NULL DEFAULT '',
+		linked_at  timestamptz NOT NULL DEFAULT now()
+	);`,
 }
 
 // Ping verifies database connectivity (status page).

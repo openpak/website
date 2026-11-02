@@ -77,6 +77,10 @@
     </header>
     <div class="tbody">
     {{with .Companion}}<p class="mt-4"><a class="btn primary" href="/titles/{{.}}">{{t $.Lang "companion.open"}}</a></p>{{end}}
+    {{if or .Site .Verse}}<div class="mt-4 actions">
+      {{with .Site}}<a class="btn primary" href="{{.URL}}" rel="noopener">{{printf (t $.Lang "sites.open") .Name}}</a>{{end}}
+      {{with .Verse}}<a class="btn" href="{{.}}" rel="noopener">{{t $.Lang "sites.verse.community"}}</a>{{end}}
+    </div>{{end}}
     <h3>{{t $.Lang "titles.compat.title"}}</h3>
     <p class="text-sm text-muted">{{t $.Lang "titles.compat.sub"}}</p>
     <div class="table-wrap"><table class="compat">
@@ -149,7 +153,7 @@
     </form>
     {{else}}
     <p class="mb-3 text-muted">{{t .Lang "requests.signin"}}</p>
-    <div class="flex gap-2"><a class="btn primary" href="/login">{{t .Lang "nav.login"}}</a><button type="button" class="btn" data-close="request-dialog">{{t .Lang "titles.request.close"}}</button></div>
+    <div class="flex gap-2"><a class="btn primary" href="/login">{{t .Lang "nav.signin"}}</a><button type="button" class="btn" data-close="request-dialog">{{t .Lang "titles.request.close"}}</button></div>
     {{end}}
     {{if .Admin}}
     <form method="post" action="/admin/titles/status" class="mt-5 flex flex-wrap items-end gap-2 border-t border-line pt-4">

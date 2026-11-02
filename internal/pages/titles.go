@@ -287,6 +287,7 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 	slugs := s.companionSlugs(r.Context())
 	for i := range rows {
 		rows[i].Companion = slugs[rows[i].ID]
+		rows[i].Site = siteFor(rows[i].Name, rows[i].Console)
 	}
 	s.render(w, http.StatusOK, "titles.html", titlesPage{d, rows, requestable, consoles, statuses, allStatuses, byVotes, backPath("/titles", byVotes)})
 }
@@ -351,15 +352,13 @@ func backPath(base string, byVotes bool) string {
 // /static/consoles. Unknown consoles fall back to a generic gamepad glyph so a
 // row is never a broken image. Keep in step with the app's consoleAsset and
 // with the svg files actually present.
-// consoleSlugs is the logos for a row: Wii / DS and Wii U / 3DS show both.
+// consoleSlugs returns each console's logo for shared services.
 func consoleSlugs(name string) []string {
-	if name == "Wii / DS" {
-		return []string{"wii", "ds"}
+	var slugs []string
+	for _, console := range strings.Split(name, " / ") {
+		slugs = append(slugs, consoleSlug(console))
 	}
-	if name == "Wii U / 3DS" {
-		return []string{"wii-u", "3ds"}
-	}
-	return []string{consoleSlug(name)}
+	return slugs
 }
 
 func consoleSlug(console string) string {
@@ -380,7 +379,7 @@ func consoleSlug(console string) string {
 		return "xbox-360"
 	case "Xbox One":
 		return "xbox-one"
-	case "PS2":
+	case "PS2", "PlayStation 2":
 		return "ps2"
 	case "PS3", "PlayStation 3":
 		return "ps3"
@@ -390,7 +389,7 @@ func consoleSlug(console string) string {
 		return "ps5"
 	case "PSP":
 		return "psp"
-	case "Vita":
+	case "Vita", "PS Vita":
 		return "vita"
 	default:
 		return "generic"
@@ -435,8 +434,10 @@ type titleRow struct {
 	Compat []compatCell
 	// Companion is the slug of the title's companion page (/titles/<slug>), "" when it has none.
 	Companion string
-	links     map[string]string // shop key -> product page
-	play      map[string]string // client -> playability
+	// Site is the Open site that covers the title (/sites), nil when none does.
+	Site  *openSite
+	links map[string]string // shop key -> product page
+	play  map[string]string // client -> playability
 }
 
 // playabilityPick is one line of the admin playability form: a client the title can run on,

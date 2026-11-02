@@ -20,12 +20,14 @@ import (
 // accountView is the profile page model (WEB-02, WEB-03).
 type accountView struct {
 	baseData
+	PakkaOK       bool
 	FriendCode    string
 	HasFriendCode bool
 	// Codes is every code people can add this account by, one per console
 	// family, shown together in the profile banner.
 	Codes          []accounts.Code
 	Links          []linkRow
+	Discord        discordRow
 	CanLinkWFC     bool // a Wii/DS server is configured, so the friend-code form is shown
 	Sessions       []core.Session
 	CurrentSession string
@@ -63,6 +65,7 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx := r.Context()
 	view := accountView{baseData: s.data(r, v, i18n.T(i18n.FromRequest(r), "account.title")), CurrentSession: v.CoreSessionID}
+	view.PakkaOK = s.pakkaOK(ctx, v)
 	view.AvatarURL = "/media/avatars/" + v.AccountID + "/512"
 	// Version the URL from the media row the upload stamps: the image bytes
 	// are served with `Cache-Control: max-age=300`, so without a version the
@@ -96,6 +99,7 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 		view.Links = append(view.Links, linkRow{Namespace: "Wii / DS", Subject: link.SubjectID, LinkID: link.LinkID, Revocable: true})
 	}
 	view.CanLinkWFC = s.WFC != nil
+	view.Discord = s.discordView(r, v.AccountID, view.Lang)
 
 	sessions, err := s.Core.ListSessions(ctx, v.CoreSessionID)
 	if err != nil {

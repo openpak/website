@@ -32,9 +32,11 @@ import (
 	"github.com/openpak/website/internal/clientip"
 	"github.com/openpak/website/internal/companion"
 	"github.com/openpak/website/internal/core"
+	"github.com/openpak/website/internal/discordlink"
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/news"
+	"github.com/openpak/website/internal/pakkachat"
 	"github.com/openpak/website/internal/pctl"
 	"github.com/openpak/website/internal/ratelimit"
 	"github.com/openpak/website/internal/rewards"
@@ -42,6 +44,7 @@ import (
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/sso"
 	"github.com/openpak/website/internal/store"
+	"github.com/openpak/website/internal/supervision"
 	"github.com/openpak/website/internal/support"
 	"github.com/openpak/website/internal/titleart"
 	"github.com/openpak/website/internal/turnstile"
@@ -82,13 +85,20 @@ type Server struct {
 	Adapter *adapter.Client
 	// WFC resolves Wii/DS friend codes for the link flow; nil hides the form.
 	WFC *wfc.Client
+	// Discord links a Discord account to the signed-in account; nil (no DISCORD_OAUTH_* env) hides the button.
+	Discord *discordlink.Client
 	// Saves is the cloud saves service; nil renders the page as "not available".
 	Saves *saves.Client
 	// Parental relays to nx-baas's parental-controls records; nil renders the
 	// page as "not available".
 	Parental *pctl.Client
+	// Supervision is the parental controls core's account-level supervision and the
+	// parent-controlled OpenVerse level; nil = not configured (the section is hidden).
+	Supervision *supervision.Client
 	// Chat is the neutral chat service; nil renders the page as "not available".
 	Chat *chat.Client
+	// Pakka connects to the assistant; nil hides every Pakka entry point.
+	Pakka *pakkachat.Bridge
 	// Support is the help-ticket service; nil says tickets are not available.
 	Support *support.Service
 	// News is the public news feed for the landing page; nil shows none.
@@ -147,9 +157,11 @@ type baseData struct {
 }
 
 type viewUser struct {
+	Pakka       bool // may use Pakka chat (adult, eligible); set on account pages only
 	ID          string
 	Email       string
 	DisplayName string
+	AvatarURL   string
 }
 
 // data builds baseData for a request.
@@ -161,8 +173,16 @@ func (s *Server) data(r *http.Request, v *viewer, title string) baseData {
 	}
 	if v != nil {
 		d.User = &viewUser{ID: v.AccountID, Email: v.Email, DisplayName: v.DisplayName}
+		d.User.AvatarURL = "/media/avatars/" + v.AccountID + "/256"
+		if rec, err := s.DB.GetMedia(r.Context(), v.AccountID, "avatar"); err == nil && !rec.UpdatedAt.IsZero() {
+			d.User.AvatarURL += "?v=" + strconv.FormatInt(rec.UpdatedAt.UnixNano(), 10)
+		}
 		d.Admin = slices.Contains(s.AdminAccountIDs, v.AccountID)
 		d.CSRF = s.Sessions.CSRFToken(v.CoreSessionID)
+		// The account nav links Pakka; only account pages ask, since it is a call to the core.
+		if strings.HasPrefix(d.Path, "/account") {
+			d.User.Pakka = s.pakkaOK(r.Context(), v)
+		}
 	}
 	d.Flash = flashText(d.Lang, r.URL.Query().Get("m"))
 	return d
@@ -344,6 +364,7 @@ func (s *Server) Handler() http.Handler {
 func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /{$}", s.handleLanding)
 	mux.HandleFunc("GET /titles", s.handleTitles)
+	mux.HandleFunc("GET /rankings", s.handleRankingsHub)
 	mux.HandleFunc("POST /request/vote", s.handleVote)
 	mux.HandleFunc("POST /admin/titles/status", s.handleSetTitleStatus)
 	mux.HandleFunc("POST /admin/titles/shops", s.handleSetShopLinks)
@@ -375,6 +396,9 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /account/sessions/revoke", s.handleRevokeSession)
 	mux.HandleFunc("POST /account/link/revoke", s.handleUnlink)
 	mux.HandleFunc("POST /account/link/wfc", s.handleLinkWFC)
+	mux.HandleFunc("POST /account/link/discord", s.handleDiscordStart)
+	mux.HandleFunc("GET /account/link/discord/callback", s.handleDiscordCallback)
+	mux.HandleFunc("POST /account/link/discord/revoke", s.handleDiscordRevoke)
 	mux.HandleFunc("POST /account/networks/{network}/{field}", s.handleNetworkField)
 	mux.HandleFunc("POST /account/avatar", s.handleAvatarUpload)
 	mux.HandleFunc("GET /media/avatars/{accountID}/{size}", s.handleAvatarServe)
@@ -391,6 +415,10 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /account/chat/send", s.handleChatSend)
 	mux.HandleFunc("GET /account/saves", s.handleSaves)
 	mux.HandleFunc("GET /account/parental", s.handleParental)
+	mux.HandleFunc("POST /account/parental/accounts/invite", s.handleSupervisionInvite)
+	mux.HandleFunc("POST /account/parental/accounts/accept", s.handleSupervisionAccept)
+	mux.HandleFunc("POST /account/parental/accounts/remove", s.handleSupervisionRemove)
+	mux.HandleFunc("POST /account/parental/accounts/openverse", s.handleSupervisionOpenVerse)
 	mux.HandleFunc("POST /account/parental/pair", s.handleParentalPair)
 	mux.HandleFunc("POST /account/parental/pin", s.handleParentalPin)
 	mux.HandleFunc("POST /account/parental/pin/set", s.handleParentalSetPin)
@@ -403,6 +431,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /titles/{slug}/{tab}", s.handleCompanion)
 	mux.HandleFunc("GET /account/activity", s.handleActivity)
 	mux.HandleFunc("GET /account/trophies", s.handleTrophies)
+	s.registerPakka(mux)
 	mux.HandleFunc("GET /account/rewards", s.handleRewards)
 	mux.HandleFunc("POST /account/rewards/claim", s.handleRewardsClaim)
 	mux.HandleFunc("POST /account/rewards/redeem", s.handleRewardsRedeem)
@@ -436,6 +465,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /account/operator/reply", s.handleOperatorReply)
 	mux.HandleFunc("GET /.well-known/security.txt", handleSecurityTxt)
 	mux.HandleFunc("GET /features", s.handleFeatures)
+	mux.HandleFunc("GET /sites", s.handleSites)
 	mux.HandleFunc("GET /downloads", s.handleDownloads)
 	mux.HandleFunc("GET /status", s.handleStatus)
 	mux.HandleFunc("GET /lang", s.handleLang)
@@ -564,14 +594,13 @@ func (s *Server) handleFeatures(w http.ResponseWriter, r *http.Request) {
 	// Distinct statuses for the filter dropdown, in stable order.
 	seen := map[string]bool{}
 	var statuses, consoles []string
-	for _, f := range reqs {
-		if f.Status != "" && !seen[f.Status] {
-			seen[f.Status] = true
-			statuses = append(statuses, f.Status)
-		}
-		if f.Console != "" && !seen["c:"+f.Console] {
-			seen["c:"+f.Console] = true
-			consoles = append(consoles, f.Console)
+	for _, group := range featureGroups(reqs) {
+		consoles = append(consoles, group.Console)
+		for _, f := range group.Features {
+			if f.Status != "" && !seen[f.Status] {
+				seen[f.Status] = true
+				statuses = append(statuses, f.Status)
+			}
 		}
 	}
 	sort.Strings(statuses)

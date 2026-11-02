@@ -148,7 +148,7 @@
 
 {{if eq .NextKind "claim"}}
 <div class="notice ok mt-5 flex flex-wrap items-center justify-between gap-3" role="status"><span>{{.NextText}}</span><a class="btn primary" href="/account/rewards?tab=missions">{{t $l "rewards.next.claim.go"}}</a></div>
-{{else if eq .NextKind "buy"}}
+{{else if and (eq .NextKind "buy") (ne .Tab "shop")}}
 <div class="notice mt-5 flex flex-wrap items-center justify-between gap-3" role="status"><span>{{.NextText}}</span><a class="btn primary" href="/account/rewards?tab=shop">{{t $l "rewards.next.buy.go"}}</a></div>
 {{else if eq .NextKind "play"}}
 <p class="hint mt-5 mb-0">{{.NextText}}</p>

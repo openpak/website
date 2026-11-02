@@ -21,7 +21,7 @@ const CommunityURL = "https://discord.gg/nMhjnsB6F6"
 // LoadTemplates parses the embedded page templates with the i18n function
 // bound as `t` (WEB-09: one string catalogue).
 func LoadTemplates() (*template.Template, error) {
-	return template.New("site").Funcs(template.FuncMap{"t": i18n.T, "langs": i18n.Supported, "date": i18n.Date, "consoleSlug": consoleSlug, "consoleSlugs": consoleSlugs, "titleArt": artPath, "badgeClass": badgeClass, "statusText": statusText, "hasPrefix": strings.HasPrefix, "lower": strings.ToLower, "arr": func(v ...any) []any { return v }, "add": func(a, b int) int { return a + b }, "deref": func(p *int) int {
+	return template.New("site").Funcs(template.FuncMap{"t": i18n.T, "langs": i18n.Supported, "date": i18n.Date, "consoleSlug": consoleSlug, "consoleSlugs": consoleSlugs, "featureGroups": featureGroups, "featureIcon": featureIcon, "titleArt": artPath, "badgeClass": badgeClass, "statusText": statusText, "hasPrefix": strings.HasPrefix, "lower": strings.ToLower, "arr": func(v ...any) []any { return v }, "add": func(a, b int) int { return a + b }, "sub": func(a, b int) int { return a - b }, "deref": func(p *int) int {
 		if p == nil {
 			return 0
 		}

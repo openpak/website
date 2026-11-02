@@ -189,6 +189,28 @@
       </form>{{end}}</li>{{end}}
   </ul>
   {{else}}<p class="empty">{{t .Lang "account.links.none"}}</p>{{end}}
+  {{if or .Discord.Configured .Discord.Linked}}
+  <div class="form-stack max-w-md" id="discord">
+    <h3 class="mt-8">{{t .Lang "discord.title"}}</h3>
+    {{if .Discord.Msg}}<p class="card mb-3 border-accent-line bg-accent-weak px-4 py-3 text-ink-2" role="status">{{.Discord.Msg}}</p>{{end}}
+    {{if .Discord.Linked}}
+    <ul class="rows"><li>
+      <span class="name">Discord</span>
+      <code>{{.Discord.Username}}</code>
+      <form method="post" action="/account/link/discord/revoke" class="inline">
+        <input type="hidden" name="csrf" value="{{.CSRF}}">
+        <button type="submit" class="small danger">{{t .Lang "discord.unlink"}}</button>
+      </form></li></ul>
+    <p class="hint">{{t .Lang "discord.linked.help"}}</p>
+    {{else}}
+    <p class="hint">{{t .Lang "discord.help"}}</p>
+    <form method="post" action="/account/link/discord">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <button type="submit" class="small">{{t .Lang "discord.link"}}</button>
+    </form>
+    {{end}}
+  </div>
+  {{end}}
   {{if .CanLinkWFC}}
   <form method="post" action="/account/link/wfc" class="form-stack max-w-md">
     <input type="hidden" name="csrf" value="{{.CSRF}}">

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -17,8 +18,8 @@ type apiBoards struct{}
 func (apiBoards) Boards(context.Context) ([]companion.Board, error) {
 	return []companion.Board{{ID: "all", Label: "All"}}, nil
 }
-func (apiBoards) Ranking(_ context.Context, _, acct string) (companion.Ranking, error) {
-	return companion.Ranking{Entries: []companion.Entry{{Name: "Ana", Value: 83456, Display: "1:23.456", Me: acct != ""}}}, nil
+func (apiBoards) Ranking(_ context.Context, _ string, q companion.RankQuery) (companion.Ranking, error) {
+	return companion.Ranking{Entries: []companion.Entry{{Name: "Ana", Value: 83456, Display: "1:23.456", Me: q.AccountID != ""}}}, nil
 }
 
 type apiStats struct{}
@@ -97,5 +98,43 @@ func TestCompanionAPI(t *testing.T) {
 	}
 	if rec = do(t, s, http.MethodGet, "/api/v1/me/activity", "", nil); rec.Code != 401 {
 		t.Errorf("activity without a token: %d", rec.Code)
+	}
+}
+
+func TestPublicRankings(t *testing.T) {
+	s, _, db := newTestAPI(t)
+	_ = db.SeedRequests(context.Background(), []store.Request{
+		{Kind: "title", Name: "Mario Kart Wii", Console: "Wii", Status: "beta"},
+		{Kind: "title", Name: "Halo 3", Console: "Xbox 360", Status: "beta"},
+	})
+	c := companion.New(db)
+	c.Register(companion.Source{Names: []string{"Mario Kart Wii"}, Rankings: apiBoards{}})
+	s.Companion = c
+
+	rec := do(t, s, http.MethodGet, "/api/v1/rankings", "", nil)
+	var games struct {
+		Games []rankedGame `json:"games"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &games)
+	if rec.Code != 200 || len(games.Games) != 1 || games.Games[0].Slug != "mario-kart-wii" || games.Games[0].Boards != 1 || rec.Header().Get("Access-Control-Allow-Origin") != "*" {
+		t.Fatalf("games: %d %s", rec.Code, rec.Body.String())
+	}
+	rec = do(t, s, http.MethodGet, "/api/v1/rankings/mario-kart-wii", "", nil)
+	if rec.Code != 200 || !strings.Contains(rec.Body.String(), `"id":"all"`) {
+		t.Fatalf("boards: %d %s", rec.Code, rec.Body.String())
+	}
+	rec = do(t, s, http.MethodGet, "/api/v1/rankings/mario-kart-wii/all?limit=5&around=acct-1", "", nil)
+	var b struct {
+		Board rankBoard `json:"board"`
+		Rows  []rankRow `json:"rows"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &b)
+	if rec.Code != 200 || b.Board.ID != "all" || len(b.Rows) != 1 || b.Rows[0].Score != 83456 || b.Rows[0].Display != "1:23.456" {
+		t.Fatalf("board: %d %s", rec.Code, rec.Body.String())
+	}
+	for _, p := range []string{"/api/v1/rankings/halo-3", "/api/v1/rankings/nothing", "/api/v1/rankings/mario-kart-wii/zzz"} {
+		if rec = do(t, s, http.MethodGet, p, "", nil); rec.Code != 404 {
+			t.Errorf("%s: %d", p, rec.Code)
+		}
 	}
 }

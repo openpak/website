@@ -27,15 +27,15 @@ const CodeTTL = 60 * time.Second
 type Client struct {
 	ID      string
 	Secret  string
-	Origins []string // exact https origins a code may be sent to, "https://opensplat.openpak.org"
+	Origins []string // exact https origins a code may be sent to, "https://splat.openpak.org"
 }
 
 // builtin names the subsites and the host each gets unless its REDIRECTS variable says otherwise.
 var builtin = []struct{ ID, Env, Host string }{
-	{"opensplat", "OPENSPLAT", "opensplat.openpak.org"},
-	{"openkart", "OPENKART", "openkart.openpak.org"},
-	{"openmaker", "OPENMAKER", "openmaker.openpak.org"},
-	{"openverse", "OPENVERSE", "openverse.openpak.org"},
+	{"opensplat", "OPENSPLAT", "splat.openpak.org"},
+	{"openkart", "OPENKART", "kart.openpak.org"},
+	{"openmaker", "OPENMAKER", "maker.openpak.org"},
+	{"openverse", "OPENVERSE", "verse.openpak.org"},
 	{"rewards", "REWARDS", "rewards.openpak.org"},
 }
 

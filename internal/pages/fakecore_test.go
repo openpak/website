@@ -24,6 +24,7 @@ type fakeCore struct {
 	sessions       map[string]string // coreSessionID -> email
 	friends        []friendRow
 	blocks         [][2]string
+	birthdays      map[string]string // account id -> YYYY-MM-DD, for GetAccount
 	profile        [2]string         // country, birthday as last saved
 	names          map[string]string // accountID -> display name
 	invitations    []core.PendingInvitation
@@ -326,7 +327,11 @@ func (f *fakeCore) GetAccount(_ context.Context, accountID string) (core.Account
 		motto = *f.profileText.Motto
 	}
 	email := strings.TrimPrefix(accountID, "acct-")
-	return core.Account{Bio: bio, Motto: motto, ID: accountID, DisplayName: f.names[accountID],
+	status := "active"
+	if f.banned[email] {
+		status = "banned"
+	}
+	return core.Account{Bio: bio, Motto: motto, ID: accountID, DisplayName: f.names[accountID], Status: status, Birthday: f.birthdays[accountID],
 		EmailVerified: f.verified[email], TwoFactorEnabled: f.twoFactor[email]}, nil
 }
 

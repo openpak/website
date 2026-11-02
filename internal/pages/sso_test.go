@@ -13,13 +13,13 @@ import (
 	"github.com/openpak/website/internal/sso"
 )
 
-const ssoCB = "https://opensplat.openpak.org/auth/callback"
+const ssoCB = "https://splat.openpak.org/auth/callback"
 
 func ssoServer(t *testing.T) (*Server, *fakeCore) {
 	t.Helper()
 	s, fc, _ := newTestServer(t)
 	seedTwoAccounts(fc)
-	s.SSO = sso.New([]sso.Client{{ID: "opensplat", Secret: "sekret", Origins: []string{"https://opensplat.openpak.org"}}})
+	s.SSO = sso.New([]sso.Client{{ID: "opensplat", Secret: "sekret", Origins: []string{"https://splat.openpak.org"}}})
 	return s, fc
 }
 
@@ -58,7 +58,7 @@ func TestSSOFlow(t *testing.T) {
 	rec := login(t, s, "a@x.test", "password-A-1")
 	w = authedRequest(s, rec, http.MethodGet, target, nil)
 	back, err := url.Parse(w.Header().Get("Location"))
-	if w.Code != http.StatusSeeOther || err != nil || back.Host != "opensplat.openpak.org" || back.Query().Get("state") != "state-12345678" || back.Query().Get("code") == "" {
+	if w.Code != http.StatusSeeOther || err != nil || back.Host != "splat.openpak.org" || back.Query().Get("state") != "state-12345678" || back.Query().Get("code") == "" {
 		t.Fatalf("signed in: %d %q", w.Code, w.Header().Get("Location"))
 	}
 	code := back.Query().Get("code")
@@ -76,6 +76,12 @@ func TestSSOFlow(t *testing.T) {
 	if _, has := out["wiiu_pid"]; !has {
 		t.Errorf("wiiu_pid is not in the answer: %s", w.Body.String())
 	}
+	if v, has := out["switch_pid"]; !has || v != "1250999896491" { // the seeded Switch link, 0x123456789ab
+		t.Errorf("switch_pid: %s", w.Body.String())
+	}
+	if v, has := out["wfc_user_id"]; !has || v != nil {
+		t.Errorf("wfc_user_id should be null without a link: %s", w.Body.String())
+	}
 	if w = exchange(s, form, "sekret"); w.Code != http.StatusBadRequest {
 		t.Fatalf("code reuse: %d", w.Code)
 	}
@@ -84,7 +90,7 @@ func TestSSOFlow(t *testing.T) {
 func TestSSORedirectMismatch(t *testing.T) {
 	s, _ := ssoServer(t)
 	rec := login(t, s, "a@x.test", "password-A-1")
-	for _, uri := range []string{"https://evil.test/cb", "http://opensplat.openpak.org/cb", "https://opensplat.openpak.org@evil.test/", "https://evil.openpak.org/cb"} {
+	for _, uri := range []string{"https://evil.test/cb", "http://splat.openpak.org/cb", "https://splat.openpak.org@evil.test/", "https://evil.openpak.org/cb"} {
 		w := authedRequest(s, rec, http.MethodGet, authorizeURL(url.Values{"redirect_uri": {uri}}), nil)
 		if w.Code != http.StatusBadRequest || w.Header().Get("Location") != "" {
 			t.Errorf("%s: %d %q", uri, w.Code, w.Header().Get("Location"))
@@ -99,7 +105,7 @@ func TestSSORedirectMismatch(t *testing.T) {
 	// A code for one redirect_uri cannot be exchanged for another.
 	w := authedRequest(s, rec, http.MethodGet, authorizeURL(nil), nil)
 	back, _ := url.Parse(w.Header().Get("Location"))
-	bad := exchange(s, url.Values{"code": {back.Query().Get("code")}, "redirect_uri": {"https://opensplat.openpak.org/elsewhere"}}, "sekret")
+	bad := exchange(s, url.Values{"code": {back.Query().Get("code")}, "redirect_uri": {"https://splat.openpak.org/elsewhere"}}, "sekret")
 	if bad.Code != http.StatusBadRequest {
 		t.Errorf("redirect mismatch at exchange: %d", bad.Code)
 	}
@@ -122,15 +128,15 @@ func TestSSOPKCE(t *testing.T) {
 func TestSSOLogout(t *testing.T) {
 	s, _ := ssoServer(t)
 	rec := login(t, s, "a@x.test", "password-A-1")
-	w := authedRequest(s, rec, http.MethodGet, "/account/sso/logout?redirect_uri="+url.QueryEscape("https://opensplat.openpak.org/"), nil)
+	w := authedRequest(s, rec, http.MethodGet, "/account/sso/logout?redirect_uri="+url.QueryEscape("https://splat.openpak.org/"), nil)
 	if w.Code != 200 || !strings.Contains(w.Body.String(), `name="csrf"`) {
 		t.Fatalf("confirm page: %d", w.Code)
 	}
 	if w = authedRequest(s, rec, http.MethodGet, "/account/sso/logout?redirect_uri="+url.QueryEscape("https://evil.test/"), nil); w.Code != http.StatusBadRequest {
 		t.Errorf("open redirect on logout: %d", w.Code)
 	}
-	w = authedRequest(s, rec, http.MethodPost, "/account/sso/logout", &url.Values{"redirect_uri": {"https://opensplat.openpak.org/"}})
-	if w.Code != http.StatusSeeOther || w.Header().Get("Location") != "https://opensplat.openpak.org/" {
+	w = authedRequest(s, rec, http.MethodPost, "/account/sso/logout", &url.Values{"redirect_uri": {"https://splat.openpak.org/"}})
+	if w.Code != http.StatusSeeOther || w.Header().Get("Location") != "https://splat.openpak.org/" {
 		t.Fatalf("logout: %d %q", w.Code, w.Header().Get("Location"))
 	}
 	if w = authedRequest(s, rec, http.MethodGet, "/account", nil); w.Code != http.StatusSeeOther {
@@ -142,5 +148,29 @@ func TestSSOOff(t *testing.T) {
 	s, _, _ := newTestServer(t)
 	if w := getPath(s, authorizeURL(nil)); w.Code != http.StatusNotFound {
 		t.Errorf("sso off: %d", w.Code)
+	}
+}
+
+// The Switch and WFC links show up as the NEX principal id (decimal) and the console user id.
+func TestSSOTokenLinkedIDs(t *testing.T) {
+	for _, c := range []struct{ subject, want string }{
+		{"aaaaaaaaaaaa0001", "12297829382472990721"}, {"not-hex", ""}, {"0000000000000000", ""},
+	} {
+		s, fc := ssoServer(t)
+		fc.links["acct-a@x.test"] = c.subject
+		fc.wfcLinks["acct-a@x.test"] = "8899001122"
+		rec := login(t, s, "a@x.test", "password-A-1")
+		w := authedRequest(s, rec, http.MethodGet, authorizeURL(nil), nil)
+		back, _ := url.Parse(w.Header().Get("Location"))
+		w = exchange(s, url.Values{"code": {back.Query().Get("code")}, "redirect_uri": {ssoCB}}, "sekret")
+		var out map[string]any
+		_ = json.Unmarshal(w.Body.Bytes(), &out)
+		var want any
+		if c.want != "" {
+			want = c.want
+		}
+		if w.Code != 200 || out["switch_pid"] != want || out["wfc_user_id"] != "8899001122" {
+			t.Errorf("%s: %d %s", c.subject, w.Code, w.Body.String())
+		}
 	}
 }

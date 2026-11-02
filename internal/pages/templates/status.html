@@ -63,13 +63,11 @@
     <ul>
       {{range .Networks}}
       <li class="state-row {{if eq .State "live"}}ok{{else if eq .State "beta"}}beta{{else if eq .State "building"}}warn{{else}}idle{{end}}">
-        <span class="console">{{range consoleSlugs .Name}}<picture class="console-mark"><img src="/static/consoles/{{.}}.svg" alt="" width="24" height="24" loading="lazy"></picture>{{end}}</span>
         <span class="name">{{.Name}}</span>
         <span class="pill">
           {{if eq .State "live"}}{{if eq .Players 1}}{{t $.Lang "status.pill.online.one"}}{{else}}{{.Players}} {{t $.Lang "status.pill.online.many"}}{{end}}
-          {{else if eq .State "beta"}}{{t $.Lang "status.net.beta"}}
-          {{else if eq .State "building"}}{{t $.Lang "status.net.building"}}
-          {{else}}{{t $.Lang "status.net.planned"}}{{end}}
+          {{else if or (eq .State "beta") (eq .State "building")}}{{if $.CountsOK}}{{if eq .Players 1}}{{t $.Lang "status.pill.one"}}{{else}}{{.Players}} {{t $.Lang "status.pill.many"}}{{end}}{{else}}{{t $.Lang "status.unchecked"}}{{end}}
+          {{else}}{{t $.Lang "status.net.building"}}{{end}}
         </span>
       </li>
       {{end}}

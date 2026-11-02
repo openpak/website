@@ -23,6 +23,7 @@ import (
 	"github.com/openpak/website/internal/companion"
 	"github.com/openpak/website/internal/config"
 	"github.com/openpak/website/internal/core"
+	"github.com/openpak/website/internal/discordlink"
 	"github.com/openpak/website/internal/erasure"
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/media"
@@ -30,6 +31,7 @@ import (
 	"github.com/openpak/website/internal/netprofile"
 	"github.com/openpak/website/internal/news"
 	"github.com/openpak/website/internal/pages"
+	"github.com/openpak/website/internal/pakkachat"
 	"github.com/openpak/website/internal/pctl"
 	"github.com/openpak/website/internal/push"
 	"github.com/openpak/website/internal/ratelimit"
@@ -38,6 +40,7 @@ import (
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/sso"
 	"github.com/openpak/website/internal/store"
+	"github.com/openpak/website/internal/supervision"
 	"github.com/openpak/website/internal/support"
 	"github.com/openpak/website/internal/turnstile"
 	"github.com/openpak/website/internal/xbl"
@@ -154,6 +157,17 @@ func run(log *slog.Logger) error {
 		log.Info("parental controls: NX_BAAS_URL not set; the page says so and the API answers 503")
 	}
 	apiSrv.Parental = parentalCli
+	// Account-level supervision (the parental controls core): Pakka, the Discord lookup and the
+	// parent page ask it, and an unreachable core counts as supervised.
+	sup, err := supervision.New(os.Getenv("PARENTAL_GRPC_ADDR"), os.Getenv("PARENTAL_HTTP_URL"), os.Getenv("PARENTAL_INTERNAL_KEY"), os.Getenv("WEBSITE_PARENTAL_KEY"))
+	if err != nil {
+		return err
+	}
+	if sup == nil {
+		log.Warn("parental controls core: PARENTAL_GRPC_ADDR not set; supervision is not checked and the account section is hidden")
+	}
+	apiSrv.Supervision = sup
+	pageSrv.Supervision = sup
 	pageSrv.Parental = parentalCli
 	apiSrv.SaveTitle = pages.SaveTitle
 	// Title companion pages and the play history: one service behind the site and the API.
@@ -161,7 +175,7 @@ func run(log *slog.Logger) error {
 	comp.History = coreGRPC
 	comp.Catalogue = func(ctx context.Context) map[string]string { return pages.TitleCatalogue(ctx, db) }
 	comp.Namer = pages.FriendGame
-	registerCompanionTitles(comp, coreGRPC, log)
+	registerCompanionTitles(comp, coreGRPC, coreGRPC, log)
 	// Rewards: points, missions, shop. REWARDS_URL is the private address (http://openpak-rewards:20180).
 	pageSrv.Rewards = rewards.New(os.Getenv("REWARDS_URL"), os.Getenv("REWARDS_INTERNAL_KEY"), os.Getenv("REWARDS_ADMIN_KEY"))
 	if pageSrv.Rewards == nil {
@@ -169,6 +183,10 @@ func run(log *slog.Logger) error {
 	}
 	// Subsite sign-in: only clients with SSO_CLIENT_<NAME>_SECRET set are registered.
 	pageSrv.SSO = sso.New(sso.FromEnv())
+	// Discord account linking for Pakka: needs DISCORD_OAUTH_CLIENT_ID and DISCORD_OAUTH_CLIENT_SECRET.
+	if pageSrv.Discord = discordlink.FromEnv(); pageSrv.Discord == nil {
+		log.Info("discord: DISCORD_OAUTH_CLIENT_ID/SECRET not set; the Link Discord button is hidden")
+	}
 	if !pageSrv.SSO.Enabled() {
 		log.Info("sso: no SSO_CLIENT_*_SECRET set; /account/sso is off")
 	}
@@ -256,6 +274,13 @@ func run(log *slog.Logger) error {
 		}}
 	go finaliser.Run(ctx)
 	log.Info("erasure: finaliser started", "every", cfg.ErasureInterval)
+	// Pakka, the assistant: PAKKA_URL (http://openpak-pakka:24800) and PAKKA_CHAT_KEY; either
+	// missing and every Pakka entry point and route is absent.
+	if bridge := pakkachat.New(os.Getenv("PAKKA_URL"), os.Getenv("PAKKA_CHAT_KEY"), pageSrv.PakkaTools()); bridge != nil {
+		pageSrv.Pakka = bridge
+		apiSrv.Pakka = bridge
+		log.Info("pakka chat enabled")
+	}
 	pageSrv.Support = supportSvc
 	apiSrv.Support = supportSvc
 	apiSrv.Crashes = files

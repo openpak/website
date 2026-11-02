@@ -11,12 +11,69 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
-## Unreleased
-
+## v0.78.0 — 2026-11-02
 - **Rewards redesign.** `/account/rewards` is now a header (balance, today's cap, next step) over four
   tabs: Missions, Shop (tile shelf and a confirm dialog), Collection (Founder seal, equip) and Settings,
   with typed success and error messages and every string in all six languages. `/admin/rewards` moved
   into the admin package and the System Settings nav. Shared rewards fake: `internal/rewards/rewardstest`.
+- **Badge ladders as tiles.** A ladder shows once: its next tier in Missions, its highest earned tier in My items. The Shop lists only what you do not own; My items has the equip buttons. Every /account page shares one section nav, which now links Pakka for accounts that may use it.
+
+## v0.77.1 — 2026-11-02
+- Adds the hub page handler missing from v0.77.0 (its build failed); no other change.
+
+## v0.77.0 — 2026-11-02
+- **Rankings contract, hub and public API.** Every game server that keeps rankings serves the same
+  read-only internal endpoints (`/internal/rankings/boards`, `/boards/{id}`), documented in
+  `docs/rankings-contract.md`; `rankingsapi/rankingsapi.go` is the helper servers copy. The website reads
+  them with one generic client (`internal/companion/contract.go`) instead of per-title adapters, names the
+  players through the account core, and shows a Rankings tab only for a title whose server has scored boards.
+- New `/rankings` hub: every game with rankings, by console, with search; the Rankings tab pages
+  (`?offset=`) and shows player pictures.
+- New public `GET /api/v1/rankings`, `/rankings/{slug}`, `/rankings/{slug}/{board}` (limit, offset,
+  `around=<account id>`), cached 30 seconds.
+- Mario Kart Wii moves onto the contract (wfc-race v0.4.1); Pokémon Global Link keeps its own source.
+  Titles served: Mario Kart Wii, 7, 8 and 8 Deluxe, Pikmin 3, Splatoon (Wii U), Puyo Puyo Tetris, Sonic &
+  All-Stars Racing Transformed, Terraria (Wii U), Dr. Luigi, Dr. Mario: Miracle Cure.
+- Switch players are named through nx-baas `GET /internal/switch/player` (nx-baas v0.57.0).
+- `WFC_RACE_URL` is no longer read.
+
+## v0.76.0 — 2026-11-02
+- Features page grouped by console, with a "Core services" group.
+- Friend codes for the Wii U, Xbox, Xbox 360 and PSN networks; five planned networks listed; console icon and filter tweaks.
+
+## v0.74.1
+
+- SSO token answer gains `switch_pid` (NEX principal id, decimal string) and `wfc_user_id`
+  (console user id, decimal string), each null without an active link. No `n3ds_pid`: the
+  PNID is one for Wii U and 3DS, `wiiu_pid` serves both.
+- OpenKart lists Mario Kart 8, 8 Deluxe, 7 and Wii; their game pages get the Open OpenKart button.
+
+## v0.76.0
+
+- **Supervised accounts.** Account > Parental controls gains a "Supervised accounts" section backed by the
+  parental controls core (`PARENTAL_GRPC_ADDR`, `PARENTAL_HTTP_URL`, `PARENTAL_INTERNAL_KEY`,
+  `WEBSITE_PARENTAL_KEY`): invite an account by handle, accept or decline, stop supervising, and set
+  "OpenVerse: off / read / read + post" per supervised account (default off). Translated (en, de, es, fr, it, pt-BR).
+- Pakka is never available to a supervised account (no parental override), and the Discord lookup's
+  `supervised_or_minor` is true for a supervised account. A core that cannot answer counts as supervised.
+
+## v0.74.2 — 2026-11-02
+- **Link Discord.** Account > Linked platforms can link a Discord account (OAuth2, `identify` only; the
+  token is revoked at once, one Discord account per OpenPak account, unlink, audit log). Pakka on
+  Discord reads it through `GET /internal/discord/{discord_id}` (internal key). Needs
+  `DISCORD_OAUTH_CLIENT_ID`/`DISCORD_OAUTH_CLIENT_SECRET`. See docs/discord-link.md.
+- **Pakka, the assistant.** A chat panel at `/account/pakka` (linked from the account menu and the
+  Help page) and `/api/v1/pakka/*` for the app, forwarded to the Pakka service with a service key,
+  the account id this site resolved, and a short-lived grant Pakka hands back to read the
+  signed-in person's own consoles, friends count, Rewards and service status
+  (`/internal/pakka/tool/*`). For accounts aged 18 or over only: child, supervised, under-18 and
+  no-birthday accounts get a plain "not available" page and no entry point. A data-use notice must be
+  accepted first (Meta's terms for the model allow training on content). New privacy section
+  (`/privacy#pakka`), docs/pakka.md. Enabled by `PAKKA_URL` and `PAKKA_CHAT_KEY`.
+- **Open sites directory.** `/sites` lists OpenSplat, OpenKart, OpenMaker and OpenVerse as tiles
+  (menu and footer link it); the details of Splatoon, Mario Kart 8 (Wii U) and Super Mario Maker
+  1 and 2 gain an "Open <site>" button. SSO built-in origins are now splat., kart., maker. and
+  verse.openpak.org.
 - **Companion sources.** Mario Kart Wii course rankings (wfc-race v0.2.0 JSON endpoint),
   Pokémon Global Showcase rankings and GTS listings on DS and 3DS Pokémon titles, and PS3
   trophies at `/account/trophies` (`GET /api/v1/me/trophies`). See docs/companion.md.

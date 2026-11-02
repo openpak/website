@@ -112,6 +112,7 @@ type Store interface {
 	CompatStore
 	ShopStore
 	PlayabilityStore
+	DiscordStore
 }
 
 // PushToken is one app install that can be notified.

@@ -15,11 +15,11 @@
   {{if not .R.Entries}}
   <p class="empty">{{t $l "companion.rankings.empty"}}</p>
   {{else}}
-  {{$podium := ge (len .R.Entries) 3}}
+  {{$podium := and (ge (len .R.Entries) 3) (eq .R.Offset 0)}}
   {{if $podium}}
   <ol class="podium">
     {{range slice .R.Entries 0 3}}
-    <li{{if .Me}} class="me"{{end}}><span class="pos">#{{.Rank}}</span><span class="who">{{.Name}}</span><span class="val">{{.Display}}</span></li>
+    <li{{if .Me}} class="me"{{end}}><span class="pos">#{{.Rank}}</span><span class="who">{{if .Avatar}}<img class="ava" src="{{.Avatar}}" alt="" width="32" height="32" loading="lazy">{{end}}{{.Name}}</span><span class="val">{{.Display}}</span></li>
     {{end}}
   </ol>
   {{end}}
@@ -27,15 +27,23 @@
   {{if $rest}}
   <div class="card"><ol class="ranklist">
     {{range $rest}}
-    <li{{if .Me}} class="me"{{end}}><span class="rk">{{.Rank}}</span><span class="nm">{{.Name}}{{if or .Region .Note}}<small>{{.Region}}{{if and .Region .Note}} · {{end}}{{.Note}}</small>{{end}}</span><span class="sc">{{.Display}}</span></li>
+    <li{{if .Me}} class="me"{{end}}><span class="rk">{{.Rank}}</span><span class="nm">{{if .Avatar}}<img class="ava" src="{{.Avatar}}" alt="" width="32" height="32" loading="lazy">{{end}}{{.Name}}{{if or .Region .Note}}<small>{{.Region}}{{if and .Region .Note}} · {{end}}{{.Note}}</small>{{end}}</span><span class="sc">{{.Display}}</span></li>
     {{end}}
   </ol></div>
   {{end}}
   {{end}}
+  {{if gt .R.Total .R.Limit}}
+  {{$prev := sub .R.Offset .R.Limit}}{{$next := add .R.Offset .R.Limit}}
+  <nav class="pager" aria-label="{{t $l "companion.rankings.boards"}}">
+    {{if gt .R.Offset 0}}<a class="btn" href="/titles/{{.Slug}}/rankings?board={{.R.Board}}&amp;offset={{if lt $prev 0}}0{{else}}{{$prev}}{{end}}">{{t $l "companion.rankings.prev"}}</a>{{else}}<span></span>{{end}}
+    <span class="text-sm text-muted">{{printf (t $l "companion.rankings.showing") (add .R.Offset 1) (add .R.Offset (len .R.Entries)) .R.Total}}</span>
+    {{if lt $next .R.Total}}<a class="btn" href="/titles/{{.Slug}}/rankings?board={{.R.Board}}&amp;offset={{$next}}">{{t $l "companion.rankings.next"}}</a>{{else}}<span></span>{{end}}
+  </nav>
+  {{end}}
   {{with .R.Around}}
   <div class="section-head mt-6"><h3>{{t $l "companion.rankings.around"}}</h3></div>
   <div class="card"><ol class="ranklist">
-    {{range .}}<li{{if .Me}} class="me"{{end}}><span class="rk">{{.Rank}}</span><span class="nm">{{.Name}}</span><span class="sc">{{.Display}}</span></li>{{end}}
+    {{range .}}<li{{if .Me}} class="me"{{end}}><span class="rk">{{.Rank}}</span><span class="nm">{{if .Avatar}}<img class="ava" src="{{.Avatar}}" alt="" width="32" height="32" loading="lazy">{{end}}{{.Name}}</span><span class="sc">{{.Display}}</span></li>{{end}}
   </ol></div>
   {{end}}
 </section>

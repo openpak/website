@@ -1,7 +1,7 @@
 # Sign-in for openpak.org subdomains (SSO)
 
-The website's session cookie is host-only, so `opensplat.openpak.org`, `openkart.openpak.org`,
-`openmaker.openpak.org`, `openverse.openpak.org` and `rewards.openpak.org` cannot see it. They sign people in through
+The website's session cookie is host-only, so `splat.openpak.org`, `kart.openpak.org`,
+`maker.openpak.org`, `verse.openpak.org` and `rewards.openpak.org` cannot see it. They sign people in through
 openpak.org instead: an authorization-code flow with a one-minute single-use code and a
 server-to-server exchange. The subsite then keeps its own session; nothing of openpak.org's
 session leaves openpak.org.
@@ -24,9 +24,16 @@ session leaves openpak.org.
        Authorization: Basic base64(<client id>:<client secret>)     (or client_id / client_secret fields)
        code=<code>&redirect_uri=<the same url>[&code_verifier=<verifier>]
 
-   `200 {"account_id": "...", "display_name": "...", "wiiu_pid": 1800000123 | null}`.
-   `wiiu_pid` is the account's Wii U / 3DS PID (its PNID, created if needed) when nn-account
-   answers; `null` otherwise. Errors are `{"error": "invalid_client" | "invalid_grant" |
+   `200 {"account_id": "...", "display_name": "...", "wiiu_pid": 1800000123 | null,
+   "switch_pid": "12297829382472990721" | null, "wfc_user_id": "8899001122" | null}`.
+   `wiiu_pid` is the account's Wii U PID (its PNID, created if needed) when nn-account
+   answers; `null` otherwise. nn-account gives an account one PNID for both families, so the same
+   number is the 3DS PID: there is no separate `n3ds_pid`, use `wiiu_pid` for 3DS too.
+   `switch_pid` is the NEX principal id of the account's active Switch link (the 16-hex network
+   service account id read as a number, as switch-nex does) as a decimal string, `null` without
+   a link. `wfc_user_id` is the console user id of the account's active Wii/DS (WFC) link as a
+   decimal string, `null` without one. New fields are only ever added. Errors are
+   `{"error": "invalid_client" | "invalid_grant" |
    "invalid_request" | "rate_limited" | "temporarily_unavailable"}` (401, 400, 400, 429, 502).
 4. The subsite starts its own session for `account_id`.
 
@@ -58,10 +65,10 @@ Environment of the website (the shared `.env`); a client with no secret is not r
 
 | Client | `client` (id) | Secret variable | Allowed origins (default) |
 | --- | --- | --- | --- |
-| OpenSplat | `opensplat` | `SSO_CLIENT_OPENSPLAT_SECRET` | `https://opensplat.openpak.org` |
-| OpenKart | `openkart` | `SSO_CLIENT_OPENKART_SECRET` | `https://openkart.openpak.org` |
-| OpenMaker | `openmaker` | `SSO_CLIENT_OPENMAKER_SECRET` | `https://openmaker.openpak.org` |
-| OpenVerse | `openverse` | `SSO_CLIENT_OPENVERSE_SECRET` | `https://openverse.openpak.org` |
+| OpenSplat | `opensplat` | `SSO_CLIENT_OPENSPLAT_SECRET` | `https://splat.openpak.org` |
+| OpenKart | `openkart` | `SSO_CLIENT_OPENKART_SECRET` | `https://kart.openpak.org` |
+| OpenMaker | `openmaker` | `SSO_CLIENT_OPENMAKER_SECRET` | `https://maker.openpak.org` |
+| OpenVerse | `openverse` | `SSO_CLIENT_OPENVERSE_SECRET` | `https://verse.openpak.org` |
 | Rewards | `rewards` | `SSO_CLIENT_REWARDS_SECRET` | `https://rewards.openpak.org` |
 
 `SSO_CLIENT_<NAME>_REDIRECTS` (comma-separated https origins) replaces the default, for example

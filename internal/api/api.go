@@ -31,11 +31,13 @@ import (
 	"github.com/openpak/website/internal/netprofile"
 	"github.com/openpak/website/internal/news"
 	"github.com/openpak/website/internal/pages"
+	"github.com/openpak/website/internal/pakkachat"
 	"github.com/openpak/website/internal/pctl"
 	"github.com/openpak/website/internal/ratelimit"
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/store"
+	"github.com/openpak/website/internal/supervision"
 	"github.com/openpak/website/internal/support"
 	"github.com/openpak/website/internal/turnstile"
 	"github.com/openpak/website/internal/voice"
@@ -84,6 +86,8 @@ type Server struct {
 	// Crashes stores crash-report files; nil keeps reports without them.
 	Crashes    *attachments.Store
 	CrashLimit *ratelimit.Limiter // per client, public crash reports
+	// Pakka is the assistant; nil answers 503 on /pakka.
+	Pakka *pakkachat.Bridge
 	// Support is the help-ticket service; nil answers 503 on /me/tickets.
 	Support *support.Service
 	// Companion serves the per-title rankings and stats and the play history; nil answers 503.
@@ -107,6 +111,10 @@ type Server struct {
 	// website's forms; nil (not configured) lets them through as before.
 	Turnstile *turnstile.Verifier
 	log       *slog.Logger
+	// Supervision answers whether an account is supervised (parental controls core); nil = not configured.
+	Supervision *supervision.Client
+	// PakkaNotice reports Pakka data-use notice acceptance for the Discord lookup; nil = unknown.
+	PakkaNotice PakkaNotice
 }
 
 // New builds the API server.
@@ -207,7 +215,9 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 
 	s.registerInternal(mux)
 	s.registerBans(mux)
+	s.registerDiscord(mux)
 	s.registerTickets(mux)
+	s.registerPakka(mux)
 	s.registerCrashes(mux)
 	h("/me/avatar", s.auth(s.handleChooseAvatar))
 	s.registerSecurity(mux)

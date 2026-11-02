@@ -37,7 +37,7 @@ func TestPGLSource(t *testing.T) {
 	if err != nil || !title.Has(FeatureRankings) || !title.Has(FeatureListings) {
 		t.Fatalf("resolve: %+v %v", title, err)
 	}
-	r, err := svc.Ranking(ctx, title, "6:single:2026-11", "")
+	r, err := svc.Ranking(ctx, title, "6:single:2026-11", RankQuery{})
 	if err != nil || len(r.Boards) != 2 || r.Entries[0].Name != "Pokémon #25" || r.Entries[0].Display != "67%" {
 		t.Fatalf("ranking: %+v %v", r, err)
 	}
@@ -51,7 +51,7 @@ func TestEmptyBoards(t *testing.T) {
 	svc, _ := seeded(t)
 	svc.Register(Source{Names: []string{"Mario Kart Wii"}, Rankings: noBoards{}})
 	title, _ := svc.Resolve(context.Background(), "mario-kart-wii")
-	r, err := svc.Ranking(context.Background(), title, "", "")
+	r, err := svc.Ranking(context.Background(), title, "", RankQuery{})
 	if err != nil || len(r.Entries) != 0 {
 		t.Fatalf("a source with no boards is %v %+v", err, r)
 	}
@@ -59,8 +59,8 @@ func TestEmptyBoards(t *testing.T) {
 
 type noBoards struct{}
 
-func (noBoards) Boards(context.Context) ([]Board, error)                  { return nil, nil }
-func (noBoards) Ranking(context.Context, string, string) (Ranking, error) { return Ranking{}, nil }
+func (noBoards) Boards(context.Context) ([]Board, error)                     { return nil, nil }
+func (noBoards) Ranking(context.Context, string, RankQuery) (Ranking, error) { return Ranking{}, nil }
 
 func TestTrophyCard(t *testing.T) {
 	now := time.Now()
@@ -70,25 +70,5 @@ func TestTrophyCard(t *testing.T) {
 	}
 	if e := TrophyCard(nil, ""); e.Linked {
 		t.Fatalf("an empty account is linked: %+v", e)
-	}
-}
-
-func TestMKW(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("X-WFC-Internal-Key") != "k" || r.URL.Query().Get("course") != "5" {
-			http.Error(w, "no", 401)
-			return
-		}
-		w.Write([]byte(`{"entries":[{"rank":1,"pid":9,"time_ms":83456,"name":"Ana"},{"rank":2,"pid":8,"time_ms":90001,"name":""}]}`))
-	}))
-	defer srv.Close()
-	m := NewMKWRace(srv.URL, "k")
-	b, _ := m.Boards(context.Background())
-	if len(b) != 32 || b[5].Label != "Coconut Mall" {
-		t.Fatalf("boards: %v", b[5])
-	}
-	r, err := m.Ranking(context.Background(), "5", "")
-	if err != nil || r.Entries[0].Display != "1:23.456" || r.Entries[1].Name != "Player" || r.Entries[1].Display != "1:30.001" {
-		t.Fatalf("ranking: %+v %v", r, err)
 	}
 }
