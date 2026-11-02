@@ -15,6 +15,17 @@ type ladderRef struct {
 }
 
 var ladderOf = map[string]ladderRef{
+	"hours-10":               {"hours", 1, "bronze", "badge-warm-up", "10 Hours Online"},
+	"hours-50":               {"hours", 2, "silver", "badge-regular", "50 Hours Online"},
+	"hours-100":              {"hours", 3, "gold", "badge-centurion", "100 Hours Online"},
+	"days-30":                {"days", 1, "silver", "badge-steady-flame", "30 Days Played"},
+	"days-100":               {"days", 2, "gold", "badge-bonfire", "100 Days Played"},
+	"titles-3":               {"titles", 1, "bronze", "badge-wanderer", "3 Different Games"},
+	"titles-10":              {"titles", 2, "silver", "badge-pathfinder", "10 Different Games"},
+	"titles-25":              {"titles", 3, "gold", "badge-cartographer", "25 Different Games"},
+	"first-friend":           {"friendsadd", 1, "bronze", "badge-first-friend", "First Friend"},
+	"friends-5":              {"friendsadd", 2, "silver", "badge-squad", "5 Friends Added"},
+	"friends-10":             {"friendsadd", 3, "gold", "badge-crew", "10 Friends Added"},
 	"splatoon-matches-1":     {"turf", 1, "wood", "badge-turf-1", "1 Turf Sessions"},
 	"splatoon-matches-10":    {"turf", 2, "copper", "badge-turf-10", "10 Turf Sessions"},
 	"splatoon-matches-25":    {"turf", 3, "bronze", "badge-turf-25", "25 Turf Sessions"},
@@ -108,4 +119,4 @@ var ladderOf = map[string]ladderRef{
 }
 
 // ladderOrder is the order families are shown in.
-var ladderOrder = []string{"online", "kart", "turf", "brawl", "friends", "cplayed", "cmade", "trades", "fests", "tourney"}
+var ladderOrder = []string{"hours", "days", "titles", "friendsadd", "online", "kart", "turf", "brawl", "friends", "cplayed", "cmade", "trades", "fests", "tourney"}

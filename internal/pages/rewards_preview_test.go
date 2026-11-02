@@ -97,7 +97,8 @@ func TestWritePreviewRewards(t *testing.T) {
 	played()
 	st.Progress["daily-play-30"], st.Progress["weekly-4-days"], st.Progress["weekly-3-titles"] = 900, 2, 1
 	st.Progress["weekly-2-networks"], st.Progress["first-online"], st.Progress["hours-10"], st.Progress["all-networks"] = 1, 60, 21600, 2
-	claim("first-online")
+	st.Counts["friends_added"], st.Counts["titles_played"] = 3, 2
+	claim("first-online", "first-friend", "titles-3")
 	st.Counts["kart_sessions"], st.Counts["turf_sessions"], st.Counts["sessions"], st.Counts["friends_played_with"] = 26, 4, 62, 250
 	st.Counts["maker_courses_played"], st.Counts["kart_sessions.mk8"], st.Counts["family_games:kart_sessions"] = 7, 20, 2
 	ladder("kart-races", 25)
@@ -113,7 +114,12 @@ func TestWritePreviewRewards(t *testing.T) {
 		rewardstest.LedgerLine(4, "earn", "new_title", "0100E65002BB8000", ago(5)),
 		rewardstest.LedgerLine(10, "earn", "mission", "kart-races-25:once", ago(30)),
 		rewardstest.LedgerLine(2, "earn", "checkin", "", ago(31)),
-		rewardstest.LedgerLine(-150, "spend", "redeem", "icon-tabby", ago(80)))
+		rewardstest.LedgerLine(5, "earn", "friend", "", ago(40)),
+		rewardstest.LedgerLine(2, "earn", "mission", "daily-play-30:2026-11-01", ago(52)),
+		rewardstest.LedgerLine(25, "earn", "mission", "online-sessions-25:once", ago(60)),
+		rewardstest.LedgerLine(-450, "spend", "redeem", "theme-harbor", ago(70)),
+		rewardstest.LedgerLine(-150, "spend", "redeem", "icon-tabby", ago(80)),
+		rewardstest.LedgerLine(50, "earn", "admin", "launch week gift", ago(90)))
 	shoot("rewards-progress", "/account/rewards?tab=missions")
 	shoot("rewards-ladder-dialog", "/account/rewards?tab=missions#l-kart")
 	shoot("rewards-collection", "/account/rewards?tab=collection")

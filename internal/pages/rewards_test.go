@@ -57,8 +57,9 @@ func TestRewardsPage(t *testing.T) {
 	// Missions is the default tab: the balance, today's cap, the claimable mission with its button, the
 	// one in progress with its numbers, and the history with names rather than ids.
 	has("/account/rewards", ">120<", "3 of 8", "Rewards ready to claim: 1", "Claim 3 points", "Play for 30 minutes", "15 min / 30 min",
-		"Recent points", "Mission", "Play for 30 minutes</span>", `aria-current="page"`, "rewards.js")
+		"Recent points", "Mission", "<b>Play for 30 minutes</b>", `class="lcard"`, "/static/rewards/act-daily-play.png", "/account/rewards/preview/badge-first-link", `aria-current="page"`, "rewards.js")
 	lacks("/account/rewards", "rewards.tab", "rewards.m.", "rewards.claim", "daily-play-30:") // no raw keys, no raw ids
+	lacks("/account/rewards", "cardrows") // no list rows for missions or the points history: everything is a card
 
 	// Every /account page is inside the account shell, with its own entry current.
 	for path, entry := range map[string]string{"/account/rewards": "/account/rewards", "/account/activity": "/account/activity", "/account/trophies": "/account/trophies",
@@ -154,13 +155,16 @@ func TestRewardsBadgeTiles(t *testing.T) {
 	get := func(path string) string { return authedRequest(s, rec, http.MethodGet, path, nil).Body.String() }
 
 	m := get("/account/rewards?tab=missions")
-	for _, want := range []string{"Badges in progress", `href="#l-kart"`, "Kart Sessions · Silver", "26 / 50", `id="l-kart"`, "Get 15 points &#43; badge", `href="#l-turf"`, "Claim 5 points", "Turf Sessions · Copper"} {
+	for _, want := range []string{"In progress", `href="#l-kart"`, "Kart Sessions · Silver", "26 / 50", `id="l-kart"`, "Get 15 points &#43; badge", `href="#l-turf"`, "Claim 5 points", "Turf Sessions · Copper"} {
 		if !strings.Contains(m, want) {
 			t.Errorf("missions lacks %q", want)
 		}
 	}
-	if strings.Contains(m, `href="#l-friends"`) || strings.Contains(m, "Equip") {
-		t.Error("a finished ladder, or an equip button, in Missions")
+	if i := strings.Index(m, `id="done-h"`); i < 0 || !strings.Contains(m[i:], `href="#l-friends"`) || strings.Contains(m[:i], `href="#l-friends"`) || strings.Contains(m, "Equip") {
+		t.Error("a finished ladder is not under Completed, or an equip button is in Missions")
+	}
+	if strings.Contains(m, "cardrows") {
+		t.Error("a mission or history row in Missions")
 	}
 
 	my := get("/account/rewards?tab=collection")

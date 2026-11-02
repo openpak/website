@@ -34,16 +34,6 @@ var platformNames = map[string]string{
 	"wiiu": "Wii U", "3ds": "3DS", "wii": "Wii", "ds": "DS",
 }
 
-type missionView struct {
-	rewards.Mission
-	Label      string // the progress as "12 min / 30 min"
-	Percent    int
-	KindLabel  string // Daily, Weekly, One time, Series
-	RewardText string // "+2 points", with "plus an item" when one is attached
-	ClaimText  string // the Claim button's words
-	CanClaim   bool
-}
-
 // itemView is a catalogue or inventory item with what the page prints about it.
 type itemView struct {
 	rewards.Item
@@ -63,7 +53,9 @@ type tileView struct {
 	Key, Name   string
 	Label       string // "Kart Sessions · Silver"
 	Description string
-	Item        string // the badge art shown: the current tier's
+	Item        string // the badge art shown: the current tier's; empty for a mission that gives points only
+	Art         string // static art (web/static/rewards) a points-only mission is shown with
+	Img         string // the picture's URL: the item's preview, or the static art
 	State       string // progress, ready or done
 	Percent     int
 	Progress    string // "26 / 50"
@@ -101,9 +93,11 @@ type kindChip struct {
 	Current     bool
 }
 
+// ledgerView is one entry of the points history, drawn as a small card: a picture, what it was for, when, and the points.
 type ledgerView struct {
-	Label, Ref, Date string
-	Delta            int
+	Img, Title, Sub string
+	Delta           int
+	Points          string // "+4 pts"
 }
 
 type rewardsPage struct {
@@ -126,10 +120,9 @@ type rewardsPage struct {
 	NextKind     string // claim, buy or play; empty when there is nothing to suggest
 	NextText     string
 
-	// Missions: the badges being worked towards as tiles, then the other missions as rows.
-	Tiles                       []tileView
-	Claimable, InProgress, Done []missionView
-	Ledger                      []ledgerView
+	// Missions: every mission is a tile. Ready to claim, in progress, completed; then the points history as small cards.
+	ReadyTiles, Tiles, Done []tileView
+	Ledger                  []ledgerView
 
 	// Shop.
 	Kind       string // the active filter; empty for all
@@ -196,17 +189,26 @@ func (s *Server) handleRewards(w http.ResponseWriter, r *http.Request) {
 	}
 	shop, owned := items(catalog), items(inventory)
 
-	// Missions: the badge ladders and single badges become tiles (the next tier to work on in Missions, the
-	// highest tier earned in My items); the rest stay rows. Every claimable one counts towards "ready".
-	var rest []rewards.Mission
+	// Missions: every mission becomes a tile (a ladder is one tile for the family, showing the tier being worked on).
+	// The highest tier earned, and each badge a mission gave, is what My items shows. Every claimable one counts towards "ready".
 	var own []tileView
-	page.Tiles, own, rest = tilesOf(lang, ms, me.Equipped["badge"])
+	var work []tileView
+	work, own, page.Done = tilesOf(lang, ms, me.Equipped["badge"])
+	for _, t := range work {
+		if t.State == "ready" {
+			page.ReadyTiles = append(page.ReadyTiles, t)
+		} else {
+			page.Tiles = append(page.Tiles, t)
+		}
+	}
 	handled := map[string]bool{} // badge items a tile stands for: never listed a second time
-	for _, t := range append(append([]tileView{}, page.Tiles...), own...) {
+	for _, t := range append(append(append([]tileView{}, work...), own...), page.Done...) {
 		for _, tr := range t.Tiers {
 			handled[tr.Item] = true
 		}
 		handled[t.Item], handled[t.EquipItem] = true, true
+	}
+	for _, t := range own {
 		page.Owned += t.Earned
 	}
 	var mine []itemView
@@ -230,30 +232,7 @@ func (s *Server) handleRewards(w http.ResponseWriter, r *http.Request) {
 		sl.Name = names[sl.ID]
 		page.Slots = append(page.Slots, sl)
 	}
-	for _, t := range page.Tiles {
-		if t.State == "ready" {
-			page.Ready++
-		}
-	}
-	for _, m := range rest {
-		mv := missionOf(lang, m)
-		switch {
-		case m.Claimed:
-			page.Done = append(page.Done, mv)
-		case mv.CanClaim:
-			page.Claimable = append(page.Claimable, mv)
-		default:
-			page.InProgress = append(page.InProgress, mv)
-		}
-	}
-	sort.SliceStable(page.InProgress, func(a, b int) bool {
-		x, y := page.InProgress[a], page.InProgress[b]
-		if x.Locked != y.Locked {
-			return !x.Locked
-		}
-		return x.Percent > y.Percent
-	})
-	page.Ready += len(page.Claimable)
+	page.Ready = len(page.ReadyTiles)
 
 	// The shop lists what is for sale and not yet owned, what can be afforded first.
 	var forSale []itemView
@@ -314,8 +293,12 @@ func (s *Server) handleRewards(w http.ResponseWriter, r *http.Request) {
 
 	if tab == "missions" {
 		led, _ := s.Rewards.Ledger(ctx, sid, 10)
+		imgs := map[string]string{}
+		for _, m := range ms {
+			imgs[m.ID] = missionImg(m)
+		}
 		for _, e := range led {
-			page.Ledger = append(page.Ledger, ledgerOf(lang, e, names))
+			page.Ledger = append(page.Ledger, ledgerOf(lang, e, names, imgs))
 		}
 	}
 
@@ -409,46 +392,85 @@ func kindChips(lang string, in []itemView, want string) ([]kindChip, string) {
 	return chips, want
 }
 
-func missionOf(lang string, m rewards.Mission) missionView {
-	mv := missionView{Mission: m, CanClaim: m.Claimable && !m.Claimed && !m.Locked}
-	if m.Target > 0 {
-		mv.Percent = int(min(m.Progress, m.Target) * 100 / m.Target)
-	}
-	if strings.HasSuffix(m.Metric, "seconds") {
-		mv.Label = Duration(lang, min(m.Progress, m.Target)) + " / " + Duration(lang, m.Target)
-	} else {
-		mv.Label = fmt.Sprintf("%d / %d", min(m.Progress, m.Target), m.Target)
-	}
-	mv.KindLabel = i18n.T(lang, "rewards.mk."+m.Kind)
-	if m.RewardPoints > 0 {
-		mv.RewardText = fmt.Sprintf(i18n.T(lang, "rewards.reward.pts"), m.RewardPoints)
-		mv.ClaimText = fmt.Sprintf(i18n.T(lang, "rewards.claim.pts"), m.RewardPoints)
-	} else {
-		mv.ClaimText = i18n.T(lang, "rewards.claim")
-	}
-	if m.RewardItem != "" {
-		if mv.RewardText != "" {
-			mv.RewardText += " · "
-		}
-		mv.RewardText += i18n.T(lang, "rewards.reward.item")
-	}
-	return mv
+// staticArt is the picture of a mission that gives points only (no badge): web/static/rewards/<id>.png, drawn in the
+// badge system (research/rewards/art/v2/src/activity.py). A mission this site has no picture for gets one for its kind.
+var staticArt = map[string]string{
+	"daily-play-30":     "act-daily-play",
+	"weekly-4-days":     "act-weekly-days",
+	"weekly-3-titles":   "act-weekly-titles",
+	"weekly-2-networks": "act-weekly-networks",
 }
 
-// ledgerOf names a line of the points history: what the points were for, and the mission or item when
-// it can be named. Title ids (play time) say nothing to a person and are left out.
-func ledgerOf(lang string, e rewards.LedgerEntry, names map[string]string) ledgerView {
-	lv := ledgerView{Label: i18n.T(lang, "rewards.src."+e.Source), Delta: e.Delta, Date: i18n.Date(lang, e.CreatedAt)}
-	if lv.Label == "rewards.src."+e.Source {
-		lv.Label = e.Source
+func staticArtOf(m rewards.Mission) string {
+	if a, ok := staticArt[m.ID]; ok {
+		return a
 	}
+	switch m.Kind {
+	case "daily":
+		return "act-daily-play"
+	case "weekly":
+		return "act-weekly-days"
+	}
+	return "act-points"
+}
+
+func previewURL(item string) string { return "/account/rewards/preview/" + item }
+func staticURL(art string) string   { return "/static/rewards/" + art + ".png" }
+
+// missionImg is the picture a mission is shown with: its badge (the service's reward_item, else the art set's), else static art.
+func missionImg(m rewards.Mission) string {
+	if m.RewardItem != "" {
+		return previewURL(m.RewardItem)
+	}
+	if ref, ok := ladderOf[m.ID]; ok && ref.Item != "" {
+		return previewURL(ref.Item)
+	}
+	return staticURL(staticArtOf(m))
+}
+
+// ledgerOf draws a line of the points history as a card: a picture of what the points were for (the mission's badge or
+// art, the shop item, or art for play time, the daily check-in and a new game), its name, the date and the signed points.
+// Title ids (play time) say nothing to a person and are left out.
+func ledgerOf(lang string, e rewards.LedgerEntry, names, imgs map[string]string) ledgerView {
+	label := i18n.T(lang, "rewards.src."+e.Source)
+	if label == "rewards.src."+e.Source {
+		label = e.Source
+	}
+	lv := ledgerView{Title: label, Delta: e.Delta, Img: staticURL("act-points")}
+	date := i18n.Date(lang, e.CreatedAt)
+	id, _, _ := strings.Cut(e.Ref, ":")
+	var ref string
 	switch e.Source {
-	case "mission", "redeem", "revoke":
-		id, _, _ := strings.Cut(e.Ref, ":")
-		lv.Ref = names[id]
+	case "play":
+		lv.Img = staticURL("act-play-time")
+	case "checkin":
+		lv.Img = staticURL("act-checkin")
+	case "new_title":
+		lv.Img = staticURL("act-new-game")
+	case "friend":
+		lv.Img = previewURL("badge-first-friend")
+	case "mission":
+		ref = names[id]
+		if img := imgs[id]; img != "" {
+			lv.Img = img
+		}
+	case "redeem", "revoke":
+		ref = names[id]
+		if id != "" && ref != "" {
+			lv.Img = previewURL(id)
+		}
 	case "admin":
-		lv.Ref = e.Ref
+		ref = e.Ref
 	}
+	lv.Sub = date
+	if ref != "" {
+		lv.Title, lv.Sub = ref, label+" · "+date
+	}
+	lv.Points = strconv.Itoa(e.Delta)
+	if e.Delta > 0 {
+		lv.Points = "+" + lv.Points
+	}
+	lv.Points += " " + strings.TrimSpace(strings.TrimPrefix(fmt.Sprintf(i18n.T(lang, "rewards.pts"), 0), "0")) // the unit, as the shop writes it
 	return lv
 }
 
@@ -590,21 +612,18 @@ func (s *Server) handleRewardsPreview(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(body)
 }
 
-// tilesOf turns the badge missions into tiles and hands back the others. A ladder is the family's tier
-// missions in order of target: the tile shows the first tier not yet claimed (or the top one when all are),
-// and counts towards that tier's target. Order: ready first, then by how far along, then completed.
-func tilesOf(lang string, ms []rewards.Mission, equippedBadge string) (work, own []tileView, rest []rewards.Mission) {
+// tilesOf turns every mission into a tile; nothing is left as a row. A ladder is the family's tier missions in order of
+// target: the tile shows the first tier not yet claimed, and counts towards that tier's target. Any other mission is a
+// tile of its own, showing its badge, or static art when it gives points only. Order: ready first, then by how far
+// along. work is what is still to do, own the badges earned (My items), done every finished ladder and mission.
+func tilesOf(lang string, ms []rewards.Mission, equippedBadge string) (work, own, done []tileView) {
 	ladders := map[string][]rewards.Mission{}
 	var singles []rewards.Mission
 	for _, m := range ms {
-		ref, ok := ladderOf[m.ID]
-		switch {
-		case !ok:
-			rest = append(rest, m)
-		case ref.Finish == "":
-			singles = append(singles, m)
-		default:
+		if ref, ok := ladderOf[m.ID]; ok && ref.Finish != "" {
 			ladders[ref.Family] = append(ladders[ref.Family], m)
+		} else {
+			singles = append(singles, m)
 		}
 	}
 	for _, fam := range ladderOrder {
@@ -627,7 +646,7 @@ func tilesOf(lang string, ms []rewards.Mission, equippedBadge string) (work, own
 			if m.RewardItem != "" {
 				item = m.RewardItem
 			}
-			tv := tierView{Finish: i18n.T(lang, "rewards.finish."+ref.Finish), Item: item, Target: strconv.FormatInt(m.Target, 10), State: "locked"}
+			tv := tierView{Finish: i18n.T(lang, "rewards.finish."+ref.Finish), Item: item, Target: targetText(lang, m), State: "locked"}
 			if m.RewardPoints > 0 {
 				tv.Points = fmt.Sprintf(i18n.T(lang, "rewards.tile.get"), m.RewardPoints)
 			}
@@ -646,12 +665,14 @@ func tilesOf(lang string, ms []rewards.Mission, equippedBadge string) (work, own
 			best := t.Earned - 1
 			o := t
 			o.Item, o.EquipItem = t.Tiers[best].Item, t.Tiers[best].Item
+			o.Img = previewURL(o.Item)
 			o.Label = t.Name + " · " + t.Tiers[best].Finish
 			o.Progress = fmt.Sprintf("%s / %s", t.Tiers[best].Target, t.Tiers[best].Target)
 			o.Percent, o.State = 100, "earned"
 			o.Equipped = equippedBadge == o.EquipItem
 			if o.Complete {
-				o.State, o.Label = "done", t.Name+" · "+t.Tiers[best].Finish
+				o.State = "done"
+				done = append(done, o)
 			}
 			own = append(own, o)
 		}
@@ -662,47 +683,80 @@ func tilesOf(lang string, ms []rewards.Mission, equippedBadge string) (work, own
 		}
 	}
 	for _, m := range singles {
-		ref := ladderOf[m.ID]
-		item := ref.Item
+		item := ladderOf[m.ID].Item
 		if m.RewardItem != "" {
 			item = m.RewardItem
 		}
-		t := tileView{Key: m.ID, Name: m.Title, Label: m.Title, Single: true, Description: m.Description}
+		t := tileView{Key: m.ID, Name: m.Title, Label: m.Title, Single: true, Description: m.Description, Art: staticArtOf(m)}
 		fillTile(lang, &t, m, item)
 		if strings.HasPrefix(m.Metric, "family_games:") {
 			t.Progress = fmt.Sprintf(i18n.T(lang, "rewards.games"), min(m.Progress, m.Target), m.Target)
 		}
 		if m.Claimed {
 			t.State, t.Earned, t.Complete, t.Percent = "done", 1, true, 100
-			t.EquipItem, t.Equipped = item, equippedBadge == item
-			t.Progress = fmt.Sprintf("%d / %d", m.Target, m.Target)
+			t.Progress = targetText(lang, m) + " / " + targetText(lang, m)
 			if strings.HasPrefix(m.Metric, "family_games:") {
 				t.Progress = fmt.Sprintf(i18n.T(lang, "rewards.games"), m.Target, m.Target)
 			}
-			own = append(own, t)
+			done = append(done, t)
+			if item != "" { // a badge: it goes in My items too
+				t.EquipItem, t.Equipped = item, equippedBadge == item
+				own = append(own, t)
+			}
 			continue
 		}
 		work = append(work, t)
 	}
 	rank := map[string]int{"ready": 0, "progress": 1}
-	sort.SliceStable(work, func(a, b int) bool {
-		x, y := work[a], work[b]
-		if rank[x.State] != rank[y.State] {
-			return rank[x.State] < rank[y.State]
-		}
-		return x.Percent > y.Percent
-	})
-	return work, own, rest
+	byProgress := func(l []tileView) {
+		sort.SliceStable(l, func(a, b int) bool {
+			x, y := l[a], l[b]
+			if rank[x.State] != rank[y.State] {
+				return rank[x.State] < rank[y.State]
+			}
+			return x.Percent > y.Percent
+		})
+	}
+	byProgress(work)
+	return work, own, done
+}
+
+// playTime is a duration as a person says it: whole hours as "10 h", else minutes ("15 min", "1 h 30 min").
+func playTime(lang string, seconds int64) string {
+	if seconds >= 3600 && seconds%3600 == 0 {
+		return fmt.Sprintf(i18n.T(lang, "rewards.hours"), seconds/3600)
+	}
+	return Duration(lang, seconds)
+}
+
+// targetText writes a mission's target the way its progress is counted: a duration for play time, else the number.
+func targetText(lang string, m rewards.Mission) string {
+	if strings.HasSuffix(m.Metric, "seconds") {
+		return playTime(lang, m.Target)
+	}
+	return strconv.FormatInt(m.Target, 10)
 }
 
 // fillTile sets what a tile shows about the mission it is working on: the art, the progress and the reward.
 func fillTile(lang string, t *tileView, m rewards.Mission, item string) {
 	t.Item, t.MissionID, t.Period, t.State = item, m.ID, m.Period, "progress"
+	if item != "" {
+		t.Img = previewURL(item)
+	} else {
+		art := t.Art
+		if art == "" {
+			art = staticArtOf(m)
+		}
+		t.Img = staticURL(art)
+	}
 	if m.Target > 0 {
 		t.Percent = int(min(m.Progress, m.Target) * 100 / m.Target)
 	}
 	t.Progress = fmt.Sprintf("%d / %d", min(m.Progress, m.Target), m.Target)
-	t.TargetText = strconv.FormatInt(m.Target, 10)
+	if strings.HasSuffix(m.Metric, "seconds") {
+		t.Progress = playTime(lang, min(m.Progress, m.Target)) + " / " + playTime(lang, m.Target)
+	}
+	t.TargetText = targetText(lang, m)
 	if m.RewardPoints > 0 {
 		t.Reward = fmt.Sprintf(i18n.T(lang, "rewards.tile.get"), m.RewardPoints)
 		t.ClaimText = fmt.Sprintf(i18n.T(lang, "rewards.claim.pts"), m.RewardPoints)

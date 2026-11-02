@@ -11,6 +11,16 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.78.1 — 2026-11-02
+
+- Rewards, Missions: no mission is a list row any more. Every mission is a tile with a picture: a mission that gives a badge shows it; the
+  series (first friend, 5 and 10 friends; 10, 50 and 100 hours; 30 and 100 days; 3, 10 and 25 games) are ladder tiles like the others
+  (`ladders.go`); daily and weekly missions that give points only show static art in the badge system (`web/static/rewards`).
+  Sections are Ready to claim, In progress and Completed, all tiles. Play time targets read "10 h".
+- Rewards, Recent points: each entry is a small card with a picture (the mission's badge or art, the shop item, art for play time, the
+  daily check-in and a new game), the title, the date and the signed points.
+- Test fake and previews use the real item ids and the live missions.
+
 ## v0.78.0 — 2026-11-02
 - **Rewards redesign.** `/account/rewards` is now a header (balance, today's cap, next step) over four
   tabs: Missions, Shop (tile shelf and a confirm dialog), Collection (Founder seal, equip) and Settings,

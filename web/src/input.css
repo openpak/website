@@ -1037,6 +1037,15 @@
   .rwtiers li.locked img { opacity: .5; }
   .rwtiers b { display: block; font-family: var(--font-ui); }
   .rwtiers .sub { font-size: .84rem; color: var(--muted); }
+  /* The points history: a small card per entry, in the tile style: picture, what it was for, the date, the signed points. */
+  .lcards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr)); list-style: none; margin: 0; padding: 0; }
+  .lcard { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 14px 10px 10px; border-radius: 18px; background: var(--raised); box-shadow: var(--shadow); }
+  .lcard img { width: 56px; height: 56px; object-fit: contain; border-radius: 12px; background: var(--paper-2); padding: 3px; }
+  .lcard .lt { display: grid; gap: 2px; min-width: 0; }
+  .lcard .lt b { font-family: var(--font-ui); font-size: .92rem; overflow-wrap: anywhere; }
+  .lcard .lt .sub { color: var(--muted); font-size: .8rem; }
+  .lcard .lpts { font-family: var(--font-ui); font-weight: 800; font-size: 1rem; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink); }
+  .lcard .lpts.pos { color: var(--ok); }
 
   /* The equip slots at the top of My items: one card each for what is on the profile now. */
   .rwslots { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }

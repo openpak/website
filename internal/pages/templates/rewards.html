@@ -4,23 +4,6 @@
      scripting off; only the Shop's confirm dialog needs /static/rewards.js, as the titles page's
      details need titles.js. */}}
 
-{{/* A mission row: title and what it asks, the reward, and on the right the thing to do about it. */}}
-{{define "rw-mission"}}
-{{$l := index . 0}}{{$csrf := index . 1}}{{$m := index . 2}}{{$frozen := index . 3}}
-<li>
-  <span class="nm">{{$m.Title}}<br>
-    {{with $m.Description}}<span class="sub">{{.}}</span><br>{{end}}
-    <span class="sub">{{$m.KindLabel}}{{with $m.RewardText}} · {{.}}{{end}}{{if $m.Locked}} · {{t $l "rewards.locked.hint"}}{{end}}</span></span>
-  <span class="val">
-    {{if $m.Claimed}}<span class="badge ok">{{t $l "rewards.claimed"}}</span>
-    {{else if $m.CanClaim}}<form method="post" action="/account/rewards/claim" data-once><input type="hidden" name="csrf" value="{{$csrf}}"><input type="hidden" name="mission" value="{{$m.ID}}"><input type="hidden" name="period" value="{{$m.Period}}"><button type="submit" class="small primary"{{if $frozen}} disabled{{end}}>{{$m.ClaimText}}</button></form>
-    {{else if $m.Locked}}<span class="badge">{{t $l "rewards.locked"}}</span>
-    {{else}}{{$m.Label}}{{end}}
-  </span>
-  {{if not (or $m.Locked $m.Claimed $m.CanClaim)}}<progress class="bar" max="100" value="{{$m.Percent}}" aria-label="{{$m.Title}}, {{$m.Label}}"></progress>{{end}}
-</li>
-{{end}}
-
 {{/* The picture of an item: its preview, or its name for a text-only one. */}}
 {{define "rw-art"}}{{if .HasPreview}}<img src="/account/rewards/preview/{{.ID}}" alt="" width="256" height="256" loading="lazy">{{else}}<span class="art-placeholder txt"><b>{{.Name}}</b></span>{{end}}{{end}}
 
@@ -31,11 +14,11 @@
 {{$l := index . 0}}{{$csrf := index . 1}}{{$t := index . 2}}{{$mode := index . 3}}{{$frozen := index . 4}}
 <li class="gtile">
   <a class="t" href="#l-{{$t.Key}}" aria-label="{{$t.Label}}, {{$t.Progress}}" title="{{$t.Label}}">
-    <span class="art"><img src="/account/rewards/preview/{{$t.Item}}" alt="" width="256" height="256" loading="lazy"></span>
+    <span class="art"><img src="{{$t.Img}}" alt="" width="256" height="256" loading="lazy"></span>
     <span class="cap"><span class="sub">{{$t.Label}}</span></span>
     <span class="rwmeta">
       {{with $t.Pips}}<span class="pips" role="img" aria-label="{{printf (t $l "rewards.tier.pips") $t.Earned (len $t.Pips)}}">{{range .}}<i{{if .}} class="on"{{end}}></i>{{end}}</span>{{end}}
-      {{if eq $mode "mine"}}<span class="rwprog"><span class="whitespace-nowrap">{{$t.Progress}}</span>{{if $t.Complete}} <span class="badge ok">{{t $l "rewards.completed"}}</span>{{end}}</span>
+      {{if or (eq $mode "mine") (eq $mode "done")}}<span class="rwprog"><span class="whitespace-nowrap">{{$t.Progress}}</span>{{if $t.Complete}} <span class="badge ok">{{t $l "rewards.completed"}}</span>{{end}}</span>
       {{else}}
       {{if eq $t.State "progress"}}<progress class="bar" max="100" value="{{$t.Percent}}" aria-label="{{$t.Label}}, {{$t.Progress}}"></progress>{{end}}
       <span class="rwprog"><span class="whitespace-nowrap">{{$t.Progress}}</span></span>
@@ -59,7 +42,7 @@
 {{$l := index . 0}}{{$csrf := index . 1}}{{$t := index . 2}}{{$mode := index . 3}}{{$frozen := index . 4}}
 <dialog id="l-{{$t.Key}}" class="card tdialog" aria-labelledby="l-{{$t.Key}}-h">
   <header class="thero">
-    <span class="tart"><img src="/account/rewards/preview/{{$t.Item}}" alt="" width="256" height="256" loading="lazy"></span>
+    <span class="tart"><img src="{{$t.Img}}" alt="" width="256" height="256" loading="lazy"></span>
     <div class="tinfo">
       <h2 id="l-{{$t.Key}}-h">{{$t.Name}}</h2>
       <p class="tmeta"><span>{{$t.Progress}}</span>{{if $t.Complete}}<span class="badge ok">{{t $l "rewards.completed"}}</span>{{end}}</p>
@@ -159,44 +142,38 @@
 </nav>
 
 {{if eq .Tab "missions"}}
-{{if .Tiles}}
-<section aria-labelledby="badges-h" class="mb-9">
-  <div class="section-head"><h2 id="badges-h">{{t $l "rewards.badges"}} <span class="text-muted">{{len .Tiles}}</span></h2></div>
-  <ul class="gtiles under">{{range .Tiles}}{{template "rw-tile" (arr $l $.CSRF . "work" $.Me.Account.Frozen)}}{{end}}</ul>
-  {{range .Tiles}}{{template "rw-ladder" (arr $l $.CSRF . "work" $.Me.Account.Frozen)}}{{end}}
-</section>
-{{end}}
-{{if not (or .Claimable .InProgress .Done .Tiles)}}
+{{if not (or .ReadyTiles .Tiles .Done)}}
 <p class="empty">{{t $l "rewards.m.empty"}}</p>
-{{else if not (or .Claimable .InProgress .Done)}}
-{{else}}
-{{if .Claimable}}
+{{end}}
+{{if .ReadyTiles}}
 <section aria-labelledby="ready-h" class="mb-9">
-  <div class="section-head"><h2 id="ready-h">{{t $l "rewards.m.ready"}} <span class="text-muted">{{len .Claimable}}</span></h2></div>
-  <div class="card"><ul class="cardrows">{{range .Claimable}}{{template "rw-mission" (arr $l $.CSRF . $.Me.Account.Frozen)}}{{end}}</ul></div>
+  <div class="section-head"><h2 id="ready-h">{{t $l "rewards.m.ready"}} <span class="text-muted">{{len .ReadyTiles}}</span></h2></div>
+  <ul class="gtiles under">{{range .ReadyTiles}}{{template "rw-tile" (arr $l $.CSRF . "work" $.Me.Account.Frozen)}}{{end}}</ul>
+  {{range .ReadyTiles}}{{template "rw-ladder" (arr $l $.CSRF . "work" $.Me.Account.Frozen)}}{{end}}
 </section>
-{{else if not .Tiles}}
+{{else if .Tiles}}
 <p class="empty mb-6">{{t $l "rewards.m.none"}}</p>
 {{end}}
-{{if .InProgress}}
+{{if .Tiles}}
 <section aria-labelledby="prog-h" class="mb-9">
-  <div class="section-head"><h2 id="prog-h">{{t $l "rewards.m.progress"}} <span class="text-muted">{{len .InProgress}}</span></h2></div>
-  <div class="card"><ul class="cardrows">{{range .InProgress}}{{template "rw-mission" (arr $l $.CSRF . $.Me.Account.Frozen)}}{{end}}</ul></div>
+  <div class="section-head"><h2 id="prog-h">{{t $l "rewards.m.progress"}} <span class="text-muted">{{len .Tiles}}</span></h2></div>
+  <ul class="gtiles under">{{range .Tiles}}{{template "rw-tile" (arr $l $.CSRF . "work" $.Me.Account.Frozen)}}{{end}}</ul>
+  {{range .Tiles}}{{template "rw-ladder" (arr $l $.CSRF . "work" $.Me.Account.Frozen)}}{{end}}
 </section>
 {{end}}
 {{if .Done}}
 <section aria-labelledby="done-h" class="mb-9">
   <div class="section-head"><h2 id="done-h">{{t $l "rewards.m.done"}} <span class="text-muted">{{len .Done}}</span></h2></div>
-  <div class="card"><ul class="cardrows">{{range .Done}}{{template "rw-mission" (arr $l $.CSRF . $.Me.Account.Frozen)}}{{end}}</ul></div>
+  <ul class="gtiles under">{{range .Done}}{{template "rw-tile" (arr $l $.CSRF . "done" $.Me.Account.Frozen)}}{{end}}</ul>
+  {{range .Done}}{{template "rw-ladder" (arr $l $.CSRF . "done" $.Me.Account.Frozen)}}{{end}}
 </section>
-{{end}}
 {{end}}
 <section aria-labelledby="history-h" id="history">
   <div class="section-head"><h2 id="history-h">{{t $l "rewards.ledger"}}</h2></div>
   {{if not .Ledger}}<p class="empty">{{t $l "rewards.ledger.empty"}}</p>{{else}}
-  <div class="card"><ul class="cardrows">
-    {{range .Ledger}}<li><span class="nm">{{.Label}}{{with .Ref}} <span class="sub">· {{.}}</span>{{end}}<br><span class="sub">{{.Date}}</span></span><span class="val{{if gt .Delta 0}} text-ok{{end}}">{{if gt .Delta 0}}+{{end}}{{.Delta}}</span></li>{{end}}
-  </ul></div>
+  <ul class="lcards">
+    {{range .Ledger}}<li class="lcard"><img src="{{.Img}}" alt="" width="56" height="56" loading="lazy"><span class="lt"><b>{{.Title}}</b><span class="sub">{{.Sub}}</span></span><span class="lpts{{if gt .Delta 0}} pos{{end}}">{{.Points}}</span></li>{{end}}
+  </ul>
   {{end}}
 </section>
 
