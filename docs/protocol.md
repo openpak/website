@@ -106,3 +106,22 @@ family may leave. One conditional GET per launch: ETag in, 304 out.
   the console's clients already compile in.
 - `nn-sssl-dns` reads the same map (NP-4), so the real-console resolver and
   the emulators cannot drift apart.
+
+## Sessions model (WEB-02)
+
+The website cookie (`opak_session`, HttpOnly/Secure/SameSite=Lax) wraps the
+core web session id. A website-side index table maps that id to the account
+id the core names for it at login (`GET /v1/whoami`, CR-4); the password is
+checked once, by the core's `POST /v1/login`. When the core session dies
+(revoked device, ban, password reset), the next request clears the cookie
+and the index row; API bearers bound to it are revoked on sight.
+
+## Friend codes (CR-3)
+
+The Switch adapter mints friend codes and publishes them on the account's
+active `switch` link (`Links.SetLinkPublicCode`); the website shows that
+`public_code` and resolves a typed code with `Links.GetLinkByPublicCode`.
+Adapters do not publish codes yet, so while `public_code` is empty the
+website asks the adapter itself (`ADAPTER_INTERNAL_URL`), and a pasted link
+subject still resolves through `Links.GetLinkBySubject`. The order lives in
+`internal/accounts` and is the same on the site and the API.

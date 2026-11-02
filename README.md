@@ -29,15 +29,16 @@ go run ./cmd/website
 ## Docs
 
 - [Protocol](docs/protocol.md)
-- [Evidence](docs/evidence.md)
 - [Deploy](docs/deploy.md)
-- [Notes](docs/notes.md)
 - [Ban lookup](docs/ban-lookup.md)
 - [Glossary](docs/glossary.md)
 - [Handles](docs/handles.md)
 - [Host agent (openpak-opsd)](docs/opsd.md)
 - [Registry](docs/registry.md)
-- [Docs index](docs/README.md)
+- [Title companion pages](docs/companion.md)
+- [SSO](docs/sso.md)
+
+PRDs: openpak/prds (private)
 
 ## Licence
 
