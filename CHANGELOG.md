@@ -27,8 +27,7 @@ release, taken from git history. `git log` stays the source of truth.
 - Pakka is never available to a supervised account (no parental override), and the Discord lookup's
   `supervised_or_minor` is true for a supervised account. A core that cannot answer counts as supervised.
 
-## Unreleased
-
+## v0.74.2 — 2026-11-02
 - **Link Discord.** Account > Linked platforms can link a Discord account (OAuth2, `identify` only; the
   token is revoked at once, one Discord account per OpenPak account, unlink, audit log). Pakka on
   Discord reads it through `GET /internal/discord/{discord_id}` (internal key). Needs
