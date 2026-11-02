@@ -35,6 +35,11 @@ var networks = []network{
 	{Name: "Xbox 360", Namespaces: []string{"x360"}, Consoles: []string{"Xbox 360"}, State: "building"},
 	{Name: "PlayStation 3", Namespaces: []string{"np"}, Consoles: []string{"PS3"}, State: "building"},
 	{Name: "PSP", Consoles: []string{"PSP"}, State: "planned"},
+	{Name: "PlayStation 2", Consoles: []string{"PS2"}, State: "planned"},
+	{Name: "PS Vita", Consoles: []string{"Vita"}, State: "planned"},
+	{Name: "PlayStation 4", Consoles: []string{"PS4"}, State: "planned"},
+	{Name: "PlayStation 5", Consoles: []string{"PS5"}, State: "planned"},
+	{Name: "Xbox One", Consoles: []string{"Xbox One"}, State: "planned"},
 }
 
 // platform is one console family and how far OpenPak is with it, in the titles
@@ -84,6 +89,9 @@ func featureStage(status string) string {
 func consoleStages(feats []store.Request) map[string]string {
 	out := map[string]string{}
 	for _, f := range feats {
+		if f.Category == "Core service" {
+			continue
+		}
 		st := featureStage(f.Status)
 		if st == "" {
 			continue

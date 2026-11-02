@@ -2,9 +2,9 @@ package pages
 
 import (
 	"context"
-	"regexp"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -103,6 +103,7 @@ func TestConsoleStagesFollowFeatures(t *testing.T) {
 		{Kind: "feature", Name: "Xbox Live", Console: "Xbox 360", Status: "in-development"},
 		{Kind: "feature", Name: "Network", Console: "PSP", Status: "planned"},
 		{Kind: "feature", Name: "Broken thing", Console: "PS3", Status: "broken"},
+		{Kind: "feature", Name: "Connectivity", Console: "PS3", Category: "Core service", Status: "working"},
 	})
 	st := consoleStages(mustFeatures(t, db))
 	for console, want := range map[string]string{"Switch": "live", "Wii U": "beta", "3DS": "beta", "Wii": "alpha", "DS": "alpha", "Xbox 360": "in-development", "PSP": "planned"} {
@@ -122,8 +123,8 @@ func TestConsoleStagesFollowFeatures(t *testing.T) {
 			t.Errorf("network %s: %q, want %q", name, got, want)
 		}
 	}
-	if body := get(t, s, "/status").Body.String(); !strings.Contains(body, "In development") {
-		t.Error("the status page should label Xbox, Xbox 360 and PS3 In development")
+	if body := get(t, s, "/status").Body.String(); strings.Contains(body, "in alpha") || strings.Contains(body, "in beta") || !strings.Contains(body, "In development") {
+		t.Error("status should show plain player counts and planned networks in development")
 	}
 	if body := get(t, s, "/features").Body.String(); !strings.Contains(body, ">in development</span>") {
 		t.Error("/features should show the in-development badge in words")

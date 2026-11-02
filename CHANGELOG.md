@@ -11,6 +11,11 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## Unreleased
+
+- Features page grouped by console, with a "Core services" group.
+- Friend codes for the Wii U, Xbox, Xbox 360 and PSN networks; five planned networks listed; console icon and filter tweaks.
+
 ## v0.74.1
 
 - SSO token answer gains `switch_pid` (NEX principal id, decimal string) and `wfc_user_id`

@@ -167,7 +167,7 @@ func (s *Server) hiddenSections() []string {
 }
 
 // adminUser matches the field shape the shared templates expect.
-type adminUser struct{ DisplayName, Email string }
+type adminUser struct{ DisplayName, Email, AvatarURL string }
 
 func (s *Server) authorize(w http.ResponseWriter, r *http.Request) (store.WebSession, bool) {
 	id := s.Sessions.CoreSessionID(r)
@@ -194,7 +194,7 @@ func (s *Server) authorize(w http.ResponseWriter, r *http.Request) (store.WebSes
 // forms and the layout's sign-out form both carry a valid token.
 func (s *Server) page(r *http.Request, ws store.WebSession, title string) base {
 	return base{Asset: pages.AssetVersion(), Admin: true, Path: r.URL.Path, Lang: "en", Title: title,
-		User: adminUser{ws.DisplayName, ws.Email}, CSRF: s.Sessions.CSRFToken(ws.CoreSessionID),
+		User: adminUser{DisplayName: ws.DisplayName, Email: ws.Email}, CSRF: s.Sessions.CSRFToken(ws.CoreSessionID),
 		Nav: navFor(r.URL.Path, s.hiddenSections()...), ShowConsoleNews: s.ConsoleNews != nil, ShowStore: s.Store != nil, Updates: s.pendingUpdates(r.Context())}
 }
 

@@ -180,9 +180,8 @@ func ResolveFriendCode(ctx context.Context, identity core.Identity, links core.L
 	if kind == "openpak" || strings.HasPrefix(strings.ToUpper(strings.TrimSpace(typed)), "OP-") {
 		return ""
 	}
-	if kind == CodeWiiU {
-		// The NNID nn-account published on the Wii U link.
-		if id, err := links.AccountByPublicCode(ctx, "wiiu", typed); err == nil {
+	if kind == CodeWiiU || kind == CodeXbox || kind == CodeX360 || kind == CodePSN {
+		if id, err := links.AccountByPublicCode(ctx, kind, typed); err == nil {
 			return id
 		}
 		return ""
@@ -228,8 +227,8 @@ func PIDFrom3DSCode(typed string) (int64, bool) {
 	return 0, false
 }
 
-// Code is one way to be added as a friend: its kind ("openpak", "email",
-// "switch", "wiiu", "3ds"), the console it works on, a label and the code itself.
+// Code is one way to be added as a friend: its kind, the console it works
+// on, a label and the code itself.
 type Code struct {
 	Kind    string `json:"kind"`
 	Console string `json:"console"`
@@ -264,6 +263,18 @@ func FriendCodes(ctx context.Context, identity core.Identity, links core.Links, 
 		}
 		if c != "" {
 			out = append(out, Code{Code3DS, "3DS", "3DS", c})
+		}
+	}
+	// These networks use named IDs. Read each adapter's published identity:
+	// a shared handle alone does not establish that a network link exists.
+	for _, network := range []struct{ kind, console, label string }{
+		{CodeWiiU, "Wii U", "Wii U NNID"},
+		{CodeXbox, "Xbox", "Xbox gamertag"},
+		{CodeX360, "Xbox 360", "Xbox 360 gamertag"},
+		{CodePSN, "PS3", "PlayStation 3 Online ID"},
+	} {
+		if link, err := links.ActiveLinkByAccount(ctx, network.kind, accountID); err == nil && link.PublicCode != "" {
+			out = append(out, Code{network.kind, network.console, network.label, link.PublicCode})
 		}
 	}
 	// Wii and DS have none: a Wii friend code belongs to a game, not the console.

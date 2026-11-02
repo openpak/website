@@ -160,6 +160,7 @@ type viewUser struct {
 	ID          string
 	Email       string
 	DisplayName string
+	AvatarURL   string
 }
 
 // data builds baseData for a request.
@@ -171,6 +172,10 @@ func (s *Server) data(r *http.Request, v *viewer, title string) baseData {
 	}
 	if v != nil {
 		d.User = &viewUser{ID: v.AccountID, Email: v.Email, DisplayName: v.DisplayName}
+		d.User.AvatarURL = "/media/avatars/" + v.AccountID + "/256"
+		if rec, err := s.DB.GetMedia(r.Context(), v.AccountID, "avatar"); err == nil && !rec.UpdatedAt.IsZero() {
+			d.User.AvatarURL += "?v=" + strconv.FormatInt(rec.UpdatedAt.UnixNano(), 10)
+		}
 		d.Admin = slices.Contains(s.AdminAccountIDs, v.AccountID)
 		d.CSRF = s.Sessions.CSRFToken(v.CoreSessionID)
 	}
@@ -585,14 +590,13 @@ func (s *Server) handleFeatures(w http.ResponseWriter, r *http.Request) {
 	// Distinct statuses for the filter dropdown, in stable order.
 	seen := map[string]bool{}
 	var statuses, consoles []string
-	for _, f := range reqs {
-		if f.Status != "" && !seen[f.Status] {
-			seen[f.Status] = true
-			statuses = append(statuses, f.Status)
-		}
-		if f.Console != "" && !seen["c:"+f.Console] {
-			seen["c:"+f.Console] = true
-			consoles = append(consoles, f.Console)
+	for _, group := range featureGroups(reqs) {
+		consoles = append(consoles, group.Console)
+		for _, f := range group.Features {
+			if f.Status != "" && !seen[f.Status] {
+				seen[f.Status] = true
+				statuses = append(statuses, f.Status)
+			}
 		}
 	}
 	sort.Strings(statuses)

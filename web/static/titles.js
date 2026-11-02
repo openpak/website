@@ -51,6 +51,9 @@
       row.hidden = !ok;
       if (ok) shown++;
     });
+    list.querySelectorAll("[data-feature-group]").forEach(function (group) {
+      group.hidden = !Array.prototype.some.call(group.querySelectorAll(".titles-row"), function (row) { return !row.hidden; });
+    });
     if (empty) empty.hidden = shown !== 0;
     if (count) count.textContent = showing + " " + shown + " / " + rows.length;
   }

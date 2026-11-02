@@ -7,16 +7,24 @@
 <section aria-labelledby="feat-h">
   <h2 id="feat-h" class="sr-only">{{t .Lang "features.title"}}</h2>
   {{template "list-filters" .}}
-  {{with .Features}}
-  <ul id="titles-list" class="tgrid">
+  {{with featureGroups .Features}}
+  <div id="titles-list">
     {{range .}}
-    <li class="titles-row tcard" data-name="{{.Name}}" data-console="{{.Console}}" data-status="{{.Status}}">
-      <span class="console lg"><picture class="console-mark"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>
-      <span class="t"><b>{{.Name}}</b><span class="sub">{{.Console}}</span></span>
-      <span class="end"><span class="badge {{badgeClass .Status}}">{{statusText .Status}}</span></span>
-    </li>
+    <section class="mt-8" data-feature-group="{{.Console}}">
+      <h2 class="section-head">{{.Console}}</h2>
+      {{$console := .Console}}
+      <ul class="tgrid">
+        {{range .Features}}
+        <li class="titles-row tcard" data-name="{{.Name}}" data-console="{{$console}}" data-status="{{.Status}}">
+          <span class="console lg"><svg class="ico" width="30" height="30" aria-hidden="true"><use href="#i-{{featureIcon .}}"/></svg></span>
+          <span class="t"><b>{{.Name}}</b><span class="sub">{{.Console}}</span></span>
+          <span class="end"><span class="badge {{badgeClass .Status}}">{{statusText .Status}}</span></span>
+        </li>
+        {{end}}
+      </ul>
+    </section>
     {{end}}
-  </ul>
+  </div>
   <p id="titles-empty" class="card p-6 text-center text-muted" hidden>{{t $.Lang "titles.none"}}</p>
   {{else}}<p class="mt-5 card p-4 text-muted">{{t $.Lang "features.next.body"}}</p>{{end}}
 </section>
