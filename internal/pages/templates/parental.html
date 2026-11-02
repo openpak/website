@@ -22,7 +22,7 @@
   {{if .Invites}}
   <h3>{{t $.Lang "parental.acct.invites"}}</h3>
   {{range .Invites}}
-  <div class="card pad mb-5">
+  <div class="card p-5 mb-5">
     <p class="m-0">{{printf (t $.Lang "parental.acct.invites.from") (or .Who.Name .Who.Handle)}}</p>
     <form method="post" action="/account/parental/accounts/accept#accounts" class="flex gap-2 mt-4">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
@@ -37,7 +37,7 @@
   {{if .Parents}}
   <h3>{{t $.Lang "parental.acct.parents"}}</h3>
   {{range .Parents}}
-  <div class="card pad mb-5">
+  <div class="card p-5 mb-5">
     <p class="m-0">{{printf (t $.Lang "parental.acct.parents.of") (or .Who.Name .Who.Handle)}}{{if eq .Role "guardian"}} <span class="pill">{{t $.Lang "parental.acct.guardian"}}</span>{{end}}</p>
     <p class="hint m-0">{{t $.Lang "parental.acct.parents.note"}}</p>
   </div>
@@ -46,7 +46,7 @@
   <h3>{{t $.Lang "parental.acct.children"}}</h3>
   {{if not .Children}}{{if not .Pending}}<p class="empty">{{t $.Lang "parental.acct.none"}}</p>{{end}}{{end}}
   {{range .Children}}
-  <article class="card pad mb-5" aria-label="{{or .Who.Name .Who.Handle}}">
+  <article class="card p-5 mb-5" aria-label="{{or .Who.Name .Who.Handle}}">
     <div class="state-row ok"><span class="name">{{or .Who.Name .Who.Handle}}</span>{{with .Who.Handle}}<span class="pill">@{{.}}</span>{{end}}</div>
     <form method="post" action="/account/parental/accounts/openverse#accounts" class="form-stack max-w-md mt-4">
       <input type="hidden" name="csrf" value="{{$.CSRF}}">
@@ -65,7 +65,7 @@
   </article>
   {{end}}
   {{range .Pending}}
-  <div class="card pad mb-5">
+  <div class="card p-5 mb-5">
     <p class="m-0">{{printf (t $.Lang "parental.acct.pending.to") (or .Who.Name .Who.Handle)}}</p>
     <p class="hint m-0">{{t $.Lang "parental.acct.pending"}}</p>
     <form method="post" action="/account/parental/accounts/remove#accounts" class="mt-4">
@@ -95,7 +95,7 @@
 {{with .Code}}
 <section aria-labelledby="code-h" class="mb-9">
   <div class="section-head"><h2 id="code-h">{{t $.Lang "parental.code.label"}}</h2></div>
-  <div class="card pad">
+  <div class="card p-5">
     <p class="m-0"><span class="code tracking-widest">{{.PairingCode}}</span></p>
     <p class="hint m-0">{{t $.Lang "parental.code.valid"}}</p>
   </div>
@@ -108,7 +108,7 @@
   <div class="section-head"><h2 id="consoles-h">{{t .Lang "parental.consoles"}} <span class="text-muted">{{len .Consoles}}</span></h2></div>
   {{if not .Consoles}}<p class="empty">{{t .Lang "parental.none"}}</p>{{end}}
   {{range .Consoles}}
-  <article class="card pad mb-5" id="c-{{.MoonID}}" aria-labelledby="c-{{.MoonID}}-h">
+  <article class="card p-5 mb-5" id="c-{{.MoonID}}" aria-labelledby="c-{{.MoonID}}-h">
     <div class="state-row {{if .Synced}}ok{{else}}warn{{end}}">
       <span class="name" id="c-{{.MoonID}}-h">{{.Name}}</span>
       <span class="pill">{{if .Synced}}{{t $.Lang "parental.synced"}}{{else}}{{t $.Lang "parental.waiting"}}{{end}}</span>
