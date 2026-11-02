@@ -11,6 +11,9 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.77.1 — 2026-11-02
+- Adds the hub page handler missing from v0.77.0 (its build failed); no other change.
+
 ## v0.77.0 — 2026-11-02
 - **Rankings contract, hub and public API.** Every game server that keeps rankings serves the same
   read-only internal endpoints (`/internal/rankings/boards`, `/boards/{id}`), documented in
