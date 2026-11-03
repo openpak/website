@@ -11,6 +11,11 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.83.2
+
+- Rewards ladders: the Splatoon 3 first-session badge (`splatoon-first-s3`, `badge-first-splat-s3`) joins the Turf
+  family; fixtures show the three-game Splatoon Collector.
+
 ## v0.83.1
 
 - Console marks: `ps4.svg` and `ps5.svg` are now the Commons public-domain text logos (with `-dark` files), replacing the

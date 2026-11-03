@@ -85,14 +85,15 @@ var ladderMissions = []Mission{
 	{"kart-first-mk7", "First online session: Mario Kart 7", "Play an online session of Mario Kart 7.", "once", "kart_sessions.mk7", "", "badge-first-kart-mk7", 1, 5},
 	{"kart-first-mk8", "First online session: Mario Kart 8", "Play an online session of Mario Kart 8.", "once", "kart_sessions.mk8", "", "badge-first-kart-mk8", 1, 5},
 	{"kart-first-mk8dx", "First online session: Mario Kart 8 Deluxe", "Play an online session of Mario Kart 8 Deluxe.", "once", "kart_sessions.mk8dx", "", "badge-first-kart-mk8dx", 1, 5},
-	{"kart-collector", "Kart Collector", "Finish an online game in each of: Mario Kart DS, Mario Kart Wii, Mario Kart 7, Mario Kart 8, Mario Kart 8 Deluxe.", "once", "family_games:kart_sessions", "", "badge-kart-collector", 5, 30},
+	{"kart-collector", "Kart Collector", "Play an online session in each of: Mario Kart DS, Mario Kart Wii, Mario Kart 7, Mario Kart 8, Mario Kart 8 Deluxe.", "once", "family_games:kart_sessions", "", "badge-kart-collector", 5, 30},
 	{"splatoon-first-s1", "First online session: Splatoon", "Play an online session of Splatoon.", "once", "turf_sessions.s1", "", "badge-first-splat-s1", 1, 5},
 	{"splatoon-first-s2", "First online session: Splatoon 2", "Play an online session of Splatoon 2.", "once", "turf_sessions.s2", "", "badge-first-splat-s2", 1, 5},
-	{"splatoon-collector", "Splatoon Collector", "Play an online session in both Splatoon and Splatoon 2.", "once", "family_games:turf_sessions", "", "badge-turf-collector", 2, 30},
+	{"splatoon-first-s3", "First online session: Splatoon 3", "Play an online session of Splatoon 3.", "once", "turf_sessions.s3", "", "badge-first-splat-s3", 1, 5},
+	{"splatoon-collector", "Splatoon Collector", "Play an online session in each of: Splatoon, Splatoon 2, Splatoon 3.", "once", "family_games:turf_sessions", "", "badge-turf-collector", 3, 30},
 	{"smash-first-3ds", "First online session: Smash 3DS", "Play an online session of Smash 3DS.", "once", "brawl_sessions.3ds", "", "badge-first-smash-3ds", 1, 5},
 	{"smash-first-wiiu", "First online session: Smash Wii U", "Play an online session of Smash Wii U.", "once", "brawl_sessions.wiiu", "", "badge-first-smash-wiiu", 1, 5},
 	{"smash-first-ult", "First online session: Smash Ultimate", "Play an online session of Smash Ultimate.", "once", "brawl_sessions.ult", "", "badge-first-smash-ult", 1, 5},
-	{"smash-collector", "Smash Collector", "Finish an online game in each of: Smash 3DS, Smash Wii U, Smash Ultimate.", "once", "family_games:brawl_sessions", "", "badge-brawl-collector", 3, 30},
+	{"smash-collector", "Smash Collector", "Play an online session in each of: Smash 3DS, Smash Wii U, Smash Ultimate.", "once", "family_games:brawl_sessions", "", "badge-brawl-collector", 3, 30},
 }
 
 func init() { Missions = append(Missions, ladderMissions...) }

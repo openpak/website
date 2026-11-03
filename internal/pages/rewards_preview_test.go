@@ -135,11 +135,11 @@ func TestWritePreviewRewards(t *testing.T) {
 	st.Progress["first-friend"], st.Progress["hours-10"], st.Progress["first-online"] = 1, 36000, 600
 	st.Progress["weekly-2-networks"], st.Progress["all-networks"] = 2, 2
 	claim("first-online")
-	st.Counts["sessions"], st.Counts["turf_sessions"], st.Counts["kart_sessions"], st.Counts["family_games:turf_sessions"] = 100, 10, 7, 2
+	st.Counts["sessions"], st.Counts["turf_sessions"], st.Counts["kart_sessions"], st.Counts["family_games:turf_sessions"] = 100, 10, 7, 3
 	ladder("online-sessions", 50)
 	ladder("splatoon-matches", 1)
 	ladder("kart-races", 1)
-	claim("splatoon-first-s1", "splatoon-first-s2")
+	claim("splatoon-first-s1", "splatoon-first-s2", "splatoon-first-s3")
 	owned("badge-founder")
 	st.Equipped["badge"] = "badge-founder"
 	st.Ledger = append(st.Ledger, rewardstest.LedgerLine(3, "earn", "mission", "first-online:once", ago(2)), rewardstest.LedgerLine(8, "earn", "play", "0100ED9024EB8000", ago(6)))

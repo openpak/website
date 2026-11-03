@@ -111,6 +111,7 @@ var ladderOf = map[string]ladderRef{
 	"kart-collector":         {"first-kart", 0, "", "badge-kart-collector", "Kart Collector"},
 	"splatoon-first-s1":      {"first-splat", 0, "", "badge-first-splat-s1", "Turf Rookie: First Wave"},
 	"splatoon-first-s2":      {"first-splat", 0, "", "badge-first-splat-s2", "Turf Rookie: Second Wave"},
+	"splatoon-first-s3":      {"first-splat", 0, "", "badge-first-splat-s3", "Turf Rookie: Third Wave"},
 	"splatoon-collector":     {"first-splat", 0, "", "badge-turf-collector", "Turf Collector"},
 	"smash-first-3ds":        {"first-smash", 0, "", "badge-first-smash-3ds", "Brawler: 3DS Era"},
 	"smash-first-wiiu":       {"first-smash", 0, "", "badge-first-smash-wiiu", "Brawler: Wii U Era"},
