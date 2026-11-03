@@ -26,6 +26,7 @@ import (
 	"github.com/openpak/website/internal/discordlink"
 	"github.com/openpak/website/internal/erasure"
 	"github.com/openpak/website/internal/i18n"
+	"github.com/openpak/website/internal/leaderboards"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/metrics"
 	"github.com/openpak/website/internal/netprofile"
@@ -137,6 +138,13 @@ func run(log *slog.Logger) error {
 		log.Info("chat: CHAT_URL not set; the chat page says so and the API answers 503")
 	}
 	pageSrv.Chat = chatCli
+
+	// The neutral leaderboards core: only its health (/healthz/leaderboards) and account erasure
+	// concern the site; the rankings it shows come through the rankings contract.
+	lbCli := leaderboards.New(os.Getenv("LEADERBOARDS_URL"), os.Getenv("LEADERBOARDS_INTERNAL_KEY"))
+	if lbCli == nil {
+		log.Info("leaderboards: LEADERBOARDS_URL not set; no health route and no erasure step")
+	}
 
 	// /link: xbl's private approval API (device-code sign-in for games). The key
 	// defaults to the shared WEBSITE_INTERNAL_KEY, which xbl also defaults to.
@@ -267,13 +275,17 @@ func run(log *slog.Logger) error {
 	// in every service, then in the core. Saves, chat and mods must be
 	// configured for an account to finish: an unconfigured service fails its
 	// step, and the account waits (closed, not restorable) until it is.
-	finaliser := &erasure.Finaliser{Core: coreGRPC, Lock: db, Interval: cfg.ErasureInterval, Log: log,
-		Steps: []erasure.Step{
-			{Name: "saves", Erase: savesCli.WipeAccount},
-			{Name: "chat", Erase: chatCli.EraseAccount},
-			erasure.ModsStep(os.Getenv("MODS_INTERNAL_URL"), os.Getenv("MODS_INTERNAL_KEY"), &http.Client{Timeout: time.Minute}),
-			erasure.WebsiteStep(db, files, mediaSvc, log),
-		}}
+	erasureSteps := []erasure.Step{
+		{Name: "saves", Erase: savesCli.WipeAccount},
+		{Name: "chat", Erase: chatCli.EraseAccount},
+	}
+	if lbCli != nil { // optional: an unconfigured step would hold every account back
+		erasureSteps = append(erasureSteps, erasure.Step{Name: "leaderboards", Erase: lbCli.EraseAccount})
+	}
+	erasureSteps = append(erasureSteps,
+		erasure.ModsStep(os.Getenv("MODS_INTERNAL_URL"), os.Getenv("MODS_INTERNAL_KEY"), &http.Client{Timeout: time.Minute}),
+		erasure.WebsiteStep(db, files, mediaSvc, log))
+	finaliser := &erasure.Finaliser{Core: coreGRPC, Lock: db, Interval: cfg.ErasureInterval, Log: log, Steps: erasureSteps}
 	go finaliser.Run(ctx)
 	log.Info("erasure: finaliser started", "every", cfg.ErasureInterval)
 	// Pakka, the assistant: PAKKA_URL (http://openpak-pakka:24800) and PAKKA_CHAT_KEY; either
@@ -356,6 +368,9 @@ func run(log *slog.Logger) error {
 	}
 	if chatCli != nil {
 		behind["chat"] = chatCli
+	}
+	if lbCli != nil {
+		behind["leaderboards"] = lbCli
 	}
 	mux.HandleFunc("GET /healthz/{service}", healthzBehind(behind))
 

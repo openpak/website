@@ -11,6 +11,13 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.81.0
+
+- Leaderboards core (`LEADERBOARDS_URL`, `LEADERBOARDS_INTERNAL_KEY`; both optional): `/healthz/leaderboards`
+  for the status page, and an account-erasure step that deletes the account's entries. The rankings
+  themselves still come through the rankings contract (the core serves it natively, so a title's
+  `rankingServers` URL is `http://openpak-leaderboards:20210/t/<title>`).
+
 ## v0.80.2 — 2026-11-03
 
 - App API: every place an account appears carries its picture, as `/me` does (`avatar_url`, the media-versioned `/media/avatars/<id>/256`): friends, incoming and outgoing requests, blocked, voice-room members; chat conversations as `peer_avatar_url`; invitations as `from_avatar_url` (the core's sender account id is now read).

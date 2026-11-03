@@ -116,7 +116,7 @@ The same data is in the older `/api/v1/companion/titles/{slug}/rankings`.
 | Mario Kart 8, Mario Kart 7 | nex v1.4.12 | one board per course, time |
 | Pikmin 3, Splatoon (Wii U), Puyo Puyo Tetris, Sonic & All-Stars Racing Transformed, Terraria (Wii U), Dr. Luigi, Dr. Mario: Miracle Cure | nex v1.4.12 | one board per stored category (neutral "Board N" where the game's category is unknown) |
 | Xbox 360 leaderboards | x360-xstats v0.3.0 | one rating board per game and view (not on the website yet: the catalogue has no game ids) |
-| PlayStation 3 scores | np-score v0.2.0 | one board per game and board id (not on the website yet, same reason) |
+| PlayStation 3 scores (and any network's, once its adapter moves over) | leaderboards v0.1.0, fed by np-score v0.3.0 | the neutral leaderboards core serves the contract itself for every title it holds: `http://openpak-leaderboards:20210/t/<title key>` per title, `/` for all of them, `/n/<network>/t/<title>` for one network's view of per-network boards. A title needs a catalogue game to get a tab; add its line to `cmd/website/rankings.go` with that URL (not on the website yet: the catalogue has no PS3 Terraria) |
 
 A game with no scored board has no Rankings tab and no hub entry; boards appear as soon as a
 score is stored.
