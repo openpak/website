@@ -39,10 +39,11 @@ backed up separately.
 
 ## Status box
 
-The status box (`ubuntu@145.241.228.207`, amd64) runs the same collector with no ingest URL:
-day files only, under `~/openpak-logs/`, same 90-day retention and gzip, same timer
-(`openpak-logd` and `openpak-logd-prune.timer`, user units) and the same journald limits.
-Its logs are not in the `/admin/logs` viewer.
+The status box (`ubuntu@145.241.228.207`, amd64) runs the same collector: day files under
+`~/openpak-logs/`, same 90-day retention and gzip, same timer (`openpak-logd`,
+`openpak-logd-prune.timer`, user units) and journald limits. It also ships to
+`https://api.openpak.org/internal/logs/ingest` (key-protected, same key), with
+`LOGD_DB_PREFIX=statusbox/`, so its services show in `/admin/logs` as `statusbox/<service>`.
 
 ## Size
 
