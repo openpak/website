@@ -11,6 +11,9 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.86.2 — 2026-11-03
+- `GET /healthz/db-connections` answers 503 once the Postgres server holds 240 or more client connections (80% of `max_connections=300`), for a status.openpak.org alert.
+
 ## v0.86.1 — 2026-11-03
 - `GET /healthz/core` reports the account core's health, so the status page no longer needs the core's own public address (account.openpak.org goes to the Wii U/3DS sign-in server).
 

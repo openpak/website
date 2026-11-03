@@ -144,6 +144,14 @@ func New(ctx context.Context, databaseURL string) (*PG, error) {
 	return s, nil
 }
 
+// Connections counts the client connections open on the whole Postgres server (every database
+// and role; max_connections is server-wide), for the status page's connection-pressure check.
+func (s *PG) Connections(ctx context.Context) (int, error) {
+	var n int
+	err := s.pool.QueryRow(ctx, `SELECT count(*) FROM pg_stat_activity WHERE backend_type = 'client backend'`).Scan(&n)
+	return n, err
+}
+
 // Close releases the pool.
 func (s *PG) Close() { s.pool.Close() }
 

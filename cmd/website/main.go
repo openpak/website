@@ -409,6 +409,8 @@ func run(log *slog.Logger) error {
 	if tsCli != nil {
 		behind["title-storage"] = tsCli
 	}
+	// Postgres connection pressure: 503 from 240 open connections, 80% of max_connections=300.
+	behind["db-connections"] = connLoad{db, 240}
 	mux.HandleFunc("GET /healthz/{service}", healthzBehind(behind))
 
 	// Minimal metrics/pprof listener on the website block's +2 port.
@@ -474,6 +476,23 @@ func logRequests(log *slog.Logger) func(http.Handler) http.Handler {
 }
 
 type healthChecker interface{ Healthy(context.Context) error }
+
+// connLoad is unhealthy once the server holds max or more client connections.
+type connLoad struct {
+	db  interface{ Connections(context.Context) (int, error) }
+	max int
+}
+
+func (c connLoad) Healthy(ctx context.Context) error {
+	n, err := c.db.Connections(ctx)
+	if err != nil {
+		return err
+	}
+	if n >= c.max {
+		return fmt.Errorf("%d connections, limit %d", n, c.max)
+	}
+	return nil
+}
 
 // healthzBehind answers GET /healthz/{service} for the services in behind: 200 when the service's
 // own health check passes, 503 when it fails, 404 for anything not listed.

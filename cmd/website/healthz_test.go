@@ -30,3 +30,16 @@ func TestHealthzBehind(t *testing.T) {
 		}
 	}
 }
+
+type fakeConns int
+
+func (f fakeConns) Connections(context.Context) (int, error) { return int(f), nil }
+
+func TestConnLoad(t *testing.T) {
+	if err := (connLoad{fakeConns(239), 240}).Healthy(context.Background()); err != nil {
+		t.Errorf("239: %v", err)
+	}
+	if err := (connLoad{fakeConns(240), 240}).Healthy(context.Background()); err == nil {
+		t.Error("240 should be unhealthy")
+	}
+}
