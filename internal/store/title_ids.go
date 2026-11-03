@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -811,7 +812,76 @@ var catalogTitleIDsX360 = []catalogTitle{
 	{"Xbox 360", "Call of Duty 4: Modern Warfare", []string{"415607E6"}},
 }
 
+// 0025 adds the other 26 Xbox 360 rows (8-hex title ids from xenia-canary/game-patches file names and
+// xenia-project/game-compatibility issue titles; World at War also from its Xbox Marketplace product
+// GUID) and 29 of the 31 PS3 rows (NPWR communication ids and serials from RPCS3's RPCN game list).
+// None was seen by an OpenPak server: they are sourced, not verified. Ultra Street Fighter IV and
+// Metal Gear Online (PS3) have no id in any list read and stay empty.
+var catalogTitleIDsX360More = []catalogTitle{
+	{"Xbox 360", "Gears of War 2", []string{"4D53082D"}},
+	{"Xbox 360", "Gears of War 3", []string{"4D5308AB"}},
+	{"Xbox 360", "Call of Duty: Modern Warfare 2", []string{"41560817"}},
+	{"Xbox 360", "Call of Duty: Black Ops", []string{"41560855"}},
+	{"Xbox 360", "Call of Duty: World at War", []string{"4156081C"}},
+	{"Xbox 360", "Minecraft: Xbox 360 Edition", []string{"584111F7"}},
+	{"Xbox 360", "Left 4 Dead 2", []string{"454108D4"}},
+	{"Xbox 360", "Borderlands 2", []string{"5454087C"}},
+	{"Xbox 360", "Castle Crashers", []string{"584108B7"}},
+	{"Xbox 360", "Forza Motorsport 4", []string{"4D530910"}},
+	{"Xbox 360", "Blur", []string{"41560845"}},
+	{"Xbox 360", "Trials Evolution", []string{"58410AAD"}},
+	{"Xbox 360", "Red Dead Redemption", []string{"5454082B"}},
+	{"Xbox 360", "Grand Theft Auto IV", []string{"545407F2"}},
+	{"Xbox 360", "Saints Row: The Third", []string{"5451086D"}},
+	{"Xbox 360", "Dead Island", []string{"4B4D07DF"}},
+	{"Xbox 360", "Resident Evil 5", []string{"434307D4"}},
+	{"Xbox 360", "Dark Souls", []string{"4E4D083A"}},
+	{"Xbox 360", "Portal 2", []string{"45410912"}},
+	{"Xbox 360", "Chromehounds", []string{"534507D4"}},
+	{"Xbox 360", "Armored Core 4", []string{"465307D6"}},
+	{"Xbox 360", "Lost Planet 2", []string{"434307ED"}},
+	{"Xbox 360", "Rock Band 3", []string{"45410914"}},
+	{"Xbox 360", "Halo Wars", []string{"4D530808"}},
+	{"Xbox 360", "Titanfall", []string{"454109D0"}},
+	{"Xbox 360", "Battlefield 3", []string{"45410950"}},
+}
+
+// catalogTitleIDsPS3: NP communication id first (np-score and the leaderboards core key boards by it), then the product codes
+// RPCS3's RPCN game list ties to it.
+var catalogTitleIDsPS3 = []catalogTitle{
+	{"PS3", "Demon's Souls", []string{"NPWR00881_00", "NPWR01249_00", "NPWR00245_00", "BLUS30443", "BLES00932", "BCAS20071", "BCJS30022"}},
+	{"PS3", "LittleBigPlanet", []string{"NPWR00160_00", "BCAS20058", "BCAS20078", "BCES00141", "BCES00611", "BCJS30018", "BCUS98148", "BCUS98208", "BCET70011", "NPEA00241"}},
+	{"PS3", "LittleBigPlanet 2", []string{"NPWR01210_00", "BCES01694", "BCES00850", "BCES01086", "BCES01693", "BCJS30058", "BCUS98245", "BCUS98372", "NPEA00324", "NPUA80662", "NPEA00437", "BCAS20201", "BCAS20113", "BCES01345", "BCES01346", "NPHA80161"}},
+	{"PS3", "LittleBigPlanet 3", []string{"NPWR03509_00", "BCES02068", "BCES01663", "BCJS30095", "BCUS81138", "BCUS98362", "BCAS20322", "NPEA00515", "NPUA81116", "NPJA00123", "NPHA80277", "NPUA81174"}},
+	{"PS3", "Soulcalibur V", []string{"NPWR01738_00", "BLES01250", "BLJS10115", "BLUS30736", "NPJB00381", "NPUB31195"}},
+	{"PS3", "Metal Gear Solid: Peace Walker HD", []string{"NPWR01848_00", "BLJM60351", "NPEB00686", "NPJB00123", "NPUB30611"}},
+	{"PS3", "Blur", []string{"NPWR00567_00", "BLES00759", "BLJM60244", "BLUS30295"}},
+	{"PS3", "Tekken 6", []string{"NPWR00482_00", "BLES00635", "BLJS10067", "BLUS30359"}},
+	{"PS3", "Tekken Tag Tournament 2", []string{"NPWR02973_00", "BLES01702", "BLJS10187", "BLUS31002", "NPEB01140", "NPJB00236", "NPUB30899"}},
+	{"PS3", "Ultimate Marvel vs. Capcom 3", []string{"NPWR01796_00", "BLES01355", "BLJM60383", "BLUS30787"}},
+	{"PS3", "Persona 4 Arena Ultimax", []string{"NPWR06200_00", "BCAS20343", "BLES02125", "BLJM61209", "BLUS31469", "NPJB00599", "NPUB31563", "NPHB00708"}},
+	{"PS3", "Guilty Gear Xrd -SIGN-", []string{"NPWR07017_00", "BLJS10289", "BLUS31467", "NPUB31555", "BLUS31588", "BCAS20338", "NPHB00693", "NPJB00652"}},
+	{"PS3", "Gran Turismo 6", []string{"NPWR04712_00", "BCES01893", "BCES01977", "BCJS37016", "BCUS98296", "BCUS99247", "BCAS25018", "NPEA00502", "NPUA81049", "NPHA80269", "NPJA00113"}},
+	{"PS3", "Uncharted 2: Among Thieves", []string{"NPWR00462_00", "BCAS20097", "BCES00509", "BCES00757", "BCES00727", "BCJS30035", "BCUS98123", "NPEA00364", "NPEA00365", "NPHA80194"}},
+	{"PS3", "Uncharted 3: Drake's Deception", []string{"NPWR01216_00", "BCAS25009", "BCAS25014", "BCES01175", "BCES01176", "BCES01670", "BCES01692", "BCJS37004", "BCUS98233", "BCUS99086", "NPUA80858", "NPEA00422"}},
+	{"PS3", "Killzone 2", []string{"NPWR00153_00", "BCAS20066", "BCES00081", "BCET00006", "BCJS30032", "BCUS98116"}},
+	{"PS3", "Killzone 3", []string{"NPWR01569_00", "BCAS25008", "BCES01007", "BCJS30066", "BCUS98234"}},
+	{"PS3", "Resistance 2", []string{"NPWR00291_00", "BCAS20055", "BCES00226", "BCJS30029", "BCUS98120", "NPEA00431"}},
+	{"PS3", "Resistance 3", []string{"NPWR01841_00", "BCAS25012", "BCES01118", "BCES01353", "BCJS37006", "BCUS98176"}},
+	{"PS3", "Warhawk", []string{"NPWR00163_00", "BCUS98117", "NPUA70023", "NPUA80077", "BCAS20015", "BCES00008", "BCJS30013", "NPEA00017", "NPHA80002", "NPJA00008", "NPEA00117"}},
+	{"PS3", "Starhawk", []string{"NPWR02261_00", "BCES01234", "BCES00907", "BCJS30076", "BCUS98181", "BCAS20171", "NPEA00410", "NPEA00411"}},
+	{"PS3", "MotorStorm", []string{"NPWR00012_00", "BCES00006", "BCUS98137"}},
+	{"PS3", "Journey", []string{"NPWR00714_00", "NPEA00438", "NPHA80188", "NPJA00070", "NPEA00288", "NPUA80275"}},
+	{"PS3", "Minecraft: PlayStation 3 Edition", []string{"NPWR05636_00", "BLES01976", "BLUS31426", "NPJB00549", "NPEB01899", "NPUB31419"}},
+	{"PS3", "Red Dead Redemption", []string{"NPWR00867_00", "BLES00680", "BLES01179", "BLES01294", "BLJM60314", "BLJM60403", "BLJM60265", "BLUS30418", "BLUS30711", "BLUS30758", "NPEB00832", "NPEB00833", "NPUB30638", "NPUB30639"}},
+	{"PS3", "Call of Duty: Black Ops II", []string{"NPWR02059_00", "BLES01717", "BLES01718", "BLES01719", "BLES01720", "BLJM60548", "BLJM60549", "BLUS31011", "BLUS31140", "BLUS31141", "NPUB31055", "NPUB31056", "NPEB01206", "NPUB31054", "NPEB01207", "NPEB01205", "NPEB01204"}},
+	{"PS3", "Battlefield 3", []string{"NPWR02011_00", "BLAS50380", "BLES01275", "BLJM60384", "BLUS30762", "NPEB00723", "NPHB00491", "NPUB30742", "NPJB00202"}},
+	{"PS3", "PlayStation All-Stars Battle Royale", []string{"NPWR02621_00", "BCES01435", "BCES01436", "BCJS30088", "BCUS98472", "NPJA00088", "NPHA80231", "NPEA00413", "BCAS20253", "NPUA80316"}},
+	{"PS3", "Armored Core V", []string{"NPWR03050_00", "NPWR03067_00", "NPWR02037_00", "BLUS30516", "BLES01440", "BLAS50448", "BLJM60378"}},
+}
+
 func init() {
 	migrations["0008_catalog_title_ids"] = titleIDsMigration(catalogTitleIDs)
 	migrations["0024_catalog_title_ids_x360"] = titleIDsMigration(catalogTitleIDsX360)
+	migrations["0025_catalog_title_ids_x360_ps3"] = titleIDsMigration(append(slices.Clone(catalogTitleIDsX360More), catalogTitleIDsPS3...))
 }

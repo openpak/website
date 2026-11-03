@@ -45,6 +45,26 @@ func TestCatalogTitleIDsData(t *testing.T) {
 			if len(id) != 8 || !titleIDPattern.MatchString(id) || seen[id] != "" {
 				t.Errorf("%s: bad or duplicate %q", e.Name, id)
 			}
+			seen[id] = e.Name
+		}
+	}
+	for _, e := range catalogTitleIDsX360More {
+		for _, id := range e.IDs {
+			if len(id) != 8 || !titleIDPattern.MatchString(id) || seen[id] != "" {
+				t.Errorf("%s: bad or duplicate %q", e.Name, id)
+			}
+			seen[id] = e.Name
+		}
+	}
+	for _, e := range catalogTitleIDsPS3 {
+		if !strings.HasPrefix(e.IDs[0], "NPWR") {
+			t.Errorf("%s: first id %q is not an NP communication id", e.Name, e.IDs[0])
+		}
+		for _, id := range e.IDs {
+			if !titleIDPattern.MatchString(id) || seen[id] != "" {
+				t.Errorf("%s: bad or duplicate %q", e.Name, id)
+			}
+			seen[id] = e.Name
 		}
 	}
 	if !strings.Contains(migrations["0024_catalog_title_ids_x360"], "'Halo: Reach'") {
