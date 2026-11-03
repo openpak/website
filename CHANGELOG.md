@@ -11,6 +11,11 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.83.1
+
+- Console marks: `ps4.svg` and `ps5.svg` are now the Commons public-domain text logos (with `-dark` files), replacing the
+  user-supplied pack that had no recorded licence; CREDITS.md records every source.
+
 ## v0.83.0
 
 - Title storage core (`TITLE_STORAGE_URL`, `TITLE_STORAGE_INTERNAL_KEY`; both optional): `/healthz/title-storage`
