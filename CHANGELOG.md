@@ -11,6 +11,13 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.87.0 — 2026-11-03
+- Title ids for 26 more Xbox 360 rows (30 of 30 now) and 29 of 31 PS3 rows (migration 0025). Xbox 360 ids are the 8-hex title ids; PS3 rows carry the NP communication id (`NPWR00000_00`, the key np-score and the leaderboards core use) first, then the serials of the same game. Every id is sourced from a public list (xenia-canary game patches and compatibility issues, RPCS3's RPCN game list), none yet seen by our own servers. Ultra Street Fighter IV and Metal Gear Online (PS3) have no id in those lists and stay empty. `title_ids` now accepts NPWR ids and 4-letter serials.
+- Rankings: each of those rows is wired to x360-xstats (`/t/<hex>`) or the leaderboards core (`/n/np/t/<NPWR>`), so a title gets its Rankings tab as soon as it has scores.
+
+## v0.86.3 — 2026-11-03
+- `/healthz/db-connections` counts backends by `datid` (client backends only); `backend_type` is hidden from non-superuser roles, so v0.86.2 undercounted.
+
 ## v0.86.2 — 2026-11-03
 - `GET /healthz/db-connections` answers 503 once the Postgres server holds 240 or more client connections (80% of `max_connections=300`), for a status.openpak.org alert.
 

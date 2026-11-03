@@ -146,9 +146,10 @@ func New(ctx context.Context, databaseURL string) (*PG, error) {
 
 // Connections counts the client connections open on the whole Postgres server (every database
 // and role; max_connections is server-wide), for the status page's connection-pressure check.
+// datid is set for client backends only, and unlike backend_type it is visible to every role.
 func (s *PG) Connections(ctx context.Context) (int, error) {
 	var n int
-	err := s.pool.QueryRow(ctx, `SELECT count(*) FROM pg_stat_activity WHERE backend_type = 'client backend'`).Scan(&n)
+	err := s.pool.QueryRow(ctx, `SELECT count(*) FROM pg_stat_activity WHERE datid IS NOT NULL`).Scan(&n)
 	return n, err
 }
 

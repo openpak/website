@@ -55,6 +55,8 @@ var rankingServers = []struct {
 	{[]string{"Mario Strikers: Battle League"}, "Switch", "http://host.containers.internal:22305", nil},
 	{[]string{"Pac-Man 99"}, "Switch", "http://host.containers.internal:23145", nil},
 	{[]string{"Teenage Mutant Ninja Turtles: Shredder's Revenge"}, "Switch", "http://host.containers.internal:23135", nil},
+	// spelunky2 v0.9.0 (Switch): boards stay empty until SPELUNKY2_SCORE_FIELD is set on the server.
+	{[]string{"Spelunky 2"}, "Switch", "http://openpak-spelunky2:9090", nil},
 	// x360-xstats v0.5.0: one URL per Xbox 360 title id (hex), matched by catalogue title_ids.
 	{[]string{"Halo 3"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/4D5307E6", []string{"4D5307E6"}},
 	{[]string{"Halo: Reach"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/4D53085B", []string{"4D53085B"}},
