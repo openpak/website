@@ -11,6 +11,12 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.88.0 — 2026-11-03
+
+- Missions tab: Sports, Royale and Hunt session ladders, the first-session badges for ARMS, Mario Tennis Aces, Mario Strikers,
+  Mario Golf, Super Mario Bros. 35, Pac-Man 99 and the Monster Hunter games, and the Hunt Collector (`ladderOf`, family names in six
+  languages, rewardstest fixtures, card #80).
+
 ## v0.87.0 — 2026-11-03
 - Title ids for 26 more Xbox 360 rows (30 of 30 now) and 29 of 31 PS3 rows (migration 0025). Xbox 360 ids are the 8-hex title ids; PS3 rows carry the NP communication id (`NPWR00000_00`, the key np-score and the leaderboards core use) first, then the serials of the same game. Every id is sourced from a public list (xenia-canary game patches and compatibility issues, RPCS3's RPCN game list), none yet seen by our own servers. Ultra Street Fighter IV and Metal Gear Online (PS3) have no id in those lists and stay empty. `title_ids` now accepts NPWR ids and 4-letter serials.
 - Rankings: each of those rows is wired to x360-xstats (`/t/<hex>`) or the leaderboards core (`/n/np/t/<NPWR>`), so a title gets its Rankings tab as soon as it has scores.

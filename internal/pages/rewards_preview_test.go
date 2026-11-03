@@ -157,6 +157,23 @@ func TestWritePreviewRewards(t *testing.T) {
 	shoot("rewards-play-ladders-hours", "/account/rewards?tab=missions#l-hours")
 	shoot("rewards-play-ladders-collection", "/account/rewards?tab=collection")
 
+	// The sports, battle royale and monster hunting ladders (card #80): Sports at 30 sessions (Wood to Bronze earned, Silver next),
+	// Royale at 12 (Wood earned, Copper waiting), Hunt at 60 with 5 of the 8 games played; firsts for the games played are earned.
+	reset()
+	st.Balance, st.Lifetime, st.PlayPoints = 210, 310, 8
+	played()
+	st.Counts["sports_sessions"], st.Counts["royale_sessions"], st.Counts["hunt_sessions"], st.Counts["family_games:hunt_sessions"] = 30, 12, 60, 5
+	ladder("sports-sessions", 25)
+	ladder("royale-sessions", 1)
+	ladder("hunt-sessions", 25)
+	claim("sports-first-arms", "sports-first-golf", "royale-first-smb35", "hunt-first-mh3u", "hunt-first-mh4u", "hunt-first-mhgen")
+	for _, g := range []string{"arms", "mario-golf-super-rush", "super-mario-bros-35", "monster-hunter-3-ultimate", "monster-hunter-4-ultimate", "monster-hunter-generations", "monster-hunter-xx", "monster-hunter-rise"} {
+		st.Counts["game_sessions."+g] = 3
+	}
+	shoot("rewards-new-games-missions", "/account/rewards?tab=missions")
+	shoot("rewards-new-games-dialog", "/account/rewards?tab=missions#l-hunt")
+	shoot("rewards-new-games-collection", "/account/rewards?tab=collection")
+
 	// The shop: only what is not owned.
 	reset()
 	st.Balance, st.Lifetime, st.PlayPoints = 260, 390, 5
