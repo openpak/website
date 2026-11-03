@@ -11,6 +11,16 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.84.0
+
+- Rankings wired for the newly persisting servers: 12 Wii U / 3DS titles (nex v1.5.0), 13 Switch titles (switch-nex
+  v0.10.0, host-network ports; players resolve through the same NEX-pid lookup as Mario Kart 8 Deluxe) and four Xbox 360
+  titles (x360-xstats v0.5.0, per-title `/t/<hex title id>` URLs). Tetris Axis has no catalogue row and is not listed.
+- A companion source can match a catalogue title by `title_ids` as well as by name; Xbox 360 lines do.
+- Catalogue title ids may be 8 hex digits (Xbox 360). Migration `0024_catalog_title_ids_x360` sets Halo 3 (4D5307E6),
+  Halo: Reach (4D53085B), Halo 4 (4D530919) and Call of Duty 4 (415607E6) on rows that have no ids yet. Other 360 rows and all
+  PS3 rows wait for ids that can be verified.
+
 ## v0.83.2
 
 - Rewards ladders: the Splatoon 3 first-session badge (`splatoon-first-s3`, `badge-first-splat-s3`) joins the Turf

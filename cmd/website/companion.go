@@ -25,7 +25,7 @@ func registerCompanionTitles(comp *companion.Service, links core.Links, accounts
 	for _, rs := range rankingServers {
 		if c := companion.NewContract(rs.URL, people); c != nil {
 			c.Fallback = "Player"
-			cs := companion.Source{Names: rs.Names, Console: rs.Console, Rankings: c}
+			cs := companion.Source{Names: rs.Names, TitleIDs: rs.TitleIDs, Console: rs.Console, Rankings: c}
 			comp.Register(cs)
 		}
 	}

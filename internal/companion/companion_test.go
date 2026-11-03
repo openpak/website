@@ -119,3 +119,19 @@ func TestActivity(t *testing.T) {
 		t.Fatalf("networks: %v", a.Networks)
 	}
 }
+
+func TestSourceMatchesTitleID(t *testing.T) {
+	s := Source{TitleIDs: []string{"4D5307E6"}, Console: "Xbox 360"}
+	if !s.matches(store.Request{Name: "Anything", Console: "Xbox 360", TitleIDs: []string{"4d5307e6"}}) {
+		t.Error("id should match")
+	}
+	if s.matches(store.Request{Name: "Halo 3", Console: "Xbox 360", TitleIDs: []string{"4D53085B"}}) {
+		t.Error("another id must not match")
+	}
+	if s.matches(store.Request{Console: "PS3", TitleIDs: []string{"4D5307E6"}}) {
+		t.Error("console must agree")
+	}
+	if !(Source{Names: []string{"Halo 3"}, Console: "Xbox 360"}).matches(store.Request{Name: "halo 3", Console: "Xbox 360"}) {
+		t.Error("name still matches")
+	}
+}

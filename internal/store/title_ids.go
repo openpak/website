@@ -21,14 +21,15 @@ import (
 // Mario vs. Donkey Kong: Tipping Stars is cross-buy with one server, so the Wii U row holds
 // the 3DS ids too. "Street Fighter IV: 3D Edition" has none: the only 3DS game of that name is
 // Super Street Fighter IV: 3D Edition, which holds them.
-//
+type catalogTitle struct {
+	Console, Name string
+	IDs           []string
+}
+
 // Applied once by the 0008 migration, only to rows whose title_ids are still empty, so an id
 // an admin set through the API is never overwritten. Add ids later through
 // PATCH /api/v1/admin/titles/{id} ({"title_ids": [...]}), not here.
-var catalogTitleIDs = []struct {
-	Console, Name string
-	IDs           []string
-}{
+var catalogTitleIDs = []catalogTitle{
 	{"Wii U", "Mario Kart 8", []string{
 		"000500001010EC00", // USA (AMK)
 		"000500001010ED00", // EUR (AMK)
@@ -772,10 +773,10 @@ var catalogTitleIDs = []struct {
 // titleIDsMigration sets the ids above on their rows and logs each change like the API does
 // (actor "migration"). A row that is missing, already has ids, or would collide with another
 // row's ids is skipped rather than failing the boot.
-func titleIDsMigration() string {
+func titleIDsMigration(list []catalogTitle) string {
 	var vals []string
 	q := func(s string) string { return "'" + strings.ReplaceAll(s, "'", "''") + "'" }
-	for _, t := range catalogTitleIDs {
+	for _, t := range list {
 		ids := make([]string, len(t.IDs))
 		for i, id := range t.IDs {
 			ids[i] = q(id)
@@ -798,4 +799,19 @@ SELECT id, 'migration', 'update', jsonb_build_object(
 FROM upd;`
 }
 
-func init() { migrations["0008_catalog_title_ids"] = titleIDsMigration() }
+// catalogTitleIDsX360 are Xbox 360 title ids (8 hex digits), applied by 0024 the same way as the
+// list above. Only ids the repo itself documents: the x360-netplay patch set names each by game
+// (Halo 3 4D5307E6, Halo: Reach 4D53085B, Halo 4 4D530919, Call of Duty 4 415607E6). The other 360
+// rows, and every PS3 row (NPWR communication ids), wait for an id that can be verified; set them
+// through PATCH /api/v1/admin/titles/{id}.
+var catalogTitleIDsX360 = []catalogTitle{
+	{"Xbox 360", "Halo 3", []string{"4D5307E6"}},
+	{"Xbox 360", "Halo: Reach", []string{"4D53085B"}},
+	{"Xbox 360", "Halo 4", []string{"4D530919"}},
+	{"Xbox 360", "Call of Duty 4: Modern Warfare", []string{"415607E6"}},
+}
+
+func init() {
+	migrations["0008_catalog_title_ids"] = titleIDsMigration(catalogTitleIDs)
+	migrations["0024_catalog_title_ids_x360"] = titleIDsMigration(catalogTitleIDsX360)
+}

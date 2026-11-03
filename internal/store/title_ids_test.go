@@ -40,6 +40,16 @@ func TestCatalogTitleIDsData(t *testing.T) {
 			}
 		}
 	}
+	for _, e := range catalogTitleIDsX360 {
+		for _, id := range e.IDs {
+			if len(id) != 8 || !titleIDPattern.MatchString(id) || seen[id] != "" {
+				t.Errorf("%s: bad or duplicate %q", e.Name, id)
+			}
+		}
+	}
+	if !strings.Contains(migrations["0024_catalog_title_ids_x360"], "'Halo: Reach'") {
+		t.Error("x360 migration missing")
+	}
 	if sql := migrations["0008_catalog_title_ids"]; !strings.Contains(sql, `'Devil''s Third'`) {
 		t.Error("migration does not quote names")
 	}

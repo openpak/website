@@ -134,7 +134,10 @@ type ListingsSource interface {
 // (case-insensitive); Console "" matches any console. Match, when set, replaces both
 // (a family of titles, such as every DS Pokémon game).
 type Source struct {
-	Names    []string
+	Names []string
+	// TitleIDs match a catalogue title that carries any of these ids (title_ids, upper-case hex),
+	// in addition to Names; Console still applies.
+	TitleIDs []string
 	Console  string
 	Match    func(name, console string) bool
 	Rankings RankingSource
@@ -142,14 +145,19 @@ type Source struct {
 	Listings ListingsSource
 }
 
-func (s Source) matches(name, console string) bool {
+func (s Source) matches(r store.Request) bool {
 	if s.Match != nil {
-		return s.Match(name, console)
+		return s.Match(r.Name, r.Console)
 	}
-	if s.Console != "" && !strings.EqualFold(s.Console, console) {
+	if s.Console != "" && !strings.EqualFold(s.Console, r.Console) {
 		return false
 	}
-	return slices.ContainsFunc(s.Names, func(n string) bool { return strings.EqualFold(n, name) })
+	if slices.ContainsFunc(s.TitleIDs, func(id string) bool {
+		return slices.ContainsFunc(r.TitleIDs, func(o string) bool { return strings.EqualFold(o, id) })
+	}) {
+		return true
+	}
+	return slices.ContainsFunc(s.Names, func(n string) bool { return strings.EqualFold(n, r.Name) })
 }
 
 // ErrNotFound is a slug no catalogue title answers to, or a feature the title
@@ -194,7 +202,7 @@ func (s *Service) Register(src Source) { s.sources = append(s.sources, src) }
 func (s *Service) titleOf(ctx context.Context, r store.Request, slug string) Title {
 	t := Title{Request: r, Slug: slug}
 	for _, src := range s.sources {
-		if !src.matches(r.Name, r.Console) {
+		if !src.matches(r) {
 			continue
 		}
 		t.source = src

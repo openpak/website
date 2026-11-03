@@ -255,7 +255,7 @@ func normalize(r Request) (Request, error) {
 			continue
 		}
 		if !titleIDPattern.MatchString(id) {
-			return r, fmt.Errorf("%w: title ids must be 16 hex digits", ErrInvalid)
+			return r, fmt.Errorf("%w: title ids must be 16 hex digits (8 for Xbox 360)", ErrInvalid)
 		}
 		r.TitleIDs = append(r.TitleIDs, id)
 	}
@@ -301,7 +301,7 @@ func statusAudit(id int64, old, new Request) string {
 	return fmt.Sprintf("%d %s: %s -> %s", id, new.Name, old.Status, new.Status)
 }
 
-var titleIDPattern = regexp.MustCompile(`^[0-9A-F]{16}$`)
+var titleIDPattern = regexp.MustCompile(`^([0-9A-F]{16}|[0-9A-F]{8})$`)
 
 const requestCols = `id, kind, name, console, category, backend, status, notes, sort, title_id, title_ids, date_added, last_updated`
 
