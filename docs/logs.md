@@ -37,6 +37,13 @@ backed up separately.
 - The website drops partitions older than 90 days (at start and every 6 hours) and creates
   the next days' partitions. Retention is dropping a partition, never a `DELETE`.
 
+## Status box
+
+The status box (`ubuntu@145.241.228.207`, amd64) runs the same collector with no ingest URL:
+day files only, under `~/openpak-logs/`, same 90-day retention and gzip, same timer
+(`openpak-logd` and `openpak-logd-prune.timer`, user units) and the same journald limits.
+Its logs are not in the `/admin/logs` viewer.
+
 ## Size
 
 About 300 000 lines (75 MB) a day across all services before request logging was added,
