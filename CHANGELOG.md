@@ -11,6 +11,9 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.88.1 — 2026-11-03
+- Demon's Souls and Armored Core V (PS3) show the boards of all their regional NP communication ids, as region-labelled boards ("US: ...", "EU: ...", "JP: ..."), so EU and JP scores no longer go unseen. They are listed side by side, not merged: ranks are counted per server (`companion.Multi`, `rankingRegions`).
+
 ## v0.88.0 — 2026-11-03
 
 - Missions tab: Sports, Royale and Hunt session ladders, the first-session badges for ARMS, Mario Tennis Aces, Mario Strikers,

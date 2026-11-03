@@ -29,3 +29,45 @@ func TestRankingServers(t *testing.T) {
 		}
 	}
 }
+
+// A title with regional boards lists every regional URL, the first being the rankingServers line,
+// and every NPWR id the catalogue holds for the title has a region (so no region's scores are dropped).
+func TestRankingRegions(t *testing.T) {
+	for key, regions := range rankingRegions {
+		var line *struct {
+			Names    []string
+			Console  string
+			URL      string
+			TitleIDs []string
+		}
+		for i := range rankingServers {
+			if rankingServers[i].Console+"|"+rankingServers[i].Names[0] == key {
+				line = &rankingServers[i]
+			}
+		}
+		if line == nil {
+			t.Fatalf("%s: no rankingServers line", key)
+		}
+		if len(regions) < 2 || regions[0].URL != line.URL {
+			t.Errorf("%s: first region must be the line's URL", key)
+		}
+		seen := map[string]bool{}
+		for _, r := range regions {
+			if r.Label == "" || seen[r.URL] || !strings.HasPrefix(r.URL, "http://openpak-leaderboards:20210/n/np/t/NPWR") {
+				t.Errorf("%s: bad region %+v", key, r)
+			}
+			seen[r.URL] = true
+		}
+		for _, id := range regionalNPWR[key] {
+			if !seen["http://openpak-leaderboards:20210/n/np/t/"+id] {
+				t.Errorf("%s: catalogue id %s has no region", key, id)
+			}
+		}
+	}
+}
+
+// regionalNPWR are the comm ids the catalogue migration 0025 stores for the multi-region titles.
+var regionalNPWR = map[string][]string{
+	"PS3|Demon's Souls":  {"NPWR00881_00", "NPWR01249_00", "NPWR00245_00"},
+	"PS3|Armored Core V": {"NPWR03050_00", "NPWR03067_00", "NPWR02037_00"},
+}

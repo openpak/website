@@ -23,10 +23,24 @@ func registerCompanionTitles(comp *companion.Service, links core.Links, accounts
 	// Every title whose game server implements the rankings contract (docs/rankings-contract.md).
 	people := rankingPeople(links, accounts)
 	for _, rs := range rankingServers {
-		if c := companion.NewContract(rs.URL, people); c != nil {
+		var src companion.RankingSource
+		if regions := rankingRegions[rs.Console+"|"+rs.Names[0]]; len(regions) > 0 {
+			var m companion.Multi
+			for _, r := range regions {
+				if c := companion.NewContract(r.URL, people); c != nil {
+					c.Fallback = "Player"
+					m = append(m, companion.Region{Label: r.Label, Src: c})
+				}
+			}
+			if len(m) > 0 {
+				src = m
+			}
+		} else if c := companion.NewContract(rs.URL, people); c != nil {
 			c.Fallback = "Player"
-			cs := companion.Source{Names: rs.Names, TitleIDs: rs.TitleIDs, Console: rs.Console, Rankings: c}
-			comp.Register(cs)
+			src = c
+		}
+		if src != nil {
+			comp.Register(companion.Source{Names: rs.Names, TitleIDs: rs.TitleIDs, Console: rs.Console, Rankings: src})
 		}
 	}
 	// PS3 trophies (/account/trophies): np-trophy's private API, the PSN id from the core's "np" link.

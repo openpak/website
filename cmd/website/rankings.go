@@ -119,3 +119,21 @@ var rankingServers = []struct {
 	{[]string{"PlayStation All-Stars Battle Royale"}, "PS3", "http://openpak-leaderboards:20210/n/np/t/NPWR02621_00", []string{"NPWR02621_00"}},
 	{[]string{"Armored Core V"}, "PS3", "http://openpak-leaderboards:20210/n/np/t/NPWR03050_00", []string{"NPWR03050_00"}},
 }
+
+// rankingRegions lists, for a title whose game keeps one set of boards per region, each regional
+// server. A PS3 game has one NP communication id per region, so US, EU and JP scores are separate
+// boards in the leaderboards core. The Rankings tab lists them side by side as "<region>: <board>"
+// (companion.Multi) rather than merged, because ranks are counted per server. Key is
+// "<console>|<first name>" of the rankingServers line; the first region is that line's URL.
+var rankingRegions = map[string][]struct{ Label, URL string }{
+	"PS3|Demon's Souls": {
+		{"US", "http://openpak-leaderboards:20210/n/np/t/NPWR00881_00"},
+		{"EU", "http://openpak-leaderboards:20210/n/np/t/NPWR01249_00"},
+		{"JP/Asia", "http://openpak-leaderboards:20210/n/np/t/NPWR00245_00"},
+	},
+	"PS3|Armored Core V": {
+		{"US", "http://openpak-leaderboards:20210/n/np/t/NPWR03050_00"},
+		{"EU", "http://openpak-leaderboards:20210/n/np/t/NPWR03067_00"},
+		{"JP", "http://openpak-leaderboards:20210/n/np/t/NPWR02037_00"},
+	},
+}
