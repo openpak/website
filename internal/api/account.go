@@ -242,6 +242,10 @@ func (s *Server) handleLinkWFC(w http.ResponseWriter, r *http.Request, tok store
 // handleUnlink: DELETE /api/v1/me/links/{namespace}. Addressed by namespace, not link id, so
 // the link revoked is always one the token's own account holds.
 func (s *Server) handleUnlink(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	if ns := r.PathValue("namespace"); ns == "wiiu" || ns == "3ds" {
+		writeError(w, http.StatusForbidden, "Wii U and 3DS console accounts cannot be unlinked here")
+		return
+	}
 	link, err := s.Links.ActiveLinkByAccount(r.Context(), r.PathValue("namespace"), tok.AccountID)
 	if err != nil {
 		writeError(w, http.StatusNotFound, "no console linked in that namespace")

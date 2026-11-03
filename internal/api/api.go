@@ -557,6 +557,13 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request, tok store.APIT
 	if link, err := s.Links.ActiveLinkByAccount(r.Context(), "wfc", tok.AccountID); err == nil {
 		platforms = append(platforms, map[string]string{"namespace": "wfc", "link_id": link.LinkID})
 	}
+	// Wii U and 3DS console accounts are listed as the website lists them but cannot be revoked here
+	// (they are nn-account's own accounts).
+	for _, ns := range []string{"wiiu", "3ds"} {
+		if link, err := s.Links.ActiveLinkByAccount(r.Context(), ns, tok.AccountID); err == nil {
+			platforms = append(platforms, map[string]string{"namespace": ns, "link_id": link.LinkID})
+		}
+	}
 	// Every code the account can be added by, as the website's profile lists
 	// them; handle is the first of them, kept as its own field for
 	// clients that only want that one.
@@ -593,6 +600,8 @@ func (s *Server) handleSessions(w http.ResponseWriter, r *http.Request, tok stor
 			"id":         sess.ID,
 			"created_at": sess.CreatedAt,
 			"expires_at": sess.ExpiresAt,
+			// The session this bearer is bound to: the app marks it "this device", as the website does.
+			"current": sess.ID == tok.CoreSessionID,
 		})
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"sessions": out})

@@ -262,6 +262,7 @@ paths:
   /me/sessions:
     get:
       summary: List live core web sessions (devices)
+      description: Each session carries `current`, true for the one this bearer is bound to (the app's "this device").
       responses:
         "200":
           description: OK
@@ -713,6 +714,7 @@ paths:
                 properties:
                   unlinked: { type: boolean }
         "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { description: "Wii U and 3DS console accounts are listed in `linked_platforms` (namespaces `wiiu`, `3ds`) but cannot be unlinked here, as on the website." }
         "404": { description: No console is linked in that namespace. }
   /auth/config:
     get:
@@ -1304,6 +1306,7 @@ paths:
                         title_ids: { type: array, items: { type: string }, description: "Every id the title has (one per region), title_id first." }
                         date_added: { type: string, format: date-time }
                         last_updated: { type: string, format: date-time }
+                        verse_url: { type: string, description: "The game's OpenVerse community (live and beta titles only; absent otherwise)." }
                         votes: { type: integer }
                         voted: { type: boolean }
   /catalog.json:

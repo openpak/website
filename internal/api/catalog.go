@@ -4,6 +4,7 @@ import (
 	"crypto/subtle"
 	"encoding/json"
 	"errors"
+	"github.com/openpak/website/internal/pages"
 	"net/http"
 	"os"
 	"slices"
@@ -181,12 +182,17 @@ func (s *Server) catalogError(w http.ResponseWriter, err error) {
 
 // requestJSON is one request as the API shows it, without the per-viewer vote fields.
 func requestJSON(q store.Request) map[string]any {
-	return map[string]any{
+	m := map[string]any{
 		"id": q.ID, "kind": q.Kind, "name": q.Name, "console": q.Console,
 		"category": q.Category, "backend": q.Backend, "status": q.Status, "notes": q.Notes,
 		"sort": q.Sort, "title_id": q.TitleID, "title_ids": titleIDs(q), "date_added": q.DateAdded.UTC().Format(time.RFC3339),
 		"last_updated": q.LastUpdated.UTC().Format(time.RFC3339),
 	}
+	// The game's OpenVerse community, by the website's rule (served titles only).
+	if v := pages.VerseURL(q); v != "" {
+		m["verse_url"] = v
+	}
+	return m
 }
 
 // titleIDs is a request's ids for JSON: never null, and never missing the primary.

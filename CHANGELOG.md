@@ -11,6 +11,10 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.80.1 — 2026-11-03
+
+- App API: `GET /me` lists Wii U and 3DS console accounts in `linked_platforms` (namespaces `wiiu`, `3ds`, as /account does); `DELETE /me/links/wiiu|3ds` answers 403, as the site does not revoke them. `GET /me/sessions` marks the bearer's own session with `current: true`. `GET /requests` carries `verse_url` (the OpenVerse community of live and beta titles, the site's own rule).
+
 ## v0.80.0 — 2026-11-03
 
 - App API for the signed-in features the app lacked (all bearer, `/api/v1`, in `openapi.yaml`):

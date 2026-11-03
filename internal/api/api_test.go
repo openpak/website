@@ -32,6 +32,7 @@ type fakeCore struct {
 	sessions       map[string]string
 	friends        map[string][]string
 	links          map[string]string
+	nnLinks        map[string]map[string]string // wiiu/3ds: account to subject
 	wfcLinks       map[string]string // namespace "wfc": the console a typed friend code resolved to
 	subjectToAc    map[string]string
 	deleted        []string // accounts whose deletion was requested
@@ -326,6 +327,9 @@ func (f *fakeCore) ActiveLinkByAccount(_ context.Context, namespace, accountID s
 	links := f.links
 	if namespace == "wfc" {
 		links = f.wfcLinks
+	}
+	if namespace == "wiiu" || namespace == "3ds" {
+		links = f.nnLinks[namespace]
 	}
 	sub, ok := links[accountID]
 	if !ok {

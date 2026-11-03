@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/openpak/website/internal/store"
 	"github.com/openpak/website/internal/titleart"
 )
 
@@ -39,3 +40,7 @@ func (t titleRow) Verse() string {
 	}
 	return verseBase + "/communities/" + verseCommunityID(t.Name)
 }
+
+// VerseURL is the OpenVerse community address of a catalogue entry, "" when it has none; the app's
+// "OpenVerse community" button follows the same rule as the website's.
+func VerseURL(r store.Request) string { return titleRow{Request: r}.Verse() }

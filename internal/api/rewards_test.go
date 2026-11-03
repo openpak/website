@@ -151,3 +151,31 @@ func TestOperatorAPI(t *testing.T) {
 		t.Fatalf("waitlist CN: %d", rec.Code)
 	}
 }
+
+func TestMeListsNNLinksAndMarksCurrentSession(t *testing.T) {
+	s, fc, _ := newTestAPI(t)
+	fc.nnLinks = map[string]map[string]string{"wiiu": {"acct-a@x.test": "wiiu-subject"}, "3ds": {"acct-a@x.test": "ds-subject"}}
+	tok := mintFor(t, s, "a@x.test", "password-A-1")
+	rec := do(t, s, http.MethodGet, "/api/v1/me", tok, nil)
+	if !strings.Contains(rec.Body.String(), `"namespace":"wiiu"`) || !strings.Contains(rec.Body.String(), `"namespace":"3ds"`) {
+		t.Fatalf("me: %s", rec.Body.String())
+	}
+	if rec = do(t, s, http.MethodDelete, "/api/v1/me/links/wiiu", tok, nil); rec.Code != http.StatusForbidden {
+		t.Fatalf("wiiu unlink: %d", rec.Code)
+	}
+	rec = do(t, s, http.MethodGet, "/api/v1/me/sessions", tok, nil)
+	if !strings.Contains(rec.Body.String(), `"current":true`) {
+		t.Fatalf("sessions: %s", rec.Body.String())
+	}
+}
+
+func TestRequestsCarryVerseURLForServedTitles(t *testing.T) {
+	q := store.Request{Kind: "title", Name: "Mario Kart Wii", Status: "beta"}
+	if m := requestJSON(q); !strings.HasPrefix(m["verse_url"].(string), "https://verse.openpak.org/communities/") {
+		t.Fatalf("%v", m)
+	}
+	q.Status = "planned"
+	if _, ok := requestJSON(q)["verse_url"]; ok {
+		t.Fatal("unserved title has a community")
+	}
+}
