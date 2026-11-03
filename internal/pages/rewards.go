@@ -471,7 +471,7 @@ func ledgerOf(lang string, e rewards.LedgerEntry, names, imgs map[string]string)
 	id, _, _ := strings.Cut(e.Ref, ":")
 	var ref string
 	switch e.Source {
-	case "play":
+	case "play", "history":
 		lv.Img = staticURL("act-play-time")
 	case "checkin":
 		lv.Img = staticURL("act-checkin")

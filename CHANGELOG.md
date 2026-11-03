@@ -11,6 +11,11 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.84.1
+
+- Recent points: the `history` ledger source (rewards v0.7.0, "Play before Rewards") has a title in all locales and
+  the Play time art.
+
 ## v0.84.0
 
 - Rankings wired for the newly persisting servers: 12 Wii U / 3DS titles (nex v1.5.0), 13 Switch titles (switch-nex
