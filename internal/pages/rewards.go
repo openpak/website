@@ -1,6 +1,7 @@
 package pages
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
@@ -139,6 +140,8 @@ type rewardsPage struct {
 	// per family, in the Badges group).
 	Slots  []slotView
 	Groups []kindGroup
+
+	names map[string]string // item and mission names by id
 }
 
 type medalView struct{ ID, Name string }
@@ -166,13 +169,22 @@ func (s *Server) handleRewards(w http.ResponseWriter, r *http.Request) {
 		s.render(w, http.StatusOK, "rewards.html", page)
 		return
 	}
-	ctx, sid := r.Context(), v.CoreSessionID
-	me, err := s.Rewards.Me(ctx, sid)
-	if err != nil {
+	if err := s.buildRewards(r.Context(), lang, v.CoreSessionID, r.URL.Query().Get("kind"), tab == "missions", &page); err != nil {
 		s.log.Warn("rewards: me", "err", err)
 		page.Failed = true
 		s.render(w, http.StatusOK, "rewards.html", page)
 		return
+	}
+	page.Notice, page.NoticeBad = rewardsNotice(lang, r.URL.Query(), page.names)
+	s.render(w, http.StatusOK, "rewards.html", page)
+}
+
+// buildRewards fills page with everything the Rewards screens show for one session: the header, missions as tiles,
+// the points history (withLedger), the shop, and My items. The web page and the app's API share it.
+func (s *Server) buildRewards(ctx context.Context, lang, sid, kindWant string, withLedger bool, page *rewardsPage) error {
+	me, err := s.Rewards.Me(ctx, sid)
+	if err != nil {
+		return err
 	}
 	page.Me = me
 	ms, _ := s.Rewards.Missions(ctx, sid)
@@ -255,7 +267,7 @@ func (s *Server) handleRewards(w http.ResponseWriter, r *http.Request) {
 		}
 		return x.Cost < y.Cost
 	})
-	page.Chips, page.Kind = kindChips(lang, forSale, r.URL.Query().Get("kind"))
+	page.Chips, page.Kind = kindChips(lang, forSale, kindWant)
 	for _, it := range forSale {
 		if page.Kind == "" || it.Kind == page.Kind {
 			page.Shop = append(page.Shop, it)
@@ -310,7 +322,7 @@ func (s *Server) handleRewards(w http.ResponseWriter, r *http.Request) {
 		page.Groups[i].Tiles = own
 	}
 
-	if tab == "missions" {
+	if withLedger {
 		led, _ := s.Rewards.Ledger(ctx, sid, 10)
 		imgs := map[string]string{}
 		for _, m := range ms {
@@ -337,9 +349,8 @@ func (s *Server) handleRewards(w http.ResponseWriter, r *http.Request) {
 	case !page.CapReached && !me.Account.Paused:
 		page.NextKind, page.NextText = "play", i18n.T(lang, "rewards.next.play")
 	}
-
-	page.Notice, page.NoticeBad = rewardsNotice(lang, r.URL.Query(), names)
-	s.render(w, http.StatusOK, "rewards.html", page)
+	page.names = names
+	return nil
 }
 
 // itemOf adds what the page prints to a catalogue or inventory item.

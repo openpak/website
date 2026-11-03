@@ -178,12 +178,14 @@ func run(log *slog.Logger) error {
 	registerCompanionTitles(comp, coreGRPC, coreGRPC, log)
 	// Rewards: points, missions, shop. REWARDS_URL is the private address (http://openpak-rewards:20180).
 	pageSrv.Rewards = rewards.New(os.Getenv("REWARDS_URL"), os.Getenv("REWARDS_INTERNAL_KEY"), os.Getenv("REWARDS_ADMIN_KEY"))
+	apiSrv.Pages, apiSrv.Rewards, apiSrv.Operators = pageSrv, pageSrv.Rewards, db
 	if pageSrv.Rewards == nil {
 		log.Info("rewards: REWARDS_URL not set; /account/rewards says it is not available")
 	}
 	// Subsite sign-in: only clients with SSO_CLIENT_<NAME>_SECRET set are registered.
 	pageSrv.SSO = sso.New(sso.FromEnv())
 	// Discord account linking for Pakka: needs DISCORD_OAUTH_CLIENT_ID and DISCORD_OAUTH_CLIENT_SECRET.
+	apiSrv.Discord = discordlink.FromEnv()
 	if pageSrv.Discord = discordlink.FromEnv(); pageSrv.Discord == nil {
 		log.Info("discord: DISCORD_OAUTH_CLIENT_ID/SECRET not set; the Link Discord button is hidden")
 	}

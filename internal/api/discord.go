@@ -24,6 +24,33 @@ type PakkaNotice interface {
 // Discord user is before it answers them. Internal, so not in the OpenAPI.
 func (s *Server) registerDiscord(mux *http.ServeMux) {
 	mux.HandleFunc("GET /internal/discord/{discord_id}", s.handleDiscordLookup)
+	mux.HandleFunc("GET /api/v1/me/discord", s.auth(s.handleMyDiscord))
+	mux.HandleFunc("DELETE /api/v1/me/discord", s.auth(s.handleUnlinkDiscord))
+}
+
+// handleMyDiscord is the Discord row of the account page: whether linking is offered at all (Discord OAuth
+// credentials set), whether this account is linked, and as whom. Linking itself is Discord's OAuth round trip
+// ending on the website's callback with the browser's own session, so the app opens the website for it.
+func (s *Server) handleMyDiscord(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	out := map[string]any{"configured": s.Discord != nil, "linked": false}
+	if l, err := s.DB.DiscordLinkByAccount(r.Context(), tok.AccountID); err == nil {
+		out["linked"], out["username"] = true, l.Username
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
+func (s *Server) handleUnlinkDiscord(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	l, err := s.DB.UnlinkDiscord(r.Context(), tok.AccountID)
+	switch {
+	case errors.Is(err, store.ErrNotFound):
+	case err != nil:
+		s.log.Error("api: discord unlink", "err", err)
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	default:
+		_ = s.DB.AddAudit(r.Context(), tok.AccountID, "discord.unlink", "discord_id="+l.DiscordID+" (app)")
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // handleDiscordLookup answers {linked:false} for a Discord id nobody linked,

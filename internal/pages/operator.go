@@ -347,3 +347,22 @@ func (s *Server) handleOperatorsTerms(w http.ResponseWriter, r *http.Request) {
 	}
 	s.render(w, http.StatusOK, legalTemplate("operators", lang), view)
 }
+
+// The app's operator API (internal/api/operator.go) applies the same checks as the form.
+
+// PlanProblems checks described servers against the core's figures, worded in lang.
+func PlanProblems(lang string, rq core.NodeRequirements, plans []store.OperatorServerPlan) []string {
+	return planProblems(lang, rq, plans)
+}
+
+// ExcludedCountry is the operator terms' location policy.
+func ExcludedCountry(code string) bool { return excludedCountry(code) }
+
+// ValidEmail is the form's address check.
+func ValidEmail(s string) bool { return validEmail(s) }
+
+// TrimTo trims space and cuts to n runes.
+func TrimTo(s string, n int) string { return trimTo(s, n) }
+
+// MaxPlannedServers is how many servers one application may describe.
+const MaxPlannedServers = maxPlannedServers

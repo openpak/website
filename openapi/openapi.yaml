@@ -2393,6 +2393,252 @@ paths:
         "403": { description: "consent_required or not_available." }
         "404": { description: Not found, or not yours. }
         "429": { description: "rate_limited or daily_cap." }
+  /me/rewards:
+    get:
+      summary: Rewards, as the website's /account/rewards shows them
+      description: |
+        The header (balance, today's play points against the cap), missions as tiles (a ladder is one tile
+        showing the tier being worked on), the recent points history, the shop (only what the account does
+        not own, plus `upcoming` seasonal items) and My items. Texts are worded in the caller's language
+        (`Accept-Language`, or `?lang=`); pictures are site paths (`/account/rewards/preview/{id}`,
+        `/static/rewards/{art}.png`) that need no credential.
+      parameters:
+        - { name: lang, in: query, required: false, schema: { type: string } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Rewards" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "502": { description: "The rewards service did not answer (code rewards_unavailable)." }
+        "503": { description: "Rewards are not available on this deployment (code rewards_unavailable)." }
+  /me/rewards/theme:
+    get:
+      summary: The equipped theme's validated tokens
+      description: |
+        `{"theme": null}` when none is equipped or its asset is unusable. The tokens are the website's
+        (`paper`, `ink`, `accent`, `on-accent`, ...), as validated colours for light and dark; the app builds
+        its theme from them and falls back to the default. Any shop theme can be previewed without an
+        account through `GET /themes/{id}` (same shape).
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  theme:
+                    nullable: true
+                    type: object
+                    properties:
+                      id: { type: string }
+                      name: { type: string }
+                      light: { type: object, additionalProperties: { type: string } }
+                      dark: { type: object, additionalProperties: { type: string } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "503": { description: Rewards are not available on this deployment. }
+  /me/rewards/claim:
+    post:
+      summary: Claim a completed mission's reward
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mission]
+              properties:
+                mission: { type: string }
+                period: { type: string, description: "Empty for the current period." }
+      responses:
+        "200":
+          description: Claimed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  points: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { description: "The account is frozen (code rewards_frozen)." }
+        "409": { description: Already claimed. }
+        "503": { description: Rewards are not available. }
+  /me/rewards/redeem:
+    post:
+      summary: Buy a shop item
+      description: A retry with the same `Idempotency-Key` header is charged once.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [item]
+              properties:
+                item: { type: string }
+      responses:
+        "200": { description: Bought. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "402": { description: "Not enough points (code not_enough_points)." }
+        "403": { description: "The account is frozen (code rewards_frozen)." }
+        "409": { description: "Already owned (code already_owned)." }
+        "503": { description: Rewards are not available. }
+  /me/rewards/equip:
+    post:
+      summary: Put an owned item in its slot, or empty the slot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [slot]
+              properties:
+                slot: { type: string, description: "badge, profile_icon or theme." }
+                item: { type: string, description: "Empty clears the slot." }
+      responses:
+        "200": { description: Done. }
+        "400": { description: slot is missing. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "503": { description: Rewards are not available. }
+  /me/rewards/settings:
+    post:
+      summary: Showcase and pause switches
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                showcase: { type: boolean, description: Show your badge to others. }
+                paused: { type: boolean, description: Stop earning points. }
+      responses:
+        "200": { description: Saved. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "503": { description: Rewards are not available. }
+  /me/discord:
+    get:
+      summary: Discord link status
+      description: |
+        `configured` is false while the deployment has no Discord OAuth credentials; hide the row then, as
+        the website does. Linking is Discord's OAuth round trip ending on the website's callback with the
+        browser's own session, so the app opens `/account#devices` in the browser to start it.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [configured, linked]
+                properties:
+                  configured: { type: boolean }
+                  linked: { type: boolean }
+                  username: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    delete:
+      summary: Unlink Discord
+      responses:
+        "204": { description: Unlinked (or nothing was linked). }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/operator:
+    get:
+      summary: Running a region node, as /account/operator shows it
+      description: The admission figures, the open locations, the roles a server may take and this account's applications.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  available: { type: boolean }
+                  in_review: { type: boolean, description: An application is pending or waits for your reply. }
+                  roles: { type: array, items: { type: string } }
+                  max_servers: { type: integer }
+                  terms_url: { type: string }
+                  requirements: { type: object, additionalProperties: true }
+                  locations:
+                    type: array
+                    items: { type: object, properties: { code: { type: string }, country: { type: string }, city: { type: string } } }
+                  applications:
+                    type: array
+                    items: { type: object, additionalProperties: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "503": { description: "Applications are not available (code operator_unavailable)." }
+    post:
+      summary: Apply to run a node
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [location, city, provider, email, terms, servers]
+              properties:
+                location: { type: string }
+                city: { type: string }
+                provider: { type: string }
+                email: { type: string }
+                notes: { type: string }
+                terms: { type: boolean }
+                servers:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      cores: { type: integer }
+                      ram_gb: { type: integer }
+                      disk_gb: { type: integer }
+                      disk_ssd: { type: boolean }
+                      bandwidth_mbps: { type: integer }
+                      ipv6: { type: boolean }
+                      roles: { type: array, items: { type: string } }
+      responses:
+        "201": { description: Applied. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "409": { description: An application is already in review. }
+        "422": { description: "Not accepted: `errors` lists what falls short, in the caller's language." }
+        "503": { description: Applications are not available. }
+  /me/operator/waitlist:
+    post:
+      summary: Join the waitlist for a country nobody is wanted in yet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [country, email]
+              properties:
+                country: { type: string }
+                city: { type: string }
+                email: { type: string }
+      responses:
+        "201": { description: Added. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { description: Not accepted. }
+  /me/operator/reply:
+    post:
+      summary: Answer an admin's question on your application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, reply]
+              properties:
+                id: { type: integer, format: int64 }
+                reply: { type: string }
+      responses:
+        "200": { description: Sent; the application is back in review. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { description: No such application. }
   /me/tickets:
     get:
       summary: Your help tickets, newest activity first
@@ -2874,6 +3120,34 @@ components:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
   schemas:
+    Rewards:
+      type: object
+      description: The Rewards screens; see GET /me/rewards. Tiles, groups and entries carry worded text and site-path pictures.
+      properties:
+        balance: { type: integer }
+        frozen: { type: boolean }
+        paused: { type: boolean }
+        showcase_public: { type: boolean }
+        today_points: { type: integer }
+        today_cap: { type: integer }
+        today_percent: { type: integer }
+        cap_reached: { type: boolean }
+        more: { type: integer }
+        play_time: { type: string }
+        owned: { type: integer }
+        ready: { type: integer }
+        affordable: { type: integer }
+        next_kind: { type: string, description: "claim, buy or play; absent when there is nothing to suggest." }
+        next_text: { type: string }
+        badge: { type: object, additionalProperties: true, description: The equipped badge, shown beside the balance. }
+        slots: { type: array, items: { type: object, additionalProperties: true } }
+        ready_tiles: { type: array, items: { type: object, additionalProperties: true } }
+        tiles: { type: array, items: { type: object, additionalProperties: true } }
+        done: { type: array, items: { type: object, additionalProperties: true } }
+        ledger: { type: array, items: { type: object, additionalProperties: true } }
+        shop: { type: array, items: { type: object, additionalProperties: true }, description: Shelves by kind; unowned items only. }
+        upcoming: { type: array, items: { type: object, additionalProperties: true }, description: "Seasonal items before their date (Coming soon cards)." }
+        mine: { type: array, items: { type: object, additionalProperties: true }, description: My items by kind. }
     RankingsBoard:
       type: object
       properties:

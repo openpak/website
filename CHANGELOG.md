@@ -11,6 +11,16 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.80.0 — 2026-11-03
+
+- App API for the signed-in features the app lacked (all bearer, `/api/v1`, in `openapi.yaml`):
+  - Rewards: `GET /me/rewards` (header, missions as tiles, points history, shop of unowned items plus upcoming, My items; texts in
+    the caller's language, pictures as site paths), `GET /me/rewards/theme` (the equipped theme's validated tokens or null),
+    `POST /me/rewards/claim|redeem|equip|settings`. The web page and the API share one builder (`buildRewards`).
+  - Discord: `GET /me/discord` (`configured` stays false without Discord OAuth credentials, so the app hides the row like the site),
+    `DELETE /me/discord`. Linking stays a browser round trip.
+  - Region node operator: `GET|POST /me/operator`, `POST /me/operator/waitlist`, `POST /me/operator/reply`, same checks as the form.
+
 ## v0.79.0 — 2026-11-03
 
 - Equipped Rewards theme applies on the whole site: the layout writes the account's theme (openpak-theme/1 tokens, light and dark)

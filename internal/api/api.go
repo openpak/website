@@ -27,6 +27,7 @@ import (
 	"github.com/openpak/website/internal/clientip"
 	"github.com/openpak/website/internal/companion"
 	"github.com/openpak/website/internal/core"
+	"github.com/openpak/website/internal/discordlink"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/netprofile"
 	"github.com/openpak/website/internal/news"
@@ -34,6 +35,7 @@ import (
 	"github.com/openpak/website/internal/pakkachat"
 	"github.com/openpak/website/internal/pctl"
 	"github.com/openpak/website/internal/ratelimit"
+	"github.com/openpak/website/internal/rewards"
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/session"
 	"github.com/openpak/website/internal/store"
@@ -113,6 +115,12 @@ type Server struct {
 	log       *slog.Logger
 	// Supervision answers whether an account is supervised (parental controls core); nil = not configured.
 	Supervision *supervision.Client
+	// Pages and Rewards serve /me/rewards: the web page's own builder and the service client; nil answers 503.
+	Pages   *pages.Server
+	Rewards *rewards.Client
+	// Operators keeps region-node applications (/me/operator); Discord is the OAuth client, nil when unconfigured.
+	Operators store.OperatorStore
+	Discord   *discordlink.Client
 	// PakkaNotice reports Pakka data-use notice acceptance for the Discord lookup; nil = unknown.
 	PakkaNotice PakkaNotice
 }
@@ -217,6 +225,8 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	s.registerBans(mux)
 	s.registerDiscord(mux)
 	s.registerTickets(mux)
+	s.registerRewards(mux)
+	s.registerOperator(mux)
 	s.registerPakka(mux)
 	s.registerCrashes(mux)
 	h("/me/avatar", s.auth(s.handleChooseAvatar))
