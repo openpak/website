@@ -11,6 +11,13 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.85.0
+
+- Rewards: the play ladders get the full nine tiers and the medal finishes. Hours Online 1, 10, 25, 50, 100, 250, 500,
+  1,000, 2,500; Days Played 1, 7, 30, 60, 100, 200, 365, 730, 1,000; Different Games 1, 3, 5, 10, 25, 50, 100, 200, 300.
+  The existing mission ids and badges keep their places (10, 50, 100 hours and so on); `ladderOf` and the rewardstest
+  fixtures follow, with a preview of the play ladders at about 72 hours.
+
 ## v0.84.1
 
 - Recent points: the `history` ledger source (rewards v0.7.0, "Play before Rewards") has a title in all locales and

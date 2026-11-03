@@ -146,6 +146,17 @@ func TestWritePreviewRewards(t *testing.T) {
 	shoot("rewards-claimable", "/account/rewards?tab=missions")
 	shoot("rewards-claimed", "/account/rewards?tab=missions&m=claimed&n=25")
 
+	// The play ladders at about 72 hours online: Hours 1, 25 waiting (10 and 50 already claimed), 100 next;
+	// Days at 5 (1 waiting), Different games at 12 (1, 5 waiting).
+	reset()
+	st.Balance, st.Lifetime, st.PlayPoints = 430, 430, 8
+	played()
+	st.Counts["lifetime_play_seconds"], st.Counts["play_days"], st.Counts["titles_played"] = 259976, 5, 12
+	claim("hours-10", "hours-50", "titles-3", "titles-10")
+	shoot("rewards-play-ladders", "/account/rewards?tab=missions")
+	shoot("rewards-play-ladders-hours", "/account/rewards?tab=missions#l-hours")
+	shoot("rewards-play-ladders-collection", "/account/rewards?tab=collection")
+
 	// The shop: only what is not owned.
 	reset()
 	st.Balance, st.Lifetime, st.PlayPoints = 260, 390, 5
