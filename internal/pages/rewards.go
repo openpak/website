@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/rewards"
@@ -45,6 +46,8 @@ type itemView struct {
 	Key       string
 	Wide      bool   // themes show a wide preview, everything else a square one
 	Where     string // "Web, App, Switch"
+	Soon      bool   // not for sale yet: shown as a card with its date
+	When      string // "Coming 1 Dec"
 }
 
 // tileView is one badge being worked towards: a ladder (one tile for the family, showing the tier being
@@ -127,6 +130,7 @@ type rewardsPage struct {
 	// Shop.
 	Kind       string // the active filter; empty for all
 	Chips      []kindChip
+	Upcoming   []itemView  // seasonal items before their date: cards after the shelves, not buyable
 	Shop       []itemView  // what the filter shows, flat (the dialogs)
 	ShopGroups []kindGroup // the same, by kind (the shelves)
 	PlayTime   string      // time played in total
@@ -265,6 +269,21 @@ func (s *Server) handleRewards(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		page.ShopGroups = append(page.ShopGroups, g)
+	}
+	if up, err := s.Rewards.Upcoming(ctx, sid); err == nil {
+		now := time.Now()
+		for _, it := range up {
+			// Only items dated ahead, priced, not owned and not already closed; the rest is not this card's business.
+			if it.AvailableFrom == nil || !it.AvailableFrom.After(now) || it.Price == nil || it.Owned ||
+				(it.AvailableUntil != nil && !it.AvailableUntil.After(now)) || (page.Kind != "" && it.Kind != page.Kind) {
+				continue
+			}
+			iv := s.itemOf(lang, me, it)
+			iv.Soon = true
+			iv.When = fmt.Sprintf(i18n.T(lang, "rewards.coming"), i18n.DateShort(lang, *it.AvailableFrom))
+			page.Upcoming = append(page.Upcoming, iv)
+		}
+		sort.SliceStable(page.Upcoming, func(a, b int) bool { return page.Upcoming[a].AvailableFrom.Before(*page.Upcoming[b].AvailableFrom) })
 	}
 	if h := me.Account.LifetimePlaySeconds / 3600; h >= 1 {
 		page.PlayTime = fmt.Sprintf(i18n.T(lang, "rewards.hours"), h) // whole hours: it sits in a narrow tile
@@ -528,6 +547,7 @@ func (s *Server) rewardsAction(w http.ResponseWriter, r *http.Request, okTab, fa
 	if !good {
 		return
 	}
+	s.themes.forget(v.AccountID) // an equip or a purchase changes the theme
 	tab := failTab
 	if s.Rewards == nil {
 		rewardsBack(w, r, tab, "failed", nil)

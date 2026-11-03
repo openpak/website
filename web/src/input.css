@@ -48,6 +48,7 @@
   --accent-2: #6366f1;
   --accent-weak: #eceeff;
   --accent-line: #c5cafb;
+  --on-accent: #fff; /* text on an accent fill */
   --ok: #138a45;
   --ok-weak: #e3f5ea;
   --ok-line: #b2e0c3;
@@ -85,6 +86,7 @@
     --accent-2: #a5abff;
     --accent-weak: #2e3156;
     --accent-line: #4a4f8c;
+    --on-accent: #15172e;
     --ok: #4fd486;
     --ok-weak: #1f3a2b;
     --ok-line: #2f5c42;
@@ -232,9 +234,8 @@
     transition: background-color .12s, border-color .12s, box-shadow .12s;
   }
   .btn:hover, main button:hover { border-color: var(--cursor); box-shadow: 0 0 0 1px var(--cursor); }
-  .btn.primary, main button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary, main button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
   .btn.primary:hover, main button.primary:hover { background: var(--accent-2); border-color: var(--accent-2); box-shadow: 0 0 0 3px var(--ring-gap, var(--paper)), 0 0 0 5px var(--cursor); }
-  @media (prefers-color-scheme: dark) { .btn.primary, main button.primary { color: #15172e; } }
   .btn.ghost { background: transparent; border-color: transparent; box-shadow: none; color: var(--ink-2); }
   .btn.ghost:hover { background: var(--raised); color: var(--ink); box-shadow: none; border-color: transparent; }
   .btn.lg { min-height: 52px; padding: 0 1.6rem; font-size: 1.02rem; }
@@ -391,7 +392,7 @@
   }
   .avatar.blank {
     display: grid; place-items: center; background: var(--accent);
-    color: #fff; font-family: var(--font-ui); font-weight: 800; text-transform: uppercase; border: 0;
+    color: var(--on-accent); font-family: var(--font-ui); font-weight: 800; text-transform: uppercase; border: 0;
   }
   @media (prefers-color-scheme: dark) { .avatar.blank { color: #15172e; } }
   .avatar-edit { display: block; flex: none; border-radius: 50%; }
@@ -489,7 +490,7 @@
   .navlinks a[aria-current] { color: var(--ink); background: var(--raised); box-shadow: inset 0 -3px 0 var(--cursor), var(--shadow-sm); }
   .top .btn { min-height: 40px; padding: 0 1rem; font-size: .9rem; }
   .avatar-btn { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; overflow: hidden; flex: none;
-                font-family: var(--font-ui); font-weight: 800; font-size: .95rem; text-transform: uppercase; color: #fff; text-decoration: none;
+                font-family: var(--font-ui); font-weight: 800; font-size: .95rem; text-transform: uppercase; color: var(--on-accent); text-decoration: none;
                 background: var(--accent); box-shadow: 0 0 0 2px var(--paper), 0 0 0 3px var(--line-2); }
   .avatar-btn:hover { box-shadow: 0 0 0 2px var(--paper), 0 0 0 5px var(--cursor); }
   @media (prefers-color-scheme: dark) { .avatar-btn { color: #15172e; } }
@@ -838,7 +839,7 @@
             font-family: var(--font-ui); font-size: .93rem; font-weight: 700; color: var(--ink-2); text-decoration: none; }
   .side a:hover, .settings-nav a:hover { background: var(--raised); color: var(--ink); }
   .side a[aria-current], .settings-nav a[aria-current] { background: var(--raised); color: var(--ink); box-shadow: inset 0 -3px 0 var(--cursor); }
-  .side .ct { margin-left: auto; font-size: .74rem; font-weight: 800; padding: 1px 8px; border-radius: 999px; background: var(--accent); color: #fff; }
+  .side .ct { margin-left: auto; font-size: .74rem; font-weight: 800; padding: 1px 8px; border-radius: 999px; background: var(--accent); color: var(--on-accent); }
   .side .sep { display: none; }
   .settings-nav .badge { margin-left: auto; }
   @media (min-width: 48rem) {
@@ -978,10 +979,8 @@
    these are the few shapes that had no home yet. */
 @layer components {
   /* A small primary button keeps the primary's text colour (the small rule above is for quiet ones). */
-  main button.small.primary { color: #fff; }
-  @media (prefers-color-scheme: dark) { main button.small.primary { color: #15172e; } }
-  .ctabs .ct { margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--accent); color: #fff; font-size: .74rem; font-weight: 800; }
-  @media (prefers-color-scheme: dark) { .ctabs .ct { color: #15172e; } }
+  main button.small.primary { color: var(--on-accent); }
+  .ctabs .ct { margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--accent); color: var(--on-accent); font-size: .74rem; font-weight: 800; }
 
   /* The header card: the balance, with the equipped badge beside it, and today's progress. */
   .rwhead { display: grid; gap: 18px; padding: 20px; }
@@ -1113,4 +1112,24 @@
     .pakka-log { max-height: 50vh; }
     .pakka-form { flex-direction: column; align-items: stretch; }
   }
+}
+
+/* Theme preview (static/themepreview.js): a bar fixed at the bottom while a Rewards theme is tried on. On a phone it
+   sits above the tab bar. */
+@layer components {
+  .pvbar { position: fixed; z-index: 45; inset: auto 0 calc(76px + env(safe-area-inset-bottom)) 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
+           padding: 10px 14px; background: var(--raised); color: var(--ink); border-top: 2px solid var(--accent); box-shadow: var(--shadow-lg); }
+  .pvbar[hidden] { display: none; }
+  .pvbar:focus-visible { outline: 3px solid var(--cursor); outline-offset: -3px; }
+  .pvbar .pvname { flex: 1 1 10rem; min-width: 0; font-family: var(--font-ui); font-weight: 800; }
+  .pvbar form { display: contents; }
+  .pvbar .btn { min-height: 40px; }
+  @media (min-width: 60rem) { .pvbar { inset: auto 0 0 0; padding-inline: max(14px, calc((100vw - 72rem) / 2)); } }
+  @media (prefers-reduced-motion: no-preference) { .pvbar { animation: pv-in .18s ease-out; } }
+  @keyframes pv-in { from { transform: translateY(100%); } }
+  body.previewing { padding-bottom: 120px; }
+  /* A shop item that is not for sale yet: the same tile, its date where the price button would be. */
+  .gtile.soon .art > img { opacity: .9; }
+  .gtile.soon .when { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 0 12px 12px; margin-top: auto;
+                      font-family: var(--font-ui); font-weight: 800; font-size: .84rem; color: var(--ink-2); }
 }

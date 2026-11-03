@@ -7,6 +7,9 @@
 {{/* The picture of an item: its preview, or its name for a text-only one. */}}
 {{define "rw-art"}}{{if .HasPreview}}<img src="/account/rewards/preview/{{.ID}}" alt="" width="256" height="256" loading="lazy">{{else}}<span class="art-placeholder txt"><b>{{.Name}}</b></span>{{end}}{{end}}
 
+{{/* The Preview button of a theme (themepreview.js): it carries what the preview bar needs. */}}
+{{define "rw-preview"}}{{$l := index . 0}}{{with index . 1}}<button type="button" class="small" data-preview-id="{{.ID}}" data-preview-name="{{.Name}}" data-preview-price="{{.Cost}}" data-preview-owned="{{if .Owned}}1{{else}}0{{end}}" data-preview-equipped="{{if .Equipped}}1{{else}}0{{end}}" aria-label="{{t $l "rewards.preview"}}: {{.Name}}">{{t $l "rewards.preview"}}</button>{{end}}{{end}}
+
 {{/* A badge tile, the shop's tile: the art, then the name and tier under it. In Missions ("work") it is the
      next tier being worked on: progress and the reward as text, or the Claim button once reached. In My items
      ("mine") it is the highest tier earned: its threshold reached, and the Equip button. Both open the ladder. */}}
@@ -185,7 +188,7 @@
     {{range .}}<li><a href="/account/rewards?tab=shop{{if .Kind}}&amp;kind={{.Kind}}{{end}}"{{if .Current}} aria-current="true"{{end}}>{{.Label}}</a></li>{{end}}
   </ul>
   {{end}}
-  {{if not .Shop}}<p class="empty">{{t $l "rewards.empty.shop"}}</p>{{else}}
+  {{if and (not .Shop) (not .Upcoming)}}<p class="empty">{{t $l "rewards.empty.shop"}}</p>{{else}}
   {{range .ShopGroups}}
   <h3 class="rwgroup">{{.Label}} <span class="text-muted">{{len .Items}}</span></h3>
   <ul class="gtiles under{{if .Wide}} wide{{end}}">
@@ -195,6 +198,21 @@
         <span class="art">{{template "rw-art" .}}</span>
         <span class="cap"><span class="sub">{{.Name}}</span><span class="badge{{if .Affordable}} beta{{end}}">{{printf (t $l "rewards.pts") .Cost}}</span></span>
       </a>
+      {{if eq .Kind "theme"}}<div class="foot">{{template "rw-preview" (arr $l .)}}</div>{{end}}
+    </li>
+    {{end}}
+  </ul>
+  {{end}}
+
+  {{/* Seasonal items before their date: the same tiles, not buyable, after everything that can be bought now. */}}
+  {{with .Upcoming}}
+  <h3 class="rwgroup">{{t $l "rewards.coming.soon"}} <span class="text-muted">{{len .}}</span></h3>
+  <ul class="gtiles under">
+    {{range .}}
+    <li class="gtile soon">
+      <span class="art">{{template "rw-art" .}}</span>
+      <span class="cap"><span class="sub">{{.Name}}</span></span>
+      <span class="when"><span>{{.When}}</span><span class="badge">{{printf (t $l "rewards.pts") .Cost}}</span></span>
     </li>
     {{end}}
   </ul>
@@ -226,6 +244,7 @@
     </div>
     <form method="post" action="/account/rewards/redeem" class="actions foot" data-once>
       <input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="item" value="{{.ID}}"><input type="hidden" name="key" value="{{.Key}}">
+      {{if eq .Kind "theme"}}{{template "rw-preview" (arr $l .)}}{{end}}
       <button type="button" data-close>{{t $l "rewards.dlg.cancel"}}</button>
       <button type="submit" class="primary" data-working="{{t $l "rewards.dlg.working"}}"{{if or .Need $.Me.Account.Frozen}} disabled{{end}}>{{printf (t $l "rewards.dlg.confirm") .Cost}}</button>
     </form>
@@ -264,6 +283,7 @@
           {{if .Equipped}}<input type="hidden" name="item" value=""><button type="submit" class="small" aria-pressed="true" title="{{t $l "rewards.unequip"}}">{{t $l "rewards.equipped"}}</button>
           {{else}}<input type="hidden" name="item" value="{{.ID}}"><button type="submit" class="small primary" aria-label="{{t $l "rewards.equip"}}: {{.Name}}"{{if $.Me.Account.Frozen}} disabled{{end}}>{{t $l "rewards.equip"}}</button>{{end}}
         </form>
+        {{if eq .Kind "theme"}}<div class="mt-2">{{template "rw-preview" (arr $l .)}}</div>{{end}}
       </div>
     </li>
     {{end}}

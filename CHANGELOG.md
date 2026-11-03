@@ -11,6 +11,20 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.79.0 — 2026-11-03
+
+- Equipped Rewards theme applies on the whole site: the layout writes the account's theme (openpak-theme/1 tokens, light and dark)
+  as a `<style>` after the stylesheet and sets `<meta name="theme-color">` from its paper colours. Every value is checked as a strict
+  hex or rgb() colour (`theme.go`); the style's sha256 is added to the CSP's `style-src`. The equipped theme is cached 45 s per
+  account (dropped on equip or buy); a slow, broken or unavailable rewards service never blocks a page, it shows the default look.
+  `--on-accent` is a new custom property: text on accent fills follows the theme.
+- Preview: a Preview button on every theme (Shop tile and dialog, My items). `GET /themes/{id}` (public, validated tokens only, 404
+  for anything that is not an active shop theme) feeds `static/themepreview.js`, which applies the tokens at once, following the
+  system light/dark setting, and keeps the preview for the session. A bottom bar (a region; above the tab bar on phones) shows
+  "Previewing <theme>", Buy <price> or Equip, and Stop preview; Escape stops it. Buying, equipping or stopping clears it.
+- Shop: seasonal items before their date show as cards after the shelves with "Coming <date>" (localised) and their price, not
+  buyable and hidden once owned or closed. Needs rewards v0.4.0 (`?upcoming=1`).
+
 ## v0.78.1 — 2026-11-02
 
 - Rewards, Missions: no mission is a list row any more. Every mission is a tile with a picture: a mission that gives a badge shows it; the

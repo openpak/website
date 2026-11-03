@@ -160,7 +160,7 @@ func TestRewardsBadgeTiles(t *testing.T) {
 			t.Errorf("missions lacks %q", want)
 		}
 	}
-	if i := strings.Index(m, `id="done-h"`); i < 0 || !strings.Contains(m[i:], `href="#l-friends"`) || strings.Contains(m[:i], `href="#l-friends"`) || strings.Contains(m, "Equip") {
+	if i := strings.Index(m, `id="done-h"`); i < 0 || !strings.Contains(m[i:], `href="#l-friends"`) || strings.Contains(m[:i], `href="#l-friends"`) || strings.Contains(m, ">Equip<") {
 		t.Error("a finished ladder is not under Completed, or an equip button is in Missions")
 	}
 	if strings.Contains(m, "cardrows") {

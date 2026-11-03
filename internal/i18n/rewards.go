@@ -1,10 +1,26 @@
 package i18n
 
+import (
+	"strconv"
+	"strings"
+	"time"
+)
+
 // The rewards page (/account/rewards): the points header, missions, shop, collection and settings.
 // Admin copy (/admin/rewards) stays English in i18n.go with the other admin pages.
 func init() {
 	for lang, c := range map[string]Catalogue{
 		"en": {
+			"rewards.coming":           "Coming %s",
+			"rewards.coming.soon":      "Coming soon",
+			"rewards.preview":          "Preview",
+			"rewards.preview.region":   "Theme preview",
+			"rewards.preview.name":     "Previewing %s",
+			"rewards.preview.buy":      "Buy %d pts",
+			"rewards.preview.stop":     "Stop preview",
+			"rewards.preview.failed":   "This theme could not be loaded.",
+			"date.months.short":        "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec",
+			"date.short.pattern":       "{d} {m}",
 			"rewards.slots":            "Equipped now",
 			"rewards.slot.none":        "Nothing equipped",
 			"rewards.hours":            "%d h",
@@ -121,6 +137,16 @@ func init() {
 			"rewards.err.failed":       "That did not work. Try again in a moment.",
 		},
 		"de": {
+			"rewards.coming":           "Ab %s",
+			"rewards.coming.soon":      "Bald verfügbar",
+			"rewards.preview":          "Vorschau",
+			"rewards.preview.region":   "Themen-Vorschau",
+			"rewards.preview.name":     "Vorschau: %s",
+			"rewards.preview.buy":      "Kaufen: %d Pkt.",
+			"rewards.preview.stop":     "Vorschau beenden",
+			"rewards.preview.failed":   "Dieses Thema konnte nicht geladen werden.",
+			"date.months.short":        "Jan. Feb. März Apr. Mai Juni Juli Aug. Sept. Okt. Nov. Dez.",
+			"date.short.pattern":       "{d}. {m}",
 			"rewards.slots":            "Gerade ausgerüstet",
 			"rewards.slot.none":        "Nichts ausgerüstet",
 			"rewards.hours":            "%d Std.",
@@ -237,6 +263,16 @@ func init() {
 			"rewards.err.failed":       "Das hat nicht geklappt. Versuche es gleich noch einmal.",
 		},
 		"fr": {
+			"rewards.coming":           "Dès le %s",
+			"rewards.coming.soon":      "Bientôt disponible",
+			"rewards.preview":          "Aperçu",
+			"rewards.preview.region":   "Aperçu du thème",
+			"rewards.preview.name":     "Aperçu : %s",
+			"rewards.preview.buy":      "Acheter : %d pts",
+			"rewards.preview.stop":     "Arrêter l'aperçu",
+			"rewards.preview.failed":   "Ce thème n'a pas pu être chargé.",
+			"date.months.short":        "janv. févr. mars avr. mai juin juil. août sept. oct. nov. déc.",
+			"date.short.pattern":       "{d} {m}",
 			"rewards.slots":            "Équipé en ce moment",
 			"rewards.slot.none":        "Rien d’équipé",
 			"rewards.hours":            "%d h",
@@ -353,6 +389,16 @@ func init() {
 			"rewards.err.failed":       "Ça n’a pas marché. Réessaie dans un instant.",
 		},
 		"pt-BR": {
+			"rewards.coming":           "Disponível em %s",
+			"rewards.coming.soon":      "Em breve",
+			"rewards.preview":          "Pré-visualizar",
+			"rewards.preview.region":   "Pré-visualização do tema",
+			"rewards.preview.name":     "Pré-visualizando %s",
+			"rewards.preview.buy":      "Comprar: %d pts",
+			"rewards.preview.stop":     "Parar pré-visualização",
+			"rewards.preview.failed":   "Não foi possível carregar este tema.",
+			"date.months.short":        "jan. fev. mar. abr. mai. jun. jul. ago. set. out. nov. dez.",
+			"date.short.pattern":       "{d} {m}",
 			"rewards.slots":            "Equipado agora",
 			"rewards.slot.none":        "Nada equipado",
 			"rewards.hours":            "%d h",
@@ -469,6 +515,16 @@ func init() {
 			"rewards.err.failed":       "Não deu certo. Tente de novo em instantes.",
 		},
 		"it": {
+			"rewards.coming":           "Dal %s",
+			"rewards.coming.soon":      "In arrivo",
+			"rewards.preview":          "Anteprima",
+			"rewards.preview.region":   "Anteprima del tema",
+			"rewards.preview.name":     "Anteprima: %s",
+			"rewards.preview.buy":      "Acquista: %d pt.",
+			"rewards.preview.stop":     "Termina anteprima",
+			"rewards.preview.failed":   "Impossibile caricare questo tema.",
+			"date.months.short":        "gen feb mar apr mag giu lug ago set ott nov dic",
+			"date.short.pattern":       "{d} {m}",
 			"rewards.slots":            "Equipaggiato ora",
 			"rewards.slot.none":        "Niente di equipaggiato",
 			"rewards.hours":            "%d h",
@@ -585,6 +641,16 @@ func init() {
 			"rewards.err.failed":       "Non ha funzionato. Riprova tra un attimo.",
 		},
 		"es": {
+			"rewards.coming":           "Desde el %s",
+			"rewards.coming.soon":      "Próximamente",
+			"rewards.preview":          "Vista previa",
+			"rewards.preview.region":   "Vista previa del tema",
+			"rewards.preview.name":     "Vista previa: %s",
+			"rewards.preview.buy":      "Comprar: %d pts",
+			"rewards.preview.stop":     "Detener vista previa",
+			"rewards.preview.failed":   "No se pudo cargar este tema.",
+			"date.months.short":        "ene feb mar abr may jun jul ago sept oct nov dic",
+			"date.short.pattern":       "{d} {m}",
 			"rewards.slots":            "Equipado ahora",
 			"rewards.slot.none":        "Nada equipado",
 			"rewards.hours":            "%d h",
@@ -738,4 +804,13 @@ func init() {
 	}) {
 		languages["en"][k] = v
 	}
+}
+
+// DateShort writes a day without its year, e.g. "1 Dec" or "1. Dez.", from date.short.pattern and date.months.short.
+func DateShort(lang string, t time.Time) string {
+	months := strings.Fields(T(lang, "date.months.short"))
+	if len(months) != 12 {
+		return t.Format("2 Jan")
+	}
+	return strings.NewReplacer("{d}", strconv.Itoa(t.Day()), "{m}", months[t.Month()-1]).Replace(T(lang, "date.short.pattern"))
 }

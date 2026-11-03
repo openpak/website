@@ -29,7 +29,9 @@ type State struct {
 	Owned               map[string]bool
 	Equipped            map[string]string
 	Ledger              []map[string]any
-	Down                bool // /v1/me and the admin stats answer 502
+	Down                bool              // /v1/me and the admin stats answer 502
+	ThemeAssets         map[string]string // theme id -> asset body, instead of the stock theme
+	Upcoming            bool              // /v1/me/catalog?upcoming=1 lists the two winter badges, dated ahead
 	Bearer              string
 }
 
@@ -109,10 +111,26 @@ func artFor(id string) ([]byte, string) {
 	return []byte(fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><rect width="256" height="256" fill="hsl(%d 35%% 55%%)"/><circle cx="128" cy="128" r="70" fill="hsl(%d 40%% 85%%)"/></svg>`, hue, hue)), "image/svg+xml"
 }
 
+// StockTheme is a complete openpak-theme/1 asset for tests: light and dark, every token.
+func StockTheme(id string) string {
+	set := func(paper, ink, accent, onAccent string) string {
+		return fmt.Sprintf(`{"paper":%q,"paper-2":%q,"raised":"#ffffff","sunk":%q,"ink":%q,"ink-2":%q,"muted":%q,"faint":%q,"line":%q,"line-2":%q,"accent":%q,"accent-2":%q,"accent-weak":%q,"accent-line":%q,"on-accent":%q,"ok":"#0f6f38","ok-weak":"#e3f5ea","ok-line":"#b2e0c3","bad":"#bc2929","bad-weak":"#fde9e9","bad-line":"#f2bfbf","warn":"#8f5300","warn-weak":"#fdf2dc","warn-line":"#efd39c"}`,
+			paper, paper, paper, ink, ink, ink, ink, paper, paper, accent, accent, paper, paper, onAccent)
+	}
+	return fmt.Sprintf(`{"schema":"openpak-theme/1","id":%q,"name":%q,"tokens":{"light":%s,"dark":%s}}`, id, id,
+		set("#fdf0e0", "#2a241d", "#a54612", "#ffffff"), set("#2a2520", "#f4f2f0", "#f6a579", "#14161a"))
+}
+
 // New starts the fake and returns a client for it; it answers the calls the pages and the admin page make.
 func New(t testing.TB, st *State) *rewards.Client {
 	t.Helper()
-	items := st.items(t)
+	var items []Item
+	for _, it := range st.items(t) {
+		// Dated ahead in the real service: the shop does not list them until their day (see soon below).
+		if it.ID != "badge-winter-2026" && it.ID != "badge-new-year-2027" {
+			items = append(items, it)
+		}
+	}
 	byID := map[string]Item{}
 	for _, it := range items {
 		byID[it.ID] = it
@@ -169,7 +187,46 @@ func New(t testing.TB, st *State) *rewards.Client {
 		}
 		write(w, map[string]any{"missions": out})
 	})
+	soon := []map[string]any{
+		{"id": "badge-winter-2026", "kind": "badge", "name": "Winter 2026", "description": "A winter badge.", "price": 120, "platforms": []string{"web", "app"}, "limited": true, "has_preview": true, "available_from": "2026-12-01T00:00:00Z", "available_until": "2027-01-31T23:59:59Z"},
+		{"id": "badge-new-year-2027", "kind": "badge", "name": "New Year 2027", "description": "A new year badge.", "price": 150, "platforms": []string{"web", "app"}, "limited": true, "has_preview": true, "available_from": "2026-12-28T00:00:00Z", "available_until": "2027-01-31T23:59:59Z"},
+	}
+	mux.HandleFunc("GET /v1/catalog", func(w http.ResponseWriter, r *http.Request) {
+		out := []map[string]any{}
+		for _, it := range items {
+			if it.Price != nil && (r.URL.Query().Get("kind") == "" || r.URL.Query().Get("kind") == it.Kind) {
+				out = append(out, item(it, false))
+			}
+		}
+		write(w, map[string]any{"items": out})
+	})
+	mux.HandleFunc("GET /internal/v1/adapter/items/{id}/asset", func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		if body, ok := st.ThemeAssets[id]; ok {
+			_, _ = w.Write([]byte(body))
+			return
+		}
+		if dir := os.Getenv("REWARDS_THEMES_DIR"); dir != "" {
+			if b, err := os.ReadFile(filepath.Join(dir, filepath.Base(id)+".json")); err == nil {
+				_, _ = w.Write(b)
+				return
+			}
+		}
+		if it, ok := byID[id]; ok && it.Kind == "theme" {
+			_, _ = w.Write([]byte(StockTheme(id)))
+			return
+		}
+		http.NotFound(w, r)
+	})
 	mux.HandleFunc("GET /v1/me/catalog", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("upcoming") == "1" {
+			if st.Upcoming {
+				write(w, map[string]any{"items": soon})
+			} else {
+				write(w, map[string]any{"items": []any{}})
+			}
+			return
+		}
 		var out []map[string]any
 		for _, it := range items {
 			if it.Price != nil || st.Owned[it.ID] {
@@ -254,7 +311,7 @@ func New(t testing.TB, st *State) *rewards.Client {
 		w.WriteHeader(http.StatusNoContent)
 	})
 	mux.HandleFunc("GET /v1/items/{id}/preview", func(w http.ResponseWriter, r *http.Request) {
-		if _, ok := byID[r.PathValue("id")]; !ok {
+		if _, ok := byID[r.PathValue("id")]; !ok && r.PathValue("id") != "badge-winter-2026" && r.PathValue("id") != "badge-new-year-2027" {
 			http.NotFound(w, r)
 			return
 		}

@@ -12,12 +12,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#e9ecf0" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#24272d" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="{{if .Theme}}{{.Theme.Light}}{{else}}#e9ecf0{{end}}" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="{{if .Theme}}{{.Theme.Dark}}{{else}}#24272d{{end}}" media="(prefers-color-scheme: dark)">
 <meta name="description" content="{{t .Lang "site.tagline"}}">
 <title>{{.Title}} · OpenPak</title>
 <link rel="icon" href="/static/icon.svg?v={{.Asset}}" type="image/svg+xml">
 <link rel="stylesheet" href="/static/site.css?v={{.Asset}}">
+{{/* The equipped Rewards theme: validated colours only (theme.go); its hash is in the CSP's style-src. */}}
+{{with .Theme}}<style>{{.CSS}}</style>
+{{end}}<script src="/static/themepreview.js?v={{.Asset}}"></script>
 <link rel="alternate" type="application/atom+xml" title="OpenPak news" href="/feed/news.xml">
 <link rel="alternate" type="application/atom+xml" title="OpenPak title status" href="/feed/titles.xml">
 <script src="/static/site.js?v={{.Asset}}" defer></script>
@@ -161,5 +164,15 @@
   {{if .User}}<a href="/account" {{if or (hasPrefix .Path "/account") (hasPrefix .Path "/admin")}}aria-current="page"{{end}}><svg class="ico" aria-hidden="true"><use href="#i-user"/></svg>{{t .Lang "nav.account"}}</a>
   {{else}}<a href="/login" {{if or (eq .Path "/login") (eq .Path "/register")}}aria-current="page"{{end}}><svg class="ico" aria-hidden="true"><use href="#i-user"/></svg>{{t .Lang "nav.signin"}}</a>{{end}}
 </nav>
+
+{{/* The theme preview bar: shown by themepreview.js while a theme is being tried on. */}}
+<div id="pvbar" class="pvbar" role="region" aria-label="{{t .Lang "rewards.preview.region"}}" tabindex="-1" hidden>
+  <span class="pvname" role="status" data-name="{{t .Lang "rewards.preview.name"}}" data-failed="{{t .Lang "rewards.preview.failed"}}"></span>
+  {{if .User}}
+  <form method="post" action="/account/rewards/redeem" data-pv="buy" hidden><input type="hidden" name="csrf" value="{{.CSRF}}"><input type="hidden" name="item" value=""><button type="submit" class="btn primary" data-label="{{t .Lang "rewards.preview.buy"}}"></button></form>
+  <form method="post" action="/account/rewards/equip" data-pv="equip" hidden><input type="hidden" name="csrf" value="{{.CSRF}}"><input type="hidden" name="slot" value="theme"><input type="hidden" name="item" value=""><button type="submit" class="btn primary" data-label="{{t .Lang "rewards.equip"}}"></button></form>
+  {{end}}
+  <button type="button" class="btn" data-pv="stop">{{t .Lang "rewards.preview.stop"}}</button>
+</div>
 </body>
 </html>{{end}}

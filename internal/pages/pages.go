@@ -64,6 +64,7 @@ type Server struct {
 	Invites    core.InvitationsView
 	// Rewards is the points, missions and shop service; nil renders the page as "not available".
 	Rewards *rewards.Client
+	themes  themeCache // equipped themes and theme assets, kept briefly (theme.go)
 	// SSO signs subsites (splatnet.openpak.org, ...) in with this site's login; nil or with no
 	// client registered, the /account/sso routes are 404.
 	SSO *sso.Service
@@ -154,6 +155,8 @@ type baseData struct {
 	CSRF    string
 	Path    string
 	Admin   bool
+	// Theme is the signed-in account's equipped Rewards theme; nil draws the default look (theme.go).
+	Theme *themeView
 }
 
 type viewUser struct {
@@ -179,6 +182,7 @@ func (s *Server) data(r *http.Request, v *viewer, title string) baseData {
 		}
 		d.Admin = slices.Contains(s.AdminAccountIDs, v.AccountID)
 		d.CSRF = s.Sessions.CSRFToken(v.CoreSessionID)
+		d.Theme = s.equippedTheme(r.Context(), v.AccountID, v.CoreSessionID)
 		// The account nav links Pakka; only account pages ask, since it is a call to the core.
 		if strings.HasPrefix(d.Path, "/account") {
 			d.User.Pakka = s.pakkaOK(r.Context(), v)
@@ -283,7 +287,11 @@ func (s *Server) render(w http.ResponseWriter, status int, name string, data any
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("Referrer-Policy", "same-origin")
-	csp := "default-src 'self'; img-src 'self' data:; style-src 'self'; frame-ancestors 'none'"
+	style := "'self'"
+	if h, ok := data.(interface{ styleHash() string }); ok && h.styleHash() != "" {
+		style += " " + h.styleHash() // the account's theme, as the layout prints it
+	}
+	csp := "default-src 'self'; img-src 'self' data:; style-src " + style + "; frame-ancestors 'none'"
 	if s.Turnstile != nil {
 		// The Turnstile widget is a script and an iframe from Cloudflare.
 		csp += "; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com"
@@ -438,6 +446,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /account/rewards/equip", s.handleRewardsEquip)
 	mux.HandleFunc("POST /account/rewards/settings", s.handleRewardsSettings)
 	mux.HandleFunc("GET /account/rewards/preview/{id}", s.handleRewardsPreview)
+	mux.HandleFunc("GET /themes/{id}", s.handleTheme)
 	mux.HandleFunc("GET /account/sso/authorize", s.handleSSOAuthorize)
 	mux.HandleFunc("GET /account/sso/logout", s.handleSSOLogoutForm)
 	mux.HandleFunc("POST /account/sso/logout", s.handleSSOLogout)

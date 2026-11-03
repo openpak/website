@@ -116,6 +116,9 @@ type Item struct {
 	Affordable       bool     `json:"affordable"`
 	Equipped         bool     `json:"equipped"`
 	RedemptionSource string   `json:"source"`
+	// AvailableFrom and AvailableUntil bound the sale; the upcoming list always has the first.
+	AvailableFrom  *time.Time `json:"available_from,omitempty"`
+	AvailableUntil *time.Time `json:"available_until,omitempty"`
 }
 
 // Flag is one entry of the admin abuse queue.
@@ -229,6 +232,16 @@ func (c *Client) Catalog(ctx context.Context, session string) ([]Item, error) {
 	return out.Items, err
 }
 
+// Upcoming lists the priced items whose sale starts later, soonest first, without what the session owns. An older
+// service ignores the parameter and answers the plain shop, so callers keep only items dated in the future.
+func (c *Client) Upcoming(ctx context.Context, session string) ([]Item, error) {
+	var out struct {
+		Items []Item `json:"items"`
+	}
+	err := c.do(ctx, http.MethodGet, "/v1/me/catalog?upcoming=1", user(session), nil, &out)
+	return out.Items, err
+}
+
 // Redeem buys an item; key makes a retry charge once.
 func (c *Client) Redeem(ctx context.Context, session, itemID, key string) error {
 	h := user(session)
@@ -280,6 +293,37 @@ func (c *Client) Preview(ctx context.Context, id string) (body []byte, contentTy
 	}
 	body, err = io.ReadAll(io.LimitReader(resp.Body, 4<<20))
 	return body, resp.Header.Get("Content-Type"), err
+}
+
+// PublicCatalog is the shop as an anonymous visitor sees it (active items, no ownership).
+func (c *Client) PublicCatalog(ctx context.Context) ([]Item, error) {
+	var out struct {
+		Items []Item `json:"items"`
+	}
+	err := c.do(ctx, http.MethodGet, "/v1/catalog", nil, nil, &out)
+	return out.Items, err
+}
+
+// ItemAsset fetches an item's asset (a theme's JSON) over the internal adapter route; the caller decides
+// whether the item may be shown to whoever asked. The body is capped at 64 KiB: a theme is about 2.
+func (c *Client) ItemAsset(ctx context.Context, id string) ([]byte, error) {
+	if c == nil {
+		return nil, ErrUnavailable
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"/internal/v1/adapter/items/"+url.PathEscape(id)+"/asset", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("X-Internal-Key", c.InternalKey)
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, &Error{Status: resp.StatusCode}
+	}
+	return io.ReadAll(io.LimitReader(resp.Body, 64<<10))
 }
 
 func (c *Client) admin(actor string) map[string]string {

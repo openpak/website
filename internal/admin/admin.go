@@ -109,9 +109,17 @@ type base struct {
 	CSRF   string
 	Path   string
 	Admin  bool
-	Nav    []navLink
+	// Theme is always nil here: the shared layout reads it, and /admin keeps its own look.
+	Theme *noTheme
+	Nav   []navLink
 	// Updates is how many containers have a newer image, for the nav badge.
 	Updates int
+}
+
+// noTheme has the fields the layout reads from an account's theme.
+type noTheme struct {
+	CSS         template.CSS
+	Light, Dark string
 }
 
 // navLink is one entry of the admin sub-nav every admin page carries.
