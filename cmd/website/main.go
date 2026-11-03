@@ -23,6 +23,7 @@ import (
 	"github.com/openpak/website/internal/chat"
 	"github.com/openpak/website/internal/companion"
 	"github.com/openpak/website/internal/config"
+	"github.com/openpak/website/internal/consolesync"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/discordlink"
 	"github.com/openpak/website/internal/erasure"
@@ -81,6 +82,13 @@ func run(log *slog.Logger) error {
 	if err != nil {
 		return err
 	}
+	// The OpenPak password is also the Wii U / 3DS console password: sign-in and password change
+	// hand it to nn-account in the background (internal/consolesync).
+	var nnForSync *adapter.Client
+	if u := os.Getenv("NN_ACCOUNT_INTERNAL_URL"); u != "" {
+		nnForSync = adapter.New(u, os.Getenv("NN_ACCOUNT_INTERNAL_KEY"))
+	}
+	var coreHTTPSync core.HTTP = consolesync.New(coreHTTP, nnForSync, log)
 	coreGRPC, err := core.DialGRPC(cfg.CoreGRPCAddr, cfg.CoreInternalKey)
 	if err != nil {
 		return err
@@ -105,7 +113,7 @@ func run(log *slog.Logger) error {
 	}
 
 	pageSrv := pages.New(tmpl, log)
-	pageSrv.Core = coreHTTP
+	pageSrv.Core = coreHTTPSync
 	pageSrv.Identity = coreGRPC
 	pageSrv.Social = coreGRPC
 	pageSrv.Moderation = coreGRPC
@@ -163,7 +171,7 @@ func run(log *slog.Logger) error {
 	}
 	pageSrv.LinkLimit = ratelimit.New(20, 10*time.Minute)
 
-	apiSrv := api.New(coreHTTP, coreGRPC, coreGRPC, coreGRPC, coreGRPC, db, sessions, mediaSvc, log)
+	apiSrv := api.New(coreHTTPSync, coreGRPC, coreGRPC, coreGRPC, coreGRPC, db, sessions, mediaSvc, log)
 	apiSrv.Federation = coreGRPC
 	apiSrv.Moderation = coreGRPC
 	apiSrv.Saves = savesCli

@@ -1995,6 +1995,48 @@ paths:
         "502": { description: nn-account did not answer. }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "503": { description: Not configured }
+  /me/wiiu/console-password:
+    get:
+      summary: The Network ID to type on a Wii U or 3DS, and where its password comes from
+      description: The OpenPak password is the console password (mode sync), set whenever the website or app sees it at sign-in or password change. mode incompatible means it cannot be typed on a Wii U and a separate console password is needed; custom means one is set.
+      responses:
+        "200":
+          description: The Network ID and password source.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nnid: { type: string }
+                  pid: { type: integer }
+                  mode: { type: string, enum: ["", sync, custom, incompatible] }
+                  min: { type: integer }
+                  max: { type: integer }
+        "404": { description: The account has no Wii U ID yet. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "503": { description: Not configured }
+    post:
+      summary: Set a separate console password, for an OpenPak password a Wii U cannot take
+      description: Asks for the OpenPak password again (and a code when two-factor authentication is on). 6 to 16 printable ASCII characters without spaces, not containing the Network ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [current_password, console_password]
+              properties:
+                current_password: { type: string }
+                code: { type: string }
+                console_password: { type: string }
+      responses:
+        "200": { description: "Set. Answers {ok, nnid}." }
+        "403": { description: Wrong password, or a code is needed or wrong. }
+        "422": { description: "The console password breaks the rules (code password_length, password_ascii or password_is_id)." }
+        "429": { description: Too many wrong codes. }
+        "502": { description: nn-account did not answer. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "503": { description: Not configured }
   /me/3ds:
     get:
       summary: The account's 3DS identity (PNID, NEX credentials, friend code, Mii), minted on first sight

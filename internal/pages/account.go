@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/openpak/website/internal/accounts"
+	"github.com/openpak/website/internal/adapter"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/media"
@@ -47,6 +48,20 @@ type accountView struct {
 	EmailVerified    bool
 	TwoFactorEnabled bool
 	friendsData
+	// Console is the Wii U / 3DS sign-in: the ID to type and where its password comes from.
+	Console consoleRow
+}
+
+type consoleRow struct {
+	Show             bool
+	NNID             string
+	Mode             string // adapter.ConsolePassword.Mode
+	Synced           bool   // the OpenPak password is the console password
+	Custom           bool
+	Incompatible     bool
+	Min, Max         int
+	NeedSecondFactor bool
+	Open             bool // the separate-password form is open by default
 }
 
 type linkRow struct {
@@ -99,6 +114,13 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 		view.Links = append(view.Links, linkRow{Namespace: "Wii / DS", Subject: link.SubjectID, LinkID: link.LinkID, Revocable: true})
 	}
 	view.CanLinkWFC = s.WFC != nil
+	if s.NNAdapter != nil {
+		if cp, err := s.NNAdapter.ConsolePasswordStatus(ctx, v.AccountID); err == nil {
+			view.Console = consoleRow{Show: true, NNID: cp.NNID, Mode: cp.Mode, Min: cp.Min, Max: cp.Max,
+				Synced: cp.Mode == "sync", Custom: cp.Mode == "custom", Incompatible: cp.Mode == "incompatible"}
+			view.Console.Open = view.Console.Custom || view.Console.Incompatible
+		}
+	}
 	view.Discord = s.discordView(r, v.AccountID, view.Lang)
 
 	sessions, err := s.Core.ListSessions(ctx, v.CoreSessionID)
@@ -130,6 +152,7 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 		s.log.Error("whoami", "err", err)
 		view.EmailVerified = true // unknown: do not nag
 	}
+	view.Console.NeedSecondFactor = view.TwoFactorEnabled
 
 	// No existence check: the URL always resolves, to the account's own
 	// picture or to the preset its id picks.
@@ -157,6 +180,37 @@ func (s *Server) handleChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	redirectMsg(w, r, "/account", "password-changed")
+}
+
+// handleConsolePassword sets a separate console password (POST /account/console-password). It
+// is the fallback for an OpenPak password a Wii U cannot take; the OpenPak password itself is
+// otherwise the console password, set at sign-in (internal/consolesync).
+func (s *Server) handleConsolePassword(w http.ResponseWriter, r *http.Request) {
+	v, ok := s.postGuard(w, r)
+	if !ok {
+		return
+	}
+	pw := r.PostFormValue("console_password")
+	if pw != r.PostFormValue("confirm_console_password") {
+		redirectMsg(w, r, "/account#devices", "console-mismatch")
+		return
+	}
+	_, err := accounts.SetConsolePassword(r.Context(), s.Identity, s.NNAdapter, v.AccountID,
+		r.PostFormValue("password"), r.PostFormValue("code"), pw)
+	var refused *adapter.ErrConsolePassword
+	switch {
+	case err == nil:
+		redirectMsg(w, r, "/account#devices", "console-saved")
+	case errors.As(err, &refused):
+		redirectMsg(w, r, "/account#devices", "console-rules")
+	case errors.Is(err, core.ErrInvalidCredentials):
+		redirectMsg(w, r, "/account#devices", "console-wrongpassword")
+	case errors.Is(err, core.ErrSecondFactorRequired), errors.Is(err, core.ErrInvalidCode):
+		redirectMsg(w, r, "/account#devices", "console-wrongcode")
+	default:
+		s.log.Error("console password", "err", err)
+		redirectMsg(w, r, "/account#devices", "console-failed")
+	}
 }
 
 // handleUpdateProfile saves the display name, country and date of birth. Country and birthday

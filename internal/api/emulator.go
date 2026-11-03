@@ -2,8 +2,11 @@ package api
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
+	"github.com/openpak/website/internal/accounts"
+	"github.com/openpak/website/internal/adapter"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/pages"
 	"github.com/openpak/website/internal/store"
@@ -17,6 +20,8 @@ import (
 //	GET  /api/v1/me/switch                 identity, token, friends, requests
 //	POST /api/v1/me/switch/friend          {"action":"request","friend_code":…} | {"action":"accept"|"decline","pid":…}
 //	POST /api/v1/me/switch/link            {"client_id":…} -> {"id_token":…} for the emulated console's federation
+//	GET  /api/v1/me/wiiu/console-password  {nnid, pid, mode: sync|custom|incompatible|"", min, max}: the ID to type on a Wii U/3DS
+//	POST /api/v1/me/wiiu/console-password  {current_password, code?, console_password}: a separate console password, only for an OpenPak password a Wii U cannot take
 //	GET  /ca.pem                           the OpenPak CA, so a client can pin it instead of trusting anything
 func (s *Server) registerEmulator(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/me/switch", s.auth(s.handleSwitch))
@@ -24,6 +29,8 @@ func (s *Server) registerEmulator(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/me/switch/link", s.auth(s.handleSwitchLink))
 	mux.HandleFunc("GET /api/v1/me/wiiu", s.auth(s.handleConsole("wiiu")))
 	mux.HandleFunc("GET /api/v1/me/3ds", s.auth(s.handleConsole("3ds")))
+	mux.HandleFunc("GET /api/v1/me/wiiu/console-password", s.auth(s.handleConsolePasswordStatus))
+	mux.HandleFunc("POST /api/v1/me/wiiu/console-password", s.auth(s.handleConsolePasswordSet))
 	mux.HandleFunc("GET /ca.pem", s.handleCA)
 }
 
@@ -132,4 +139,62 @@ func (s *Server) handleCA(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/x-pem-file")
 	w.Header().Set("Cache-Control", "public, max-age=3600")
 	_, _ = w.Write(pem)
+}
+
+// handleConsolePasswordStatus: the Network ID to type on a Wii U or 3DS and where its password
+// comes from. The OpenPak password is the console password ("sync"); a separate one is the
+// fallback for a password a Wii U cannot take.
+func (s *Server) handleConsolePasswordStatus(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	if s.NNAdapter == nil {
+		writeError(w, http.StatusServiceUnavailable, "wii u identities are not configured")
+		return
+	}
+	out, err := s.NNAdapter.ConsolePasswordStatus(r.Context(), tok.AccountID)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "no wii u id yet")
+		return
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
+// handleConsolePasswordSet sets a separate console password. It asks for the OpenPak password
+// again, and a code when the account has two-factor authentication, like deleting an account.
+func (s *Server) handleConsolePasswordSet(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	if s.NNAdapter == nil {
+		writeError(w, http.StatusServiceUnavailable, "wii u identities are not configured")
+		return
+	}
+	var req struct {
+		Current string `json:"current_password"`
+		Code    string `json:"code"`
+		Console string `json:"console_password"`
+	}
+	if !decodeSmall(w, r, &req) {
+		return
+	}
+	if req.Current == "" || req.Console == "" {
+		writeError(w, http.StatusBadRequest, "current_password and console_password are required")
+		return
+	}
+	nnid, err := accounts.SetConsolePassword(r.Context(), s.Identity, s.NNAdapter, tok.AccountID, req.Current, req.Code, req.Console)
+	var refused *adapter.ErrConsolePassword
+	switch {
+	case err == nil:
+		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "nnid": nnid})
+	case errors.As(err, &refused):
+		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": "console password breaks the rules", "code": refused.Reason})
+	case errors.Is(err, core.ErrInvalidCredentials):
+		writeError(w, http.StatusForbidden, "wrong password")
+	case errors.Is(err, core.ErrSecondFactorRequired):
+		writeJSON(w, http.StatusForbidden, map[string]any{
+			"error": "this account has two-factor authentication: send a code", "code": "two_factor_required", "two_factor_required": true})
+	case errors.Is(err, core.ErrInvalidCode):
+		writeError(w, http.StatusForbidden, "wrong code")
+	case errors.Is(err, core.ErrTwoFactorLocked):
+		w.Header().Set("Retry-After", "900")
+		writeError(w, http.StatusTooManyRequests, "too many wrong codes; try again in 15 minutes")
+	default:
+		s.log.Error("api console password", "err", err)
+		writeError(w, http.StatusBadGateway, "console password unavailable")
+	}
 }

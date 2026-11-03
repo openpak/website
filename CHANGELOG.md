@@ -11,6 +11,11 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.86.0 — 2026-11-03
+
+- The OpenPak password is now the Wii U / 3DS console password. Signing in (website or app, including after a second factor) and changing the password hand it to nn-account (`NN_ACCOUNT_INTERNAL_URL`), which stores the console form of it, in the background: a slow or failed nn-account never blocks a sign-in, and the password is never logged (`internal/consolesync`). Existing accounts are fixed by signing out and back in once; then "Link an existing Network ID" on the console takes the ID and the OpenPak password.
+- Linked platforms shows the Network ID to type. Only when the OpenPak password cannot be typed on a Wii U (longer than 16, accents, or containing the ID) does it offer a separate console password, which asks for the OpenPak password again. `GET`/`POST /api/v1/me/wiiu/console-password` give the app the same.
+
 ## v0.85.1 — 2026-11-03
 - Rewards ladder targets group thousands in each language ("1,000 h", "1.000 h") instead of "1000 h".
 

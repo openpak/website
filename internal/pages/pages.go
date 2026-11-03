@@ -213,6 +213,18 @@ func flashText(lang, code string) string {
 		return i18n.T(lang, "account.links.wfc.notfound")
 	case "wfc-taken":
 		return i18n.T(lang, "account.links.wfc.taken")
+	case "console-saved":
+		return i18n.T(lang, "account.console.msg.saved")
+	case "console-mismatch":
+		return i18n.T(lang, "account.console.msg.mismatch")
+	case "console-rules":
+		return i18n.T(lang, "account.console.msg.rules")
+	case "console-wrongpassword":
+		return i18n.T(lang, "account.console.msg.wrongpassword")
+	case "console-wrongcode":
+		return i18n.T(lang, "account.console.msg.wrongcode")
+	case "console-failed":
+		return i18n.T(lang, "account.console.msg.failed")
 	case "password-changed":
 		return i18n.T(lang, "account.password.ok")
 	case "password-mismatch":
@@ -399,6 +411,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /reset-password", s.handleResetSubmit)
 	mux.HandleFunc("GET /account", s.handleAccount)
 	mux.HandleFunc("POST /account/password", s.handleChangePassword)
+	mux.HandleFunc("POST /account/console-password", s.handleConsolePassword)
 	mux.HandleFunc("POST /account/profile", s.handleUpdateProfile)
 	mux.HandleFunc("POST /account/delete", s.handleDeleteAccount)
 	mux.HandleFunc("POST /account/sessions/revoke", s.handleRevokeSession)

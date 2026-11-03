@@ -216,3 +216,65 @@ func (c *Client) Player(ctx context.Context, pid, accountID string) (outAccount,
 	}
 	return out.AccountID, fmt.Sprintf("%.0f", out.PID), nil
 }
+
+// ConsolePassword is where an account stands on the Wii U / 3DS console password.
+type ConsolePassword struct {
+	NNID string `json:"nnid"`
+	PID  int64  `json:"pid"`
+	// Mode is "sync" (the OpenPak password is the console password), "custom" (a separate one),
+	// "incompatible" (the OpenPak password cannot be typed on a Wii U and there is no separate
+	// one) or "" (the website has not seen the password since this existed).
+	Mode string `json:"mode"`
+	Min  int    `json:"min"`
+	Max  int    `json:"max"`
+}
+
+// ConsolePasswordStatus asks nn-account for the Network ID to type on the console and where its
+// password comes from. An account without a Wii U ID yet is an error.
+func (c *Client) ConsolePasswordStatus(ctx context.Context, accountID string) (ConsolePassword, error) {
+	var out ConsolePassword
+	err := c.get(ctx, "/internal/wiiu/console-password?account_id="+url.QueryEscape(accountID), &out)
+	return out, err
+}
+
+// ErrConsolePassword is a console password nn-account refused; Reason is one of
+// password_length, password_ascii, password_is_id.
+type ErrConsolePassword struct{ Reason string }
+
+func (e *ErrConsolePassword) Error() string { return "console password refused: " + e.Reason }
+
+// SetConsolePassword hands a plain password to nn-account over the internal key. mode "sync"
+// is the OpenPak password itself; "custom" is a separate console password. The answer is the
+// resulting status ("sync", "custom" or "incompatible") and the NNID. The password is never logged.
+func (c *Client) SetConsolePassword(ctx context.Context, accountID, password, mode string) (status, nnid string, err error) {
+	if c == nil {
+		return "", "", fmt.Errorf("nn-account not configured")
+	}
+	body, _ := json.Marshal(map[string]string{"account_id": accountID, "password": password, "mode": mode})
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+"/internal/wiiu/console-password", bytes.NewReader(body))
+	if err != nil {
+		return "", "", err
+	}
+	req.Header.Set("Authorization", "Bearer "+c.Key)
+	req.Header.Set("X-Internal-Key", c.Key)
+	req.Header.Set("Content-Type", "application/json")
+	// Ensure may mint a whole Wii U identity first, which outlasts the 3 s of a lookup.
+	resp, err := (&http.Client{Timeout: 15 * time.Second, Transport: c.HTTP.Transport}).Do(req)
+	if err != nil {
+		return "", "", err
+	}
+	defer resp.Body.Close()
+	var out struct {
+		Status string `json:"status"`
+		NNID   string `json:"nnid"`
+		Error  string `json:"error"`
+	}
+	_ = json.NewDecoder(io.LimitReader(resp.Body, 1<<14)).Decode(&out)
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return out.Status, out.NNID, nil
+	case http.StatusUnprocessableEntity:
+		return "", "", &ErrConsolePassword{Reason: out.Error}
+	}
+	return "", "", fmt.Errorf("nn-account: %s", resp.Status)
+}

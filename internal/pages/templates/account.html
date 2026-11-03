@@ -189,6 +189,34 @@
       </form>{{end}}</li>{{end}}
   </ul>
   {{else}}<p class="empty">{{t .Lang "account.links.none"}}</p>{{end}}
+  {{if .Console.Show}}
+  <div class="form-stack max-w-md" id="console">
+    <h3 class="mt-8">{{t .Lang "account.console.title"}}</h3>
+    <p class="hint">Wii U &middot; 3DS &mdash; {{t .Lang "account.console.id"}}: <code>{{.Console.NNID}}</code></p>
+    {{if .Console.Synced}}<p>{{tid .Lang "account.console.sync" .Console.NNID}}</p>
+    {{else if .Console.Custom}}<p>{{tid .Lang "account.console.custom" .Console.NNID}}</p>
+    {{else if .Console.Incompatible}}<p class="card border-accent-line bg-accent-weak px-4 py-3 text-ink-2" role="status">{{tid .Lang "account.console.incompatible" .Console.NNID}}</p>
+    {{else}}<p>{{tid .Lang "account.console.unsynced" .Console.NNID}}</p>{{end}}
+    <details{{if .Console.Open}} open{{end}}>
+      <summary>{{t .Lang "account.console.fallback"}}</summary>
+      <p class="hint">{{tid .Lang "account.console.rules" .Console.NNID}}</p>
+      <form method="post" action="/account/console-password" class="form-stack">
+        <input type="hidden" name="csrf" value="{{.CSRF}}">
+        <label for="console-password">{{t .Lang "account.console.new"}}</label>
+        <input id="console-password" type="password" name="console_password" autocomplete="new-password" minlength="{{.Console.Min}}" maxlength="{{.Console.Max}}" required>
+        <label for="console-confirm">{{t .Lang "account.console.confirm"}}</label>
+        <input id="console-confirm" type="password" name="confirm_console_password" autocomplete="new-password" minlength="{{.Console.Min}}" maxlength="{{.Console.Max}}" required>
+        <label for="console-current">{{t .Lang "account.password.current"}}</label>
+        <input id="console-current" type="password" name="password" autocomplete="current-password" required>
+        {{if .Console.NeedSecondFactor}}
+        <label for="console-code">{{t .Lang "auth.2fa.code"}}</label>
+        <input id="console-code" type="text" name="code" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" required>
+        {{end}}
+        <button type="submit" class="small">{{t .Lang "account.console.save"}}</button>
+      </form>
+    </details>
+  </div>
+  {{end}}
   {{if or .Discord.Configured .Discord.Linked}}
   <div class="form-stack max-w-md" id="discord">
     <h3 class="mt-8">{{t .Lang "discord.title"}}</h3>

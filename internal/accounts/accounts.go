@@ -300,3 +300,19 @@ func SplitSecondFactor(typed string) (code, recoveryCode string) {
 	}
 	return "", strings.TrimSpace(typed)
 }
+
+// SetConsolePassword sets a separate Wii U / 3DS console password, for an OpenPak password that
+// cannot be typed on a console. Like other security changes it asks for the OpenPak password
+// again (and the second factor): a session or a bearer alone must not be able to open a
+// console sign-in. It returns the Network ID to type. A refused console password is an
+// *adapter.ErrConsolePassword.
+func SetConsolePassword(ctx context.Context, id core.Identity, nn *adapter.Client, accountID, current, secondFactor, console string) (string, error) {
+	if nn == nil {
+		return "", errors.New("nn-account not configured")
+	}
+	if err := Reauthenticate(ctx, id, accountID, current, secondFactor); err != nil {
+		return "", err
+	}
+	_, nnid, err := nn.SetConsolePassword(ctx, accountID, console, "custom")
+	return nnid, err
+}
