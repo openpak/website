@@ -392,6 +392,8 @@ func run(log *slog.Logger) error {
 	// and can only reach what is public. Up or down only, nothing else about them.
 	// ponytail: one fixed map; add a service here when the status page should watch it.
 	behind := map[string]healthChecker{}
+	// The account core lost its own public name: account.openpak.org is the consoles' sign-in host.
+	behind["core"] = coreHTTP
 	if savesCli != nil {
 		behind["saves"] = savesCli
 	}

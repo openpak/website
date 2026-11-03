@@ -11,6 +11,9 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.86.1 — 2026-11-03
+- `GET /healthz/core` reports the account core's health, so the status page no longer needs the core's own public address (account.openpak.org goes to the Wii U/3DS sign-in server).
+
 ## v0.86.0 — 2026-11-03
 
 - The OpenPak password is now the Wii U / 3DS console password. Signing in (website or app, including after a second factor) and changing the password hand it to nn-account (`NN_ACCOUNT_INTERNAL_URL`), which stores the console form of it, in the background: a slow or failed nn-account never blocks a sign-in, and the password is never logged (`internal/consolesync`). Existing accounts are fixed by signing out and back in once; then "Link an existing Network ID" on the console takes the ID and the OpenPak password.
