@@ -485,16 +485,6 @@ func envOr(key, def string) string {
 	return v
 }
 
-func logRequests(log *slog.Logger) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			start := time.Now()
-			next.ServeHTTP(w, r)
-			log.Debug("http", "method", r.Method, "path", r.URL.Path, "dur", time.Since(start).String())
-		})
-	}
-}
-
 type healthChecker interface{ Healthy(context.Context) error }
 
 // connLoad is unhealthy once the server holds max or more client connections.

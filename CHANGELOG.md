@@ -11,6 +11,9 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.89.1 — 2026-11-03
+- One info line per request (`http method path status ms`) instead of a debug-only one. Never the query, headers, cookies or body; opaque path segments (24+ token characters) are masked as `{id}`; static files, health probes, metrics and the log ingest are left out (card #84).
+
 ## v0.89.0 — 2026-11-03
 - Service logs: `openpak-logd` host collector (one file per service per UTC day, gzip after 2 days, 90 days kept), `POST /internal/logs/ingest` (key `LOGS_INGEST_KEY`) into a day-partitioned Postgres `logs` database (`LOGS_DATABASE_URL`, pool of 3, partitions dropped after 90 days), and the admins-only `/admin/logs` viewer: service, day, level, text search, paging, live tail, day download. Secrets are masked before storage. See `docs/logs.md` (card #84).
 
