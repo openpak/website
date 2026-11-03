@@ -11,6 +11,12 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.82.0
+
+- Achievements core: `/healthz/achievements` for the status page and an account-erasure step, both
+  active only when `ACHIEVEMENTS_URL` is set (`ACHIEVEMENTS_INTERNAL_KEY` is the erasure key). The
+  PS3 trophy page still reads np-trophy's private API, which now fronts the core.
+
 ## v0.81.0
 
 - Leaderboards core (`LEADERBOARDS_URL`, `LEADERBOARDS_INTERNAL_KEY`; both optional): `/healthz/leaderboards`

@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/openpak/website/internal/accounts"
+	"github.com/openpak/website/internal/achievements"
 	"github.com/openpak/website/internal/adapter"
 	"github.com/openpak/website/internal/admin"
 	"github.com/openpak/website/internal/api"
@@ -144,6 +145,13 @@ func run(log *slog.Logger) error {
 	lbCli := leaderboards.New(os.Getenv("LEADERBOARDS_URL"), os.Getenv("LEADERBOARDS_INTERNAL_KEY"))
 	if lbCli == nil {
 		log.Info("leaderboards: LEADERBOARDS_URL not set; no health route and no erasure step")
+	}
+
+	// The neutral achievements core: only its health (/healthz/achievements) and account erasure
+	// concern the site; PS3 trophies still come through np-trophy's private API, which fronts it.
+	achCli := achievements.New(os.Getenv("ACHIEVEMENTS_URL"), os.Getenv("ACHIEVEMENTS_INTERNAL_KEY"))
+	if achCli == nil {
+		log.Info("achievements: ACHIEVEMENTS_URL not set; no health route and no erasure step")
 	}
 
 	// /link: xbl's private approval API (device-code sign-in for games). The key
@@ -282,6 +290,9 @@ func run(log *slog.Logger) error {
 	if lbCli != nil { // optional: an unconfigured step would hold every account back
 		erasureSteps = append(erasureSteps, erasure.Step{Name: "leaderboards", Erase: lbCli.EraseAccount})
 	}
+	if achCli != nil { // optional, like leaderboards
+		erasureSteps = append(erasureSteps, erasure.Step{Name: "achievements", Erase: achCli.EraseAccount})
+	}
 	erasureSteps = append(erasureSteps,
 		erasure.ModsStep(os.Getenv("MODS_INTERNAL_URL"), os.Getenv("MODS_INTERNAL_KEY"), &http.Client{Timeout: time.Minute}),
 		erasure.WebsiteStep(db, files, mediaSvc, log))
@@ -371,6 +382,9 @@ func run(log *slog.Logger) error {
 	}
 	if lbCli != nil {
 		behind["leaderboards"] = lbCli
+	}
+	if achCli != nil {
+		behind["achievements"] = achCli
 	}
 	mux.HandleFunc("GET /healthz/{service}", healthzBehind(behind))
 
