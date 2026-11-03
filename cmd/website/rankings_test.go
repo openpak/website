@@ -23,7 +23,8 @@ func TestRankingServers(t *testing.T) {
 				t.Errorf("%v: URL %s does not scope to %v", rs.Names, rs.URL, rs.TitleIDs)
 			}
 		}
-		if rs.Console == "Switch" && !strings.HasPrefix(rs.URL, "http://host.containers.internal:") {
+		// Spelunky 2 is a vendor-free container on openpak.network (RANKINGS_ADDR=:9090), not a host-network switch-nex process.
+		if rs.Console == "Switch" && !strings.HasPrefix(rs.URL, "http://host.containers.internal:") && rs.URL != "http://openpak-spelunky2:9090" {
 			t.Errorf("%v: Switch servers run on the host network", rs.Names)
 		}
 	}
