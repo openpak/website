@@ -11,6 +11,11 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.83.0
+
+- Title storage core (`TITLE_STORAGE_URL`, `TITLE_STORAGE_INTERNAL_KEY`; both optional): `/healthz/title-storage`
+  for the status page and an account-erasure step that deletes the account's variables and objects.
+
 ## v0.82.0
 
 - Achievements core: `/healthz/achievements` for the status page and an account-erasure step, both

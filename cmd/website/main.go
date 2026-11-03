@@ -44,6 +44,7 @@ import (
 	"github.com/openpak/website/internal/store"
 	"github.com/openpak/website/internal/supervision"
 	"github.com/openpak/website/internal/support"
+	"github.com/openpak/website/internal/titlestorage"
 	"github.com/openpak/website/internal/turnstile"
 	"github.com/openpak/website/internal/xbl"
 )
@@ -277,6 +278,12 @@ func run(log *slog.Logger) error {
 		log.Warn("attachments unavailable; tickets and crash reports carry no files", "dir", cfg.AttachmentsDir, "err", err)
 		files = nil
 	}
+	// The neutral title storage core: only its health (/healthz/title-storage) and account erasure
+	// concern the site; console adapters (np-tus, np-uploader) use it over gRPC.
+	tsCli := titlestorage.New(os.Getenv("TITLE_STORAGE_URL"), os.Getenv("TITLE_STORAGE_INTERNAL_KEY"))
+	if tsCli == nil {
+		log.Info("title-storage: TITLE_STORAGE_URL not set; no health route and no erasure step")
+	}
 	supportSvc := &support.Service{DB: db, Files: files, Push: pushSender, Log: log}
 
 	// Account erasure: once a closed account's grace period is over, erase it
@@ -292,6 +299,9 @@ func run(log *slog.Logger) error {
 	}
 	if achCli != nil { // optional, like leaderboards
 		erasureSteps = append(erasureSteps, erasure.Step{Name: "achievements", Erase: achCli.EraseAccount})
+	}
+	if tsCli != nil { // optional, like leaderboards
+		erasureSteps = append(erasureSteps, erasure.Step{Name: "title-storage", Erase: tsCli.EraseAccount})
 	}
 	erasureSteps = append(erasureSteps,
 		erasure.ModsStep(os.Getenv("MODS_INTERNAL_URL"), os.Getenv("MODS_INTERNAL_KEY"), &http.Client{Timeout: time.Minute}),
@@ -385,6 +395,9 @@ func run(log *slog.Logger) error {
 	}
 	if achCli != nil {
 		behind["achievements"] = achCli
+	}
+	if tsCli != nil {
+		behind["title-storage"] = tsCli
 	}
 	mux.HandleFunc("GET /healthz/{service}", healthzBehind(behind))
 
