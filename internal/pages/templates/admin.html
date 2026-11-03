@@ -16,6 +16,7 @@
   <li><a class="card sel block h-full p-5 no-underline" href="/admin/registry"><h3 class="text-ink">{{t .Lang "admin.registry"}}</h3><p class="mb-0 text-sm text-muted">{{t .Lang "admin.registry.sub"}}</p></a></li>
   <li><a class="card sel block h-full p-5 no-underline" href="/admin/config"><h3 class="text-ink">{{t .Lang "admin.config"}}</h3><p class="mb-0 text-sm text-muted">{{t .Lang "admin.config.sub"}}</p></a></li>
   <li><a class="card sel block h-full p-5 no-underline" href="/admin/events"><h3 class="text-ink">{{t .Lang "admin.events"}}</h3><p class="mb-0 text-sm text-muted">{{t .Lang "admin.events.sub"}}</p></a></li>
+  {{if .ShowLogs}}<li><a class="card sel block h-full p-5 no-underline" href="/admin/logs"><h3 class="text-ink">{{t .Lang "admin.logs"}}</h3><p class="mb-0 text-sm text-muted">{{t .Lang "admin.logs.sub"}}</p></a></li>{{end}}
   <li><a class="card sel block h-full p-5 no-underline" href="/admin/users"><h3 class="text-ink">{{t .Lang "admin.users"}}</h3><p class="mb-0 text-sm text-muted">{{t .Lang "admin.users.sub"}}</p></a></li>
   {{if .ShowRewards}}<li><a class="card sel block h-full p-5 no-underline" href="/admin/rewards"><h3 class="text-ink">{{t .Lang "admin.rewards"}}</h3><p class="mb-0 text-sm text-muted">{{t .Lang "admin.rewards.sub"}}</p></a></li>{{end}}
   <li><a class="card sel block h-full p-5 no-underline" href="/admin/reports"><h3 class="text-ink">{{t .Lang "admin.reports"}}</h3><p class="mb-0 text-sm text-muted">{{t .Lang "admin.reports.sub"}}</p></a></li>

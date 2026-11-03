@@ -32,6 +32,11 @@ go run ./cmd/website
   `/metrics` is Prometheus text; `/debug/pprof/` is mounted on the same port.
   Keep both off the public internet (port plan rule 4).
 
+## Logs
+
+Where this service's logs are, how long they are kept and the `/admin/logs` viewer:
+see `docs/logs.md` (day files under `~/openpak-logs/openpak-website/`, 90 days).
+
 ## Styling
 
 The stylesheet is built by Tailwind from `web/src/input.css`; run

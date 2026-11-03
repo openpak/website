@@ -11,6 +11,9 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.89.0 — 2026-11-03
+- Service logs: `openpak-logd` host collector (one file per service per UTC day, gzip after 2 days, 90 days kept), `POST /internal/logs/ingest` (key `LOGS_INGEST_KEY`) into a day-partitioned Postgres `logs` database (`LOGS_DATABASE_URL`, pool of 3, partitions dropped after 90 days), and the admins-only `/admin/logs` viewer: service, day, level, text search, paging, live tail, day download. Secrets are masked before storage. See `docs/logs.md` (card #84).
+
 ## v0.88.1 — 2026-11-03
 - Demon's Souls and Armored Core V (PS3) show the boards of all their regional NP communication ids, as region-labelled boards ("US: ...", "EU: ...", "JP: ..."), so EU and JP scores no longer go unseen. They are listed side by side, not merged: ranks are counted per server (`companion.Multi`, `rankingRegions`).
 

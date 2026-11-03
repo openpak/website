@@ -24,9 +24,10 @@ func TestWritePreview(t *testing.T) {
 	_ = db.PutWebSession(context.Background(), store.WebSession{CoreSessionID: "sess-admin", AccountID: "acct-admin", DisplayName: "Root"})
 	st := rewardstest.NewState()
 	s.Rewards = rewardstest.New(t, st)
+	s.Logs = sampleLogs()
 	mux := http.NewServeMux()
 	s.RegisterRoutes(mux)
-	for _, p := range []string{"", "monitor", "services", "news", "titles", "users", "tickets", "crashes", "config", "events", "rewards", "rewards?all=1&m=resolved", "rewards?down"} {
+	for _, p := range []string{"", "monitor", "services", "news", "titles", "users", "tickets", "crashes", "config", "events", "rewards", "rewards?all=1&m=resolved", "rewards?down", "logs?service=openpak-account", "logs?service=openpak-account&level=2"} {
 		st.Down = p == "rewards?down"
 		rec := httptest.NewRecorder()
 		mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, strings.TrimSuffix("/admin/"+strings.Replace(p, "?down", "", 1), "/"), nil))

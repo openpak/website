@@ -205,6 +205,19 @@
   }
   @media (prefers-color-scheme: dark) { .card { border-color: transparent; } }
 
+  /* /admin/logs: one log line per row; the level colours the badge, the message wraps. */
+  .logview { list-style: none; margin: 0; padding: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8rem; overflow: hidden; }
+  .logview .ll { display: grid; grid-template-columns: 5.2em 4.2em 1fr; gap: .6rem; padding: .3rem .8rem; border-bottom: 1px solid var(--line); align-items: baseline; }
+  .logview .ll:last-child { border-bottom: 0; }
+  .logview .ll time { color: var(--muted); }
+  .logview .ll b { font-weight: 700; font-size: .7rem; letter-spacing: .04em; color: var(--ink-2); }
+  .logview .ll span { overflow-wrap: anywhere; white-space: pre-wrap; color: var(--ink); }
+  .logview .ll.ERROR { background: var(--bad-weak); }
+  .logview .ll.ERROR b { color: var(--bad); }
+  .logview .ll.WARN b { color: var(--warn); }
+  .logview .ll.DEBUG span { color: var(--muted); }
+  @media (max-width: 640px) { .logview .ll { grid-template-columns: 4.6em 1fr; } .logview .ll b { display: none; } }
+
   .badge {
     display: inline-flex; align-items: center; gap: 0.4rem;
     padding: 0.15rem 0.6rem 0.15rem 0.5rem; border-radius: 999px;

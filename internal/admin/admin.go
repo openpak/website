@@ -76,6 +76,8 @@ type Server struct {
 	Rewards *rewards.Client
 	// CrashFiles holds crash-report attachments; nil means reports carry none.
 	CrashFiles *attachments.Store
+	// Logs is the service-log database behind /admin/logs; nil says "not configured".
+	Logs LogSource
 
 	tmpl *template.Template
 	log  *slog.Logger
@@ -97,7 +99,7 @@ func New(tpl *template.Template, coreEvents core.Events, db store.Store, session
 type base struct {
 	// The optional sections this deployment configures, so the overview can
 	// leave the others' cards out too.
-	ShowConsoleNews, ShowStore, ShowRewards bool
+	ShowConsoleNews, ShowStore, ShowRewards, ShowLogs bool
 	// Same fingerprint the public pages use: _layout.html is shared, and without this field
 	// every admin page fails to render.
 	Asset  string
@@ -143,6 +145,7 @@ var adminNav = []struct{ href, key string }{
 	{"/admin/registry", "admin.registry"},
 	{"/admin/config", "admin.nav.config"},
 	{"/admin/events", "admin.nav.events"},
+	{"/admin/logs", "admin.logs"},
 	{"/admin/users", "admin.nav.users"},
 	{"/admin/rewards", "admin.rewards"},
 	{"/admin/reports", "admin.reports"},
@@ -178,6 +181,9 @@ func (s *Server) hiddenSections() []string {
 	if s.Rewards == nil {
 		out = append(out, "/admin/rewards")
 	}
+	if s.Logs == nil {
+		out = append(out, "/admin/logs")
+	}
 	return out
 }
 
@@ -210,7 +216,7 @@ func (s *Server) authorize(w http.ResponseWriter, r *http.Request) (store.WebSes
 func (s *Server) page(r *http.Request, ws store.WebSession, title string) base {
 	return base{Asset: pages.AssetVersion(), Admin: true, Path: r.URL.Path, Lang: "en", Title: title,
 		User: adminUser{DisplayName: ws.DisplayName, Email: ws.Email}, CSRF: s.Sessions.CSRFToken(ws.CoreSessionID),
-		Nav: navFor(r.URL.Path, s.hiddenSections()...), ShowConsoleNews: s.ConsoleNews != nil, ShowStore: s.Store != nil, ShowRewards: s.Rewards != nil, Updates: s.pendingUpdates(r.Context())}
+		Nav: navFor(r.URL.Path, s.hiddenSections()...), ShowConsoleNews: s.ConsoleNews != nil, ShowStore: s.Store != nil, ShowRewards: s.Rewards != nil, ShowLogs: s.Logs != nil, Updates: s.pendingUpdates(r.Context())}
 }
 
 func (s *Server) pendingUpdates(ctx context.Context) int {
@@ -283,6 +289,9 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/config", s.handleConfig)
 	mux.HandleFunc("POST /admin/config", s.handleConfigSave)
 	mux.HandleFunc("GET /admin/events", s.handleEvents)
+	mux.HandleFunc("GET /admin/logs", s.handleLogs)
+	mux.HandleFunc("GET /admin/logs/data", s.handleLogsData)
+	mux.HandleFunc("GET /admin/logs/download", s.handleLogsDownload)
 	mux.HandleFunc("GET /admin/users", s.handleUsers)
 	mux.HandleFunc("GET /admin/rewards", s.handleRewards)
 	mux.HandleFunc("POST /admin/rewards/flags/resolve", s.handleRewardsResolve)

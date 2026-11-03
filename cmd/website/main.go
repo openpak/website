@@ -29,6 +29,7 @@ import (
 	"github.com/openpak/website/internal/erasure"
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/leaderboards"
+	"github.com/openpak/website/internal/logstore"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/metrics"
 	"github.com/openpak/website/internal/netprofile"
@@ -327,8 +328,24 @@ func run(log *slog.Logger) error {
 	pageSrv.Support = supportSvc
 	apiSrv.Support = supportSvc
 	apiSrv.Crashes = files
+	// Service logs: the host collector (openpak-logd) ships here, /admin/logs reads. LOGS_DATABASE_URL
+	// unset leaves the section out; LOGS_INGEST_KEY unset refuses the ingest route.
+	var logsStore *logstore.Store
+	if u := os.Getenv("LOGS_DATABASE_URL"); u != "" {
+		ls, err := logstore.Open(ctx, u)
+		if err != nil {
+			log.Error("logs: database unavailable; /admin/logs is left out", "err", err)
+		} else {
+			defer ls.Close()
+			go ls.Run(ctx, log)
+			logsStore = ls
+		}
+	}
 	adminSrv := admin.New(tmpl, coreGRPC, db, sessions, cfg.AdminAccountIDs, log)
 	adminSrv.Federation = coreGRPC
+	if logsStore != nil { // a nil *Store in the interface would read as configured
+		adminSrv.Logs = logsStore
+	}
 	adminSrv.Operators = db
 	adminSrv.Moderation = coreGRPC
 	adminSrv.Rewards = pageSrv.Rewards // nil without REWARDS_URL: the section is left out
@@ -380,6 +397,9 @@ func run(log *slog.Logger) error {
 	}
 
 	mux := http.NewServeMux()
+	if logsStore != nil {
+		mux.HandleFunc("POST /internal/logs/ingest", logstore.IngestHandler(logsStore, os.Getenv("LOGS_INGEST_KEY"), log))
+	}
 	pageSrv.RegisterRoutes(mux)
 	apiSrv.RegisterRoutes(mux)
 	adminSrv.RegisterRoutes(mux)

@@ -1,0 +1,35 @@
+{{template "header" .}}
+{{template "adminnav" .}}
+<div class="page-head">
+  <h1>{{t .Lang "admin.logs"}}</h1>
+  <p>{{t .Lang "admin.logs.help"}}</p>
+</div>
+{{if .Error}}<p class="notice bad mb-6" role="alert">{{.Error}}</p>{{end}}
+{{if not .Days}}{{else}}
+<form method="get" action="/admin/logs" class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2" aria-label="{{t .Lang "admin.logs"}}">
+  <label class="flex flex-col gap-1 text-sm text-ink-2"><span>{{t .Lang "admin.logs.service"}}</span>
+    <select name="service" class="field"><option value="">{{t .Lang "admin.logs.pick"}}</option>{{range .Services}}<option value="{{.Service}}"{{if eq .Service $.Service}} selected{{end}}>{{.Service}} ({{.Lines}}{{if .Errors}}, {{.Errors}} {{t $.Lang "admin.logs.errors"}}{{end}})</option>{{end}}</select></label>
+  <label class="flex flex-col gap-1 text-sm text-ink-2"><span>{{t .Lang "admin.logs.day"}}</span>
+    <select name="day" class="field">{{range .Days}}<option value="{{.}}"{{if eq . $.Day}} selected{{end}}>{{.}}</option>{{end}}</select></label>
+  <label class="flex flex-col gap-1 text-sm text-ink-2"><span>{{t .Lang "admin.logs.level"}}</span>
+    <select name="level" class="field">{{range $i, $n := .Levels}}<option value="{{$i}}"{{if eq $i $.Level}} selected{{end}}>{{$n}}</option>{{end}}</select></label>
+  <label class="flex flex-col gap-1 text-sm text-ink-2"><span>{{t .Lang "admin.logs.search"}}</span>
+    <input name="q" class="field" value="{{.Text}}" autocomplete="off" maxlength="200"></label>
+  <div class="flex flex-wrap items-center gap-3 sm:col-span-2">
+    <button type="submit" class="btn text-sm primary">{{t .Lang "admin.logs.apply"}}</button>
+    {{if .Service}}<a class="btn text-sm" href="/admin/logs/download?{{.Query.Encode}}">{{t .Lang "admin.logs.download"}}</a>
+    <label class="flex items-center gap-2 text-sm text-ink-2"><input type="checkbox" id="logtail"> {{t .Lang "admin.logs.tail"}}</label>{{end}}
+  </div>
+</form>
+{{if .Service}}
+{{if .Lines}}
+<ol class="logview card" id="loglines" data-newest="{{.NewestID}}" data-service="{{.Service}}" data-level="{{.Level}}" data-q="{{.Text}}" data-live="{{if eq .Day (index .Days 0)}}1{{end}}">
+  {{range .Lines}}<li class="ll {{.LevelName}}"><time>{{.TS.UTC.Format "15:04:05"}}</time><b>{{.LevelName}}</b><span>{{.Msg}}</span></li>{{end}}
+</ol>
+{{if .NextBefore}}<p class="mt-4"><a class="btn text-sm" href="/admin/logs?{{.Query.Encode}}&amp;before={{.NextBefore}}">{{t .Lang "admin.logs.older"}}</a></p>{{end}}
+{{else}}<p class="card p-4 text-muted">{{t .Lang "admin.logs.none"}}</p>{{end}}
+{{else}}<p class="card p-4 text-muted">{{t .Lang "admin.logs.choose"}}</p>{{end}}
+{{end}}
+<script src="/static/logs.js?v={{.Asset}}" defer></script>
+{{template "adminend"}}
+{{template "footer" .}}

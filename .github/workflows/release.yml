@@ -53,8 +53,11 @@ jobs:
             CGO_ENABLED=0 GOOS=linux GOARCH="$arch" \
               go build -trimpath -ldflags "-s -w" \
               -o "dist/openpak-opsd-linux-$arch" ./cmd/openpak-opsd
+            CGO_ENABLED=0 GOOS=linux GOARCH="$arch" \
+              go build -trimpath -ldflags "-s -w" \
+              -o "dist/openpak-logd-linux-$arch" ./cmd/openpak-logd
           done
-          (cd dist && sha256sum openpak-network-* openpak-opsd-* > checksums.txt)
+          (cd dist && sha256sum openpak-network-* openpak-opsd-* openpak-logd-* > checksums.txt)
       - if: startsWith(github.ref, 'refs/tags/v') && env.PUSH == 'true'
         uses: softprops/action-gh-release@v2
         with:
