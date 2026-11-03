@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 	"net/http"
 	"net/url"
 	"slices"
@@ -755,17 +757,20 @@ func tilesOf(lang string, ms []rewards.Mission, equippedBadge string) (work, own
 // playTime is a duration as a person says it: whole hours as "10 h", else minutes ("15 min", "1 h 30 min").
 func playTime(lang string, seconds int64) string {
 	if seconds >= 3600 && seconds%3600 == 0 {
-		return fmt.Sprintf(i18n.T(lang, "rewards.hours"), seconds/3600)
+		return number(lang).Sprintf(i18n.T(lang, "rewards.hours"), seconds/3600)
 	}
 	return Duration(lang, seconds)
 }
+
+// number prints integers with the language's digit grouping (1,000 h, 1.000 h, 1 000 h).
+func number(lang string) *message.Printer { return message.NewPrinter(language.Make(lang)) }
 
 // targetText writes a mission's target the way its progress is counted: a duration for play time, else the number.
 func targetText(lang string, m rewards.Mission) string {
 	if strings.HasSuffix(m.Metric, "seconds") {
 		return playTime(lang, m.Target)
 	}
-	return strconv.FormatInt(m.Target, 10)
+	return number(lang).Sprint(m.Target)
 }
 
 // fillTile sets what a tile shows about the mission it is working on: the art, the progress and the reward.

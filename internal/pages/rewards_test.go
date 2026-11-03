@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/openpak/website/internal/rewards"
 	"github.com/openpak/website/internal/rewards/rewardstest"
 	"time"
 )
@@ -194,5 +195,16 @@ func TestRewardsBadgeTiles(t *testing.T) {
 	form := url.Values{"slot": {"badge"}, "item": {"badge-kart-25"}}
 	if w := authedRequest(s, rec, http.MethodPost, "/account/rewards/equip", &form); w.Code != http.StatusSeeOther {
 		t.Errorf("equip: %d", w.Code)
+	}
+}
+
+func TestTargetTextGroupsThousands(t *testing.T) {
+	for lang, want := range map[string]string{"en": "1,000", "de": "1.000"} {
+		if got := targetText(lang, rewards.Mission{Metric: "titles_played", Target: 1000}); got != want {
+			t.Errorf("%s: %q, want %q", lang, got, want)
+		}
+	}
+	if got := targetText("en", rewards.Mission{Metric: "lifetime_play_seconds", Target: 2500 * 3600}); !strings.Contains(got, "2,500") {
+		t.Errorf("hours: %q", got)
 	}
 }

@@ -11,6 +11,9 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.85.1 — 2026-11-03
+- Rewards ladder targets group thousands in each language ("1,000 h", "1.000 h") instead of "1000 h".
+
 ## v0.85.0
 
 - Rewards: the play ladders get the full nine tiers and the medal finishes. Hours Online 1, 10, 25, 50, 100, 250, 500,
