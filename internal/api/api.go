@@ -540,11 +540,7 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request, tok store.APIT
 		// id picks, and the URL serves both. Versioned from the media row the
 		// avatar writes stamp, so clients do not keep showing the old picture
 		// from cache after a change.
-		url := "/media/avatars/" + tok.AccountID + "/256"
-		if rec, err := s.DB.GetMedia(r.Context(), tok.AccountID, "avatar"); err == nil && !rec.UpdatedAt.IsZero() {
-			url += "?v=" + strconv.FormatInt(rec.UpdatedAt.UnixNano(), 10)
-		}
-		resp["avatar_url"] = url
+		resp["avatar_url"] = s.avatarURL(r.Context(), tok.AccountID)
 	}
 	// Linked consoles, every family the account reaches. A Wii/DS console is
 	// linked from the website by friend code (WFC has no login); its subject
@@ -646,7 +642,7 @@ func (s *Server) handleFriends(w http.ResponseWriter, r *http.Request, tok store
 	}
 	out := make([]map[string]any, 0, len(friends))
 	for _, f := range friends {
-		row := map[string]any{"account_id": f.AccountID, "display_name": f.DisplayName, "online": false}
+		row := map[string]any{"account_id": f.AccountID, "display_name": f.DisplayName, "online": false, "avatar_url": s.avatarURL(r.Context(), f.AccountID)}
 		if p, ok := presence[f.AccountID]; ok {
 			row["online"] = true
 			pj := s.presenceJSON(r.Context(), catalogue, p)
@@ -674,7 +670,7 @@ func (s *Server) handleRequests(w http.ResponseWriter, r *http.Request, tok stor
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
-		"incoming": friendsJSON(in), "outgoing": friendsJSON(out),
+		"incoming": s.friendsJSON(r.Context(), in), "outgoing": s.friendsJSON(r.Context(), out),
 	})
 }
 
@@ -808,10 +804,24 @@ func decodeSmall(w http.ResponseWriter, r *http.Request, v any) bool {
 	return true
 }
 
-func friendsJSON(fs []core.Friend) []map[string]string {
-	out := make([]map[string]string, 0, len(fs))
+// avatarURL is an account's picture as /me serves it: every account has one, its own or the preset
+// its id picks, at /media/avatars/<id>/256, versioned by the media row so a change shows at once.
+// "" when this deployment has no media service.
+func (s *Server) avatarURL(ctx context.Context, accountID string) string {
+	if s.Media == nil || accountID == "" {
+		return ""
+	}
+	url := "/media/avatars/" + accountID + "/256"
+	if rec, err := s.DB.GetMedia(ctx, accountID, "avatar"); err == nil && !rec.UpdatedAt.IsZero() {
+		url += "?v=" + strconv.FormatInt(rec.UpdatedAt.UnixNano(), 10)
+	}
+	return url
+}
+
+func (s *Server) friendsJSON(ctx context.Context, fs []core.Friend) []map[string]any {
+	out := make([]map[string]any, 0, len(fs))
 	for _, f := range fs {
-		out = append(out, map[string]string{"account_id": f.AccountID, "display_name": f.DisplayName})
+		out = append(out, map[string]any{"account_id": f.AccountID, "display_name": f.DisplayName, "avatar_url": s.avatarURL(ctx, f.AccountID)})
 	}
 	return out
 }
@@ -876,11 +886,12 @@ func (s *Server) handleInvitations(w http.ResponseWriter, r *http.Request, tok s
 	out := make([]map[string]any, 0, len(ins))
 	for _, in := range ins {
 		out = append(out, map[string]any{
-			"invitation_id": in.ID,
-			"from":          in.FromName,
-			"title_id":      in.TitleID,
-			"namespace":     in.Namespace,
-			"expires_at":    in.ExpiresAt.UTC().Format(time.RFC3339),
+			"invitation_id":   in.ID,
+			"from":            in.FromName,
+			"from_avatar_url": s.avatarURL(r.Context(), in.FromAccount),
+			"title_id":        in.TitleID,
+			"namespace":       in.Namespace,
+			"expires_at":      in.ExpiresAt.UTC().Format(time.RFC3339),
 		})
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"invitations": out})
@@ -1078,7 +1089,7 @@ func (s *Server) handleTitles(w http.ResponseWriter, r *http.Request) {
 		titles = append(titles, map[string]any{
 			"id": t.ID, "name": t.Name, "console": t.Console, "category": t.Category, "title_id": t.TitleID,
 			"title_ids": titleIDs(t), "status": t.Status, "notes": t.Notes, "requestable": t.Votable(),
-			"playability": playabilityOf(idx, t.ID),
+			"playability": playabilityOf(idx, t.ID), "art_url": pages.TitleArtURL(t),
 		})
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"titles": titles})

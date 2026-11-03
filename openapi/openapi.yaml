@@ -1307,6 +1307,7 @@ paths:
                         date_added: { type: string, format: date-time }
                         last_updated: { type: string, format: date-time }
                         verse_url: { type: string, description: "The game's OpenVerse community (live and beta titles only; absent otherwise)." }
+                        art_url: { type: string, description: "The titles page's picture: a Switch title's icon (/titles/icon/<id>) or the cover tile (/static/art/titles/...); empty when none, then draw the console mark. Titles only." }
                         votes: { type: integer }
                         voted: { type: boolean }
   /catalog.json:
@@ -3366,6 +3367,7 @@ components:
       properties:
         account_id: { type: string }
         display_name: { type: string }
+        avatar_url: { type: string, description: "The account's picture, a site path (/media/avatars/<id>/256?v=...). Every account has one." }
         blocked_at: { type: string, format: date-time }
     NewsArticle:
       type: object
@@ -3516,6 +3518,7 @@ components:
       properties:
         account_id: { type: string }
         display_name: { type: string }
+        avatar_url: { type: string, description: "The account's picture, a site path (/media/avatars/<id>/256?v=...). Every account has one." }
         country: { type: string, description: Empty when the account has never set one. }
         birthday: { type: string, description: Empty when the account has never set one. }
         email: { type: string, description: "The account's email address; empty if the core could not be asked." }
@@ -3572,6 +3575,7 @@ components:
             properties:
               account_id: { type: string }
               display_name: { type: string }
+              avatar_url: { type: string, description: "The account's picture, a site path (/media/avatars/<id>/256?v=...). Every account has one." }
               in_voice: { type: boolean }
     ChatMessage:
       type: object
@@ -3645,6 +3649,7 @@ components:
       properties:
         account_id: { type: string }
         display_name: { type: string }
+        avatar_url: { type: string, description: "The account's picture, a site path (/media/avatars/<id>/256?v=...). Every account has one." }
         online:
           type: boolean
           description: |

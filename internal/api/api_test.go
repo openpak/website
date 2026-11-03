@@ -26,30 +26,31 @@ import (
 
 // fakeCore mirrors contract semantics the API relies on.
 type fakeCore struct {
-	profileText    core.ProfileText
-	accounts       map[string]string
-	verified       map[string]bool
-	sessions       map[string]string
-	friends        map[string][]string
-	links          map[string]string
-	nnLinks        map[string]map[string]string // wiiu/3ds: account to subject
-	wfcLinks       map[string]string // namespace "wfc": the console a typed friend code resolved to
-	subjectToAc    map[string]string
-	deleted        []string // accounts whose deletion was requested
-	blocks         [][2]string
-	invitations    []core.PendingInvitation
-	presence       map[string]core.Presence
-	players        []core.TitlePlayers
-	networkPlayers map[string]int
-	totalPlayers   int
-	profile        [3]string         // country, birthday, display name as last saved
-	down           error             // when set, the core answers nothing at all
-	twoFactor      map[string]bool   // email -> 2FA on
-	publicCodes    map[string]string // published friend code -> account id
-	resent         int
-	newEmail       string
-	status         map[string]string // account id -> core status; absent = active
-	closed         map[string]bool   // email -> closed, restorable
+	profileText        core.ProfileText
+	accounts           map[string]string
+	verified           map[string]bool
+	sessions           map[string]string
+	friends            map[string][]string
+	links              map[string]string
+	incoming, outgoing []core.Friend
+	nnLinks            map[string]map[string]string // wiiu/3ds: account to subject
+	wfcLinks           map[string]string            // namespace "wfc": the console a typed friend code resolved to
+	subjectToAc        map[string]string
+	deleted            []string // accounts whose deletion was requested
+	blocks             [][2]string
+	invitations        []core.PendingInvitation
+	presence           map[string]core.Presence
+	players            []core.TitlePlayers
+	networkPlayers     map[string]int
+	totalPlayers       int
+	profile            [3]string         // country, birthday, display name as last saved
+	down               error             // when set, the core answers nothing at all
+	twoFactor          map[string]bool   // email -> 2FA on
+	publicCodes        map[string]string // published friend code -> account id
+	resent             int
+	newEmail           string
+	status             map[string]string // account id -> core status; absent = active
+	closed             map[string]bool   // email -> closed, restorable
 }
 
 func newFakeCore() *fakeCore {
@@ -299,10 +300,10 @@ func (f *fakeCore) ListFriends(_ context.Context, id string) ([]core.Friend, err
 	return out, nil
 }
 func (f *fakeCore) ListIncoming(_ context.Context, _ string) ([]core.Friend, error) {
-	return nil, nil
+	return f.incoming, nil
 }
 func (f *fakeCore) ListOutgoing(_ context.Context, _ string) ([]core.Friend, error) {
-	return nil, nil
+	return f.outgoing, nil
 }
 func (f *fakeCore) Relationship(_ context.Context, _, _ string) (core.Relationship, error) {
 	return core.RelNone, nil

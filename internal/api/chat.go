@@ -44,7 +44,12 @@ func (s *Server) handleChatConversations(w http.ResponseWriter, r *http.Request,
 	if convs == nil {
 		convs = []chat.Conversation{}
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"conversations": convs})
+	// Each conversation also names the peer's picture, as friends do.
+	out := make([]map[string]any, 0, len(convs))
+	for _, c := range convs {
+		out = append(out, map[string]any{"peer": c.Peer, "newest": c.Newest, "peer_avatar_url": s.avatarURL(r.Context(), c.Peer)})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"conversations": out})
 }
 
 func (s *Server) handleChatHistory(w http.ResponseWriter, r *http.Request, tok store.APIToken) {

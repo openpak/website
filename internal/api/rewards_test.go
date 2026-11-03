@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/openpak/website/internal/core"
+	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/pages"
 	"github.com/openpak/website/internal/rewards/rewardstest"
 	"github.com/openpak/website/internal/store"
@@ -177,5 +178,49 @@ func TestRequestsCarryVerseURLForServedTitles(t *testing.T) {
 	q.Status = "planned"
 	if _, ok := requestJSON(q)["verse_url"]; ok {
 		t.Fatal("unserved title has a community")
+	}
+}
+
+// Every place an account appears carries its picture, as /me does: fixtures once had avatar_url the live API lacked.
+func TestAccountsCarryAvatarURL(t *testing.T) {
+	s, fc, db := newTestAPI(t)
+	st, err := media.NewFSStorage(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.Media = media.New(st)
+	fc.friends["acct-a@x.test"] = []string{"acct-f"}
+	fc.incoming = []core.Friend{{AccountID: "acct-in", DisplayName: "In"}}
+	fc.outgoing = []core.Friend{{AccountID: "acct-out", DisplayName: "Out"}}
+	fc.blocks = append(fc.blocks, [2]string{"acct-a@x.test", "acct-bl"})
+	fc.invitations = []core.PendingInvitation{{ID: "i1", FromAccount: "acct-inv", FromName: "Inv", ExpiresAt: time.Now().Add(time.Hour)}}
+	tok := mintFor(t, s, "a@x.test", "password-A-1")
+	_ = db
+	for path, want := range map[string]string{
+		"/api/v1/me/friends":          "/media/avatars/acct-f/256",
+		"/api/v1/me/friends/requests": "/media/avatars/acct-in/256",
+		"/api/v1/me/blocked":          "/media/avatars/acct-bl/256",
+		"/api/v1/me/invitations":      "/media/avatars/acct-inv/256",
+	} {
+		if body := do(t, s, http.MethodGet, path, tok, nil).Body.String(); !strings.Contains(body, want) {
+			t.Errorf("%s lacks %s: %s", path, want, body)
+		}
+	}
+	if body := do(t, s, http.MethodGet, "/api/v1/me/friends/requests", tok, nil).Body.String(); !strings.Contains(body, "/media/avatars/acct-out/256") {
+		t.Errorf("outgoing lacks avatar_url: %s", body)
+	}
+}
+
+func TestEveryTitleCarriesArtURL(t *testing.T) {
+	sw := store.Request{Kind: "title", Name: "Splatoon 3", Console: "Switch", TitleID: "0100C2500FC20000", Status: "live"}
+	if m := requestJSON(sw); m["art_url"] != "/titles/icon/0100C2500FC20000" {
+		t.Fatalf("switch icon: %v", m["art_url"])
+	}
+	other := store.Request{Kind: "title", Name: "A Game With No Tile", Console: "Wii", Status: "live"}
+	if v, ok := requestJSON(other)["art_url"]; !ok || v != "" {
+		t.Fatalf("a title with no art still carries art_url (empty): %v %v", v, ok)
+	}
+	if _, ok := requestJSON(store.Request{Kind: "feature", Name: "Chat"})["art_url"]; ok {
+		t.Fatal("features have no art")
 	}
 }

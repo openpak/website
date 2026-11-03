@@ -491,11 +491,12 @@ func (g *GRPC) ListPending(ctx context.Context, accountID string) ([]PendingInvi
 	out := make([]PendingInvitation, 0, len(resp.GetInvitations()))
 	for _, in := range resp.GetInvitations() {
 		out = append(out, PendingInvitation{
-			ID:        in.GetInvitationId(),
-			FromName:  in.GetFromDisplayName(),
-			TitleID:   in.GetTitleId(),
-			Namespace: in.GetNamespace(),
-			ExpiresAt: time.Unix(in.GetExpiresAtUnix(), 0).UTC(),
+			ID:          in.GetInvitationId(),
+			FromAccount: in.GetFromAccountId(),
+			FromName:    in.GetFromDisplayName(),
+			TitleID:     in.GetTitleId(),
+			Namespace:   in.GetNamespace(),
+			ExpiresAt:   time.Unix(in.GetExpiresAtUnix(), 0).UTC(),
 		})
 	}
 	return out, nil

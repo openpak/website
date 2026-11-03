@@ -66,6 +66,7 @@ type voiceMember struct {
 	AccountID   string `json:"account_id"`
 	DisplayName string `json:"display_name"`
 	InVoice     bool   `json:"in_voice"`
+	AvatarURL   string `json:"avatar_url,omitempty"`
 }
 
 type voiceRoom struct {
@@ -104,12 +105,12 @@ func (s *Server) describeRoom(room voice.Room, g *voice.Gathering) *voiceRoom {
 				continue
 			}
 			seen[p.AccountID] = true
-			out.Members = append(out.Members, voiceMember{AccountID: p.AccountID, DisplayName: p.Nickname, InVoice: talking[p.AccountID]})
+			out.Members = append(out.Members, voiceMember{AccountID: p.AccountID, DisplayName: p.Nickname, InVoice: talking[p.AccountID], AvatarURL: s.avatarURL(context.Background(), p.AccountID)})
 		}
 	}
 	for _, p := range peers {
 		if !seen[p.ID] {
-			out.Members = append(out.Members, voiceMember{AccountID: p.ID, DisplayName: p.Name, InVoice: true})
+			out.Members = append(out.Members, voiceMember{AccountID: p.ID, DisplayName: p.Name, InVoice: true, AvatarURL: s.avatarURL(context.Background(), p.ID)})
 		}
 	}
 	return out

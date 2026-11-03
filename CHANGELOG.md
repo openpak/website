@@ -11,6 +11,11 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.80.2 — 2026-11-03
+
+- App API: every place an account appears carries its picture, as `/me` does (`avatar_url`, the media-versioned `/media/avatars/<id>/256`): friends, incoming and outgoing requests, blocked, voice-room members; chat conversations as `peer_avatar_url`; invitations as `from_avatar_url` (the core's sender account id is now read).
+- `GET /requests` and `GET /titles`: every title carries `art_url`, the titles page's rule (a Switch title's `/titles/icon/<id>`, else the cover tile under `/static/art/titles`, empty when it has none).
+
 ## v0.80.1 — 2026-11-03
 
 - App API: `GET /me` lists Wii U and 3DS console accounts in `linked_platforms` (namespaces `wiiu`, `3ds`, as /account does); `DELETE /me/links/wiiu|3ds` answers 403, as the site does not revoke them. `GET /me/sessions` marks the bearer's own session with `current: true`. `GET /requests` carries `verse_url` (the OpenVerse community of live and beta titles, the site's own rule).

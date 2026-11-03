@@ -356,11 +356,12 @@ type TitlePlayers struct {
 }
 
 type PendingInvitation struct {
-	ID        string
-	FromName  string
-	TitleID   string
-	Namespace string
-	ExpiresAt time.Time
+	ID          string
+	FromAccount string
+	FromName    string
+	TitleID     string
+	Namespace   string
+	ExpiresAt   time.Time
 }
 
 // Presence is what is known about someone who is playing right now. Absence

@@ -192,6 +192,10 @@ func requestJSON(q store.Request) map[string]any {
 	if v := pages.VerseURL(q); v != "" {
 		m["verse_url"] = v
 	}
+	// The titles page's picture for the game (Switch icon or cover tile); "" when it has none.
+	if q.Kind == "title" {
+		m["art_url"] = pages.TitleArtURL(q)
+	}
 	return m
 }
 

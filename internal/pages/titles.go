@@ -828,3 +828,19 @@ func (s *Server) handleSetShopLinks(w http.ResponseWriter, r *http.Request) {
 	_ = s.DB.AddAudit(r.Context(), v.AccountID, "title.shops", strconv.FormatInt(id, 10))
 	http.Redirect(w, r, "/titles#t-"+strconv.FormatInt(id, 10), http.StatusSeeOther)
 }
+
+// TitleArtURL is the picture the titles page draws a catalogue entry with, the app's too: a Switch
+// title's own icon (/titles/icon/<id>), else the cover tile under /static/art/titles; "" when it has
+// none, and the client then draws its console's mark, as the page's placeholder does.
+func TitleArtURL(r store.Request) string {
+	if r.Kind != "title" {
+		return ""
+	}
+	if r.Console == "Switch" {
+		if r.TitleID != "" {
+			return "/titles/icon/" + r.TitleID
+		}
+		return ""
+	}
+	return artPath(r.Console, r.Name)
+}

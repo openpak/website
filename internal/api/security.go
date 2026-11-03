@@ -169,7 +169,7 @@ func (s *Server) handleBlocked(w http.ResponseWriter, r *http.Request, tok store
 	out := make([]map[string]any, 0, len(blocked))
 	for _, b := range blocked {
 		out = append(out, map[string]any{
-			"account_id": b.AccountID, "display_name": b.DisplayName,
+			"account_id": b.AccountID, "display_name": b.DisplayName, "avatar_url": s.avatarURL(r.Context(), b.AccountID),
 			"blocked_at": b.BlockedAt.UTC().Format(time.RFC3339),
 		})
 	}
