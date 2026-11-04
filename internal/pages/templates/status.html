@@ -41,6 +41,7 @@
     <h2 id="sv-nets-h">{{t .Lang "status.v.networks"}}</h2>
     <ul class="sv-grid" id="sv-nets">
       {{range .Networks}}
+      {{if .NewFamily}}<li class="sv-fam"{{if not .Family}} aria-hidden="true"{{end}}>{{.Family}}</li>{{end}}
       <li class="sv-card sv-net" data-net="{{.ID}}" data-state="{{.State}}">
         <div class="sv-net-h">
           <span class="sv-net-n">{{.Name}}</span>

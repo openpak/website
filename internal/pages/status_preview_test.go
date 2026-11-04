@@ -81,6 +81,11 @@ func TestWriteStatusPreview(t *testing.T) {
 	write2 := func(path, body string) { _ = os.WriteFile(filepath.Join(dir, path), []byte(body), 0o644) }
 	write2("status/map.json", get(t, s, "/status/map.json").Body.String())
 
+	var feats []store.Request
+	for c, st := range map[string]string{"Switch": "live", "Wii U": "beta", "3DS": "beta", "Wii": "beta", "DS": "beta", "Xbox 360": "live", "Xbox": "in-development", "PS3": "in-development", "PS4": "in-development"} {
+		feats = append(feats, store.Request{Kind: "feature", Name: c + " online", Console: c, Status: st})
+	}
+	_ = db.SeedRequests(context.Background(), feats)
 	old := checkGameServers
 	checkGameServers = func(context.Context, ...map[string]string) []ServerHealth { return nil }
 	defer func() { checkGameServers = old }()

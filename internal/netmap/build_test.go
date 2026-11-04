@@ -118,3 +118,21 @@ func TestPublicMapHasNoInternals(t *testing.T) {
 		t.Errorf("kinds %v", kinds)
 	}
 }
+
+func TestConsoleLanesFollowTheNetworkOrder(t *testing.T) {
+	var ids []string
+	for _, n := range Build(fixture(t)).Networks {
+		ids = append(ids, n.ID)
+	}
+	want := "wii,ds,wiiu,3ds,switch,ps3,ps4,ps5,xbox,xbox360"
+	got := ""
+	for i, id := range ids {
+		if i > 0 {
+			got += ","
+		}
+		got += id
+	}
+	if got != want {
+		t.Errorf("lanes %s, want %s", got, want)
+	}
+}

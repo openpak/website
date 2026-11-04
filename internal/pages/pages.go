@@ -103,7 +103,7 @@ type Server struct {
 	Chat *chat.Client
 	// Pakka connects to the assistant; nil hides every Pakka entry point.
 	Pakka *pakkachat.Bridge
-	live liveState // the /status overview, cached a few seconds
+	live  liveState // the /status overview, cached a few seconds
 
 	// StatusAPI is status.openpak.org/api/status, the checks run from another host; empty hides that part of /status.
 	StatusAPI string

@@ -12,20 +12,13 @@ import (
 
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
+	"github.com/openpak/website/internal/netorder"
 )
 
 // /status is a live overview for players: is each network working, and who is playing what
 // right now. Per-service detail lives on status.openpak.org, which this page links to. The
 // page renders the current state itself (so it works without scripting) and status-live.js
 // then polls /status/live.json and updates it in place.
-
-// statusNetworks are the cards, in reading order. Name picks the entry in `networks` (stage and
-// player namespaces); ID is the id status.openpak.org rolls its checks up under.
-var statusNetworks = []struct{ ID, Name string }{
-	{"switch", "Switch"}, {"wiiu-3ds", "Wii U / 3DS"}, {"wii-ds", "Wii / DS"}, {"xbox360", "Xbox 360"},
-	{"xbox", "Xbox"}, {"ps3", "PlayStation 3"}, {"ps4", "PlayStation 4"},
-	{"shared", ""}, {"websites", ""},
-}
 
 type liveNet struct {
 	ID, Name string
@@ -35,6 +28,10 @@ type liveNet struct {
 	Players  int
 	Counted  bool   // Players is a real number
 	Text     string // "12 online"
+	// Family is Nintendo, PlayStation or Xbox ("" for Shared services and Websites); NewFamily marks the
+	// first card of a family (or of the shared group, whose Family is empty), which the page draws a heading or a gap above.
+	Family    string
+	NewFamily bool
 }
 
 type liveTitle struct {
@@ -196,11 +193,11 @@ func (s *Server) buildLive(ctx context.Context, lang string) *liveView {
 	issues = issueNames(issues, entries)
 
 	stages := s.consoleStages(ctx)
-	for _, sn := range statusNetworks {
-		n := liveNet{ID: sn.ID, Name: sn.Name, State: "idle", Label: t("status.unchecked")}
+	for _, sn := range netorder.All {
+		n := liveNet{ID: sn.ID, Name: sn.Site, Family: sn.Family, State: "idle", Label: t("status.unchecked")}
 		var def *network
 		for i := range networks {
-			if networks[i].Name == sn.Name {
+			if sn.Site != "" && networks[i].Name == sn.Site {
 				def = &networks[i]
 			}
 		}
@@ -211,7 +208,7 @@ func (s *Server) buildLive(ctx context.Context, lang string) *liveView {
 		}
 		if x, ok := ext.Networks[sn.ID]; ok {
 			n.State = x.State
-			if x.Title != "" && sn.Name != "" {
+			if x.Title != "" && sn.Site != "" {
 				n.Name = x.Title // one name for a network on both pages
 			}
 		}
@@ -242,6 +239,7 @@ func (s *Server) buildLive(ctx context.Context, lang string) *liveView {
 		if n.Counted {
 			n.Text = fmt.Sprintf("%d %s", n.Players, t("status.pill.online.many"))
 		}
+		n.NewFamily = len(v.Networks) > 0 && v.Networks[len(v.Networks)-1].Family != n.Family || len(v.Networks) == 0 && n.Family != ""
 		v.Networks = append(v.Networks, n)
 	}
 

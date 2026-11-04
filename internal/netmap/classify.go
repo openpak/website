@@ -1,14 +1,16 @@
 package netmap
 
-import "strings"
+import (
+	"sort"
+	"strings"
 
-// consoleSpec lists the ten console networks in the order the owner named them.
+	"github.com/openpak/website/internal/netorder"
+)
+
+// consoleSpec lists the console networks, in the shared network order (internal/netorder).
 // Family is the palette slot: consoles that share a stack share a hue, and the
 // node always carries its name as well, so colour is never the only code.
-var consoleSpec = []struct {
-	ID, Label, Feature string
-	Family             int
-}{
+var consoleSpec = ordered([]consoleDef{
 	{"switch", "Switch", "Switch", 1},
 	{"wiiu", "Wii U", "Wii U", 2},
 	{"3ds", "3DS", "3DS", 2},
@@ -18,7 +20,19 @@ var consoleSpec = []struct {
 	{"ps4", "PS4", "PS4", 4},
 	{"ps5", "PS5", "PS5", 4},
 	{"xbox360", "Xbox 360", "Xbox 360", 5},
-	{"xbox", "Xbox", "Xbox", 5},
+	{"xbox", "Original Xbox", "Xbox", 5},
+})
+
+type consoleDef struct {
+	ID, Label, Feature string
+	Family             int
+}
+
+// ordered puts the consoles in the one network order (family, then generation, oldest first), so
+// the map's lanes agree with the status pages.
+func ordered(in []consoleDef) []consoleDef {
+	sort.SliceStable(in, func(i, j int) bool { return netorder.ConsoleRank(in[i].ID) < netorder.ConsoleRank(in[j].ID) })
+	return in
 }
 
 var consoleIDs = func() map[string]bool {

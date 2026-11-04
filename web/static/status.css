@@ -48,3 +48,6 @@
   .sv-net .sv-badge { grid-column: 2; grid-row: 1 / span 2; }
   .sv-players { grid-column: 1; grid-row: 2; font-size: .84rem; }
 }
+.sv-fam { grid-column: 1 / -1; margin: .6rem 0 -.2rem; color: var(--muted); font: 700 .78rem var(--font-ui); letter-spacing: .08em; text-transform: uppercase; }
+.sv-fam:first-child { margin-top: 0; }
+.sv-fam:empty { margin-top: .9rem; height: 0; }

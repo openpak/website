@@ -98,3 +98,29 @@ func TestGroupedProblemsUseCatalogueNames(t *testing.T) {
 		t.Errorf("grouped: %q", got)
 	}
 }
+
+func TestOverviewCardsFollowTheNetworkOrder(t *testing.T) {
+	s, _, _ := newTestServer(t)
+	nets := ""
+	for _, id := range []string{"xbox360", "switch", "ps4", "wii-ds", "websites", "ps3", "shared", "wiiu-3ds", "xbox"} {
+		if nets != "" {
+			nets += ","
+		}
+		nets += `{"ID":"` + id + `","Title":"T","State":"ok","Up":1,"Total":1}`
+	}
+	withChecks(t, s, `{"Networks":[`+nets+`],"Problems":null,"Down":0}`)
+	body := get(t, s, "/status").Body.String()
+	last := -1
+	for _, id := range []string{"wii-ds", "wiiu-3ds", "switch", "ps3", "ps4", "xbox", "xbox360", "shared", "websites"} {
+		i := strings.Index(body, `data-net="`+id+`"`)
+		if i < 0 || i < last {
+			t.Fatalf("card %s out of order (at %d, after %d)", id, i, last)
+		}
+		last = i
+	}
+	for _, fam := range []string{">Nintendo<", ">PlayStation<", ">Xbox<", " aria-hidden=\"true\"><"} {
+		if strings.Count(body, `class="sv-fam"`+fam) != 1 {
+			t.Errorf("one %s heading expected", fam)
+		}
+	}
+}

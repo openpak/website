@@ -11,7 +11,9 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
-## v0.97.0 — 2026-11-04
+## v0.98.0 — 2026-11-04
+
+- Networks are ordered by family, then generation, oldest first, on `/status` (cards) and in the network map (lanes): Nintendo (Wii / DS, Wii U / 3DS, Switch), PlayStation (PS3, PSP, PS Vita, PS4, PS5), Xbox (Original Xbox, Xbox 360, Xbox One), then Shared services and Websites. One definition, `internal/netorder/networks.json`, copied from the status repository's `shared/networks.json` (`scripts/sync-status-shared.sh`, drift test), read by both views and by status.openpak.org. Networks nobody runs (PSP, PS Vita, Xbox One) have their place but appear once they exist. The cards carry small family headings. The map calls the original Xbox "Original Xbox".
 
 - Account erasure now reaches every service that keeps per-account data (card openpak/prds#120). `ERASURE_SERVICES` (name=url pairs, one per container; a name may repeat) and the shared `ACCOUNT_ERASE_KEY` add one finaliser step per service, calling `DELETE /internal/accounts/{id}/data`. Steps for nn-account and x360-xuacs run last because other services resolve ids through them.
 - `erasure.ExpectedServices` lists every service the chain depends on. One with no step is logged on every erasure and shown as "Not configured" on the new `/admin/erasure` page, next to the latest result of each step.
