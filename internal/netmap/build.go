@@ -212,12 +212,12 @@ func Build(in Input) Graph {
 			add(id, "zerotier", "network", "")
 		}
 	}
-	for _, h := range g.Hosts {
+	for i, h := range g.Hosts {
 		st, d := Up, fmt.Sprintf("Agent answered; %d services", h.Count)
 		if !h.Up {
 			st, d = Down, "The host agent did not answer: "+h.Error
 		}
-		nodes = append(nodes, Node{ID: "host-" + h.Name, Label: hostLabel(h), Kind: "host", Virtual: true, State: st, Detail: d,
+		nodes = append(nodes, Node{ID: "host-" + h.Name, Label: hostLabel(h, i), Kind: "host", Virtual: true, State: st, Detail: d,
 			Desc: fmt.Sprintf("A server. It runs %d of the services on this map.", h.Count), Hosts: []string{h.Name}})
 	}
 
@@ -382,9 +382,10 @@ var rank = map[string]int{Up: 0, Idle: 0, Planned: 1, Unknown: 1, Degraded: 2, D
 
 func worse(a, b string) bool { return rank[a] > rank[b] }
 
-func hostLabel(h HostRow) string {
+func hostLabel(h HostRow, i int) string {
+	// The first agent in WEBSITE_OPSD_HOSTS is the primary box.
 	name := "Secondary server"
-	if h.Name == "prod" {
+	if i == 0 {
 		name = "Primary server"
 	}
 	if h.IP != "" {

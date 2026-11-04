@@ -378,9 +378,9 @@ func run(log *slog.Logger) error {
 	adminSrv.Ops = admin.NewOpsAPI(os.Getenv("WEBSITE_OPSD_HOSTS"), os.Getenv("WEBSITE_OPSD_KEY"))
 	// The network map (/admin/network, and the public map on /status): built from what the host
 	// agents report, so it needs them. NETMAP_HOST_IPS names each agent's box by public address
-	// ("prod=145.241.199.19,draughts=145.241.228.207") so a reference to that address resolves.
+	// ("quilted-waffle=145.241.199.19,draughts=145.241.228.207") so a reference to that address resolves.
 	if adminSrv.Ops != nil {
-		ips := parseKV(envOr("NETMAP_HOST_IPS", "prod=145.241.199.19,draughts=145.241.228.207"))
+		ips := parseKV(envOr("NETMAP_HOST_IPS", "quilted-waffle=145.241.199.19,draughts=145.241.228.207"))
 		nm := &netmap.Service{
 			Topology: func(ctx context.Context) []netmap.HostTopo { return adminSrv.Ops.Topology(ctx, ips) },
 			Status: func(ctx context.Context) *netmap.StatusPage {

@@ -61,7 +61,7 @@ two servers. ZeroTier has no probe, so it shows "not monitored" rather than a ma
 | Variable | Default | Meaning |
 | --- | --- | --- |
 | `WEBSITE_OPSD_HOSTS`, `WEBSITE_OPSD_KEY` | (existing) | the host agents; without them there is no map |
-| `NETMAP_HOST_IPS` | `prod=145.241.199.19,draughts=145.241.228.207` | each agent's box by public address, so a reference to that address resolves |
+| `NETMAP_HOST_IPS` | `quilted-waffle=145.241.199.19,draughts=145.241.228.207` | each agent's box by public address, so a reference to that address resolves |
 | `STATUS_API_URL` | (existing) | the availability page |
 
 The graph is cached for 20 seconds and a failed refresh keeps serving the last good one. The map

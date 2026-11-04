@@ -11,6 +11,10 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.95.1 — 2026-11-04
+
+- Network map: `NETMAP_HOST_IPS` defaults to the real agent names (`quilted-waffle`, `draughts`), and the first agent is labelled the primary server.
+
 ## v0.95.0 — 2026-11-04
 
 - Network map. `/admin/network` (staff only, in the admin nav) draws every node of the network from live data: the ten console networks (Switch, Wii U, 3DS, Wii, DS, PS3, PS4, PS5, Xbox 360, Xbox), each one's services, the shared core, the sites and API, and the infrastructure and servers, with the lines between them. Search, filter by network or status, zoom and pan; clicking a node opens a panel with what it does, its repo and version, live status, a logs link, its databases and what it uses and is used by. A list view is the accessible twin and the phone layout. Status colours are fixed and always come with an icon and a word; network identity uses five validated hues.
