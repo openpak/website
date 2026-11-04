@@ -12,7 +12,7 @@
 <p>El software de OpenPak es software libre: cualquiera puede ejecutarlo bajo la <a href="https://www.gnu.org/licenses/agpl-3.0.html" rel="noopener">AGPL</a>. El nombre «OpenPak» y el logotipo de OpenPak son otra cosa: solo OpenPak y sus nodos de federación aprobados pueden usarlos. Una red independiente construida con el software debe usar su propio nombre y logotipo, y puede decir que está «basada en el software de OpenPak».</p>
 
 <h2 id="takedown">Derechos de autor y solicitudes de retirada</h2>
-<p>OpenPak no aloja ni distribuye juegos, firmware ni claves. Si crees que algo en openpak.org o en un servicio de OpenPak infringe tus derechos de autor u otros derechos, escribe a <a href="mailto:contact@openpak.org">contact@openpak.org</a> indicando:</p>
+<p>OpenPak no aloja ni distribuye juegos, firmware ni claves. Si crees que algo en openpak.org o en un servicio de OpenPak infringe tus derechos de autor u otros derechos, escribe a <a href="mailto:{{takedownEmail}}">{{takedownEmail}}</a> indicando:</p>
 <ul>
   <li>la obra que consideras infringida y la dirección exacta (URL) o la descripción del material;</li>
   <li>tu nombre y datos de contacto, y en nombre de quién actúas;</li>
@@ -21,6 +21,8 @@
 </ul>
 <p>Revisamos cada notificación y retiramos el material que infringe derechos. Si se retiró material tuyo y crees que fue un error, puedes enviar una contranotificación a la misma dirección.</p>
 <p>Para nuestro código fuente en GitHub, también puedes usar el <a href="https://docs.github.com/en/site-policy/content-removal-policies/dmca-takedown-policy" rel="noopener">proceso DMCA de GitHub</a>.</p>
+
+{{template "takedownform" .}}
 
 <h2 id="security">Seguridad</h2>
 <p>Comunica los problemas de seguridad como se describe en nuestra <a href="https://github.com/openpak/.github/blob/main/SECURITY.md" rel="noopener">política de seguridad</a>; también hay un archivo <a href="/.well-known/security.txt">security.txt</a>.</p>

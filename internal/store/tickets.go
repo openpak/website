@@ -29,6 +29,10 @@ var TicketStatuses = []string{TicketOpen, TicketWaiting, TicketClosed}
 // TicketCategories are what the forms offer; anything else is refused.
 var TicketCategories = []string{"account", "network", "switch", "wiiu-3ds", "emulator", "saves", "app", "other"}
 
+// TicketCategoryTakedown tags a copyright or takedown notice sent through the form on the legal
+// page. It is not one of the categories a help form offers (TicketCategories), but it is valid.
+const TicketCategoryTakedown = "takedown"
+
 // Ticket is one support thread.
 type Ticket struct {
 	ID          int64
@@ -93,7 +97,7 @@ func ValidateTicket(subject, category, body string) error {
 	switch {
 	case strings.TrimSpace(subject) == "" || len(subject) > 200:
 		return fmt.Errorf("%w: subject is required, at most 200 characters", ErrInvalid)
-	case !slices.Contains(TicketCategories, category):
+	case !slices.Contains(TicketCategories, category) && category != TicketCategoryTakedown:
 		return fmt.Errorf("%w: category must be one of %s", ErrInvalid, strings.Join(TicketCategories, ", "))
 	}
 	return ValidateTicketBody(body)

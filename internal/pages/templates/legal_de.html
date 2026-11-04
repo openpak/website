@@ -12,7 +12,7 @@
 <p>Die Software von OpenPak ist freie Software: Jeder darf sie unter der <a href="https://www.gnu.org/licenses/agpl-3.0.html" rel="noopener">AGPL</a> betreiben. Der Name „OpenPak“ und das OpenPak-Logo sind etwas anderes: Nur OpenPak und seine zugelassenen Föderationsknoten dürfen sie verwenden. Ein unabhängiges Netzwerk, das aus der Software aufgebaut wird, muss einen eigenen Namen und ein eigenes Logo verwenden und darf angeben, es „basiere auf OpenPak-Software“.</p>
 
 <h2 id="takedown">Urheberrecht und Löschanfragen</h2>
-<p>OpenPak hostet oder verbreitet keine Spiele, keine Firmware und keine Schlüssel. Wenn du glaubst, dass etwas auf openpak.org oder in einem OpenPak-Dienst dein Urheberrecht oder andere Rechte verletzt, schreibe an <a href="mailto:contact@openpak.org">contact@openpak.org</a> und gib an:</p>
+<p>OpenPak hostet oder verbreitet keine Spiele, keine Firmware und keine Schlüssel. Wenn du glaubst, dass etwas auf openpak.org oder in einem OpenPak-Dienst dein Urheberrecht oder andere Rechte verletzt, schreibe an <a href="mailto:{{takedownEmail}}">{{takedownEmail}}</a> und gib an:</p>
 <ul>
   <li>das Werk, das deiner Ansicht nach verletzt wird, sowie die genaue Adresse (URL) oder Beschreibung des Materials;</li>
   <li>deinen Namen und deine Kontaktdaten sowie in wessen Namen du handelst;</li>
@@ -21,6 +21,8 @@
 </ul>
 <p>Wir prüfen jede Mitteilung und entfernen Material, das Rechte verletzt. Wurde dein Material entfernt und du hältst das für einen Fehler, kannst du an dieselbe Adresse eine Gegendarstellung senden.</p>
 <p>Für unseren Quellcode auf GitHub kannst du auch das <a href="https://docs.github.com/en/site-policy/content-removal-policies/dmca-takedown-policy" rel="noopener">DMCA-Verfahren von GitHub</a> nutzen.</p>
+
+{{template "takedownform" .}}
 
 <h2 id="security">Sicherheit</h2>
 <p>Melde Sicherheitsprobleme so, wie es in unserer <a href="https://github.com/openpak/.github/blob/main/SECURITY.md" rel="noopener">Sicherheitsrichtlinie</a> beschrieben ist; es gibt außerdem eine <a href="/.well-known/security.txt">security.txt</a>.</p>

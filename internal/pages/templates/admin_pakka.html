@@ -1,0 +1,52 @@
+{{template "header" .}}
+{{template "adminnav" .}}
+{{/* The Pakka approval queue in the System Settings shell: what the model drafted and a staff member has not
+     decided yet, the kill switch, and the latest decisions. Each draft opens its own review page. */}}
+<div class="page-head"><h1>{{t .Lang "admin.pakka"}}</h1><p>{{t .Lang "admin.pakka.sub"}}</p></div>
+
+{{if .Failed}}
+<p class="notice bad mb-6" role="alert">{{t .Lang "admin.pakka.failed"}}</p>
+{{else}}
+{{if .Status.Killed}}<p class="notice bad mb-6" role="alert">{{t .Lang "admin.pakka.kill.on"}}</p>
+{{else if not .Status.Configured}}<p class="notice warn mb-6" role="alert">{{t .Lang "admin.pakka.kill.unconfigured"}}</p>{{end}}
+
+<nav class="mb-4 flex flex-wrap gap-2" aria-label="{{t .Lang "admin.pakka.filter"}}">
+  <a class="btn text-sm {{if not .All}}primary{{end}}" href="/admin/pakka"{{if not .All}} aria-current="page"{{end}}>{{t .Lang "admin.pakka.filter.waiting"}}{{if .Pending}} ({{.Pending}}){{end}}</a>
+  <a class="btn text-sm {{if .All}}primary{{end}}" href="/admin/pakka?all=1"{{if .All}} aria-current="page"{{end}}>{{t .Lang "admin.pakka.filter.all"}}</a>
+</nav>
+
+<h2 class="mb-3 text-base">{{if .All}}{{t .Lang "admin.pakka.recent"}}{{else}}{{t .Lang "admin.pakka.waiting"}}{{end}}</h2>
+{{if .Rows}}
+<ul class="card mb-9 list-none divide-y divide-line p-0">
+  {{range .Rows}}
+  <li class="flex flex-wrap items-center gap-3 p-4">
+    <span class="min-w-0 flex-1">
+      <a class="font-semibold break-anywhere" href="/admin/pakka/{{.ID}}">{{.Kind}}{{with .Target}} · {{.}}{{end}}</a>
+      <span class="badge {{.StatusCSS}} ml-1">{{.Label}}</span>
+      <span class="badge ml-1">{{.Action.Category}}</span>
+      <span class="block break-anywhere text-ink-2">{{.Preview}}</span>
+      <span class="block text-sm text-muted break-anywhere">{{t $.Lang "admin.pakka.by"}} {{.CreatedBy}} · {{.CreatedAt.Format "2 Jan 2006 15:04"}} UTC{{if .DecidedAt}} · {{t $.Lang "admin.pakka.decided"}} {{.Reviewer}} {{.DecidedAt.Format "2 Jan 2006 15:04"}} UTC{{end}}</span>
+      {{if .RejectReason}}<span class="block text-sm text-muted break-anywhere">{{t $.Lang "admin.pakka.rejected.reason"}}: {{.RejectReason}}</span>{{end}}
+    </span>
+    {{if or (eq .Status "pending") (eq .Status "failed")}}<a class="btn primary text-sm" href="/admin/pakka/{{.ID}}">{{t $.Lang "admin.pakka.review"}}</a>{{end}}
+  </li>
+  {{end}}
+</ul>
+{{else}}<p class="card mb-9 p-4 text-muted">{{if .All}}{{t .Lang "admin.pakka.recent.none"}}{{else}}{{t .Lang "admin.pakka.waiting.none"}}{{end}}</p>{{end}}
+
+<h2 class="mb-3 text-base">{{t .Lang "admin.pakka.kill.title"}}</h2>
+<div class="mb-4">
+  <div class="state-row ok"><span class="name">{{t .Lang "admin.pakka.categories"}}</span><span class="pill">{{range $i, $c := .Status.CategoriesOn}}{{if $i}}, {{end}}{{$c}}{{end}}</span></div>
+  <div class="state-row ok"><span class="name">{{t .Lang "admin.pakka.auto"}}</span><span class="pill">{{range $i, $c := .Status.AutoCategory}}{{if $i}}, {{end}}{{$c}}{{end}}</span></div>
+</div>
+<p class="mb-3 text-sm text-muted">{{t .Lang "admin.pakka.kill.help"}}</p>
+{{if not .Status.Killed}}
+<form method="post" action="/admin/pakka/kill" class="form-stack mb-9 max-w-2xl">
+  <input type="hidden" name="csrf" value="{{.CSRF}}">
+  <label class="flex items-center gap-2"><input type="checkbox" name="confirm" value="1" class="w-auto" required> {{t .Lang "admin.pakka.kill.confirm"}}</label>
+  <button type="submit" class="btn text-sm">{{t .Lang "admin.pakka.kill.button"}}</button>
+</form>
+{{end}}
+{{end}}
+{{template "adminend"}}
+{{template "footer" .}}

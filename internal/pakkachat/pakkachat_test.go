@@ -52,3 +52,28 @@ func TestNewNeedsURLAndKey(t *testing.T) {
 		t.Error("bridge built without config")
 	}
 }
+
+func TestEraseAccountCallsPakkaWithKeyAndAccount(t *testing.T) {
+	var got struct{ method, path, auth, account string }
+	status := http.StatusOK
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got.method, got.path = r.Method, r.URL.Path
+		got.auth, got.account = r.Header.Get("Authorization"), r.Header.Get("X-Account-Id")
+		w.WriteHeader(status)
+	}))
+	defer srv.Close()
+	b := New(srv.URL, "chat-key", nil)
+	if err := b.EraseAccount(context.Background(), "acct-1"); err != nil {
+		t.Fatal(err)
+	}
+	if got.method != http.MethodDelete || got.path != "/v1/chat/account" || got.auth != "Bearer chat-key" || got.account != "acct-1" {
+		t.Errorf("%+v", got)
+	}
+	status = http.StatusBadGateway
+	if err := b.EraseAccount(context.Background(), "acct-1"); err == nil {
+		t.Error("a refused erase must fail the step so the account waits")
+	}
+	if err := (*Bridge)(nil).EraseAccount(context.Background(), "x"); err == nil {
+		t.Error("an unconfigured bridge must not report success")
+	}
+}

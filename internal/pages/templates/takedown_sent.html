@@ -1,0 +1,7 @@
+{{template "header" .}}
+<div class="mx-auto w-full max-w-xl">
+  <h1 class="mb-4">{{t .Lang "takedown.sent.title"}}</h1>
+  <p class="card p-4" role="status">{{tid .Lang "takedown.sent" (printf "%d" .ID)}}</p>
+  <p class="mt-5">{{if .Follow}}<a class="btn primary" href="/help/{{.ID}}">{{t .Lang "takedown.sent.follow"}}</a> {{end}}<a class="btn" href="/legal">{{t .Lang "takedown.sent.back"}}</a></p>
+</div>
+{{template "footer" .}}

@@ -74,6 +74,8 @@ type Server struct {
 	Store *StoreAPI
 	// Rewards is the points service behind /admin/rewards (the abuse queue and totals); nil hides the section.
 	Rewards *rewards.Client
+	// Pakka is the publisher's admin API behind /admin/pakka (the approval queue); nil hides the section.
+	Pakka *PakkaAPI
 	// CrashFiles holds crash-report attachments; nil means reports carry none.
 	CrashFiles *attachments.Store
 	// Logs is the service-log database behind /admin/logs; nil says "not configured".
@@ -137,6 +139,7 @@ var adminNav = []struct{ href, key string }{
 	{"/admin/monitor", "admin.monitor"},
 	{"/admin/services", "admin.services"},
 	{"/admin/news", "admin.news"},
+	{"/admin/pakka", "admin.pakka"},
 	{"/admin/console-news", "admin.cnews"},
 	{"/admin/store", "admin.store"},
 	{"/admin/titles", "admin.titles"},
@@ -174,6 +177,9 @@ func (s *Server) hiddenSections() []string {
 	var out []string
 	if s.ConsoleNews == nil {
 		out = append(out, "/admin/console-news")
+	}
+	if s.Pakka == nil {
+		out = append(out, "/admin/pakka")
 	}
 	if s.Store == nil {
 		out = append(out, "/admin/store")
@@ -280,6 +286,10 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/news/{id}", s.handleNewsSave)
 	mux.HandleFunc("POST /admin/news/{id}/publish", s.handleNewsPublish)
 	mux.HandleFunc("POST /admin/news/{id}/unpublish", s.handleNewsPublish)
+	mux.HandleFunc("GET /admin/pakka", s.handlePakka)
+	mux.HandleFunc("POST /admin/pakka/kill", s.handlePakkaKill)
+	mux.HandleFunc("GET /admin/pakka/{id}", s.handlePakkaDraft)
+	mux.HandleFunc("POST /admin/pakka/{id}/{action}", s.handlePakkaDecide)
 	mux.HandleFunc("GET /admin/titles", s.handleTitles)
 	mux.HandleFunc("POST /admin/titles", s.handleTitleSave)
 	mux.HandleFunc("GET /admin/mods", s.handleMods)

@@ -14,6 +14,8 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -245,4 +247,29 @@ func (b *Bridge) answer(w http.ResponseWriter, f func() (any, error)) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")
 	_ = json.NewEncoder(w).Encode(v)
+}
+
+// EraseAccount asks Pakka to delete everything it keeps for an account: its chat conversations,
+// its consent record and its rate state. It is the website's account-erasure step for Pakka, and
+// repeating it is harmless. Pakka answering anything but 200 fails the step, so the account waits.
+func (b *Bridge) EraseAccount(ctx context.Context, account string) error {
+	if b == nil {
+		return errors.New("pakka: not configured")
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, b.URL+"/v1/chat/account", nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+b.Key)
+	req.Header.Set("X-Account-Id", account)
+	resp, err := b.HTTP.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 1<<16))
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("pakka: erase answered %d", resp.StatusCode)
+	}
+	return nil
 }

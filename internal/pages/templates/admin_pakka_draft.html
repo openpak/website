@@ -1,0 +1,83 @@
+{{template "header" .}}
+{{template "adminnav" .}}
+<div class="page-head">
+  <h1>{{.Row.Kind}}{{with .Row.Target}} · {{.}}{{end}}</h1>
+  <p><a href="/admin/pakka">{{t .Lang "admin.pakka.back"}}</a></p>
+</div>
+
+{{if .Failed}}
+<p class="notice bad mb-6" role="alert">{{t .Lang "admin.pakka.failed"}}</p>
+{{else}}
+<p class="mb-4">
+  <span class="badge {{.Row.StatusCSS}}">{{.Row.Label}}</span>
+  <span class="badge ml-1">{{.Row.Action.Category}}</span>
+  <span class="block text-sm text-muted break-anywhere">{{t .Lang "admin.pakka.by"}} {{.Row.CreatedBy}} · {{.Row.CreatedAt.Format "2 Jan 2006 15:04"}} UTC</span>
+</p>
+
+{{if .Row.Error}}<p class="notice bad mb-6" role="alert">{{t .Lang "admin.pakka.error"}}: {{.Row.Error}}</p>{{end}}
+{{if .Row.RejectReason}}<p class="card mb-6 p-4 break-anywhere"><strong>{{t .Lang "admin.pakka.rejected.reason"}}:</strong> {{.Row.RejectReason}}</p>{{end}}
+
+{{if .CanAct}}
+<form method="post" action="/admin/pakka/{{.Row.ID}}/approve" class="form-stack mb-6 max-w-2xl">
+  <input type="hidden" name="csrf" value="{{.CSRF}}">
+  {{if .Row.Editable}}
+    {{if eq .Row.Action.Tool "openverse.community"}}
+    <label for="title">{{t .Lang "admin.pakka.title"}}</label>
+    <input id="title" name="title" value="{{.Title}}" maxlength="100" required>
+    <label for="description">{{t .Lang "admin.pakka.description"}}</label>
+    <textarea id="description" name="description" rows="6" maxlength="2000" required>{{.Desc}}</textarea>
+    {{else}}
+    {{if eq .Row.Action.Tool "news.publish"}}
+    <label for="title">{{t .Lang "admin.pakka.title"}}</label>
+    <input id="title" name="title" value="{{.Title}}" maxlength="200" required>
+    {{end}}
+    <label for="body">{{t .Lang "admin.pakka.text"}}</label>
+    <textarea id="body" name="body" rows="8" maxlength="4000" required>{{.Text}}</textarea>
+    {{end}}
+    <p class="hint">{{t .Lang "admin.pakka.edit.help"}}</p>
+  {{else}}
+    <p class="card p-4 break-anywhere">{{.Row.Preview}}</p>
+    {{if eq .Row.Action.Template ""}}{{else}}<p class="hint">{{t .Lang "admin.pakka.templated"}}</p>{{end}}
+  {{end}}
+  {{if .Row.Action.ImageURL}}<p class="hint">{{t .Lang "admin.pakka.image"}}: {{.Row.Action.ImageURL}}</p>{{end}}
+  <button type="submit" class="btn primary">{{t .Lang "admin.pakka.approve"}}</button>
+</form>
+
+<form method="post" action="/admin/pakka/{{.Row.ID}}/reject" class="form-stack mb-9 max-w-2xl">
+  <input type="hidden" name="csrf" value="{{.CSRF}}">
+  <label for="reason">{{t .Lang "admin.pakka.reason"}}</label>
+  <textarea id="reason" name="reason" rows="2" maxlength="500" required></textarea>
+  <button type="submit" class="btn">{{t .Lang "admin.pakka.reject"}}</button>
+</form>
+{{else}}
+<div class="card mb-6 p-4 break-anywhere">
+  {{if .Row.Action.Title}}<p class="mb-2 font-semibold">{{.Row.Action.Title}}</p>{{end}}
+  <p class="mb-0 whitespace-pre-wrap">{{if .Row.Action.Body}}{{.Row.Action.Body}}{{else if .Row.Action.Description}}{{.Row.Action.Description}}{{else}}{{.Row.Preview}}{{end}}</p>
+</div>
+{{with .Row.Result}}<p class="mb-6 text-sm text-muted break-anywhere">{{t $.Lang "admin.pakka.result"}}: {{.Status}}{{with .Refs.url}} · <a href="{{.}}">{{.}}</a>{{end}}</p>{{end}}
+{{end}}
+
+{{with .Row.Original}}
+<h2 class="mb-3 text-base">{{t $.Lang "admin.pakka.original"}}</h2>
+<div class="card mb-9 p-4 break-anywhere">
+  {{if .Title}}<p class="mb-2 font-semibold">{{.Title}}</p>{{end}}
+  <p class="mb-0 whitespace-pre-wrap text-muted">{{if .Body}}{{.Body}}{{else}}{{.Description}}{{end}}</p>
+  {{if $.Row.EditedBy}}<p class="mb-0 mt-2 text-sm text-muted">{{t $.Lang "admin.pakka.edited"}} {{$.Row.EditedBy}}</p>{{end}}
+</div>
+{{end}}
+
+<h2 class="mb-3 text-base">{{t .Lang "admin.pakka.history"}}</h2>
+{{if .History}}
+<ol class="card mb-9 list-none divide-y divide-line p-0">
+  {{range .History}}
+  <li class="p-4">
+    <span class="font-semibold">{{t $.Lang (printf "admin.pakka.event.%s" .Event)}}</span>
+    <span class="text-sm text-muted"> · {{.Actor}} · {{.Time.Format "2 Jan 2006 15:04:05"}} UTC</span>
+    {{with .Detail}}<span class="block text-sm text-muted break-anywhere">{{.}}</span>{{end}}
+  </li>
+  {{end}}
+</ol>
+{{else}}<p class="card mb-9 p-4 text-muted">{{t .Lang "admin.pakka.history.none"}}</p>{{end}}
+{{end}}
+{{template "adminend"}}
+{{template "footer" .}}

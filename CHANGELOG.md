@@ -11,6 +11,13 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.94.0 — 2026-11-04
+
+- Admin: Pakka posts (`/admin/pakka`), the staff queue for what Pakka's model drafted for OpenVerse and News. Staff publish a draft as written, edit the text and publish, or reject with a reason (required); each draft shows its audit history, and every decision is also written to the website audit log. A kill switch (with a confirmation box) stops all Pakka publishing. Needs `PAKKA_URL` and `PAKKA_PUBLISH_ADMIN_KEY`; without them the section is absent. Requires Pakka v0.12.0.
+- Account erasure now includes Pakka: the finaliser calls Pakka's new `DELETE /v1/chat/account` for every erased account (chat conversations, consent, rate state). Steps are skipped when Pakka is not configured.
+- Legal pages (terms, privacy, trademarks and takedowns, all six languages) give takedown@openpak.org as the contact for copyright and takedown notices.
+- Trademarks and takedowns: a "Report a takedown" form that opens a help ticket tagged `takedown`, signed in or not (Turnstile and the auth rate limit guard it). Anonymous notices are answered by email to the address in the notice.
+
 ## v0.93.0 — 2026-11-04
 
 - `/status` shows every check status.openpak.org runs from another host, grouped as that page groups them (web, companion sites, core services, each console network, game session ports). A long group folds behind "Show all" unless something in it is down; the banner counts those checks too. If the outside checker cannot be reached the page says so as its own line, not as an outage.

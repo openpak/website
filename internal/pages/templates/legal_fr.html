@@ -12,7 +12,7 @@
 <p>Le logiciel d’OpenPak est un logiciel libre : chacun peut l’exécuter sous la licence <a href="https://www.gnu.org/licenses/agpl-3.0.html" rel="noopener">AGPL</a>. Le nom « OpenPak » et le logo OpenPak sont une autre affaire : seuls OpenPak et ses nœuds de fédération approuvés peuvent les utiliser. Un réseau indépendant construit à partir du logiciel doit utiliser son propre nom et son propre logo, et peut indiquer qu’il est « basé sur le logiciel OpenPak ».</p>
 
 <h2 id="takedown">Droit d’auteur et demandes de retrait</h2>
-<p>OpenPak n’héberge ni ne distribue de jeux, de micrologiciels ou de clés. Si vous estimez qu’un élément présent sur openpak.org ou sur un service OpenPak porte atteinte à votre droit d’auteur ou à d’autres droits, écrivez à <a href="mailto:contact@openpak.org">contact@openpak.org</a> en indiquant :</p>
+<p>OpenPak n’héberge ni ne distribue de jeux, de micrologiciels ou de clés. Si vous estimez qu’un élément présent sur openpak.org ou sur un service OpenPak porte atteinte à votre droit d’auteur ou à d’autres droits, écrivez à <a href="mailto:{{takedownEmail}}">{{takedownEmail}}</a> en indiquant :</p>
 <ul>
   <li>l’œuvre que vous estimez contrefaite, ainsi que l’adresse exacte (URL) ou la description du contenu concerné ;</li>
   <li>vos nom et coordonnées, et pour le compte de qui vous agissez ;</li>
@@ -21,6 +21,8 @@
 </ul>
 <p>Nous examinons chaque notification et retirons les contenus contrefaisants. Si votre contenu a été retiré et que vous pensez qu’il s’agit d’une erreur, vous pouvez envoyer une contre-notification à la même adresse.</p>
 <p>Pour notre code source sur GitHub, vous pouvez aussi utiliser <a href="https://docs.github.com/en/site-policy/content-removal-policies/dmca-takedown-policy" rel="noopener">la procédure DMCA de GitHub</a>.</p>
+
+{{template "takedownform" .}}
 
 <h2 id="security">Sécurité</h2>
 <p>Signalez les problèmes de sécurité comme décrit dans notre <a href="https://github.com/openpak/.github/blob/main/SECURITY.md" rel="noopener">politique de sécurité</a> ; il existe aussi un fichier <a href="/.well-known/security.txt">security.txt</a>.</p>

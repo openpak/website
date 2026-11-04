@@ -14,6 +14,11 @@ var templateFS embed.FS
 // ContactEmail is the project's public contact address (footer, help, legal pages).
 const ContactEmail = "contact@openpak.org"
 
+// TakedownEmail is where copyright and takedown notices go (legal pages). It is forwarded to the
+// operators' inbox; the takedown form on the legal page opens a help ticket, so nothing depends on
+// the inbox alone.
+const TakedownEmail = "takedown@openpak.org"
+
 // CommunityURL is the community invite link (Discord) shown in the footer and on
 // /help. Empty draws nothing; set it here once an invite exists.
 const CommunityURL = "https://discord.gg/nMhjnsB6F6"
@@ -27,5 +32,5 @@ func LoadTemplates() (*template.Template, error) {
 		}
 		return *p
 	},
-		"contactEmail": func() string { return ContactEmail }, "communityURL": func() string { return CommunityURL }}).ParseFS(templateFS, "templates/*.html")
+		"contactEmail": func() string { return ContactEmail }, "takedownEmail": func() string { return TakedownEmail }, "communityURL": func() string { return CommunityURL }}).ParseFS(templateFS, "templates/*.html")
 }

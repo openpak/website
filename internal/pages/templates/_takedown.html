@@ -1,0 +1,31 @@
+{{/* The "Report a takedown" form of the trademarks and takedowns page (every language shares it). It opens
+     a help ticket tagged takedown; signed out works too. With help tickets off only the address is shown. */}}
+{{define "takedownform"}}
+{{if not .Takedown.Off}}
+<section id="report" aria-labelledby="report-h" class="card mb-9 p-4">
+  <h3 id="report-h">{{t .Lang "takedown.title"}}</h3>
+  <p>{{t .Lang "takedown.sub"}}</p>
+  {{if .Takedown.Error}}<p class="notice bad mb-6" role="alert">{{.Takedown.Error}}</p>{{end}}
+  <form method="post" action="/legal/takedown" class="form-stack max-w-2xl">
+    {{if .User}}<input type="hidden" name="csrf" value="{{.CSRF}}">{{end}}
+    <label for="td-name">{{t .Lang "takedown.name"}}</label>
+    <input id="td-name" name="name" type="text" value="{{.Takedown.Name}}" required maxlength="120" autocomplete="name">
+    <label for="td-email">{{t .Lang "takedown.email"}}</label>
+    <input id="td-email" name="email" type="email" value="{{.Takedown.Email}}" required maxlength="200" autocomplete="email">
+    <label for="td-behalf">{{t .Lang "takedown.behalf"}}</label>
+    <input id="td-behalf" name="behalf" type="text" value="{{.Takedown.OnBehalf}}" maxlength="200">
+    <label for="td-work">{{t .Lang "takedown.work"}}</label>
+    <textarea id="td-work" name="work" rows="3" required maxlength="3000">{{.Takedown.Work}}</textarea>
+    <label for="td-material">{{t .Lang "takedown.material"}}</label>
+    <textarea id="td-material" name="material" rows="3" required maxlength="3000">{{.Takedown.Material}}</textarea>
+    <label class="flex items-start gap-2"><input type="checkbox" name="goodfaith" value="1" class="mt-1 w-auto" required> <span>{{t .Lang "takedown.goodfaith"}}</span></label>
+    <label class="flex items-start gap-2"><input type="checkbox" name="accurate" value="1" class="mt-1 w-auto" required> <span>{{t .Lang "takedown.accurate"}}</span></label>
+    <label for="td-sign">{{t .Lang "takedown.sign"}}</label>
+    <input id="td-sign" name="signature" type="text" value="{{.Takedown.Sign}}" required maxlength="120">
+    {{template "turnstile" .Takedown.Turnstile}}
+    <p class="hint">{{t .Lang "takedown.hint"}}</p>
+    <button type="submit" class="btn primary">{{t .Lang "takedown.send"}}</button>
+  </form>
+</section>
+{{end}}
+{{end}}

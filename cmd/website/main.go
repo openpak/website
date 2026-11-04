@@ -314,17 +314,22 @@ func run(log *slog.Logger) error {
 	if tsCli != nil { // optional, like leaderboards
 		erasureSteps = append(erasureSteps, erasure.Step{Name: "title-storage", Erase: tsCli.EraseAccount})
 	}
+	// Pakka's chat conversations are keyed by the core account id; optional like the other cores.
+	// PAKKA_URL (http://openpak-pakka:24800) and PAKKA_CHAT_KEY: either missing and every Pakka
+	// entry point, route and this step are absent.
+	pakkaBridge := pakkachat.New(os.Getenv("PAKKA_URL"), os.Getenv("PAKKA_CHAT_KEY"), pageSrv.PakkaTools())
+	if pakkaBridge != nil {
+		erasureSteps = append(erasureSteps, erasure.Step{Name: "pakka", Erase: pakkaBridge.EraseAccount})
+	}
 	erasureSteps = append(erasureSteps,
 		erasure.ModsStep(os.Getenv("MODS_INTERNAL_URL"), os.Getenv("MODS_INTERNAL_KEY"), &http.Client{Timeout: time.Minute}),
 		erasure.WebsiteStep(db, files, mediaSvc, log))
 	finaliser := &erasure.Finaliser{Core: coreGRPC, Lock: db, Interval: cfg.ErasureInterval, Log: log, Steps: erasureSteps}
 	go finaliser.Run(ctx)
 	log.Info("erasure: finaliser started", "every", cfg.ErasureInterval)
-	// Pakka, the assistant: PAKKA_URL (http://openpak-pakka:24800) and PAKKA_CHAT_KEY; either
-	// missing and every Pakka entry point and route is absent.
-	if bridge := pakkachat.New(os.Getenv("PAKKA_URL"), os.Getenv("PAKKA_CHAT_KEY"), pageSrv.PakkaTools()); bridge != nil {
-		pageSrv.Pakka = bridge
-		apiSrv.Pakka = bridge
+	if pakkaBridge != nil {
+		pageSrv.Pakka = pakkaBridge
+		apiSrv.Pakka = pakkaBridge
 		log.Info("pakka chat enabled")
 	}
 	pageSrv.Support = supportSvc
@@ -350,6 +355,8 @@ func run(log *slog.Logger) error {
 	}
 	adminSrv.Operators = db
 	adminSrv.Moderation = coreGRPC
+	// The Pakka approval queue: PAKKA_URL plus Pakka's publisher admin key; either missing leaves the section out.
+	adminSrv.Pakka = admin.NewPakkaAPI(os.Getenv("PAKKA_URL"), os.Getenv("PAKKA_PUBLISH_ADMIN_KEY"))
 	adminSrv.Rewards = pageSrv.Rewards // nil without REWARDS_URL: the section is left out
 	adminSrv.Erasure = coreGRPC
 	// The monitor's sources. Each is optional and reads as "not configured"
