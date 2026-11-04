@@ -5,6 +5,7 @@
 package wfc
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -70,4 +71,74 @@ func (c *Client) Resolve(ctx context.Context, friendCode string) (Profile, error
 		return Profile{}, ErrNotFound
 	}
 	return out, nil
+}
+
+// ErrPairingCode is a pairing code that is unknown, expired or already used.
+var ErrPairingCode = errors.New("wfc: pairing code unknown, expired or used")
+
+// Pairing is the console a live pairing code belongs to.
+type Pairing struct {
+	UserID    uint64    `json:"user_id"`
+	GameCode  string    `json:"gsbrcd"`
+	Name      string    `json:"name"` // the in-game name of the profile that signed in
+	ExpiresAt time.Time `json:"expires_at"`
+}
+
+func (c *Client) post(ctx context.Context, path string, body map[string]any, out any) error {
+	if c == nil {
+		return errors.New("wfc: not configured")
+	}
+	body["secret"] = c.Secret
+	raw, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+path, bytes.NewReader(raw))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	switch resp.StatusCode {
+	case http.StatusOK, http.StatusNoContent:
+	case http.StatusNotFound:
+		return ErrPairingCode
+	default:
+		return fmt.Errorf("wfc: %s", resp.Status)
+	}
+	if out == nil || resp.StatusCode == http.StatusNoContent {
+		return nil
+	}
+	return json.NewDecoder(resp.Body).Decode(out)
+}
+
+// PairLookup says which console a code a Wii or DS game showed belongs to, without spending it.
+func (c *Client) PairLookup(ctx context.Context, code string) (Pairing, error) {
+	var p Pairing
+	if err := c.post(ctx, "/api/pair/lookup", map[string]any{"code": code}, &p); err != nil {
+		return Pairing{}, err
+	}
+	if p.UserID == 0 {
+		return Pairing{}, ErrPairingCode
+	}
+	return p, nil
+}
+
+// PairRedeem spends the code for good, once the core link exists.
+func (c *Client) PairRedeem(ctx context.Context, code string) (uint64, error) {
+	var p Pairing
+	if err := c.post(ctx, "/api/pair/redeem", map[string]any{"code": code}, &p); err != nil {
+		return 0, err
+	}
+	return p.UserID, nil
+}
+
+// PairForget tells the Wii/DS server a console was unlinked, so its next login is shown a
+// code again. Best effort: the friend-code path works regardless.
+func (c *Client) PairForget(ctx context.Context, userID uint64) error {
+	return c.post(ctx, "/api/pair/forget", map[string]any{"user_id": userID}, nil)
 }

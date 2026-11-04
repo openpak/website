@@ -7,7 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/openpak/website/internal/accounts"
+	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
+	"github.com/openpak/website/internal/wfc"
 	"github.com/openpak/website/internal/xbl"
 )
 
@@ -33,12 +36,14 @@ type linkView struct {
 	LoginHref string
 	Error     string
 	ClientID  string
+	Kind      string // "wfc" for a Wii or DS pairing code, empty for a game device code
 	TitleName string
 	Handle    string
 	Gamertag  string
 	Expires   string
 	// Question and Done are the confirm and success sentences, names filled in.
 	Question string
+	Note     string // overrides the standard confirm note when set
 	Done     string
 }
 
@@ -128,6 +133,8 @@ func (s *Server) linkFail(w http.ResponseWriter, r *http.Request, v *viewer, cod
 		status, key = http.StatusGone, "link.err.expired"
 	case errors.Is(err, xbl.ErrUsed):
 		status, key = http.StatusConflict, "link.err.used"
+	case errors.Is(err, core.ErrConflict):
+		status, key = http.StatusConflict, "link.err.taken"
 	case errors.Is(err, xbl.ErrAccount):
 		status, key = http.StatusForbidden, "link.err.account"
 	default:
@@ -157,18 +164,49 @@ func (s *Server) handleLinkCheck(w http.ResponseWriter, r *http.Request) {
 		s.linkFail(w, r, v, code, errLinkSlow)
 		return
 	}
+	lang := i18n.FromRequest(r)
+	// A Wii or DS shows an eight-symbol pairing code; try the Wii/DS server first, and fall
+	// back to the game device codes when it does not know the code.
+	if s.WFC != nil {
+		switch pairing, err := s.WFC.PairLookup(r.Context(), code); {
+		case err == nil:
+			s.linkConfirmWFC(w, r, v, code, pairing)
+			return
+		case !errors.Is(err, wfc.ErrPairingCode):
+			s.log.Warn("link: wfc lookup", "err", err)
+		}
+	}
 	p, err := s.XBL.Lookup(r.Context(), code)
 	if err != nil {
 		s.linkFail(w, r, v, code, err)
 		return
 	}
-	lang := i18n.FromRequest(r)
 	view := linkView{baseData: s.data(r, v, i18n.T(lang, "link.title")), Step: "confirm", Code: code,
 		ClientID: p.ClientID, TitleName: s.linkTitle(lang, p.ClientID), Handle: v.DisplayName}
 	if view.Handle == "" {
 		view.Handle = v.Email
 	}
 	view.Question = strings.NewReplacer("{title}", view.TitleName, "{account}", view.Handle).Replace(i18n.T(lang, "link.confirm.q"))
+	if !p.ExpiresAt.IsZero() {
+		view.Expires = p.ExpiresAt.UTC().Format(time.RFC3339)
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	s.render(w, http.StatusOK, "link.html", view)
+}
+
+// linkConfirmWFC asks the player to confirm linking the console a pairing code names.
+func (s *Server) linkConfirmWFC(w http.ResponseWriter, r *http.Request, v *viewer, code string, p wfc.Pairing) {
+	lang := i18n.FromRequest(r)
+	view := linkView{baseData: s.data(r, v, i18n.T(lang, "link.title")), Step: "confirm", Code: code,
+		Kind: "wfc", TitleName: i18n.T(lang, "link.wfc.title"), Handle: v.DisplayName}
+	if view.Handle == "" {
+		view.Handle = v.Email
+	}
+	if p.Name != "" {
+		view.TitleName += " (" + p.Name + ")"
+	}
+	view.Question = strings.NewReplacer("{title}", view.TitleName, "{account}", view.Handle).Replace(i18n.T(lang, "link.confirm.q"))
+	view.Note = i18n.T(lang, "link.wfc.note")
 	if !p.ExpiresAt.IsZero() {
 		view.Expires = p.ExpiresAt.UTC().Format(time.RFC3339)
 	}
@@ -190,6 +228,10 @@ func (s *Server) handleLinkApprove(w http.ResponseWriter, r *http.Request) {
 		s.linkFail(w, r, v, code, errLinkSlow)
 		return
 	}
+	if r.PostFormValue("kind") == "wfc" && s.WFC != nil {
+		s.linkApproveWFC(w, r, v, code)
+		return
+	}
 	gamertag, err := s.XBL.Approve(r.Context(), code, v.AccountID)
 	if err != nil {
 		s.linkFail(w, r, v, code, err)
@@ -206,4 +248,37 @@ func (s *Server) handleLinkApprove(w http.ResponseWriter, r *http.Request) {
 	s.render(w, http.StatusOK, "link.html", linkView{baseData: s.data(r, v, i18n.T(lang, "link.title")),
 		Step: "done", TitleName: title, Gamertag: gamertag,
 		Done: strings.NewReplacer("{title}", title, "{gamertag}", gamertag).Replace(i18n.T(lang, "link.done"))})
+}
+
+// linkApproveWFC makes the core link for the console the code names and spends the code.
+func (s *Server) linkApproveWFC(w http.ResponseWriter, r *http.Request, v *viewer, code string) {
+	err := accounts.LinkWFCCode(r.Context(), s.WFC, s.Links, v.AccountID, code)
+	switch {
+	case err == nil:
+	case errors.Is(err, wfc.ErrPairingCode):
+		s.linkFail(w, r, v, code, xbl.ErrExpired)
+		return
+	default:
+		s.linkFail(w, r, v, code, err)
+		return
+	}
+	s.log.Info("link: wii/ds pairing code approved", "account", v.AccountID)
+	lang := i18n.FromRequest(r)
+	handle := v.DisplayName
+	if handle == "" {
+		handle = v.Email
+	}
+	title := i18n.T(lang, "link.wfc.title")
+	w.Header().Set("Cache-Control", "no-store")
+	s.render(w, http.StatusOK, "link.html", linkView{baseData: s.data(r, v, i18n.T(lang, "link.title")),
+		Step: "done", TitleName: title,
+		Done: strings.NewReplacer("{title}", capitalize(title), "{account}", handle).Replace(i18n.T(lang, "link.wfc.done"))})
+}
+
+func capitalize(s string) string {
+	if s == "" {
+		return s
+	}
+	r := []rune(s)
+	return strings.ToUpper(string(r[:1])) + string(r[1:])
 }

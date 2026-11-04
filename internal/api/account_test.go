@@ -9,8 +9,10 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/openpak/website/internal/media"
+	"github.com/openpak/website/internal/ratelimit"
 	"github.com/openpak/website/internal/store"
 	"github.com/openpak/website/internal/wfc"
 )
@@ -150,5 +152,51 @@ func TestDeleteAccount(t *testing.T) {
 		if rec := do(t, s, http.MethodGet, "/api/v1/me", b, nil); rec.Code != http.StatusUnauthorized {
 			t.Fatalf("a bearer outlived the account: %d", rec.Code)
 		}
+	}
+}
+
+// The app takes a Wii/DS pairing code in the same field as a friend code; it links the console
+// the code names, spends the code and is rate limited per account.
+func TestLinkWiiDSByPairingCode(t *testing.T) {
+	s, fc, _ := newTestAPI(t)
+	var redeemed, forgotten int
+	nwfc := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct{ Code string }
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		switch r.URL.Path {
+		case "/api/pair/lookup", "/api/pair/redeem":
+			if strings.ToUpper(strings.ReplaceAll(req.Code, "-", "")) != "QXZP7K2M" {
+				http.Error(w, "{}", http.StatusNotFound)
+				return
+			}
+			if strings.HasSuffix(r.URL.Path, "redeem") {
+				redeemed++
+			}
+			_, _ = w.Write([]byte(`{"user_id":77}`))
+		case "/api/pair/forget":
+			forgotten++
+			w.WriteHeader(http.StatusNoContent)
+		}
+	}))
+	defer nwfc.Close()
+	s.WFC = wfc.New(nwfc.URL, "")
+	s.PairLimit = ratelimit.New(3, time.Minute)
+	tok := signIn(t, s)
+
+	if rec := do(t, s, http.MethodPost, "/api/v1/me/links/wfc", tok, map[string]string{"code": "AAAA-BBBB"}); rec.Code != http.StatusNotFound {
+		t.Fatalf("unknown pairing code: %d", rec.Code)
+	}
+	if rec := do(t, s, http.MethodPost, "/api/v1/me/links/wfc", tok, map[string]string{"friend_code": "qxzp-7k2m"}); rec.Code != http.StatusCreated {
+		t.Fatalf("pairing code in the friend_code field: %d %s", rec.Code, rec.Body.String())
+	}
+	if fc.wfcLinks["acct-a@x.test"] != "77" || redeemed != 1 {
+		t.Fatalf("link %v, redeemed %d", fc.wfcLinks, redeemed)
+	}
+	if rec := do(t, s, http.MethodDelete, "/api/v1/me/links/wfc", tok, nil); rec.Code != http.StatusOK || forgotten != 1 {
+		t.Fatalf("unlink: %d, forgotten %d", rec.Code, forgotten)
+	}
+	do(t, s, http.MethodPost, "/api/v1/me/links/wfc", tok, map[string]string{"code": "ZZZZ-ZZZZ"})
+	if rec := do(t, s, http.MethodPost, "/api/v1/me/links/wfc", tok, map[string]string{"code": "ZZZZ-ZZZZ"}); rec.Code != http.StatusTooManyRequests {
+		t.Fatalf("rate limit: %d", rec.Code)
 	}
 }

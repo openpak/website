@@ -11,6 +11,10 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.91.0 — 2026-11-04
+- Link a Wii or DS from the console: an unlinked Mario Kart Wii shows a pairing code in its Wi-Fi menu message (wfc-gpcm v0.2.0); enter it at `/link` (or in the app, in the friend-code field) to make the `wfc` core link. Codes live in Postgres, last 30 minutes and work once; attempts are rate limited per account and address. The friend-code form on `/account` still works, and now points to `/link`.
+- `POST /api/v1/me/links/wfc` accepts `{"code"}` (or a pairing code in `friend_code`). Unlinking a Wii/DS tells wfc-api (`/api/pair/forget`) so the console is offered a code again. Needs wfc-api v0.2.0.
+
 ## v0.90.0 — 2026-11-04
 - Rankings hub (`/rankings`) lists every game that has rankings, grouped by console, games with scores first. A game nobody has scored in shows "No scores yet — be the first" and its board names (an unnamed board is "Board N", never an id).
 - A game's Rankings tab exists for every ranked game whose server answers, and shows the same empty state until there are scores; with scores it opens on a board that has some.

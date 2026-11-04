@@ -244,6 +244,7 @@
     <input type="hidden" name="csrf" value="{{.CSRF}}">
     <label for="friend_code">{{t .Lang "account.links.wfc"}}</label>
     <p class="hint">{{t .Lang "account.links.wfc.help"}}</p>
+    <p class="hint">{{t .Lang "account.links.wfc.codehelp"}} <a href="/link">{{t .Lang "account.links.wfc.codelink"}}</a></p>
     <div class="row">
       <input id="friend_code" name="friend_code" inputmode="numeric" pattern="[0-9 -]{12,14}" placeholder="1234-5678-9012" required>
       <button type="submit" class="small">{{t .Lang "account.links.wfc.submit"}}</button>

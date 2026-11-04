@@ -39,6 +39,40 @@ func LinkWFC(ctx context.Context, w *wfc.Client, links core.Links, accountID, fr
 	return links.Link(ctx, accountID, "wfc", subject, "wfc:"+accountID+":"+subject)
 }
 
+// LooksLikeWFCPairingCode tells a pairing code (letters and digits) from a friend code (twelve
+// digits), so one field can take either.
+func LooksLikeWFCPairingCode(s string) bool {
+	for _, r := range s {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') {
+			return true
+		}
+	}
+	return false
+}
+
+// LinkWFCCode links the console a pairing code belongs to: the code a Wii or DS game showed
+// after it signed in (Mario Kart Wii prints it in the Wi-Fi menu message). The core link is
+// made first and the code spent after it, so a console already held by another account
+// (core.ErrConflict) leaves the code alone, and a failed spend does not undo a good link. Errors
+// as LinkWFC, with wfc.ErrPairingCode for a code that is unknown, expired or used.
+func LinkWFCCode(ctx context.Context, w *wfc.Client, links core.Links, accountID, code string) error {
+	p, err := w.PairLookup(ctx, code)
+	switch {
+	case errors.Is(err, wfc.ErrPairingCode):
+		return err
+	case err != nil:
+		return fmt.Errorf("%w: %v", ErrWFCUnreachable, err)
+	}
+	subject := strconv.FormatUint(p.UserID, 10)
+	if err := links.Link(ctx, accountID, "wfc", subject, "wfc:"+accountID+":"+subject); err != nil {
+		return err
+	}
+	// The link exists. If spending the code fails now, the code simply lives out its
+	// 30 minutes and still names a console that is linked to this same account.
+	_, _ = w.PairRedeem(ctx, code)
+	return nil
+}
+
 // StorageOAuthState binds a storage consent round trip to the account without a database row:
 // the account id plus an HMAC the callback recomputes. The website session secret signs it, so
 // a state forged elsewhere never verifies. The app asks for the consent URL and the website's

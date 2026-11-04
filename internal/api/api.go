@@ -88,6 +88,7 @@ type Server struct {
 	// Crashes stores crash-report files; nil keeps reports without them.
 	Crashes    *attachments.Store
 	CrashLimit *ratelimit.Limiter // per client, public crash reports
+	PairLimit  *ratelimit.Limiter // per account, Wii/DS pairing codes tried
 	// Pakka is the assistant; nil answers 503 on /pakka.
 	Pakka *pakkachat.Bridge
 	// Support is the help-ticket service; nil answers 503 on /me/tickets.
@@ -139,6 +140,7 @@ func New(c core.HTTP, id core.Identity, soc core.Social, lnk core.Links, inv cor
 		PerToken:   ratelimit.New(120, time.Minute),
 		MediaLimit: ratelimit.New(5, time.Hour),
 		CrashLimit: ratelimit.New(20, 10*time.Minute),
+		PairLimit:  ratelimit.New(10, 10*time.Minute),
 		MailLimit:  accounts.NewMailLimit(),
 		log:        log,
 	}

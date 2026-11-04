@@ -9,11 +9,12 @@
   {{else if eq .Step "confirm"}}
   <p class="mt-4" id="link-q">{{.Question}}</p>
   <p class="hint">{{t .Lang "link.code"}}: <code>{{.Code}}</code>{{with .Expires}} · {{t $.Lang "link.expires"}} <time datetime="{{.}}">{{.}}</time>{{end}}</p>
-  <p class="hint">{{t .Lang "link.confirm.note"}}</p>
+  <p class="hint">{{with .Note}}{{.}}{{else}}{{t $.Lang "link.confirm.note"}}{{end}}</p>
   <form method="post" action="/link/approve" class="form-stack mt-6" aria-labelledby="link-q">
     <input type="hidden" name="csrf" value="{{.CSRF}}">
     <input type="hidden" name="code" value="{{.Code}}">
     <input type="hidden" name="client_id" value="{{.ClientID}}">
+    <input type="hidden" name="kind" value="{{.Kind}}">
     <button type="submit" class="btn primary">{{t .Lang "link.approve"}}</button>
     <a class="btn ghost" href="/link">{{t .Lang "link.cancel"}}</a>
   </form>

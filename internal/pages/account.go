@@ -323,9 +323,11 @@ func (s *Server) handleUnlink(w http.ResponseWriter, r *http.Request) {
 	}
 	// The form names a link id; only one of the viewer's own links may be revoked.
 	owned := false
+	var ownedLink core.Link
+	ownedNS := ""
 	for _, ns := range []string{"switch", "wfc"} {
 		if l, err := s.Links.ActiveLinkByAccount(r.Context(), ns, v.AccountID); err == nil && l.LinkID == linkID {
-			owned = true
+			owned, ownedLink, ownedNS = true, l, ns
 		}
 	}
 	if !owned {
@@ -337,6 +339,14 @@ func (s *Server) handleUnlink(w http.ResponseWriter, r *http.Request) {
 		s.log.Error("unlink", "err", err)
 		http.Error(w, "could not revoke link", http.StatusInternalServerError)
 		return
+	}
+	if ownedNS == "wfc" && s.WFC != nil {
+		// Offer the console a pairing code again; best effort, the friend code path still works.
+		if uid, err := strconv.ParseUint(ownedLink.SubjectID, 10, 64); err == nil {
+			if err := s.WFC.PairForget(r.Context(), uid); err != nil {
+				s.log.Warn("wfc forget", "err", err)
+			}
+		}
 	}
 	redirectMsg(w, r, "/account", "saved")
 }

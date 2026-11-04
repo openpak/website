@@ -667,20 +667,25 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
   /me/links/wfc:
     post:
-      summary: Link a Wii or DS by friend code
+      summary: Link a Wii or DS by friend code or pairing code
       description: |
         WFC has no login, so a Wii or DS is linked from a friend code the
-        player reads off a game. The console then appears in `/me`'s
-        `linked_platforms` under namespace `wfc`.
+        player reads off a game, or from the pairing code an unlinked console
+        is shown when it connects (Mario Kart Wii prints it in the Wi-Fi menu
+        message). Send the pairing code as `code`; a pairing code in
+        `friend_code` is also accepted. Pairing codes expire after 30 minutes,
+        work once and are rate limited per account (429). The console then
+        appears in `/me`'s `linked_platforms` under namespace `wfc`.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [friend_code]
+              description: Either `friend_code` or `code`.
               properties:
                 friend_code: { type: string, examples: ["1234-5678-9012"] }
+                code: { type: string, examples: ["QXZP-7K2M"] }
       responses:
         "201":
           description: Linked

@@ -1,9 +1,11 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -214,6 +216,7 @@ func (s *Server) handleDeleteAccount(w http.ResponseWriter, r *http.Request, tok
 func (s *Server) handleLinkWFC(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
 	var req struct {
 		FriendCode string `json:"friend_code"`
+		Code       string `json:"code"` // a pairing code the game showed (Mario Kart Wii: the Wi-Fi menu message)
 	}
 	if !decodeSmall(w, r, &req) {
 		return
@@ -222,7 +225,24 @@ func (s *Server) handleLinkWFC(w http.ResponseWriter, r *http.Request, tok store
 		writeError(w, http.StatusServiceUnavailable, "Wii/DS linking is not available")
 		return
 	}
-	err := accounts.LinkWFC(r.Context(), s.WFC, s.Links, tok.AccountID, req.FriendCode)
+	// One field takes either: a pairing code has letters, a friend code is twelve digits.
+	if req.Code == "" && accounts.LooksLikeWFCPairingCode(req.FriendCode) {
+		req.Code, req.FriendCode = req.FriendCode, ""
+	}
+	var err error
+	if req.Code != "" {
+		if !s.wfcPairAllowed(tok.AccountID) {
+			writeError(w, http.StatusTooManyRequests, "too many codes tried; wait a few minutes")
+			return
+		}
+		err = accounts.LinkWFCCode(r.Context(), s.WFC, s.Links, tok.AccountID, req.Code)
+		if errors.Is(err, wfc.ErrPairingCode) {
+			writeError(w, http.StatusNotFound, "that code is unknown or has expired; sign in on the console again for a new one")
+			return
+		}
+	} else {
+		err = accounts.LinkWFC(r.Context(), s.WFC, s.Links, tok.AccountID, req.FriendCode)
+	}
 	switch {
 	case err == nil:
 		writeJSON(w, http.StatusCreated, map[string]any{"namespace": "wfc", "linked": true})
@@ -255,6 +275,9 @@ func (s *Server) handleUnlink(w http.ResponseWriter, r *http.Request, tok store.
 		s.log.Error("api unlink", "err", err)
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
+	}
+	if r.PathValue("namespace") == "wfc" {
+		s.forgetWFC(r.Context(), link)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"unlinked": true})
 }
@@ -289,5 +312,25 @@ func (s *Server) stampAvatar(r *http.Request, accountID string) {
 		AccountID: accountID, Kind: "avatar", UpdatedAt: time.Now().UTC(),
 	}); err != nil {
 		s.log.Error("api media metadata", "err", err)
+	}
+}
+
+// wfcPairAllowed spends one pairing-code attempt for the account.
+func (s *Server) wfcPairAllowed(accountID string) bool {
+	return s.PairLimit == nil || s.PairLimit.Allow("pair:"+accountID)
+}
+
+// forgetWFC tells the Wii/DS server a console was unlinked, so it offers the console a code
+// again. Best effort: the friend-code path works whatever happens here.
+func (s *Server) forgetWFC(ctx context.Context, link core.Link) {
+	if s.WFC == nil {
+		return
+	}
+	uid, err := strconv.ParseUint(link.SubjectID, 10, 64)
+	if err != nil {
+		return
+	}
+	if err := s.WFC.PairForget(ctx, uid); err != nil {
+		s.log.Warn("api wfc forget", "err", err)
 	}
 }
