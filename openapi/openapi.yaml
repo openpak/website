@@ -2929,7 +2929,8 @@ paths:
     get:
       summary: The games that have rankings
       description: |
-        Every game whose server keeps rankings and has at least one board with a score, with its board count.
+        Every game that keeps rankings, scored or not, grouped by console and with games that have scores first.
+        A game nobody has scored in has has_scores false; board_names still names its boards.
         Public, read-only, cached for 30 seconds. See docs/rankings-contract.md.
       security: [{}]
       responses:
@@ -2949,6 +2950,11 @@ paths:
                         name: { type: string }
                         console: { type: string }
                         boards: { type: integer }
+                        has_scores: { type: boolean }
+                        scored_boards: { type: integer }
+                        board_names:
+                          type: array
+                          items: { type: string }
         "503": { description: Title pages are not configured on this deployment. }
   /rankings/{slug}:
     get:
@@ -3203,6 +3209,7 @@ components:
         order: { type: string, enum: [asc, desc] }
         unit: { type: string }
         season: { type: string }
+        has_scores: { type: boolean }
     RankingsRow:
       type: object
       properties:

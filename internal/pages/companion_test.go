@@ -29,6 +29,19 @@ func (b testBoards) Ranking(_ context.Context, _ string, q companion.RankQuery) 
 	return r, nil
 }
 
+// testEmpty is a game whose boards exist but nobody has a score on; none lists no boards at all.
+type testEmpty struct{ none bool }
+
+func (e testEmpty) Boards(context.Context) ([]companion.Board, error) {
+	if e.none {
+		return []companion.Board{}, nil
+	}
+	return []companion.Board{{ID: "0", Label: "Time trial", NoScores: true}, {ID: "1", Label: "Board 2", NoScores: true}}, nil
+}
+func (testEmpty) Ranking(context.Context, string, companion.RankQuery) (companion.Ranking, error) {
+	return companion.Ranking{Entries: []companion.Entry{}}, nil
+}
+
 type testStats struct{ linked bool }
 
 func (s testStats) Stats(context.Context, string) (companion.Card, error) {
@@ -54,12 +67,16 @@ func companionServer(t *testing.T) (*Server, *fakeCore) {
 		{Kind: "title", Name: "Mario Kart Wii", Console: "Wii", Status: "beta"},
 		{Kind: "title", Name: "Stardew Valley", Console: "Switch", Status: "live", TitleID: "0100E65002BB8000", TitleIDs: []string{"0100E65002BB8000"}},
 		{Kind: "title", Name: "Halo 3", Console: "Xbox 360", Status: "beta"},
+		{Kind: "title", Name: "Aaa Empty Racer", Console: "Wii", Status: "beta"},
+		{Kind: "title", Name: "No Boards Yet", Console: "PS3", Status: "beta"},
 	})
 	c := companion.New(db)
 	c.History = testHistory{}
 	c.Register(companion.Source{Names: []string{"Mario Kart Wii"}, Rankings: testBoards{entries: []companion.Entry{
 		{Name: "Ana", Display: "1:23.456"}, {Name: "Bo", Display: "1:24.000"}, {Name: "Cy", Display: "1:25.500"},
 		{Name: "Di", Display: "1:26.000"}, {Name: "Ed", Display: "1:27.250", Me: true}}}, Stats: testStats{linked: true}})
+	c.Register(companion.Source{Names: []string{"Aaa Empty Racer"}, Rankings: testEmpty{}})
+	c.Register(companion.Source{Names: []string{"No Boards Yet"}, Rankings: testEmpty{none: true}})
 	s.Companion = c
 	return s, fc
 }
@@ -183,5 +200,20 @@ func TestRankingsHub(t *testing.T) {
 	}
 	if strings.Contains(body, "Halo 3") || strings.Contains(body, "Stardew") {
 		t.Fatal("a game without rankings is on the hub")
+	}
+	// Games nobody has scored in are listed too, after the games with scores, with their board names.
+	i, j := strings.Index(body, "Aaa Empty Racer"), strings.Index(body, "Mario Kart Wii")
+	if i < 0 || j < 0 || i < j {
+		t.Fatalf("empty game missing or sorted before a scored one (%d, %d)", i, j)
+	}
+	if n := strings.Count(body, "No scores yet"); n != 2 || !strings.Contains(body, "Time trial, Board 2") || !strings.Contains(body, "No Boards Yet") {
+		t.Fatalf("empty states: %d\n%s", n, body)
+	}
+	w = getPath(s, "/titles/aaa-empty-racer/rankings")
+	if w.Code != 200 || !strings.Contains(w.Body.String(), "No scores yet") || !strings.Contains(w.Body.String(), "Time trial") {
+		t.Fatalf("empty title tab: %d %s", w.Code, w.Body.String())
+	}
+	if w = getPath(s, "/titles/no-boards-yet/rankings"); w.Code != 200 || !strings.Contains(w.Body.String(), "No scores yet") {
+		t.Fatalf("title with no boards: %d", w.Code)
 	}
 }

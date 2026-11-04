@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/openpak/website/internal/companion"
@@ -26,6 +27,11 @@ type rankedGame struct {
 	Name    string `json:"name"`
 	Console string `json:"console"`
 	Boards  int    `json:"boards"`
+	// HasScores is false while no board of the game has a score; ScoredBoards counts those that do,
+	// and BoardNames names every board (so an empty game can still say what it ranks).
+	HasScores    bool     `json:"has_scores"`
+	ScoredBoards int      `json:"scored_boards"`
+	BoardNames   []string `json:"board_names"`
 }
 
 type rankBoard struct {
@@ -35,6 +41,8 @@ type rankBoard struct {
 	Order  string `json:"order,omitempty"`
 	Unit   string `json:"unit,omitempty"`
 	Season string `json:"season,omitempty"`
+	// HasScores is false for a board nobody has a score on yet.
+	HasScores bool `json:"has_scores"`
 }
 
 type rankRow struct {
@@ -59,7 +67,7 @@ func rankRows(es []companion.Entry) []rankRow {
 func rankBoards(bs []companion.Board) []rankBoard {
 	out := make([]rankBoard, 0, len(bs))
 	for _, b := range bs {
-		out = append(out, rankBoard{ID: b.ID, Name: b.Label, Kind: b.Kind, Order: b.Order, Unit: b.Unit, Season: b.Season})
+		out = append(out, rankBoard{ID: b.ID, Name: b.Label, Kind: b.Kind, Order: b.Order, Unit: b.Unit, Season: b.Season, HasScores: !b.NoScores})
 	}
 	return out
 }
@@ -91,11 +99,26 @@ func (s *Server) handleRankingsGames(w http.ResponseWriter, r *http.Request) {
 	games := []rankedGame{}
 	for _, t := range titles {
 		bs, err := s.Companion.BoardsOf(r.Context(), t)
-		if err != nil || len(bs) == 0 {
+		if err != nil {
 			continue
 		}
-		games = append(games, rankedGame{Slug: t.Slug, Name: t.Name, Console: t.Console, Boards: len(bs)})
+		g := rankedGame{Slug: t.Slug, Name: t.Name, Console: t.Console, Boards: len(bs), BoardNames: []string{}}
+		for _, b := range bs {
+			g.BoardNames = append(g.BoardNames, b.Label)
+			if !b.NoScores {
+				g.ScoredBoards++
+			}
+		}
+		g.HasScores = g.ScoredBoards > 0
+		games = append(games, g)
 	}
+	// Games with scores first within each console.
+	sort.SliceStable(games, func(i, j int) bool {
+		if games[i].Console != games[j].Console {
+			return games[i].Console < games[j].Console
+		}
+		return games[i].HasScores && !games[j].HasScores
+	})
 	rankingsHeaders(w)
 	writeJSON(w, http.StatusOK, map[string]any{"games": games})
 }

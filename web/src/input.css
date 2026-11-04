@@ -944,7 +944,7 @@
   .pstrip b { font-family: var(--font-ui); color: var(--ink); }
 
   .board-pick { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; padding: 0; list-style: none; }
-  .board-pick a { display: inline-flex; align-items: center; min-height: 40px; padding: 0 15px; border-radius: 999px; background: var(--raised); box-shadow: var(--shadow-sm); font-family: var(--font-ui); font-size: .88rem; font-weight: 700; color: var(--ink-2); text-decoration: none; }
+  .board-pick a, .board-pick span { display: inline-flex; align-items: center; min-height: 40px; padding: 0 15px; border-radius: 999px; background: var(--raised); box-shadow: var(--shadow-sm); font-family: var(--font-ui); font-size: .88rem; font-weight: 700; color: var(--ink-2); text-decoration: none; }
   .board-pick a[aria-current="true"] { background: var(--ink); color: var(--paper); }
   .board-pick a:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--paper), 0 0 0 5px var(--cursor); }
 

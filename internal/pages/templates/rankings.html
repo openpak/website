@@ -19,7 +19,8 @@
           <span class="tart title-art">{{template "title-art" (arr $.Lang .Console .Name .TitleID "")}}</span>
           <a class="t no-underline" href="/titles/{{.Slug}}/rankings" aria-label="{{.Name}}, {{t $.Lang "rankings.open"}}">
             <b>{{.Name}}</b>
-            <span class="sub">{{if eq .Boards 1}}{{t $.Lang "rankings.boards.one"}}{{else}}{{printf (t $.Lang "rankings.boards.n") .Boards}}{{end}}</span>
+            {{if .Scored}}<span class="sub">{{if eq .Boards 1}}{{t $.Lang "rankings.boards.one"}}{{else}}{{printf (t $.Lang "rankings.boards.n") .Boards}}{{end}}</span>
+            {{else}}<span class="sub">{{t $.Lang "rankings.noscores"}}{{if .Names}}<br>{{.Names}}{{if .More}} {{printf (t $.Lang "rankings.more") .More}}{{end}}{{end}}</span>{{end}}
           </a>
         </li>
         {{end}}

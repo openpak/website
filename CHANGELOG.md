@@ -11,6 +11,12 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.90.0 — 2026-11-04
+- Rankings hub (`/rankings`) lists every game that has rankings, grouped by console, games with scores first. A game nobody has scored in shows "No scores yet — be the first" and its board names (an unnamed board is "Board N", never an id).
+- A game's Rankings tab exists for every ranked game whose server answers, and shows the same empty state until there are scores; with scores it opens on a board that has some.
+- `GET /api/v1/rankings` includes every ranked game: new `has_scores`, `scored_boards` and `board_names`; boards in `/rankings/{slug}` and the companion ranking carry `has_scores` / `no_scores`. Documented in the OpenAPI file.
+- Reads the leaderboards core with `?all=1` (leaderboards v0.2.3) so empty boards are named.
+
 ## v0.89.9 — 2026-11-04
 - Rankings lines for the 11 other switch-nex titles on the core leaderboards (Castle Crashers Remastered, Monopoly, Mario Party Superstars, ARMS, Animal Crossing: New Horizons, Luigi's Mansion 3, Minecraft, Super Mario Maker 2, Super Mario Odyssey, 3D World + Bowser's Fury, Don't Starve Together); each shows once it has scores (card #63).
 

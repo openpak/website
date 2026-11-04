@@ -3,6 +3,7 @@ package companion
 import (
 	"context"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -26,6 +27,7 @@ type Contract struct {
 
 type boardsCache struct {
 	list rankingsapi.BoardList
+	has  []bool // per board: it has at least one score
 	err  error
 	exp  time.Time
 }
@@ -50,40 +52,66 @@ func NewContract(baseURL string, people *People) *Contract {
 }
 
 func (c *Contract) list(ctx context.Context) (rankingsapi.BoardList, error) {
+	l, _, err := c.listHas(ctx)
+	return l, err
+}
+
+func (c *Contract) listHas(ctx context.Context) (rankingsapi.BoardList, []bool, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if time.Now().Before(c.boards.exp) {
-		return c.boards.list, c.boards.err
+		return c.boards.list, c.boards.has, c.boards.err
 	}
 	// The answer is shared by every caller for a minute, so it does not depend on one caller's deadline.
 	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 6*time.Second)
 	defer cancel()
-	l, err := c.Client.Boards(ctx)
+	l, err := c.Client.AllBoards(ctx)
 	ttl := boardsTTL
+	var has []bool
 	if err != nil {
 		ttl = 20 * time.Second // a server that is down is not asked on every page view
 	} else {
-		l.Boards = c.withRows(ctx, l.Boards)
+		l.Boards, has = c.withRows(ctx, l.Boards)
 	}
-	c.boards = boardsCache{l, err, time.Now().Add(ttl)}
-	return l, err
+	c.boards = boardsCache{l, has, err, time.Now().Add(ttl)}
+	return l, has, err
 }
 
-// Available implements Availability: the server answers and has at least one board.
+// Available implements Availability: the server answers. A game with no board or no score yet
+// still has its Rankings tab, which says so.
 func (c *Contract) Available(ctx context.Context) bool {
-	l, err := c.list(ctx)
-	return err == nil && len(l.Boards) > 0
+	_, err := c.list(ctx)
+	return err == nil
+}
+
+// boardLabel is a board's name; a board a server did not name, or named by its raw id, is
+// "Board N" (N is its place in the list), so no id ever shows.
+func boardLabel(name, id string, n int) string {
+	if name == "" || name == id || (strings.HasPrefix(name, "Board ") && name == "Board "+id && !isDigits(id)) {
+		return "Board " + strconv.Itoa(n)
+	}
+	return name
+}
+
+func isDigits(s string) bool {
+	for _, r := range s {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return s != ""
 }
 
 // Boards implements RankingSource.
 func (c *Contract) Boards(ctx context.Context) ([]Board, error) {
-	l, err := c.list(ctx)
+	l, has, err := c.listHas(ctx)
 	if err != nil {
 		return nil, err
 	}
 	out := make([]Board, 0, len(l.Boards))
-	for _, b := range l.Boards {
-		out = append(out, Board{ID: b.ID, Label: b.Name, Kind: b.Kind, Order: b.Order, Unit: b.Unit, Season: b.Season})
+	for i, b := range l.Boards {
+		out = append(out, Board{ID: b.ID, Label: boardLabel(b.Name, b.ID, i+1), Kind: b.Kind, Order: b.Order,
+			Unit: b.Unit, Season: b.Season, NoScores: !has[i]})
 	}
 	return out, nil
 }
@@ -141,10 +169,9 @@ func (c *Contract) entries(ctx context.Context, network string, rows []rankingsa
 	return out
 }
 
-// withRows keeps the boards that have at least one row: a board nobody has set a score on is not
-// offered, and a game with none has no Rankings tab. The probes run together; a board that does
-// not answer is kept out for this minute.
-func (c *Contract) withRows(ctx context.Context, boards []rankingsapi.Board) []rankingsapi.Board {
+// withRows says, for each board, whether it has at least one row. The probes run together; a
+// board that does not answer counts as having none for this minute.
+func (c *Contract) withRows(ctx context.Context, boards []rankingsapi.Board) ([]rankingsapi.Board, []bool) {
 	const maxProbe = 400
 	if len(boards) > maxProbe {
 		boards = boards[:maxProbe]
@@ -163,11 +190,5 @@ func (c *Contract) withRows(ctx context.Context, boards []rankingsapi.Board) []r
 		}()
 	}
 	wg.Wait()
-	out := make([]rankingsapi.Board, 0, len(boards))
-	for i, b := range boards {
-		if has[i] {
-			out = append(out, b)
-		}
-	}
-	return out
+	return boards, has
 }

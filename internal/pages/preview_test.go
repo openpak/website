@@ -77,9 +77,10 @@ func TestWritePreview(t *testing.T) {
 	ranked := testBoards{total: 60, entries: []companion.Entry{
 		{Name: "Ana", Display: "1:23.456", Avatar: "/static/icon.svg"}, {Name: "Bo", Display: "1:24.000", Avatar: "/static/icon.svg"}, {Name: "Cy", Display: "1:25.500"},
 		{Name: "Di", Display: "1:26.000"}, {Name: "Ed", Display: "1:27.250", Me: true}}}
-	for _, n := range []string{"Mario Kart 8 Deluxe", "Mario Kart 7", "Mario Kart 8", "Splatoon", "Killzone 2"} {
+	for _, n := range []string{"Mario Kart 8 Deluxe", "Mario Kart 7", "Mario Kart 8", "Splatoon"} {
 		comp.Register(companion.Source{Names: []string{n}, Rankings: ranked})
 	}
+	comp.Register(companion.Source{Names: []string{"Killzone 2"}, Rankings: testEmpty{}})
 	comp.TrophySource = testTrophies{}
 	comp.PSN = func(context.Context, string) string { return "psn_player" }
 	s.Companion = comp
@@ -87,7 +88,7 @@ func TestWritePreview(t *testing.T) {
 	rec := login(t, s, "a@x.test", "password-A-1")
 
 	for name, path := range map[string]string{
-		"companion-overview": "/titles/mario-kart-wii", "companion-listings": "/titles/halo-3/listings", "companion-rankings": "/titles/mario-kart-wii/rankings", "companion-rankings-paged": "/titles/mario-kart-8-deluxe/rankings?offset=25", "rankings-hub": "/rankings",
+		"companion-overview": "/titles/mario-kart-wii", "companion-listings": "/titles/halo-3/listings", "companion-rankings": "/titles/mario-kart-wii/rankings", "companion-rankings-empty": "/titles/killzone-2/rankings", "companion-rankings-paged": "/titles/mario-kart-8-deluxe/rankings?offset=25", "rankings-hub": "/rankings",
 		"home": "/", "sites": "/sites", "features": "/features", "downloads": "/downloads",
 		"status": "/status", "login": "/login", "register": "/register",
 		"forgot": "/forgot-password", "titles": "/titles", "help": "/help",

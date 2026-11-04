@@ -56,6 +56,8 @@ type Board struct {
 	Order  string `json:"order,omitempty"`
 	Unit   string `json:"unit,omitempty"`
 	Season string `json:"season,omitempty"`
+	// NoScores is set when the board exists but nobody has a score on it yet.
+	NoScores bool `json:"no_scores,omitempty"`
 }
 
 // Ranking is one board's table. Around is the signed-in player's slice of the
@@ -71,6 +73,9 @@ type Ranking struct {
 	Total  int `json:"total,omitempty"`
 	Offset int `json:"offset"`
 	Limit  int `json:"limit,omitempty"`
+	// NoScores is true when no board of the title has a score yet (the page shows the "be the
+	// first" state with the board names).
+	NoScores bool `json:"no_scores,omitempty"`
 }
 
 // RankQuery picks the window of a board. AccountID is "" when nobody is signed in.
@@ -87,7 +92,8 @@ type RankingSource interface {
 }
 
 // Availability is optionally implemented by a RankingSource that can be reachable without having
-// any board yet (a game server that has not stored a score): such a title has no Rankings tab.
+// any board yet (a game server that has not stored a score). A source that is not reachable has no
+// Rankings tab; one that is reachable has it, empty or not.
 type Availability interface {
 	Available(ctx context.Context) bool
 }
@@ -273,10 +279,14 @@ func (s *Service) Ranking(ctx context.Context, t Title, board string, q RankQuer
 		return Ranking{}, err
 	}
 	if len(boards) == 0 {
-		return Ranking{Boards: []Board{}, Entries: []Entry{}}, nil
+		return Ranking{Boards: []Board{}, Entries: []Entry{}, NoScores: true}, nil
 	}
-	if board == "" && len(boards) > 0 {
+	noScores := !slices.ContainsFunc(boards, func(b Board) bool { return !b.NoScores })
+	if board == "" {
 		board = boards[0].ID
+		if i := slices.IndexFunc(boards, func(b Board) bool { return !b.NoScores }); i >= 0 {
+			board = boards[i].ID // open on a board that has scores
+		}
 	}
 	if !slices.ContainsFunc(boards, func(b Board) bool { return b.ID == board }) {
 		return Ranking{}, ErrNotFound
@@ -285,7 +295,7 @@ func (s *Service) Ranking(ctx context.Context, t Title, board string, q RankQuer
 	if err != nil {
 		return Ranking{}, err
 	}
-	out.Boards, out.Board = boards, board
+	out.Boards, out.Board, out.NoScores = boards, board, noScores
 	for _, b := range boards {
 		if b.ID == board {
 			out.Label = b.Label

@@ -5,12 +5,19 @@
 
 {{define "ranking-board"}}
 {{$l := .Lang}}
-{{if gt (len .R.Boards) 1}}
+{{if and (gt (len .R.Boards) 1) (not .R.NoScores)}}
 <ul class="board-pick" aria-label="{{t $l "companion.rankings.boards"}}">
   {{range .R.Boards}}<li><a href="/titles/{{$.Slug}}/rankings?board={{.ID}}"{{if eq .ID $.R.Board}} aria-current="true"{{end}}>{{.Label}}</a></li>{{end}}
 </ul>
 {{end}}
 <section aria-labelledby="board-h">
+  {{if .R.NoScores}}
+  <div class="section-head"><h2 id="board-h">{{t $l "rankings.noscores"}}</h2></div>
+  {{if .R.Boards}}
+  <p class="lede">{{t $l "companion.rankings.noscores.boards"}}</p>
+  <ul class="board-pick">{{range .R.Boards}}<li><span>{{.Label}}</span></li>{{end}}</ul>
+  {{end}}
+  {{else}}
   <div class="section-head"><h2 id="board-h">{{.R.Label}}</h2></div>
   {{if not .R.Entries}}
   <p class="empty">{{t $l "companion.rankings.empty"}}</p>
@@ -45,6 +52,7 @@
   <div class="card"><ol class="ranklist">
     {{range .}}<li{{if .Me}} class="me"{{end}}><span class="rk">{{.Rank}}</span><span class="nm">{{if .Avatar}}<img class="ava" src="{{.Avatar}}" alt="" width="32" height="32" loading="lazy">{{end}}{{.Name}}</span><span class="sc">{{.Display}}</span></li>{{end}}
   </ol></div>
+  {{end}}
   {{end}}
 </section>
 {{end}}

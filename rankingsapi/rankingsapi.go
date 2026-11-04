@@ -276,6 +276,14 @@ func (c *Client) Boards(ctx context.Context) (BoardList, error) {
 	return l, err
 }
 
+// AllBoards is Boards with ?all=1: a server that supports it (the leaderboards core) also lists
+// boards nobody has scored on; any other server ignores the parameter.
+func (c *Client) AllBoards(ctx context.Context) (BoardList, error) {
+	var l BoardList
+	err := c.get(ctx, "/internal/rankings/boards", url.Values{"all": {"1"}}, &l)
+	return l, err
+}
+
 // Rows fetches GET /internal/rankings/boards/{id}.
 func (c *Client) Rows(ctx context.Context, board string, q Query) (Page, error) {
 	v := url.Values{"limit": {strconv.Itoa(q.Limit)}, "offset": {strconv.Itoa(q.Offset)}}

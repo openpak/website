@@ -3,6 +3,7 @@ package pages
 import (
 	"net/http"
 	"sort"
+	"strings"
 
 	"github.com/openpak/website/internal/companion"
 	"github.com/openpak/website/internal/i18n"
@@ -12,6 +13,11 @@ import (
 type rankedTitle struct {
 	companion.Title
 	Boards int
+	// Scored is true when at least one board has a score. Names lists the board names shown for a
+	// game with no scores yet, and More is how many further boards there are.
+	Scored bool
+	Names  string
+	More   int
 }
 
 // rankedGroup is the hub's titles on one console.
@@ -26,6 +32,9 @@ type rankingsHub struct {
 	Statuses []string
 	Consoles []string
 }
+
+// maxBoardNames is how many board names a game with no scores lists on the hub.
+const maxBoardNames = 4
 
 // consoleOrder is the order the site lists consoles in.
 var consoleOrder = map[string]int{"Switch": 0, "Wii U": 1, "3DS": 2, "Wii": 3, "DS": 4, "Xbox": 5, "Xbox 360": 6, "PS3": 7}
@@ -45,16 +54,34 @@ func (s *Server) handleRankingsHub(w http.ResponseWriter, r *http.Request) {
 		seen := map[string]bool{}
 		for _, t := range titles {
 			boards, err := s.Companion.BoardsOf(r.Context(), t)
-			if err != nil || len(boards) == 0 {
+			if err != nil {
 				continue
 			}
-			by[t.Console] = append(by[t.Console], rankedTitle{t, len(boards)})
+			rt := rankedTitle{Title: t, Boards: len(boards)}
+			for _, b := range boards {
+				if !b.NoScores {
+					rt.Scored = true
+				}
+			}
+			if !rt.Scored {
+				var names []string
+				for i, b := range boards {
+					if i < maxBoardNames {
+						names = append(names, b.Label)
+					}
+				}
+				rt.Names = strings.Join(names, ", ")
+				rt.More = max(len(boards)-maxBoardNames, 0)
+			}
+			by[t.Console] = append(by[t.Console], rt)
 			if t.Status != "" && !seen[t.Status] {
 				seen[t.Status] = true
 				page.Statuses = append(page.Statuses, t.Status)
 			}
 		}
 		for c, ts := range by {
+			// Games with scores first, then by name (Ranked already gave the names in order).
+			sort.SliceStable(ts, func(i, j int) bool { return ts[i].Scored && !ts[j].Scored })
 			page.Groups = append(page.Groups, rankedGroup{c, ts})
 		}
 		sort.Slice(page.Groups, func(i, j int) bool {

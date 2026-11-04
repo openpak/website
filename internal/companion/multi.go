@@ -45,10 +45,10 @@ func (m Multi) Boards(ctx context.Context) ([]Board, error) {
 	return out, nil
 }
 
-// Available implements Availability: some region has a board.
+// Available implements Availability: some region answers.
 func (m Multi) Available(ctx context.Context) bool {
-	out, _ := m.regionBoards(ctx)
-	return len(out) > 0
+	_, errs := m.regionBoards(ctx)
+	return len(errs) < len(m)
 }
 
 // Ranking implements RankingSource; board "" is the first board of the first region that has one.

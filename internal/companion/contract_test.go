@@ -52,13 +52,28 @@ func TestContractResolvesPeople(t *testing.T) {
 	}
 }
 
-func TestContractWithoutBoardsIsUnavailable(t *testing.T) {
+func TestContractWithoutBoardsStillHasATab(t *testing.T) {
 	ts := httptest.NewServer(rankingsapi.Handler("wiiu", srv{}))
 	defer ts.Close()
-	if NewContract(ts.URL, nil).Available(context.Background()) {
-		t.Fatal("a server with no boards has a Rankings tab")
+	c := NewContract(ts.URL, nil)
+	if !c.Available(context.Background()) {
+		t.Fatal("a reachable server with no boards has no Rankings tab")
+	}
+	if bs, err := c.Boards(context.Background()); err != nil || len(bs) != 0 {
+		t.Fatalf("boards: %v %v", bs, err)
 	}
 	if NewContract("http://127.0.0.1:1", nil).Available(context.Background()) {
 		t.Fatal("a down server has a Rankings tab")
+	}
+}
+
+func TestBoardLabelNeverShowsAnId(t *testing.T) {
+	for _, c := range []struct{ name, id, want string }{
+		{"Distance", "0", "Distance"}, {"", "7", "Board 2"}, {"Board 7", "7", "Board 7"},
+		{"Board c9f1a", "c9f1a", "Board 2"}, {"c9f1a", "c9f1a", "Board 2"},
+	} {
+		if got := boardLabel(c.name, c.id, 2); got != c.want {
+			t.Errorf("boardLabel(%q,%q) = %q, want %q", c.name, c.id, got, c.want)
+		}
 	}
 }
