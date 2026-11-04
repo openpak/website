@@ -45,7 +45,7 @@ var languages = map[string]Catalogue{
 		"downloads.kind.setup":     "Setup app",
 		"downloads.get":            "Download",
 		"downloads.soon":           "Not public yet",
-		"downloads.note":           "Download links open the latest public release on GitHub. Clients marked “Not public yet” do not have a public download.",
+		"downloads.note":           "Download links open the latest public release on GitHub.",
 		"nav.signin":               "Sign in",
 		"nav.signout":              "Sign out",
 		"nav.register":             "Create account",

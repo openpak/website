@@ -26,7 +26,7 @@ var cataloguePTBR = Catalogue{
 	"downloads.kind.setup":              "App de configuração",
 	"downloads.get":                     "Baixar",
 	"downloads.soon":                    "Ainda não público",
-	"downloads.note":                    "Os links abrem a versão pública mais recente no GitHub. Clientes ainda não públicos não têm download público.",
+	"downloads.note":                    "Os links abrem a versão pública mais recente no GitHub.",
 	"nav.signin":                        "Entrar",
 	"nav.signout":                       "Sair",
 	"nav.register":                      "Criar conta",

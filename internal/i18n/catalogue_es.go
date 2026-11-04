@@ -26,7 +26,7 @@ var catalogueES = Catalogue{
 	"downloads.kind.setup":              "App de configuración",
 	"downloads.get":                     "Descargar",
 	"downloads.soon":                    "Aún no es público",
-	"downloads.note":                    "Los enlaces abren la última versión pública en GitHub. Los clientes marcados como no públicos aún no tienen una descarga pública.",
+	"downloads.note":                    "Los enlaces abren la última versión pública en GitHub.",
 	"nav.signin":                        "Iniciar sesión",
 	"nav.signout":                       "Cerrar sesión",
 	"nav.register":                      "Crear cuenta",

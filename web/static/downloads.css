@@ -1,6 +1,15 @@
-/* /downloads: families, then consoles oldest first. The cards are the site's own .dl cards. */
-.dlfam + .dlfam { margin-top: 2.6rem; }
-.dlcon { display: flex; align-items: center; gap: .7rem; margin: 1.4rem 0 .7rem; }
-.dlcon:first-of-type { margin-top: 0; }
+/* /downloads: families, then consoles oldest first. The cards are the site's own .dl cards; each
+   console is one cell of a responsive grid so wide screens use their width. */
+.dlfam.section { padding-top: 2.4rem; }
+.page-head + .dlfam.section { padding-top: 0; }
+.dlfam .section-top { margin-bottom: 1rem; }
+.dlcons { display: grid; gap: 1.8rem 1.5rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 34rem), 1fr)); }
+.dlgroup { min-width: 0; }
+.dlcon { display: flex; align-items: center; gap: .7rem; margin: 0 0 .7rem; }
 .dlcon h3 { margin: 0; font-family: var(--font-ui); font-size: 1.1rem; font-weight: 800; }
+.dlgroup .dlgrid { grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); }
 .dl h4 { margin: 0; font-family: var(--font-ui); font-size: 1.05rem; font-weight: 700; line-height: 1.35; }
+/* Logos sit straight on the card: no white tile, which is wrong on dark. Console marks share one box. */
+.dl .client-mark { background: transparent; padding: 0; border-radius: 12px; width: 56px; height: 56px; }
+.dl .console-mark { width: 56px; height: 40px; padding: 0; --console-mark-size: 56px; }
+.dl .console.lg { --console-mark-size: 56px; }

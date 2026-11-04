@@ -26,7 +26,7 @@ var catalogueDE = Catalogue{
 	"downloads.kind.setup":              "Einrichtungs-App",
 	"downloads.get":                     "Herunterladen",
 	"downloads.soon":                    "Noch nicht öffentlich",
-	"downloads.note":                    "Download-Links öffnen die neueste öffentliche Version auf GitHub. Für Clients mit „Noch nicht öffentlich“ gibt es noch keinen öffentlichen Download.",
+	"downloads.note":                    "Download-Links öffnen die neueste öffentliche Version auf GitHub.",
 	"nav.signin":                        "Anmelden",
 	"nav.signout":                       "Abmelden",
 	"nav.register":                      "Konto erstellen",

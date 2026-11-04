@@ -11,7 +11,9 @@
 {{range .Families}}
 <section class="section dlfam" aria-labelledby="fam-{{.ID}}">
   <div class="section-top"><div><h2 id="fam-{{.ID}}">{{.Name}}</h2>{{if eq .ID "openpak"}}<p>{{t $.Lang "downloads.app.sub"}}</p>{{end}}</div></div>
+  <div class="dlcons">
   {{range .Groups}}
+  <div class="dlgroup">
   {{if .Label}}<div class="dlcon">
     <h3>{{.Label}}</h3>
     {{if .Status}}<span class="badge {{badgeClass .Status}}">{{statusText .Status}}</span>{{end}}
@@ -32,9 +34,11 @@
     </li>
     {{end}}
   </ul>
+  </div>
   {{end}}
+  </div>
 </section>
 {{end}}
 
-<p class="mt-8 max-w-prose text-sm text-muted" id="platforms">{{t .Lang "downloads.note"}} {{t .Lang "platforms.note"}}</p>
+<p class="mt-6 max-w-prose text-sm text-muted" id="platforms">{{t .Lang "downloads.note"}}</p>
 {{template "footer" .}}
