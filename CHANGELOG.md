@@ -11,6 +11,9 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.89.7 — 2026-11-04
+- Test: the Xbox 360 rankings test expects the `/t/x360:<title id>` URLs (v0.89.6 shipped without it).
+
 ## v0.89.6 — 2026-11-04
 - Xbox 360 rankings lines use the core's title key `/t/x360:<title id>`; v0.89.5's `/n/x360/t/<id>` form does not resolve native ids in the core (it takes the neutral key).
 
