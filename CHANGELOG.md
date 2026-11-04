@@ -11,6 +11,9 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.89.9 — 2026-11-04
+- Rankings lines for the 11 other switch-nex titles on the core leaderboards (Castle Crashers Remastered, Monopoly, Mario Party Superstars, ARMS, Animal Crossing: New Horizons, Luigi's Mansion 3, Minecraft, Super Mario Maker 2, Super Mario Odyssey, 3D World + Bowser's Fury, Don't Starve Together); each shows once it has scores (card #63).
+
 ## v0.89.8 — 2026-11-04
 - The 13 switch-nex Ranking/Ranking2 titles on the Rankings tab read the core leaderboards (`/t/<title>`) instead of their host-network ports (switch-nex v0.13.0, card #63).
 

@@ -54,6 +54,18 @@ var rankingServers = []struct {
 	{[]string{"Mario Strikers: Battle League"}, "Switch", "http://openpak-leaderboards:20210/t/mario-strikers-battle-league", nil},
 	{[]string{"Pac-Man 99"}, "Switch", "http://openpak-leaderboards:20210/t/pac-man-99", nil},
 	{[]string{"Teenage Mutant Ninja Turtles: Shredder's Revenge"}, "Switch", "http://openpak-leaderboards:20210/t/tmnt-shredders-revenge", nil},
+	// The other switch-nex Ranking/Ranking2 titles on the core leaderboards (switch-nex v0.13.0, card #63); a title shows once it has scores.
+	{[]string{"Castle Crashers Remastered"}, "Switch", "http://openpak-leaderboards:20210/t/castle-crashers-remastered", nil},
+	{[]string{"Monopoly for Nintendo Switch"}, "Switch", "http://openpak-leaderboards:20210/t/monopoly", nil},
+	{[]string{"Mario Party Superstars"}, "Switch", "http://openpak-leaderboards:20210/t/mario-party-superstars", nil},
+	{[]string{"ARMS"}, "Switch", "http://openpak-leaderboards:20210/t/arms", nil},
+	{[]string{"Animal Crossing: New Horizons"}, "Switch", "http://openpak-leaderboards:20210/t/animal-crossing-new-horizons", nil},
+	{[]string{"Luigi's Mansion 3"}, "Switch", "http://openpak-leaderboards:20210/t/luigis-mansion-3", nil},
+	{[]string{"Minecraft"}, "Switch", "http://openpak-leaderboards:20210/t/minecraft", nil},
+	{[]string{"Super Mario Maker 2"}, "Switch", "http://openpak-leaderboards:20210/t/super-mario-maker-2", nil},
+	{[]string{"Super Mario Odyssey"}, "Switch", "http://openpak-leaderboards:20210/t/super-mario-odyssey", nil},
+	{[]string{"Super Mario 3D World + Bowser's Fury"}, "Switch", "http://openpak-leaderboards:20210/t/super-mario-3d-world-bowsers-fury", nil},
+	{[]string{"Don't Starve Together"}, "Switch", "http://openpak-leaderboards:20210/t/dont-starve-together", nil},
 	// spelunky2 v0.9.0 (Switch): boards stay empty until SPELUNKY2_SCORE_FIELD is set on the server.
 	{[]string{"Spelunky 2"}, "Switch", "http://openpak-spelunky2:9090", nil},
 	// Xbox 360: x360-xstats v0.7.0 feeds the leaderboards core, which keys an unmapped title as x360:<title id in hex>, served at /t/x360:<id>; matched by catalogue title_ids.
