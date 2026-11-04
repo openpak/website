@@ -107,6 +107,9 @@ type Server struct {
 
 	// StatusAPI is status.openpak.org/api/status, the checks run from another host; empty hides that part of /status.
 	StatusAPI string
+
+	// ReleaseCheck says whether a client's latest-release link leads to a published release; nil offers every client.
+	ReleaseCheck func(ctx context.Context, url string) bool
 	// Support is the help-ticket service; nil says tickets are not available.
 	Support *support.Service
 	// News is the public news feed for the landing page; nil shows none.
@@ -716,17 +719,6 @@ var downloads = []download{
 // apps is the phone app.
 var apps = []download{
 	{"OpenPak", "Android", "downloads.kind.app", "", "https://github.com/openpak/app/releases/latest", "/static/icon.svg"},
-}
-
-func (s *Server) handleDownloads(w http.ResponseWriter, r *http.Request) {
-	v := s.viewerOf(w, r)
-	s.render(w, http.StatusOK, "downloads.html", struct {
-		baseData
-		Downloads []download
-		Emulators []download
-		Apps      []download
-		Platforms []platform
-	}{s.data(r, v, i18n.T(i18n.FromRequest(r), "downloads.title")), downloads, emulators, apps, platformsAt(s.consoleStages(r.Context()))})
 }
 
 // staticPage serves a page that is only text, for signed-in and signed-out

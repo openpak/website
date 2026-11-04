@@ -1,18 +1,28 @@
 {{template "header" .}}
+{{/* Downloads, by family (Nintendo, Sony, Microsoft, OpenPak) and console, oldest first, in the order
+     the status pages use. A console with nothing to download is not listed. */}}
+<link rel="stylesheet" href="/static/downloads.css?v={{.Asset}}">
 <div class="page-head">
   <h1>{{t .Lang "downloads.title"}}</h1>
   <p class="lede">{{t .Lang "downloads.sub"}}</p>
+  <p class="mt-3 max-w-prose text-sm text-muted">{{t .Lang "downloads.emulators.sub"}} {{t .Lang "downloads.console.sub"}}</p>
 </div>
 
-<section aria-labelledby="emu-h">
-  <div class="section-top"><div><h2 id="emu-h">{{t .Lang "downloads.emulators"}}</h2><p>{{t .Lang "downloads.emulators.sub"}}</p></div></div>
+{{range .Families}}
+<section class="section dlfam" aria-labelledby="fam-{{.ID}}">
+  <div class="section-top"><div><h2 id="fam-{{.ID}}">{{.Name}}</h2>{{if eq .ID "openpak"}}<p>{{t $.Lang "downloads.app.sub"}}</p>{{end}}</div></div>
+  {{range .Groups}}
+  {{if .Label}}<div class="dlcon">
+    <h3>{{.Label}}</h3>
+    {{if .Status}}<span class="badge {{badgeClass .Status}}">{{statusText .Status}}</span>{{end}}
+  </div>{{end}}
   <ul class="dlgrid">
-    {{range .Emulators}}
+    {{range .Cards}}
     <li class="card dl">
       <div class="flex items-center gap-3">
         {{if .Icon}}<img class="client-mark" src="{{.Icon}}" alt="" width="64" height="64">
         {{else}}<span class="console lg"><picture class="console-mark"><source srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg" media="(prefers-color-scheme: dark)"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>{{end}}
-        <div class="min-w-0"><div class="kind">{{.Console}} · {{t $.Lang .Kind}}</div><h3 class="break-anywhere">{{.Name}}</h3></div>
+        <div class="min-w-0"><div class="kind">{{.Label}}{{if ne .Kind "downloads.kind.patch"}} · {{t $.Lang .Kind}}{{end}}</div><h4 class="break-anywhere">{{if eq .Kind "downloads.kind.patch"}}{{t $.Lang .Kind}}{{else}}{{.Name}}{{end}}</h4></div>
       </div>
       <div class="foot">
         {{if .Status}}<span class="badge {{badgeClass .Status}}">{{statusText .Status}}</span>{{else}}<span></span>{{end}}
@@ -22,58 +32,9 @@
     </li>
     {{end}}
   </ul>
+  {{end}}
 </section>
+{{end}}
 
-<section class="section" aria-labelledby="app-h">
-  <div class="section-top"><div><h2 id="app-h">{{t .Lang "downloads.app"}}</h2><p>{{t .Lang "downloads.app.sub"}}</p></div></div>
-  <ul class="dlgrid">
-    {{range .Apps}}
-    <li class="card dl">
-      <div class="flex items-center gap-3">
-        <img class="client-mark" src="{{.Icon}}" alt="" width="64" height="64">
-        <div class="min-w-0"><div class="kind">{{.Console}} · {{t $.Lang .Kind}}</div><h3 class="break-anywhere">{{.Name}}</h3></div>
-      </div>
-      <div class="foot">
-        <span></span>
-        <a class="btn primary" href="{{.URL}}" rel="noopener"><svg class="ico sm" aria-hidden="true"><use href="#i-dl"/></svg>{{t $.Lang "downloads.get"}}</a>
-      </div>
-    </li>
-    {{end}}
-  </ul>
-</section>
-
-<section class="section" aria-labelledby="dl-h">
-  <div class="section-top"><div><h2 id="dl-h">{{t .Lang "downloads.console"}}</h2><p>{{t .Lang "downloads.console.sub"}}</p></div></div>
-  <ul class="dlgrid">
-    {{range .Downloads}}
-    <li class="card dl" aria-label="{{.Console}} · {{t $.Lang "downloads.kind.patch"}}">
-      <div class="flex items-center gap-3">
-        {{if .Icon}}<img class="client-mark" src="{{.Icon}}" alt="" width="64" height="64">
-        {{else}}<span class="console lg"><picture class="console-mark"><source srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg" media="(prefers-color-scheme: dark)"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="{{.Console}}" width="30" height="30" loading="lazy"></picture></span>{{end}}
-        <div class="min-w-0"><div class="kind">{{.Console}}</div><h3 class="break-anywhere">{{t $.Lang "downloads.kind.patch"}}</h3></div>
-      </div>
-      <div class="foot">
-        {{if .Status}}<span class="badge {{badgeClass .Status}}">{{statusText .Status}}</span>{{else}}<span></span>{{end}}
-        {{if .URL}}<a class="btn primary" href="{{.URL}}" rel="noopener"><svg class="ico sm" aria-hidden="true"><use href="#i-dl"/></svg>{{t $.Lang "downloads.get"}}</a>
-        {{else}}<button class="btn" type="button" disabled>{{t $.Lang "downloads.soon"}}</button>{{end}}
-      </div>
-    </li>
-    {{end}}
-  </ul>
-  <p class="mt-4 text-sm text-muted">{{t .Lang "downloads.note"}}</p>
-</section>
-
-<section class="section" aria-labelledby="plat-h" id="platforms">
-  <h2 id="plat-h">{{t .Lang "platforms.title"}}</h2>
-  <p class="text-muted">{{t .Lang "platforms.note"}}</p>
-  <ul class="tgrid">
-    {{range .Platforms}}
-    <li class="tcard">
-      <span class="console lg"><picture class="console-mark"><source srcset="/static/consoles/{{consoleSlug .Console}}-dark.svg" media="(prefers-color-scheme: dark)"><img src="/static/consoles/{{consoleSlug .Console}}.svg" alt="" width="30" height="30" loading="lazy"></picture></span>
-      <span class="t"><b>{{.Name}}</b></span>
-      <span class="end"><span class="badge {{badgeClass .Status}}">{{statusText .Status}}</span></span>
-    </li>
-    {{end}}
-  </ul>
-</section>
+<p class="mt-8 max-w-prose text-sm text-muted" id="platforms">{{t .Lang "downloads.note"}} {{t .Lang "platforms.note"}}</p>
 {{template "footer" .}}

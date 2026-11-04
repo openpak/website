@@ -1,0 +1,6 @@
+/* /downloads: families, then consoles oldest first. The cards are the site's own .dl cards. */
+.dlfam + .dlfam { margin-top: 2.6rem; }
+.dlcon { display: flex; align-items: center; gap: .7rem; margin: 1.4rem 0 .7rem; }
+.dlcon:first-of-type { margin-top: 0; }
+.dlcon h3 { margin: 0; font-family: var(--font-ui); font-size: 1.1rem; font-weight: 800; }
+.dl h4 { margin: 0; font-family: var(--font-ui); font-size: 1.05rem; font-weight: 700; line-height: 1.35; }

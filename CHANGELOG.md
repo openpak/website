@@ -11,6 +11,10 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.100.0 — 2026-11-04
+
+- `/downloads` follows the status pages' order: Nintendo, Sony, Microsoft and OpenPak headings (from `internal/netorder`), each console under its family oldest first with its status badge and its downloads; the phone app sits under OpenPak. The platforms grid is folded into the console headings. A console with nothing to download is left out, and a client whose repository has no published release is not offered (checked against the GitHub API, cached half an hour) and appears once a release exists. The original Xbox reads "Original Xbox".
+
 ## v0.99.0 — 2026-11-04
 
 - `/status` family headings are the companies: Nintendo, Sony, Microsoft, then OpenPak over Shared services and Websites (from `shared/networks.json`); no more gap-only group. The PlayStation 4 card says "0 online" like the others.
