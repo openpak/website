@@ -7,7 +7,7 @@
   <span class="tart title-art">{{template "title-art" (arr .Lang .Title.Console .Title.Name .Title.TitleID "")}}</span>
   <div>
     <h1>{{.Title.Name}}</h1>
-    <p class="tmeta"><span class="console">{{range consoleSlugs .Title.Console}}<img src="/static/consoles/{{.}}.svg" alt="" width="32" height="22">{{end}}{{.Title.Console}}</span><span class="badge {{badgeClass .Title.Status}}">{{statusText .Title.Status}}</span></p>
+    <p class="tmeta"><span class="console">{{range consoleSlugs .Title.Console}}<picture><source srcset="/static/consoles/{{.}}-dark.svg" media="(prefers-color-scheme: dark)"><img src="/static/consoles/{{.}}.svg" alt="" width="32" height="22"></picture>{{end}}{{.Title.Console}}</span><span class="badge {{badgeClass .Title.Status}}">{{statusText .Title.Status}}</span></p>
   </div>
 </header>
 

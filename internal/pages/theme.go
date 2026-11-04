@@ -9,6 +9,7 @@ import (
 	"html/template"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -109,13 +110,76 @@ type themeView struct {
 	CSS         template.CSS
 	Hash        string // 'sha256-...' for the CSP's style-src
 	Light, Dark string // the paper colours, for <meta name="theme-color">
+	// MarkMedia is the media query the console marks' dark <source> answers to on this theme: dark paper in
+	// light mode, or light paper in dark mode, must not pick the file by the system setting alone.
+	MarkMedia string
+}
+
+// paperIsDark reports whether a theme paper colour (hex or rgb) is dark, by relative luminance. Unknown is light.
+func paperIsDark(c string) bool {
+	var r, g, b float64
+	switch {
+	case strings.HasPrefix(c, "#") && (len(c) == 7 || len(c) == 9):
+		var v [3]int
+		for i := range v {
+			n, err := strconv.ParseUint(c[1+2*i:3+2*i], 16, 8)
+			if err != nil {
+				return false
+			}
+			v[i] = int(n)
+		}
+		r, g, b = float64(v[0]), float64(v[1]), float64(v[2])
+	case strings.HasPrefix(c, "#") && (len(c) == 4 || len(c) == 5):
+		var v [3]int
+		for i := range v {
+			n, err := strconv.ParseUint(string([]byte{c[1+i], c[1+i]}), 16, 8)
+			if err != nil {
+				return false
+			}
+			v[i] = int(n)
+		}
+		r, g, b = float64(v[0]), float64(v[1]), float64(v[2])
+	case strings.HasPrefix(c, "rgb"):
+		f := strings.FieldsFunc(c[strings.Index(c, "(")+1:], func(r rune) bool { return r == ',' || r == ')' || r == ' ' })
+		if len(f) < 3 {
+			return false
+		}
+		r, _ = strconv.ParseFloat(f[0], 64)
+		g, _ = strconv.ParseFloat(f[1], 64)
+		b, _ = strconv.ParseFloat(f[2], 64)
+	default:
+		return false
+	}
+	return (0.2126*r+0.7152*g+0.0722*b)/255 < 0.5
+}
+
+// markMedia picks the dark mark's media query from which modes of the theme have dark paper.
+func markMedia(lightPaper, darkPaper string) string {
+	ld, dd := paperIsDark(lightPaper), paperIsDark(darkPaper)
+	switch {
+	case ld && dd:
+		return "all"
+	case ld:
+		return "(prefers-color-scheme: light)"
+	case !dd:
+		return "not all"
+	}
+	return "(prefers-color-scheme: dark)"
 }
 
 func viewOfTheme(t Theme) *themeView {
 	css := t.CSS()
 	sum := sha256.Sum256([]byte(css))
 	return &themeView{CSS: template.CSS(css), Hash: "'sha256-" + base64.StdEncoding.EncodeToString(sum[:]) + "'",
-		Light: t.Light["paper"], Dark: t.Dark["paper"]}
+		Light: t.Light["paper"], Dark: t.Dark["paper"], MarkMedia: markMedia(t.Light["paper"], t.Dark["paper"])}
+}
+
+// markMedia is read by render: "" when the default query already fits.
+func (b baseData) markMedia() string {
+	if b.Theme == nil || b.Theme.MarkMedia == "(prefers-color-scheme: dark)" {
+		return ""
+	}
+	return b.Theme.MarkMedia
 }
 
 // styleHash is read by render: pages embed baseData, so every page answers it.

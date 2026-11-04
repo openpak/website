@@ -10,7 +10,7 @@ dropped; CSS classes from a <style> block are inlined, since the result is
 rewrapped and the block would no longer apply.
 
 Colours follow CREDITS.md: against the tile each theme draws the logo on, a
-colour below 3:1 (4.5:1 for a near-neutral, which goes grey) is moved in
+colour below 4.5:1 (7:1 for a near-neutral, which goes grey) is moved in
 lightness, hue kept, until it passes: darker for the light file, lighter for
 the dark one. Unfilled shapes default to black, so the wrapper sets that
 default explicitly and it is adjusted like any other colour.
@@ -28,8 +28,8 @@ ET.register_namespace("", SVG)
 ET.register_namespace("xlink", XLINK)
 OUT = Path(__file__).resolve().parent.parent / "web/static/consoles"
 BOX_W, BOX_H, PAD = 36.0, 24.0, 0.5
-# The console tile's background (--paper-2) in each theme.
-TILES = {"": "#f1f1f4", "-dark": "#181a21"}
+# The hardest background a mark sits on in each theme: --paper in light, --raised in dark. There is no white chip.
+TILES = {"": "#e9ecf0", "-dark": "#31353d"}
 COLOR_PROPS = ("fill", "stroke", "stop-color")
 NAMED = {"black": "#000000", "white": "#ffffff"}
 
@@ -59,7 +59,7 @@ def adjust(c, tile, lighter):
     r, g, b = (int(c[i:i + 2], 16) / 255 for i in (1, 3, 5))
     h, l, s = colorsys.rgb_to_hls(r, g, b)
     neutral = s < 0.15
-    need = 4.5 if neutral else 3.0
+    need = 7.0 if neutral else 4.5
     if neutral:
         s = 0.0
     out = c

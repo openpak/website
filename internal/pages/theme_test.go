@@ -197,3 +197,17 @@ func TestShopPreviewAndUpcoming(t *testing.T) {
 		t.Error("signed out: the bar has no buy form")
 	}
 }
+
+func TestMarkMedia(t *testing.T) {
+	for _, c := range []struct{ light, dark, want string }{
+		{"#e9ecf0", "#24272d", "(prefers-color-scheme: dark)"},
+		{"#101010", "#202020", "all"},
+		{"#101010", "#f0f0f0", "(prefers-color-scheme: light)"},
+		{"#f0f0f0", "#fafafa", "not all"},
+		{"rgb(20,20,20)", "#222", "all"},
+	} {
+		if got := markMedia(c.light, c.dark); got != c.want {
+			t.Errorf("markMedia(%s,%s) = %q, want %q", c.light, c.dark, got, c.want)
+		}
+	}
+}

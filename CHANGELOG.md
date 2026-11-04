@@ -11,6 +11,12 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.92.0 — 2026-11-04
+
+- Console marks no longer sit on a white chip. `.console-mark` is transparent, so a mark takes the tile it is on (`--paper`, `--paper-2` or `--raised`) in light and dark. Every `<picture class="console-mark">` (titles grid, filters, art placeholders, downloads, account friend codes and friends, saves, landing, the title page header) now carries a `<source srcset="…-dark.svg" media="(prefers-color-scheme: dark)">`.
+- An equipped Rewards theme whose paper does not follow the system setting (dark paper in light mode, or light in dark) swaps that media query when the page is rendered, so its marks use the matching file (`markMedia`, theme.go).
+- Contrast: with no white behind them, black wordmarks went dim grey on dark. The dark files now lift near-neutrals to 7:1 (`#c4c4c4`) and coloured fills to 4.5:1; the light files darken the Wii U blue, Wii greys and the Xbox 360 greens to the same bar. Rule documented in `web/static/consoles/CREDITS.md`; `scripts/consoles.py` applies it against the hardest tile of each theme.
+
 ## v0.91.0 — 2026-11-04
 - Link a Wii or DS from the console: an unlinked Mario Kart Wii shows a pairing code in its Wi-Fi menu message (wfc-gpcm v0.2.0); enter it at `/link` (or in the app, in the friend-code field) to make the `wfc` core link. Codes live in Postgres, last 30 minutes and work once; attempts are rate limited per account and address. The friend-code form on `/account` still works, and now points to `/link`.
 - `POST /api/v1/me/links/wfc` accepts `{"code"}` (or a pairing code in `friend_code`). Unlinking a Wii/DS tells wfc-api (`/api/pair/forget`) so the console is offered a code again. Needs wfc-api v0.2.0.

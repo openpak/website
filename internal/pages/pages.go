@@ -296,6 +296,10 @@ func (s *Server) render(w http.ResponseWriter, status int, name string, data any
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
+	if m, ok := data.(interface{ markMedia() string }); ok && m.markMedia() != "" {
+		// An equipped theme whose paper does not follow the system setting: pick the console marks by its paper.
+		buf = *bytes.NewBuffer(bytes.ReplaceAll(buf.Bytes(), []byte(`-dark.svg" media="(prefers-color-scheme: dark)"`), []byte(`-dark.svg" media="`+m.markMedia()+`"`)))
+	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("Referrer-Policy", "same-origin")
