@@ -11,6 +11,10 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.94.2 — 2026-11-04
+
+- Rebuilt `web/static/site.css`: the stylesheet shipped in v0.94.0 lacked `.max-w-xl`, used by the new admin pages.
+
 ## v0.94.1 — 2026-11-04
 
 - Console filter pills (titles, features): the marks are a 64x24 wordmark slot instead of an 18 px square, so 3DS, PS3, PSP and Xbox 360 read in dark and light. They use the lifted `-dark` files like every other mark; a selected pill (inverted colours) keeps a `--paper` tile behind its mark.
