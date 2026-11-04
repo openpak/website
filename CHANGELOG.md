@@ -11,6 +11,9 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.89.3 — 2026-11-04
+- Mario Kart Wii rankings now come from the leaderboards core (`/t/mario-kart-wii`) instead of wfc-race's own contract listener.
+
 ## v0.89.2 — 2026-11-04
 - Saves page: PS3 saves show the PS3 logo and the game's catalogue title (by the product code the save directory starts with) instead of the raw `ps3:folder` id; an unknown code shows the save directory name.
 

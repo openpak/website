@@ -16,7 +16,7 @@ var rankingServers = []struct {
 	URL      string
 	TitleIDs []string
 }{
-	{[]string{"Mario Kart Wii"}, "Wii", "http://openpak-wfc-race:9090", nil},
+	{[]string{"Mario Kart Wii"}, "Wii", "http://openpak-leaderboards:20210/t/mario-kart-wii", nil},
 	{[]string{"Mario Kart 8 Deluxe"}, "Switch", "http://host.containers.internal:22855", nil},
 	{[]string{"Mario Kart 8"}, "Wii U", "http://openpak-mario-kart-8:9090", nil},
 	{[]string{"Mario Kart 7"}, "3DS", "http://openpak-mario-kart-7:9090", nil},
