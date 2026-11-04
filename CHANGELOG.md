@@ -11,6 +11,10 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.89.4 — 2026-11-04
+- Mario Kart 8 Deluxe (Switch) rankings come from the core leaderboards (`http://openpak-leaderboards:20210/t/mario-kart-8-deluxe`)
+  instead of the switch-nex host-network port, since switch-nex v0.12.0 (card #63).
+
 ## v0.89.3 — 2026-11-04
 - Mario Kart Wii rankings now come from the leaderboards core (`/t/mario-kart-wii`) instead of wfc-race's own contract listener.
 

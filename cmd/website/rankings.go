@@ -2,7 +2,7 @@ package main
 
 // rankingServers maps a catalogue title (name and console exactly as the catalogue has them) to its
 // game server's internal rankings endpoint (docs/rankings-contract.md). The NEX titles are container
-// names on openpak.network; Mario Kart 8 Deluxe runs on the host network, so its endpoint is
+// names on openpak.network; the switch-nex titles run on the host network, so its endpoint is
 // reached through host.containers.internal and fenced off from the public side by a firewall rule. None of them has a Traefik route or a published port. A server
 // that does not answer, or has no scored board yet, gives its title no Rankings tab and no hub entry.
 //
@@ -17,7 +17,7 @@ var rankingServers = []struct {
 	TitleIDs []string
 }{
 	{[]string{"Mario Kart Wii"}, "Wii", "http://openpak-leaderboards:20210/t/mario-kart-wii", nil},
-	{[]string{"Mario Kart 8 Deluxe"}, "Switch", "http://host.containers.internal:22855", nil},
+	{[]string{"Mario Kart 8 Deluxe"}, "Switch", "http://openpak-leaderboards:20210/t/mario-kart-8-deluxe", nil}, // core leaderboards since switch-nex v0.12.0 (card #63)
 	{[]string{"Mario Kart 8"}, "Wii U", "http://openpak-mario-kart-8:9090", nil},
 	{[]string{"Mario Kart 7"}, "3DS", "http://openpak-mario-kart-7:9090", nil},
 	{[]string{"Pikmin 3"}, "Wii U", "http://openpak-pikmin-3:9090", nil},
