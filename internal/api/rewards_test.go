@@ -184,7 +184,7 @@ func TestRequestsCarryVerseURLForServedTitles(t *testing.T) {
 // Every place an account appears carries its picture, as /me does: fixtures once had avatar_url the live API lacked.
 func TestAccountsCarryAvatarURL(t *testing.T) {
 	s, fc, db := newTestAPI(t)
-	st, err := media.NewFSStorage(t.TempDir())
+	st, err := media.NewMemStorage(), error(nil)
 	if err != nil {
 		t.Fatal(err)
 	}

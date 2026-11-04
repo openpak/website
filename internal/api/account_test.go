@@ -92,7 +92,7 @@ func TestLinkAndUnlinkWiiDS(t *testing.T) {
 
 func TestAvatarUpload(t *testing.T) {
 	s, _, db := newTestAPI(t)
-	st, err := media.NewFSStorage(t.TempDir())
+	st, err := media.NewMemStorage(), error(nil)
 	if err != nil {
 		t.Fatal(err)
 	}

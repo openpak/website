@@ -9,10 +9,7 @@ import (
 )
 
 func TestSaveOpenServe(t *testing.T) {
-	s, err := New(t.TempDir())
-	if err != nil {
-		t.Fatal(err)
-	}
+	s := NewMemory()
 	got, err := s.Save("tickets", strings.NewReader("<html>hello</html>"), 100)
 	if err != nil || got.Size != 18 || !strings.HasPrefix(got.ContentType, "text/html") {
 		t.Fatalf("save: %+v %v", got, err)
@@ -43,7 +40,7 @@ func TestSaveOpenServe(t *testing.T) {
 	if _, err := s.Open("tickets/../../etc/passwd"); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("traversal: %v", err)
 	}
-	if s, _ := New(""); s != nil {
-		t.Fatal("empty dir must disable attachments")
+	if NewPG(nil) != nil {
+		t.Fatal("nil pool must disable attachments")
 	}
 }

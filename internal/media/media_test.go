@@ -23,7 +23,7 @@ func pngBytes(size int) []byte {
 }
 
 func TestStoreAvatarResizes(t *testing.T) {
-	st, err := NewFSStorage(t.TempDir())
+	st, err := NewMemStorage(), error(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,7 +49,7 @@ func TestStoreAvatarResizes(t *testing.T) {
 }
 
 func TestStoreAvatarRejectsGarbage(t *testing.T) {
-	st, _ := NewFSStorage(t.TempDir())
+	st, _ := NewMemStorage(), error(nil)
 	svc := New(st)
 	if err := svc.StoreAvatar(context.Background(), "acct-1", strings.NewReader("not an image")); err == nil {
 		t.Fatal("garbage upload must fail")
@@ -68,7 +68,7 @@ func TestStoreAvatarRejectsGarbage(t *testing.T) {
 // picking a built-in avatar must leave a decodable JPEG behind, because the
 // adapter serves those bytes at /1/<id> and /2/<id> (CR-2).
 func TestPresetsProduceConsoleJPEG(t *testing.T) {
-	st, err := NewFSStorage(t.TempDir())
+	st, err := NewMemStorage(), error(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -108,7 +108,7 @@ func (f *fakePublisher) PutAvatar(_ context.Context, accountID string, png256, p
 // Every stored avatar goes to the core too (CR-2), with the sizes the core
 // checks; a core that refuses it does not fail the upload.
 func TestStoreAvatarPublishesToCore(t *testing.T) {
-	st, _ := NewFSStorage(t.TempDir())
+	st, _ := NewMemStorage(), error(nil)
 	svc := New(st)
 	pub := &fakePublisher{}
 	svc.Publisher = pub

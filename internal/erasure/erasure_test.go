@@ -5,8 +5,6 @@ import (
 	"errors"
 	"io"
 	"log/slog"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -131,12 +129,8 @@ func TestFinaliserPages(t *testing.T) {
 func TestWebsiteStep(t *testing.T) {
 	ctx := context.Background()
 	db := store.NewMemory()
-	dir := t.TempDir()
-	files, err := attachments.New(filepath.Join(dir, "att"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	st, err := media.NewFSStorage(filepath.Join(dir, "media"))
+	files := attachments.NewMemory()
+	st, err := media.NewMemStorage(), error(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -167,10 +161,10 @@ func TestWebsiteStep(t *testing.T) {
 	if _, err := files.Open(att.Key); !errors.Is(err, attachments.ErrNotFound) {
 		t.Fatalf("ticket attachment survives: %v", err)
 	}
-	if _, err := os.Stat(filepath.Join(dir, "media", "avatars", gone)); !os.IsNotExist(err) {
+	if _, err := avatars.Avatar(ctx, gone, media.SizeSmall); err == nil {
 		t.Fatalf("avatar files survive: %v", err)
 	}
-	if _, err := os.Stat(filepath.Join(dir, "media", "avatars", stays)); err != nil {
+	if _, err := avatars.Avatar(ctx, stays, media.SizeSmall); err != nil {
 		t.Fatalf("neighbour's avatar went: %v", err)
 	}
 	if ts, _ := db.ListTickets(ctx, store.TicketFilter{AccountID: gone}, 10); len(ts) != 0 {

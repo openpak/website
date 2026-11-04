@@ -1,13 +1,16 @@
 // Package attachments keeps uploaded files (help-ticket attachments, crash
-// dumps) on disk under WEBSITE_ATTACHMENTS_DIR. The database holds only the
-// key; files are streamed in and out, never held in memory whole.
+// dumps) in Postgres (attachment_files). Uploads are size-limited by the
+// callers (10 and 20 MiB), so a file is held in memory at most once.
 package attachments
 
 import (
+	"bytes"
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
 	"io"
+	"io/fs"
 	"mime"
 	"net/http"
 	"os"
@@ -15,6 +18,10 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // ErrTooLarge is a file over the caller's limit; nothing is kept.
@@ -25,19 +32,27 @@ var ErrNotFound = errors.New("attachments: not found")
 
 var keyRE = regexp.MustCompile(`^(tickets|crashes)/[0-9a-f]{2}/[0-9a-f]{32}$`)
 
-// Store is a directory of attachments.
-type Store struct{ dir string }
-
-// New creates the directory if needed. An empty dir disables attachments (nil).
-func New(dir string) (*Store, error) {
-	if dir == "" {
-		return nil, nil
-	}
-	if err := os.MkdirAll(dir, 0o750); err != nil {
-		return nil, err
-	}
-	return &Store{dir: dir}, nil
+// backend holds the bytes: Postgres in production, memory in tests.
+type backend interface {
+	put(ctx context.Context, key string, data []byte) error
+	get(ctx context.Context, key string) ([]byte, error)
+	del(ctx context.Context, key string) error
 }
+
+// Store is the attachment store.
+type Store struct{ b backend }
+
+// NewPG keeps attachments in the attachment_files table (made by the store
+// migrations). A nil pool disables attachments (nil Store).
+func NewPG(pool *pgxpool.Pool) *Store {
+	if pool == nil {
+		return nil
+	}
+	return &Store{b: pgBackend{pool}}
+}
+
+// NewMemory is a non-durable Store for tests.
+func NewMemory() *Store { return &Store{b: &memBackend{m: map[string][]byte{}}} }
 
 // Saved describes a stored file.
 type Saved struct {
@@ -46,8 +61,9 @@ type Saved struct {
 	ContentType string // sniffed from the first bytes, for display only
 }
 
-// Save streams r to a new file under kind ("tickets" or "crashes"). A body
-// longer than max is refused and removed.
+// Save reads r into a new file under kind ("tickets" or "crashes"). A body
+// longer than max is refused and nothing is kept. At most max+1 bytes are
+// ever held in memory (the callers' limits are 10 and 20 MiB).
 func (s *Store) Save(kind string, r io.Reader, max int64) (Saved, error) {
 	b := make([]byte, 16)
 	if _, err := rand.Read(b); err != nil {
@@ -58,49 +74,41 @@ func (s *Store) Save(kind string, r io.Reader, max int64) (Saved, error) {
 	if !keyRE.MatchString(key) {
 		return Saved{}, errors.New("attachments: unknown kind")
 	}
-	path := filepath.Join(s.dir, filepath.FromSlash(key))
-	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
-		return Saved{}, err
-	}
-	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o640)
+	data, err := io.ReadAll(io.LimitReader(r, max+1))
 	if err != nil {
 		return Saved{}, err
 	}
-	head := make([]byte, 512)
-	n, _ := io.ReadFull(r, head)
-	head = head[:n]
-	written, err := io.Copy(f, io.LimitReader(io.MultiReader(strings.NewReader(string(head)), r), max+1))
-	if cerr := f.Close(); err == nil {
-		err = cerr
+	if int64(len(data)) > max {
+		return Saved{}, ErrTooLarge
 	}
-	if err == nil && written > max {
-		err = ErrTooLarge
-	}
-	if err != nil {
-		_ = os.Remove(path)
+	if err := s.b.put(context.Background(), key, data); err != nil {
 		return Saved{}, err
 	}
-	return Saved{Key: key, Size: written, ContentType: http.DetectContentType(head)}, nil
+	head := data
+	if len(head) > 512 {
+		head = head[:512]
+	}
+	return Saved{Key: key, Size: int64(len(data)), ContentType: http.DetectContentType(head)}, nil
 }
 
 // Open returns the file for a key.
-func (s *Store) Open(key string) (*os.File, error) {
+func (s *Store) Open(key string) (io.ReadCloser, error) {
+	data, err := s.read(key)
+	if err != nil {
+		return nil, err
+	}
+	return io.NopCloser(bytes.NewReader(data)), nil
+}
+
+func (s *Store) read(key string) ([]byte, error) {
 	if !keyRE.MatchString(key) {
 		return nil, ErrNotFound
 	}
-	f, err := os.Open(filepath.Join(s.dir, filepath.FromSlash(key)))
-	if errors.Is(err, os.ErrNotExist) {
-		return nil, ErrNotFound
-	}
-	return f, err
+	return s.b.get(context.Background(), key)
 }
 
 // Remove deletes a stored file; unknown keys are ignored.
-func (s *Store) Remove(key string) {
-	if keyRE.MatchString(key) {
-		_ = os.Remove(filepath.Join(s.dir, filepath.FromSlash(key)))
-	}
-}
+func (s *Store) Remove(key string) { _ = s.Delete(key) }
 
 // Delete removes a stored file and says when it could not: a file already
 // gone, or a key that is not one of ours, is not an error (account erasure
@@ -109,10 +117,95 @@ func (s *Store) Delete(key string) error {
 	if !keyRE.MatchString(key) {
 		return nil
 	}
-	if err := os.Remove(filepath.Join(s.dir, filepath.FromSlash(key))); err != nil && !errors.Is(err, os.ErrNotExist) {
-		return err
+	return s.b.del(context.Background(), key)
+}
+
+type pgBackend struct{ pool *pgxpool.Pool }
+
+func (p pgBackend) put(ctx context.Context, key string, data []byte) error {
+	_, err := p.pool.Exec(ctx, `INSERT INTO attachment_files(key, data) VALUES($1,$2) ON CONFLICT (key) DO NOTHING`, key, data)
+	return err
+}
+
+func (p pgBackend) get(ctx context.Context, key string) ([]byte, error) {
+	var b []byte
+	err := p.pool.QueryRow(ctx, `SELECT data FROM attachment_files WHERE key=$1`, key).Scan(&b)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrNotFound
 	}
+	return b, err
+}
+
+func (p pgBackend) del(ctx context.Context, key string) error {
+	_, err := p.pool.Exec(ctx, `DELETE FROM attachment_files WHERE key=$1`, key)
+	return err
+}
+
+type memBackend struct {
+	mu sync.Mutex
+	m  map[string][]byte
+}
+
+func (m *memBackend) put(_ context.Context, k string, d []byte) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.m[k] = d
 	return nil
+}
+
+func (m *memBackend) get(_ context.Context, k string) ([]byte, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	d, ok := m.m[k]
+	if !ok {
+		return nil, ErrNotFound
+	}
+	return d, nil
+}
+
+func (m *memBackend) del(_ context.Context, k string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	delete(m.m, k)
+	return nil
+}
+
+// ImportDir copies every file under dir (layout tickets/ab/<32hex>) whose key
+// is not yet stored into Postgres. Files are never removed. A missing dir
+// imports nothing; files that are not attachments are skipped.
+func ImportDir(ctx context.Context, pool *pgxpool.Pool, dir string) (imported, skipped int, err error) {
+	if _, serr := os.Stat(dir); serr != nil {
+		return 0, 0, nil
+	}
+	err = filepath.WalkDir(dir, func(p string, d fs.DirEntry, werr error) error {
+		if werr != nil || d.IsDir() {
+			return werr
+		}
+		rel, rerr := filepath.Rel(dir, p)
+		if rerr != nil {
+			return rerr
+		}
+		key := filepath.ToSlash(rel)
+		if !keyRE.MatchString(key) {
+			skipped++
+			return nil
+		}
+		data, rerr := os.ReadFile(p)
+		if rerr != nil {
+			return rerr
+		}
+		tag, rerr := pool.Exec(ctx, `INSERT INTO attachment_files(key, data) VALUES($1,$2) ON CONFLICT (key) DO NOTHING`, key, data)
+		if rerr != nil {
+			return rerr
+		}
+		if tag.RowsAffected() == 1 {
+			imported++
+		} else {
+			skipped++
+		}
+		return nil
+	})
+	return imported, skipped, err
 }
 
 // Serve writes a stored file as a download. It is always served as an opaque
@@ -123,13 +216,11 @@ func (s *Store) Serve(w http.ResponseWriter, r *http.Request, key, name string) 
 		http.NotFound(w, r)
 		return
 	}
-	f, err := s.Open(key)
-	if err != nil {
+	data, err := s.read(key)
+	if errors.Is(err, ErrNotFound) {
 		http.NotFound(w, r)
 		return
 	}
-	defer f.Close()
-	st, err := f.Stat()
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
@@ -138,9 +229,9 @@ func (s *Store) Serve(w http.ResponseWriter, r *http.Request, key, name string) 
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("Content-Security-Policy", "sandbox; default-src 'none'")
 	w.Header().Set("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": CleanName(name)}))
-	w.Header().Set("Content-Length", strconv.FormatInt(st.Size(), 10))
+	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
 	w.Header().Set("Cache-Control", "private, no-store")
-	_, _ = io.Copy(w, f)
+	_, _ = w.Write(data)
 }
 
 // CleanName is a filename safe to show and to put in a header: no path, no

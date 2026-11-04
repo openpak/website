@@ -189,7 +189,7 @@ cmd/openpak-network/    CI-side fetch tool: authenticate, fetch, verify a v2 bun
 internal/accounts/      account actions shared by the pages and the API
 internal/adapter/       client for the Switch (and Wii U/3DS) adapter internal API
 internal/admin/         role-gated operator/moderation pages under /admin
-internal/attachments/   ticket and crash-report files on disk (WEBSITE_ATTACHMENTS_DIR)
+internal/attachments/   ticket and crash-report files in Postgres (old WEBSITE_ATTACHMENTS_DIR imported once)
 internal/api/           /api/v1 mobile API (+ openapi/openapi.yaml contract)
 internal/chat/          client for the chat service's internal API
 internal/config/        environment configuration

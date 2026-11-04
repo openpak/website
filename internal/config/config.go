@@ -36,10 +36,12 @@ type Config struct {
 	// account — without it FCM reaches Android only.
 	FCMCredentialsFile string
 
-	MediaDir string // filesystem storage root for avatars
-	// AttachmentsDir holds help-ticket attachments and crash-report files
-	// (WEBSITE_ATTACHMENTS_DIR). Put it on a volume: it is not rebuilt from
-	// anywhere.
+	// MediaDir is the OLD avatar directory (WEBSITE_MEDIA_DIR): avatars live in
+	// Postgres now; files found here are imported once at start-up, never deleted.
+	MediaDir string
+	// AttachmentsDir is the OLD attachments directory (WEBSITE_ATTACHMENTS_DIR):
+	// ticket and crash files live in Postgres now; files found here are
+	// imported once at start-up, never deleted.
 	AttachmentsDir string
 
 	// ErasureInterval is how often the account-erasure finaliser looks for

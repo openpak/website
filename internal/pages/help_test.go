@@ -55,7 +55,7 @@ func TestHelpTickets(t *testing.T) {
 	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "not available") {
 		t.Fatalf("help off: %d", rec.Code)
 	}
-	files, _ := attachments.New(t.TempDir())
+	files := attachments.NewMemory()
 	s.Support = &support.Service{DB: db, Files: files}
 	rec = httptest.NewRecorder()
 	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/support", nil))

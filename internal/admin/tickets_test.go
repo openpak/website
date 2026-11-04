@@ -21,7 +21,7 @@ func TestTicketsAdmin(t *testing.T) {
 	if rec := get(mux, "/admin/tickets"); rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "not configured") {
 		t.Fatalf("off: %d", rec.Code)
 	}
-	files, _ := attachments.New(t.TempDir())
+	files := attachments.NewMemory()
 	s.Support = &support.Service{DB: db, Files: files}
 	tk, err := s.Support.Open(ctx, store.Ticket{AccountID: "acct-1", DisplayName: "Leia", Subject: "Friend list empty", Category: "switch"},
 		"Nothing shows", &support.Upload{Name: "shot.png", Body: strings.NewReader("png")})

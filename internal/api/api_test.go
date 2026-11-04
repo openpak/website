@@ -808,8 +808,7 @@ func TestSessionsAreSnakeCase(t *testing.T) {
 // 18:49, row still the day before.
 func TestInternalAvatarStampsTheMediaRow(t *testing.T) {
 	s, _, db := newTestAPI(t)
-	dir := t.TempDir()
-	st, err := media.NewFSStorage(dir)
+	st, err := media.NewMemStorage(), error(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -855,7 +854,7 @@ func pngEncode(w io.Writer) error {
 // somebody chooses another, so "no avatar" is a state only the picker knows.
 func TestEveryAccountHasAnAvatar(t *testing.T) {
 	s, _, _ := newTestAPI(t)
-	st, err := media.NewFSStorage(t.TempDir())
+	st, err := media.NewMemStorage(), error(nil)
 	if err != nil {
 		t.Fatal(err)
 	}

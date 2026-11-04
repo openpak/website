@@ -1,6 +1,6 @@
 // Package media implements the avatar pipeline (WEB-03): validate PNG/JPEG
 // uploads, resize server-side to 256 and 512 px, store bytes behind a
-// filesystem-first object-storage interface, and record metadata in the
+// object-storage interface (Postgres-backed in production), and record metadata in the
 // website database. Every stored avatar is also published to the account
 // core's Media service (CR-2), best effort, so adapters can serve it to
 // consoles; the website keeps serving its own copies from /media/.
@@ -16,8 +16,6 @@ import (
 	"image/png"
 	"io"
 	"log/slog"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"golang.org/x/image/draw"
@@ -41,64 +39,11 @@ const (
 // ErrInvalid is returned for rejected uploads.
 var ErrInvalid = errors.New("media: not a valid PNG or JPEG image")
 
-// Storage is the object-storage interface (filesystem first; an
+// Storage is the object-storage interface (Postgres; an
 // S3-compatible implementation can slot in without touching handlers).
 type Storage interface {
 	Put(ctx context.Context, key string, data []byte) error
 	Get(ctx context.Context, key string) ([]byte, error)
-}
-
-// FSStorage stores objects under a root directory.
-type FSStorage struct{ root string }
-
-// NewFSStorage creates the root if needed.
-func NewFSStorage(root string) (*FSStorage, error) {
-	if err := os.MkdirAll(root, 0o755); err != nil {
-		return nil, err
-	}
-	return &FSStorage{root: root}, nil
-}
-
-func (s *FSStorage) path(key string) (string, error) {
-	clean := filepath.Clean("/" + key) // force under root
-	return filepath.Join(s.root, clean), nil
-}
-
-// Put writes an object atomically.
-func (s *FSStorage) Put(_ context.Context, key string, data []byte) error {
-	p, err := s.path(key)
-	if err != nil {
-		return err
-	}
-	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
-		return err
-	}
-	tmp := p + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o644); err != nil {
-		return err
-	}
-	return os.Rename(tmp, p)
-}
-
-// Get reads an object.
-func (s *FSStorage) Get(_ context.Context, key string) ([]byte, error) {
-	p, err := s.path(key)
-	if err != nil {
-		return nil, err
-	}
-	return os.ReadFile(p)
-}
-
-// RemoveAll deletes every object under a key prefix; a missing prefix is fine.
-func (s *FSStorage) RemoveAll(_ context.Context, prefix string) error {
-	p, err := s.path(prefix)
-	if err != nil {
-		return err
-	}
-	if p == filepath.Clean(s.root) {
-		return errors.New("media: refusing to remove the storage root")
-	}
-	return os.RemoveAll(p)
 }
 
 // Remover is a Storage that can delete (account erasure needs it).

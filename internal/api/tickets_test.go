@@ -37,7 +37,7 @@ func TestTicketsAPI(t *testing.T) {
 		!strings.Contains(rec.Body.String(), "tickets_unavailable") {
 		t.Fatalf("off: %d %s", rec.Code, rec.Body.String())
 	}
-	files, _ := attachments.New(t.TempDir())
+	files := attachments.NewMemory()
 	s.Support = &support.Service{DB: db, Files: files}
 
 	if rec := do(t, s, http.MethodGet, "/api/v1/me/tickets", "", nil); rec.Code != http.StatusUnauthorized {

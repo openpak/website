@@ -15,7 +15,7 @@ import (
 func TestCrashesAdmin(t *testing.T) {
 	s, db, mux := adminMux(t)
 	ctx := context.Background()
-	files, _ := attachments.New(t.TempDir())
+	files := attachments.NewMemory()
 	s.CrashFiles = files
 	saved, _ := files.Save("crashes", strings.NewReader("dump"), 100)
 	_ = db.SeedRequests(ctx, []store.Request{{Kind: "title", Name: "Mario Kart 8 Deluxe", Console: "Switch", Status: "live", TitleID: "0100152000022000"}})

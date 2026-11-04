@@ -560,7 +560,7 @@ func newTestServer(t *testing.T) (*Server, *fakeCore, *store.Memory) {
 	fc := newFakeCore()
 	db := store.NewMemory()
 	sessions := session.New("opak_session", "test-secret-0123456789abcdef-test!", false, time.Hour)
-	st, err := media.NewFSStorage(t.TempDir())
+	st, err := media.NewMemStorage(), error(nil)
 	if err != nil {
 		t.Fatal(err)
 	}

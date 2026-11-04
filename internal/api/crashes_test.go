@@ -44,7 +44,7 @@ func crashMultipart(t *testing.T, s *Server, bearer string, meta any, file []byt
 
 func TestCrashReports(t *testing.T) {
 	s, _, db := newTestAPI(t)
-	s.Crashes, _ = attachments.New(t.TempDir())
+	s.Crashes = attachments.NewMemory()
 	ctx := context.Background()
 	meta := map[string]any{"source": "ryujinx", "version": "1.3.2", "os": "linux", "title_id": "0100a8e016236000",
 		"error_code": "2162-0002", "message": "panic at 0xdeadbeef", "fields": map[string]any{"gpu": "RADV", "top_frame": "Ryujinx.Graphics.Vulkan.Foo"}}
@@ -108,7 +108,7 @@ func TestCrashReports(t *testing.T) {
 
 func TestInternalCrashReports(t *testing.T) {
 	s, _, db := newTestAPI(t)
-	s.Crashes, _ = attachments.New(t.TempDir())
+	s.Crashes = attachments.NewMemory()
 	body := map[string]any{"source": "console", "received_at": "2026-09-23T10:00:00Z", "device_id": "dev-1", "account_id": "acct-1",
 		"title_id": "0100152000022000", "error_code": "2110-3127", "firmware": "22.5.0", "fields": map[string]any{"result": "0x1234"},
 		"attachment_b64": base64.StdEncoding.EncodeToString([]byte("erpt"))}
@@ -152,7 +152,7 @@ func TestInternalCrashReports(t *testing.T) {
 
 func TestInternalCrashBadBase64(t *testing.T) {
 	s, _, _ := newTestAPI(t)
-	s.Crashes, _ = attachments.New(t.TempDir())
+	s.Crashes = attachments.NewMemory()
 	t.Setenv("WEBSITE_INTERNAL_KEY", "k")
 	rec := doRaw(t, s, http.MethodPost, "/api/v1/internal/crash-reports", "Bearer k", map[string]any{"source": "console", "attachment_b64": "!!!not base64"})
 	if rec.Code != http.StatusBadRequest {

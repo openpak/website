@@ -100,15 +100,18 @@ func run(log *slog.Logger) error {
 
 	sessions := session.New(cfg.SessionCookieName, cfg.SessionSecret, cfg.Environment == "production", cfg.CoreSessionTTL)
 
-	var mediaSvc *media.Service
-	if st, err := media.NewFSStorage(cfg.MediaDir); err == nil {
-		mediaSvc = media.New(st)
-		// Every stored avatar also goes to the core's Media service (CR-2), so
-		// adapters can serve it to consoles. Best effort: a failure is logged.
-		mediaSvc.Publisher, mediaSvc.Log = coreGRPC, log
-	} else {
-		log.Warn("media storage unavailable; avatar uploads disabled", "err", err)
+	// Avatars live in Postgres. Files left on the old media volume are copied
+	// in once (keys already present are kept); the directory is never touched.
+	mediaStore := media.NewPGStorage(db.Pool())
+	if n, k, err := mediaStore.ImportDir(ctx, cfg.MediaDir); err != nil {
+		log.Warn("media import from directory failed", "dir", cfg.MediaDir, "imported", n, "already_present", k, "err", err)
+	} else if n+k > 0 {
+		log.Info("media import from directory", "imported", n, "already_present", k)
 	}
+	mediaSvc := media.New(mediaStore)
+	// Every stored avatar also goes to the core's Media service (CR-2), so
+	// adapters can serve it to consoles. Best effort: a failure is logged.
+	mediaSvc.Publisher, mediaSvc.Log = coreGRPC, log
 
 	tmpl, err := pages.LoadTemplates()
 	if err != nil {
@@ -282,13 +285,13 @@ func run(log *slog.Logger) error {
 		log.Info("push: notifier started")
 	}
 
-	// Help tickets and crash-report files live on disk under
-	// WEBSITE_ATTACHMENTS_DIR. If the directory cannot be made, tickets still
-	// work without files rather than taking the site down.
-	files, err := attachments.New(cfg.AttachmentsDir)
-	if err != nil {
-		log.Warn("attachments unavailable; tickets and crash reports carry no files", "dir", cfg.AttachmentsDir, "err", err)
-		files = nil
+	// Help tickets and crash-report files live in Postgres. Files left on the
+	// old attachments volume are copied in once; the directory is never touched.
+	files := attachments.NewPG(db.Pool())
+	if n, k, err := attachments.ImportDir(ctx, db.Pool(), cfg.AttachmentsDir); err != nil {
+		log.Warn("attachments import from directory failed", "dir", cfg.AttachmentsDir, "imported", n, "skipped", k, "err", err)
+	} else if n+k > 0 {
+		log.Info("attachments import from directory", "imported", n, "skipped", k)
 	}
 	// The neutral title storage core: only its health (/healthz/title-storage) and account erasure
 	// concern the site; console adapters (np-tus, np-uploader) use it over gRPC.

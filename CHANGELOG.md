@@ -11,6 +11,10 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.101.0 — 2026-11-04
+
+- Database only (board prds#85): avatars (`media_objects`) and ticket/crash attachments (`attachment_files`) are stored in Postgres, not on the `openpak-media` and `openpak-attachments` volumes. At start-up any files still in `WEBSITE_MEDIA_DIR` / `WEBSITE_ATTACHMENTS_DIR` are imported once (keys already in the database are kept; counts are logged; the old files are never deleted). `/downloads` ordering from the unreleased commits rides in this tag.
+
 ## v0.100.0 — 2026-11-04
 
 - `/downloads` follows the status pages' order: Nintendo, Sony, Microsoft and OpenPak headings (from `internal/netorder`), each console under its family oldest first with its status badge and its downloads; the phone app sits under OpenPak. The platforms grid is folded into the console headings. A console with nothing to download is left out, and a client whose repository has no published release is not offered (checked against the GitHub API, cached half an hour) and appears once a release exists. The original Xbox reads "Original Xbox".

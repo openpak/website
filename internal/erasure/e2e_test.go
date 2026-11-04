@@ -85,9 +85,8 @@ func TestEraseEverywhereAfterGrace(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer db.Close()
-	dir := t.TempDir()
-	files, _ := attachments.New(filepath.Join(dir, "att"))
-	mst, _ := media.NewFSStorage(filepath.Join(dir, "media"))
+	files := attachments.NewMemory()
+	mst := media.NewMemStorage()
 	avatars := media.New(mst)
 
 	// Two accounts, friends, through the core's own registration.
@@ -211,7 +210,7 @@ func TestEraseEverywhereAfterGrace(t *testing.T) {
 	if _, err := db.GetMedia(ctx, gone, "avatar"); !errors.Is(err, store.ErrNotFound) {
 		t.Errorf("media row survives: %v", err)
 	}
-	if _, err := os.Stat(filepath.Join(dir, "media", "avatars", gone)); !os.IsNotExist(err) {
+	if _, err := avatars.Avatar(ctx, gone, media.SizeSmall); err == nil {
 		t.Errorf("avatar files survive: %v", err)
 	}
 	if _, err := files.Open(att.Key); !errors.Is(err, attachments.ErrNotFound) {
