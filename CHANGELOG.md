@@ -11,6 +11,9 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.89.6 — 2026-11-04
+- Xbox 360 rankings lines use the core's title key `/t/x360:<title id>`; v0.89.5's `/n/x360/t/<id>` form does not resolve native ids in the core (it takes the neutral key).
+
 ## v0.89.5 — 2026-11-04
 - The 30 Xbox 360 rankings lines read the leaderboards core (`http://openpak-leaderboards:20210/n/x360/t/<title id>`) instead of x360-xstats' own listener, since x360-xstats v0.7.0 (card #64).
 
