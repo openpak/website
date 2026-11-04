@@ -193,6 +193,11 @@ func (s *Server) externalStatus(ctx context.Context) []check {
 	return out
 }
 
+// GetJSON is getJSON for callers outside the package (the network map reads the availability page with it).
+func GetJSON(ctx context.Context, url, bearer string, out any) error {
+	return getJSON(ctx, url, bearer, out)
+}
+
 // getJSON is the one small HTTP read the admin backends share: GET, optional
 // bearer, a 2xx or an error carrying the status, a bounded body. Extra fields
 // in the answer are ignored, so a backend can grow without breaking this page.

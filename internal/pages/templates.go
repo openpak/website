@@ -32,5 +32,5 @@ func LoadTemplates() (*template.Template, error) {
 		}
 		return *p
 	},
-		"contactEmail": func() string { return ContactEmail }, "takedownEmail": func() string { return TakedownEmail }, "communityURL": func() string { return CommunityURL }}).ParseFS(templateFS, "templates/*.html")
+		"netmapStrings": netmapStrings, "contactEmail": func() string { return ContactEmail }, "takedownEmail": func() string { return TakedownEmail }, "communityURL": func() string { return CommunityURL }}).ParseFS(templateFS, "templates/*.html")
 }

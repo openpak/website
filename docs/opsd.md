@@ -29,6 +29,7 @@ Every route except `GET /healthz` needs `Authorization: Bearer <OPSD_KEY>`. The 
 | --- | --- |
 | `GET /healthz` | `200 ok` (no auth) |
 | `GET /v1/services` | `{"host", "checked_at": RFC3339\|null, "services": [{"name", "unit", "image", "state", "health", "started_at", "networks", "update_available", "protected"}]}` |
+| `GET /v1/topology` | `{"host", "services": [{"name", "unit", "description", "image", "version", "source", "state", "health", "networks", "ports", "needs", "refs": [{"var", "scheme", "host", "port", "path"}]}]}`: the quadlets read on the host, for the network map ([network-map.md](network-map.md)). Never a value: a reference carries the variable's name and the address it points at, and secret-named variables are skipped. |
 | `POST /v1/services/{name}/{action}` | `action` is `restart`, `stop`, `start` or `update`; `200 {"ok": true, "message"}` or 4xx/5xx `{"ok": false, "message"}` |
 | `POST /v1/updates/check` | `202 {"ok": true, "message"}`; the check runs in the background |
 
@@ -58,6 +59,7 @@ Every route except `GET /healthz` needs `Authorization: Bearer <OPSD_KEY>`. The 
 | `OPSD_PREFIX` | `openpak-` | Only containers whose name starts with this are managed. |
 | `OPSD_PROTECTED` | `openpak-website,openpak-account` | Never-stop list; container names or unit names without `.service`. |
 | `OPSD_NETWORK_MAP` | — | Path to a JSON file mapping a regexp on the container name to a network, or several comma-separated (`"wiiu,3ds"`). A container whose name lacks the prefix but whose quadlet unit has it (switch-nexd) is managed too. |
+| `OPSD_QUADLET_DIR` | `~/.config/containers/systemd` | Where `/v1/topology` reads the `.container` files. |
 | `OPSD_UPDATE_CHECK` | `15m` | Interval of the background update check (Go duration). |
 | `OPSD_HOST_NAME` | `os.Hostname()` | The `host` shown on the dashboard. |
 

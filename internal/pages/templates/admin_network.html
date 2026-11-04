@@ -1,0 +1,15 @@
+{{template "header" .}}
+{{template "adminnav" .}}
+{{/* The staff network map. The page is a shell: netmap.js draws the graph from
+     /admin/network/data (admin-gated), with a list view as the accessible twin and the
+     phone layout. docs/network-map.md. */}}
+<div class="page-head">
+  <h1>{{t .Lang "admin.network"}}</h1>
+  <p>{{t .Lang "admin.network.help"}}</p>
+</div>
+{{template "adminend"}}
+{{/* Outside the settings shell on purpose: the map is wider than the shell's content column. */}}
+<div class="nm nm-wide" data-netmap data-mode="admin" data-url="/admin/network/data"><noscript><p class="notice">The map needs scripting. The Services page lists the same units.</p></noscript></div>
+<link rel="stylesheet" href="/static/netmap.css?v={{.Asset}}">
+<script src="/static/netmap.js?v={{.Asset}}" defer></script>
+{{template "footer" .}}

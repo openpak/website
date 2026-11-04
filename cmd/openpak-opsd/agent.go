@@ -389,6 +389,7 @@ func (a *agent) routes() http.Handler {
 		w.Write([]byte("ok"))
 	})
 	mux.Handle("GET /v1/services", a.auth(http.HandlerFunc(a.handleServices)))
+	mux.Handle("GET /v1/topology", a.auth(http.HandlerFunc(a.handleTopology)))
 	mux.Handle("POST /v1/services/{name}/{action}", a.auth(http.HandlerFunc(a.handleAction)))
 	mux.Handle("POST /v1/updates/check", a.auth(http.HandlerFunc(a.handleCheck)))
 	return mux

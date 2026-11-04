@@ -33,6 +33,7 @@ import (
 	"github.com/openpak/website/internal/logstore"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/metrics"
+	"github.com/openpak/website/internal/netmap"
 	"github.com/openpak/website/internal/netprofile"
 	"github.com/openpak/website/internal/news"
 	"github.com/openpak/website/internal/pages"
@@ -375,6 +376,25 @@ func run(log *slog.Logger) error {
 	adminSrv.Mods = admin.NewModsAPI(os.Getenv("MODS_INTERNAL_URL"), os.Getenv("MODS_INTERNAL_KEY"))
 	adminSrv.Registry = admin.NewRegistryAPI(os.Getenv("REGISTRY_INTERNAL_URL"), os.Getenv("REGISTRY_ADMIN_KEY"))
 	adminSrv.Ops = admin.NewOpsAPI(os.Getenv("WEBSITE_OPSD_HOSTS"), os.Getenv("WEBSITE_OPSD_KEY"))
+	// The network map (/admin/network, and the public map on /status): built from what the host
+	// agents report, so it needs them. NETMAP_HOST_IPS names each agent's box by public address
+	// ("prod=145.241.199.19,draughts=145.241.228.207") so a reference to that address resolves.
+	if adminSrv.Ops != nil {
+		ips := parseKV(envOr("NETMAP_HOST_IPS", "prod=145.241.199.19,draughts=145.241.228.207"))
+		nm := &netmap.Service{
+			Topology: func(ctx context.Context) []netmap.HostTopo { return adminSrv.Ops.Topology(ctx, ips) },
+			Status: func(ctx context.Context) *netmap.StatusPage {
+				var sp netmap.StatusPage
+				if adminSrv.StatusAPI == "" || admin.GetJSON(ctx, adminSrv.StatusAPI, "", &sp) != nil {
+					return nil
+				}
+				return &sp
+			},
+			Stages: pageSrv.ConsoleStages,
+			LogsOn: logsStore != nil,
+		}
+		adminSrv.NetMap, pageSrv.NetMap = nm, nm
+	}
 	adminSrv.Support = supportSvc
 	adminSrv.CrashFiles = files
 	// Console news (the Switch News tab) and the homebrew store: each section
@@ -508,6 +528,17 @@ func run(log *slog.Logger) error {
 }
 
 // envOr reads an optional URL with a default; the literal "off" turns it off.
+// parseKV reads "a=1,b=2" into a map.
+func parseKV(s string) map[string]string {
+	m := map[string]string{}
+	for _, p := range strings.Split(s, ",") {
+		if k, v, ok := strings.Cut(strings.TrimSpace(p), "="); ok && k != "" {
+			m[k] = v
+		}
+	}
+	return m
+}
+
 func envOr(key, def string) string {
 	v := os.Getenv(key)
 	if v == "" {

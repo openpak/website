@@ -1,0 +1,131 @@
+/* The network map (admin /admin/network and the public map on /status).
+   Colour has two separate jobs and they never share a hue:
+   - network identity: five validated categorical hues (scripts/validate_palette.js against the
+     card surfaces, light and dark), one per console family; every console node also carries its name;
+   - status: the fixed good / warning / critical steps, always drawn with an icon and a word.
+   Everything else comes from the site's tokens, so an equipped theme restyles the map too. */
+.nm {
+  --nm-f1: #2a78d6; --nm-f2: #eb6834; --nm-f3: #1baf7a; --nm-f4: #6250d6; --nm-f5: #008300;
+  --nm-ok: #0ca30c; --nm-warn: #fab219; --nm-bad: #d03b3b; --nm-off: var(--faint);
+  --nm-on-ok: #fff; --nm-on-warn: #0b0b0b; --nm-on-bad: #fff;
+  position: relative; color: var(--ink);
+}
+@media (prefers-color-scheme: dark) {
+  .nm { --nm-f1: #3987e5; --nm-f2: #d95926; --nm-f3: #199e70; --nm-f4: #9085e9; --nm-f5: #008300; }
+}
+.nm .f1 { --fam: var(--nm-f1); } .nm .f2 { --fam: var(--nm-f2); } .nm .f3 { --fam: var(--nm-f3); }
+.nm .f4 { --fam: var(--nm-f4); } .nm .f5 { --fam: var(--nm-f5); } .nm .f0 { --fam: var(--faint); }
+
+.nm-bar { display: flex; flex-wrap: wrap; gap: .6rem; align-items: end; margin-bottom: .8rem; }
+.nm-bar label { display: flex; flex-direction: column; gap: .2rem; font-size: .8rem; color: var(--ink-2); }
+.nm-bar .field { min-width: 11rem; }
+.nm-bar .grow { flex: 1 1 14rem; }
+.nm-seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: .6rem; overflow: hidden; background: var(--raised); }
+.nm-seg button { min-height: 0; border-radius: 0; box-shadow: none; padding: .7rem 1rem; font-size: .85rem; color: var(--ink-2); background: transparent; border: 0; cursor: pointer; }
+.nm-seg button[aria-pressed="true"] { background: var(--accent-weak); color: var(--ink); font-weight: 600; box-shadow: inset 0 -2px 0 var(--cursor); }
+.nm-seg button:focus-visible, .nm-ctl button:focus-visible { outline: 2px solid var(--cursor); outline-offset: -2px; }
+
+.nm-legend { display: flex; flex-wrap: wrap; gap: .4rem 1.1rem; font-size: .8rem; color: var(--ink-2); margin: 0 0 .7rem; padding: 0; list-style: none; }
+.nm-legend li { display: inline-flex; align-items: center; gap: .35rem; }
+.nm-sw { width: .8rem; height: .8rem; border-radius: 3px; background: var(--fam); display: inline-block; }
+.nm-ico { width: 1.05rem; height: 1.05rem; flex: none; }
+.nm-ico circle { fill: var(--c); }
+.nm-ico path { fill: none; stroke: var(--g); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.st-up { --c: var(--nm-ok); --g: var(--nm-on-ok); }
+.st-degraded { --c: var(--nm-warn); --g: var(--nm-on-warn); }
+.st-down { --c: var(--nm-bad); --g: var(--nm-on-bad); }
+.st-idle, .st-planned, .st-unknown { --c: transparent; --g: var(--muted); }
+.st-idle .nm-ico circle, .st-planned .nm-ico circle, .st-unknown .nm-ico circle { stroke: var(--muted); stroke-width: 1.6; }
+
+.nm-stage { position: relative; border: 1px solid var(--line); border-radius: .9rem; background: var(--raised); overflow: hidden; touch-action: none; }
+.nm-stage > svg { display: block; width: 100%; height: min(86vh, 1000px); min-height: 460px; cursor: grab; user-select: none; }
+.nm-stage > svg.drag { cursor: grabbing; }
+.nm.busy .nm-stage > svg { opacity: .65; }
+.nm-ctl { position: absolute; left: .6rem; bottom: .6rem; display: flex; flex-direction: column; gap: 1px; background: var(--line); border-radius: .5rem; overflow: hidden; box-shadow: var(--shadow-sm); }
+.nm-ctl button { width: 2.3rem; height: 2.3rem; min-height: 0; padding: 0; border-radius: 0; background: var(--raised); border: 0; color: var(--ink); font-size: 1.1rem; line-height: 1; cursor: pointer; box-shadow: none; display: block; }
+.nm-ctl button:hover { background: var(--accent-weak); }
+.nm-hint { position: absolute; right: .7rem; bottom: .5rem; font-size: .72rem; color: var(--muted); pointer-events: none; }
+
+/* SVG parts */
+.nm-lane { fill: var(--fam); fill-opacity: .07; stroke: var(--fam); stroke-opacity: .35; stroke-width: 1; }
+.nm-lane-label { font-size: 11px; fill: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.nm-col-label { font-size: 11px; fill: var(--muted); letter-spacing: .06em; text-transform: uppercase; font-weight: 600; }
+.nm-edge { fill: none; stroke: var(--ink-2); stroke-opacity: .16; stroke-width: 1; pointer-events: none; }
+.nm-edge.store { stroke-opacity: .12; stroke-dasharray: none; }
+.nm-edge.network { stroke: var(--fam); stroke-opacity: .5; stroke-width: 1.4; }
+.nm-edge.on { stroke: var(--cursor); stroke-opacity: .95; stroke-width: 1.7; }
+.has-focus .nm-edge:not(.on) { stroke-opacity: .05; }
+.nm-node { cursor: pointer; }
+.nm-node rect.body { fill: var(--raised); stroke: var(--c, var(--line-2)); stroke-width: 1.5; }
+.nm-node.st-up rect.body { stroke: var(--line-2); }
+.nm-node.st-idle rect.body, .nm-node.st-planned rect.body, .nm-node.st-unknown rect.body { stroke: var(--line-2); stroke-dasharray: 3 2; }
+.nm-node.st-degraded rect.body, .nm-node.st-down rect.body { stroke-width: 2.2; }
+.nm-node rect.stripe { fill: var(--fam); }
+.nm-node text { font-size: 12px; fill: var(--ink); pointer-events: none; }
+.nm-node text.sub { font-size: 10.5px; fill: var(--muted); }
+.nm-node.console rect.body { fill: var(--paper-2); stroke-width: 2; }
+.nm-node.console.st-up rect.body, .nm-node.console.st-idle rect.body, .nm-node.console.st-planned rect.body, .nm-node.console.st-unknown rect.body { stroke: var(--fam); stroke-dasharray: none; }
+.nm-node.console text { font-size: 14px; font-weight: 700; }
+.nm-node.group rect.body { fill: var(--paper-2); }
+.nm-node.sel rect.body, .nm-node:focus-visible rect.body { stroke: var(--cursor); stroke-width: 3; stroke-dasharray: none; }
+.nm-node:focus { outline: none; }
+.nm-node:hover rect.body { fill: var(--accent-weak); }
+.nm-node.dim { opacity: .22; }
+.nm-node.hit rect.body { stroke: var(--cursor); stroke-width: 2.6; }
+.nm-node.nofocus { opacity: .35; }
+.has-focus .nm-node.faded { opacity: .35; }
+
+/* Side panel */
+.nm-panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(24rem, 100%); background: var(--raised); border-left: 1px solid var(--line-2);
+  box-shadow: var(--shadow-lg); overflow: auto; padding: 1rem 1.1rem 1.4rem; z-index: 3; transform: translateX(102%); transition: transform .16s ease-out; visibility: hidden; }
+.nm-panel.open { transform: none; visibility: visible; }
+@media (prefers-reduced-motion: reduce) { .nm-panel { transition: none; } }
+.nm-panel h3 { margin: 0 2rem .15rem 0; font-size: 1.15rem; line-height: 1.25; overflow-wrap: anywhere; }
+.nm-panel .kind { font-size: .75rem; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin-bottom: .6rem; display: flex; gap: .5rem; align-items: center; }
+.nm-panel .close { position: absolute; top: .6rem; right: .6rem; width: 2.2rem; height: 2.2rem; border-radius: .5rem; border: 1px solid var(--line-2); background: var(--paper-2); color: var(--ink); font-size: 1.2rem; cursor: pointer; }
+.nm-status { display: flex; gap: .55rem; align-items: flex-start; padding: .65rem .75rem; border: 1px solid var(--line); border-radius: .6rem; background: var(--paper-2); margin: .4rem 0 .8rem; }
+.nm-status b { display: block; }
+.nm-status span { color: var(--ink-2); font-size: .85rem; overflow-wrap: anywhere; }
+.nm-panel dl { display: grid; grid-template-columns: 6.2rem 1fr; gap: .35rem .7rem; font-size: .88rem; margin: 0 0 .9rem; }
+.nm-panel dt { color: var(--muted); }
+.nm-panel dd { margin: 0; overflow-wrap: anywhere; }
+.nm-panel h4 { font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 1rem 0 .35rem; }
+.nm-panel ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .3rem; }
+.nm-chip { min-height: 0; font-weight: 400; box-shadow: none; display: inline-flex; align-items: center; gap: .3rem; padding: .22rem .55rem; border: 1px solid var(--line-2); border-radius: 999px; background: var(--paper-2);
+  font-size: .8rem; color: var(--ink); cursor: pointer; }
+button.nm-chip:hover { background: var(--accent-weak); }
+.nm-chip .nm-ico { width: .85rem; height: .85rem; }
+.nm-members { display: grid; gap: .2rem; flex-direction: column; }
+.nm-members li { display: flex; align-items: center; gap: .45rem; font-size: .86rem; width: 100%; }
+.nm-panel a { color: var(--accent); }
+
+/* List view: the accessible twin of the map, and the phone layout */
+.nm-list { border: 1px solid var(--line); border-radius: .9rem; background: var(--raised); }
+.nm-list details { border-bottom: 1px solid var(--line); }
+.nm-list details:last-child { border-bottom: 0; }
+.nm-list summary { display: flex; gap: .6rem; align-items: center; padding: .75rem .9rem; cursor: pointer; min-height: 2.9rem; list-style: none; }
+.nm-list summary::-webkit-details-marker { display: none; }
+.nm-list summary::before { content: ""; width: .35rem; height: .85rem; background: var(--fam, var(--faint)); border-radius: 2px; }
+.nm-list summary .name { font-weight: 650; }
+.nm-list summary .meta { margin-left: auto; font-size: .8rem; color: var(--muted); }
+.nm-list ul { list-style: none; margin: 0; padding: 0 0 .4rem; }
+.nm-list li button { display: flex; align-items: center; gap: .55rem; width: 100%; text-align: left; padding: .5rem .9rem .5rem 1.6rem; min-height: 2.5rem; background: transparent; border: 0; color: var(--ink); cursor: pointer; font: inherit; }
+.nm-list li button:hover { background: var(--accent-weak); }
+.nm-list li .sub { margin-left: auto; font-size: .78rem; color: var(--muted); text-align: right; }
+.nm-list li button:focus-visible, .nm-list summary:focus-visible { outline: 2px solid var(--cursor); outline-offset: -2px; }
+.nm-empty { padding: 1.2rem; color: var(--muted); }
+.nm-notes { margin-top: 1rem; font-size: .85rem; color: var(--ink-2); }
+.nm-notes ul { margin: .3rem 0 0 1.1rem; }
+.nm [hidden] { display: none !important; }
+@media (max-width: 720px) {
+  .nm-bar .field { min-width: 0; width: 100%; }
+  .nm-bar label { flex: 1 1 100%; }
+  .nm-panel { position: fixed; top: auto; left: 0; right: 0; bottom: 0; width: auto; max-height: 72vh; border-left: 0; border-top: 1px solid var(--line-2); border-radius: 1rem 1rem 0 0; transform: translateY(102%); }
+  .nm-panel.open { transform: none; }
+}
+.nm-node .ic-c { fill: var(--c); }
+.nm-node .ic-g { fill: none; stroke: var(--g); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.nm-node.st-idle .ic-c, .nm-node.st-planned .ic-c, .nm-node.st-unknown .ic-c { stroke: var(--muted); stroke-width: 1.6; }
+
+/* The staff map breaks out of the page column: 240 nodes need the width. */
+.nm-wide { width: min(calc(100vw - 2.5rem), 1800px); position: relative; left: 50%; transform: translateX(-50%); margin-top: 1.5rem; }

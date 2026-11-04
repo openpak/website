@@ -35,6 +35,7 @@ import (
 	"github.com/openpak/website/internal/discordlink"
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/media"
+	"github.com/openpak/website/internal/netmap"
 	"github.com/openpak/website/internal/news"
 	"github.com/openpak/website/internal/pakkachat"
 	"github.com/openpak/website/internal/pctl"
@@ -64,7 +65,9 @@ type Server struct {
 	Invites    core.InvitationsView
 	// Rewards is the points, missions and shop service; nil renders the page as "not available".
 	Rewards *rewards.Client
-	themes  themeCache // equipped themes and theme assets, kept briefly (theme.go)
+	// NetMap builds the network graph behind the map on /status; nil leaves the section out.
+	NetMap *netmap.Service
+	themes themeCache // equipped themes and theme assets, kept briefly (theme.go)
 	// SSO signs subsites (splatnet.openpak.org, ...) in with this site's login; nil or with no
 	// client registered, the /account/sso routes are 404.
 	SSO *sso.Service
@@ -497,6 +500,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /sites", s.handleSites)
 	mux.HandleFunc("GET /downloads", s.handleDownloads)
 	mux.HandleFunc("GET /status", s.handleStatus)
+	mux.HandleFunc("GET /status/map.json", s.handleNetMapJSON)
 	mux.HandleFunc("GET /lang", s.handleLang)
 	mux.HandleFunc("GET /feed/news.xml", s.handleNewsFeed)
 	mux.HandleFunc("GET /feed/titles.xml", s.handleTitlesFeed)

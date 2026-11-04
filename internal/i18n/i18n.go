@@ -869,6 +869,8 @@ var languages = map[string]Catalogue{
 		"admin.registry":                    "Registry",
 		"admin.registry.sub":                "Which revision each channel serves, and the clients it knows. Read-only.",
 		"admin.services":                    "Services",
+		"admin.network":                     "Network map",
+		"admin.network.help":                "Every console network, the services each one runs, the shared core and the infrastructure under them, drawn from what is deployed right now. Select a node for what it does, its status, logs and what it depends on.",
 		"admin.services.sub":                "Every OpenPak container on every host: restart, start, stop or update.",
 		"admin.services.off":                "No host agents are configured (WEBSITE_OPSD_HOSTS and WEBSITE_OPSD_KEY; see docs/opsd.md).",
 		"admin.services.network":            "Network",

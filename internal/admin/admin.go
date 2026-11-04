@@ -19,6 +19,7 @@ import (
 	"github.com/openpak/website/internal/chat"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
+	"github.com/openpak/website/internal/netmap"
 	newsv1 "github.com/openpak/website/internal/newspb"
 	"github.com/openpak/website/internal/pages"
 	"github.com/openpak/website/internal/rewards"
@@ -80,6 +81,8 @@ type Server struct {
 	CrashFiles *attachments.Store
 	// Logs is the service-log database behind /admin/logs; nil says "not configured".
 	Logs LogSource
+	// NetMap builds the graph behind /admin/network; nil says "not configured".
+	NetMap *netmap.Service
 
 	tmpl *template.Template
 	log  *slog.Logger
@@ -138,6 +141,7 @@ var adminNav = []struct{ href, key string }{
 	{"/admin", "admin.nav.overview"},
 	{"/admin/monitor", "admin.monitor"},
 	{"/admin/services", "admin.services"},
+	{"/admin/network", "admin.network"},
 	{"/admin/news", "admin.news"},
 	{"/admin/pakka", "admin.pakka"},
 	{"/admin/console-news", "admin.cnews"},
@@ -277,6 +281,8 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin", s.handleDashboard)
 	mux.HandleFunc("GET /admin/monitor", s.handleMonitor)
 	mux.HandleFunc("GET /admin/services", s.handleServices)
+	mux.HandleFunc("GET /admin/network", s.handleNetwork)
+	mux.HandleFunc("GET /admin/network/data", s.handleNetworkData)
 	mux.HandleFunc("POST /admin/services/action", s.handleServiceAction)
 	mux.HandleFunc("POST /admin/services/check", s.handleServicesCheck)
 	mux.HandleFunc("GET /admin/news", s.handleNews)

@@ -1,0 +1,12 @@
+{{/* The public network map. A section the script fills in; without scripting the
+     heading and a plain sentence remain. The data attributes carry the visitor's
+     language, so the map speaks it too. */}}
+{{define "netmapPublic"}}
+<section class="mb-9" aria-labelledby="map-h" id="netmap-section">
+  <div class="section-head"><h2 id="map-h">{{t .Lang "netmap.title"}}</h2></div>
+  <p class="mb-4 max-w-prose text-muted">{{t .Lang "netmap.sub"}}</p>
+  <div class="nm" data-netmap data-mode="public" data-url="/status/map.json" data-strings="{{netmapStrings .Lang}}"></div>
+</section>
+<link rel="stylesheet" href="/static/netmap.css?v={{.Asset}}">
+<script src="/static/netmap.js?v={{.Asset}}" defer></script>
+{{end}}
