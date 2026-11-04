@@ -11,6 +11,10 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.104.0 — 2026-11-04
+
+- `/healthz/shop-core` (board prds#124): health of shop-core, the console-neutral shop catalog, for the status page. Set `SHOP_CORE_URL`; unset leaves the route out (404).
+
 ## v0.103.0 — 2026-11-04
 
 - Downloads: the PS3 row is now the OpenPak PS3 Patcher (openpak/ps3-patcher), linking to its latest release (the installable `.pkg`, v0.2.0).

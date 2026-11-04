@@ -495,6 +495,7 @@ func run(log *slog.Logger) error {
 		"pokemon-home":        os.Getenv("POKEMON_HOME_URL"),
 		"pokemon-legality":    os.Getenv("POKEMON_LEGALITY_URL"),
 		"voice":               os.Getenv("VOICE_URL"),
+		"shop-core":           os.Getenv("SHOP_CORE_URL"),
 	} {
 		if base != "" {
 			behind[name] = httpHealth{base}
