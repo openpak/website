@@ -12,7 +12,7 @@ import (
 // out, and a client with no published release is not offered.
 func TestDownloadsByFamilyAndGeneration(t *testing.T) {
 	s, _, _ := newTestServer(t)
-	unreleased := []string{"azahar", "melonds", "berth", "wharf", "pier", "ds-patcher"}
+	unreleased := []string{"azahar", "melonds", "berth", "wharf", "pier", "ds-patcher", "ps3-patcher"}
 	s.ReleaseCheck = func(_ context.Context, url string) bool {
 		for _, r := range unreleased {
 			if strings.Contains(url, "/"+r+"/") {
@@ -68,7 +68,7 @@ func TestWriteDownloadsPreview(t *testing.T) {
 	}
 	_ = db.SeedRequests(context.Background(), feats)
 	s.ReleaseCheck = func(_ context.Context, url string) bool {
-		for _, r := range []string{"azahar", "melonds", "berth", "wharf", "pier", "ds-patcher"} {
+		for _, r := range []string{"azahar", "melonds", "berth", "wharf", "pier", "ds-patcher", "ps3-patcher"} {
 			if strings.Contains(url, "/"+r+"/") {
 				return false
 			}

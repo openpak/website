@@ -719,7 +719,7 @@ var downloads = []download{
 	{"OpenPak DS Patcher", "DS", "downloads.kind.patch", "", "https://github.com/openpak/ds-patcher/releases/latest", ""},
 	{"OpenPak patch", "Xbox", "downloads.kind.patch", "", "", ""},
 	{"OpenPak patch", "Xbox 360", "downloads.kind.patch", "", "", ""},
-	{"OpenPak patch", "PS3", "downloads.kind.patch", "", "", ""},
+	{"OpenPak PS3 Patcher", "PS3", "downloads.kind.patch", "", "https://github.com/openpak/ps3-patcher/releases/latest", ""},
 }
 
 // apps is the phone app.
