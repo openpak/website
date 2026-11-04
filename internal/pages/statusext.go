@@ -16,12 +16,21 @@ type extService struct {
 	Uptime float64
 }
 
+// extSvcIn is one service as the checker's API writes it.
+type extSvcIn struct {
+	Name   string
+	Up     bool
+	Uptime float64
+}
+
 type extGroup struct {
 	Title, Note string
 	Services    []extService
-	Up          int
-	// Fold is true for a long list, which the page tucks behind a summary unless something is down.
-	Fold bool
+	// Ports are the game-session-port checks: one line each, tucked behind a summary unless one is down.
+	Ports []extService
+	Up    int
+	Total int
+	Fold  bool
 }
 
 type extStatus struct {
@@ -59,26 +68,30 @@ func (s *Server) externalStatus(ctx context.Context) extStatus {
 			var page struct {
 				Groups []struct {
 					Title, Note string
-					Services    []struct {
-						Name   string
-						Up     bool
-						Uptime float64
-					}
+					Services    []extSvcIn
+					Ports       []extSvcIn
 				}
 			}
 			if resp.StatusCode == http.StatusOK && json.NewDecoder(io.LimitReader(resp.Body, 8<<20)).Decode(&page) == nil {
 				v.Reached = true
 				for _, g := range page.Groups {
-					eg := extGroup{Title: g.Title, Note: g.Note, Fold: len(g.Services) > 14}
-					for _, sv := range g.Services {
-						eg.Services = append(eg.Services, extService{sv.Name, sv.Up, sv.Uptime})
-						if sv.Up {
-							eg.Up++
-						} else {
-							v.Down++
-							eg.Fold = false
+					eg := extGroup{Title: g.Title, Note: g.Note, Fold: true}
+					add := func(in []extSvcIn, out *[]extService, port bool) {
+						for _, sv := range in {
+							*out = append(*out, extService{sv.Name, sv.Up, sv.Uptime})
+							eg.Total++
+							if sv.Up {
+								eg.Up++
+							} else {
+								v.Down++
+								if port {
+									eg.Fold = false
+								}
+							}
 						}
 					}
+					add(g.Services, &eg.Services, false)
+					add(g.Ports, &eg.Ports, true)
 					v.Groups = append(v.Groups, eg)
 				}
 			}

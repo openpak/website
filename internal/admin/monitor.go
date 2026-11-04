@@ -153,13 +153,16 @@ func (s *Server) pushLag(ctx context.Context) check {
 type statusPage struct {
 	Groups []struct {
 		Title    string
-		Services []struct {
-			Name    string
-			Up      bool
-			Uptime  float64
-			Checked string
-		}
+		Services []statusService
+		Ports    []statusService // the generated game-session-port checks
 	}
+}
+
+type statusService struct {
+	Name    string
+	Up      bool
+	Uptime  float64
+	Checked string
 }
 
 // externalStatus reads the availability page, which checks the network from
@@ -178,7 +181,7 @@ func (s *Server) externalStatus(ctx context.Context) []check {
 	}
 	var out []check
 	for _, g := range page.Groups {
-		for _, sv := range g.Services {
+		for _, sv := range append(append([]statusService{}, g.Services...), g.Ports...) {
 			c := check{g.Title + " · " + sv.Name, "bad", ""}
 			if sv.Up {
 				c.State = "ok"

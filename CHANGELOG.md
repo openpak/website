@@ -25,6 +25,10 @@ release, taken from git history. `git log` stays the source of truth.
 - Legal pages (terms, privacy, trademarks and takedowns, all six languages) give takedown@openpak.org as the contact for copyright and takedown notices.
 - Trademarks and takedowns: a "Report a takedown" form that opens a help ticket tagged `takedown`, signed in or not (Turnstile and the auth rate limit guard it). Anonymous notices are answered by email to the address in the notice.
 
+## v0.93.1 — 2026-11-04
+
+- `/status` and the admin monitor read the checker's game-session-port checks too (`Ports` in status.openpak.org's `/api/status`), shown in a folded list per group.
+
 ## v0.93.0 — 2026-11-04
 
 - `/status` shows every check status.openpak.org runs from another host, grouped as that page groups them (web, companion sites, core services, each console network, game session ports). A long group folds behind "Show all" unless something in it is down; the banner counts those checks too. If the outside checker cannot be reached the page says so as its own line, not as an outage.

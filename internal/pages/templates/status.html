@@ -103,17 +103,24 @@
 <div class="panels">
   {{range .Ext.Groups}}
   <section class="card panel">
-    <header><h3>{{.Title}} <span class="text-sm font-normal text-muted">{{.Up}} {{t $.Lang "status.ext.of"}} {{len .Services}} {{t $.Lang "status.ext.working"}}</span></h3></header>
-    {{if .Fold}}<details><summary>{{t $.Lang "status.ext.show"}}</summary>{{end}}
-    <ul>
+    <header><h3>{{.Title}} <span class="text-sm font-normal text-muted">{{.Up}} {{t $.Lang "status.ext.of"}} {{.Total}} {{t $.Lang "status.ext.working"}}</span></h3></header>
+    {{if .Services}}<ul>
       {{range .Services}}
       <li class="state-row {{if .Up}}ok{{else}}bad{{end}}">
         <span class="name">{{.Name}}</span>
         <span class="pill">{{if .Up}}{{t $.Lang "status.ok"}}{{else}}{{t $.Lang "status.down"}}{{end}}</span>
       </li>
       {{end}}
-    </ul>
-    {{if .Fold}}</details>{{end}}
+    </ul>{{end}}
+    {{if .Ports}}<details{{if not .Fold}} open{{end}}><summary>{{t $.Lang "status.ext.show"}} ({{len .Ports}})</summary>
+    <ul>
+      {{range .Ports}}
+      <li class="state-row {{if .Up}}ok{{else}}bad{{end}}">
+        <span class="name">{{.Name}}</span>
+        <span class="pill">{{if .Up}}{{t $.Lang "status.ok"}}{{else}}{{t $.Lang "status.down"}}{{end}}</span>
+      </li>
+      {{end}}
+    </ul></details>{{end}}
   </section>
   {{end}}
 </div>
