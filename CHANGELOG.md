@@ -11,6 +11,9 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.89.5 — 2026-11-04
+- The 30 Xbox 360 rankings lines read the leaderboards core (`http://openpak-leaderboards:20210/n/x360/t/<title id>`) instead of x360-xstats' own listener, since x360-xstats v0.7.0 (card #64).
+
 ## v0.89.4 — 2026-11-04
 - Mario Kart 8 Deluxe (Switch) rankings come from the core leaderboards (`http://openpak-leaderboards:20210/t/mario-kart-8-deluxe`)
   instead of the switch-nex host-network port, since switch-nex v0.12.0 (card #63).

@@ -6,7 +6,7 @@ package main
 // reached through host.containers.internal and fenced off from the public side by a firewall rule. None of them has a Traefik route or a published port. A server
 // that does not answer, or has no scored board yet, gives its title no Rankings tab and no hub entry.
 //
-// x360-xstats and the leaderboards core keep boards for many games in one service and serve each
+// The leaderboards core keeps boards for many games in one service and serve each
 // title at /t/<title>/..., so a title with a native id in the catalogue (title_ids) maps to its own URL
 // and a title with no boards yet simply has no tab. The Xbox 360 rows match by id as well as by name.
 // PS3 rows match by NPWR communication id the same way, through /n/np/t/<NPWR>.
@@ -56,38 +56,38 @@ var rankingServers = []struct {
 	{[]string{"Teenage Mutant Ninja Turtles: Shredder's Revenge"}, "Switch", "http://host.containers.internal:23135", nil},
 	// spelunky2 v0.9.0 (Switch): boards stay empty until SPELUNKY2_SCORE_FIELD is set on the server.
 	{[]string{"Spelunky 2"}, "Switch", "http://openpak-spelunky2:9090", nil},
-	// x360-xstats v0.5.0: one URL per Xbox 360 title id (hex), matched by catalogue title_ids.
-	{[]string{"Halo 3"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/4D5307E6", []string{"4D5307E6"}},
-	{[]string{"Halo: Reach"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/4D53085B", []string{"4D53085B"}},
-	{[]string{"Halo 4"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/4D530919", []string{"4D530919"}},
-	{[]string{"Call of Duty 4: Modern Warfare"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/415607E6", []string{"415607E6"}},
+	// Xbox 360: x360-xstats v0.7.0 feeds the leaderboards core, which keys boards by the title id (hex): /n/x360/t/<id> resolves it mapped or not; matched by catalogue title_ids.
+	{[]string{"Halo 3"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/4D5307E6", []string{"4D5307E6"}},
+	{[]string{"Halo: Reach"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/4D53085B", []string{"4D53085B"}},
+	{[]string{"Halo 4"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/4D530919", []string{"4D530919"}},
+	{[]string{"Call of Duty 4: Modern Warfare"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/415607E6", []string{"415607E6"}},
 	// The other 26 Xbox 360 rows (catalogue migration 0025); boards appear once a title has scores.
-	{[]string{"Gears of War 2"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/4D53082D", []string{"4D53082D"}},
-	{[]string{"Gears of War 3"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/4D5308AB", []string{"4D5308AB"}},
-	{[]string{"Call of Duty: Modern Warfare 2"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/41560817", []string{"41560817"}},
-	{[]string{"Call of Duty: Black Ops"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/41560855", []string{"41560855"}},
-	{[]string{"Call of Duty: World at War"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/4156081C", []string{"4156081C"}},
-	{[]string{"Minecraft: Xbox 360 Edition"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/584111F7", []string{"584111F7"}},
-	{[]string{"Left 4 Dead 2"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/454108D4", []string{"454108D4"}},
-	{[]string{"Borderlands 2"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/5454087C", []string{"5454087C"}},
-	{[]string{"Castle Crashers"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/584108B7", []string{"584108B7"}},
-	{[]string{"Forza Motorsport 4"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/4D530910", []string{"4D530910"}},
-	{[]string{"Blur"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/41560845", []string{"41560845"}},
-	{[]string{"Trials Evolution"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/58410AAD", []string{"58410AAD"}},
-	{[]string{"Red Dead Redemption"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/5454082B", []string{"5454082B"}},
-	{[]string{"Grand Theft Auto IV"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/545407F2", []string{"545407F2"}},
-	{[]string{"Saints Row: The Third"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/5451086D", []string{"5451086D"}},
-	{[]string{"Dead Island"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/4B4D07DF", []string{"4B4D07DF"}},
-	{[]string{"Resident Evil 5"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/434307D4", []string{"434307D4"}},
-	{[]string{"Dark Souls"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/4E4D083A", []string{"4E4D083A"}},
-	{[]string{"Portal 2"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/45410912", []string{"45410912"}},
-	{[]string{"Chromehounds"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/534507D4", []string{"534507D4"}},
-	{[]string{"Armored Core 4"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/465307D6", []string{"465307D6"}},
-	{[]string{"Lost Planet 2"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/434307ED", []string{"434307ED"}},
-	{[]string{"Rock Band 3"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/45410914", []string{"45410914"}},
-	{[]string{"Halo Wars"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/4D530808", []string{"4D530808"}},
-	{[]string{"Titanfall"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/454109D0", []string{"454109D0"}},
-	{[]string{"Battlefield 3"}, "Xbox 360", "http://openpak-x360-xstats:9090/t/45410950", []string{"45410950"}},
+	{[]string{"Gears of War 2"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/4D53082D", []string{"4D53082D"}},
+	{[]string{"Gears of War 3"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/4D5308AB", []string{"4D5308AB"}},
+	{[]string{"Call of Duty: Modern Warfare 2"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/41560817", []string{"41560817"}},
+	{[]string{"Call of Duty: Black Ops"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/41560855", []string{"41560855"}},
+	{[]string{"Call of Duty: World at War"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/4156081C", []string{"4156081C"}},
+	{[]string{"Minecraft: Xbox 360 Edition"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/584111F7", []string{"584111F7"}},
+	{[]string{"Left 4 Dead 2"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/454108D4", []string{"454108D4"}},
+	{[]string{"Borderlands 2"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/5454087C", []string{"5454087C"}},
+	{[]string{"Castle Crashers"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/584108B7", []string{"584108B7"}},
+	{[]string{"Forza Motorsport 4"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/4D530910", []string{"4D530910"}},
+	{[]string{"Blur"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/41560845", []string{"41560845"}},
+	{[]string{"Trials Evolution"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/58410AAD", []string{"58410AAD"}},
+	{[]string{"Red Dead Redemption"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/5454082B", []string{"5454082B"}},
+	{[]string{"Grand Theft Auto IV"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/545407F2", []string{"545407F2"}},
+	{[]string{"Saints Row: The Third"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/5451086D", []string{"5451086D"}},
+	{[]string{"Dead Island"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/4B4D07DF", []string{"4B4D07DF"}},
+	{[]string{"Resident Evil 5"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/434307D4", []string{"434307D4"}},
+	{[]string{"Dark Souls"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/4E4D083A", []string{"4E4D083A"}},
+	{[]string{"Portal 2"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/45410912", []string{"45410912"}},
+	{[]string{"Chromehounds"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/534507D4", []string{"534507D4"}},
+	{[]string{"Armored Core 4"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/465307D6", []string{"465307D6"}},
+	{[]string{"Lost Planet 2"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/434307ED", []string{"434307ED"}},
+	{[]string{"Rock Band 3"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/45410914", []string{"45410914"}},
+	{[]string{"Halo Wars"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/4D530808", []string{"4D530808"}},
+	{[]string{"Titanfall"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/454109D0", []string{"454109D0"}},
+	{[]string{"Battlefield 3"}, "Xbox 360", "http://openpak-leaderboards:20210/n/x360/t/45410950", []string{"45410950"}},
 	// PS3: np-score feeds the leaderboards core, which keys boards by NP communication id; /n/np/t/<NPWR> resolves it whether or not it is mapped to a neutral key.
 	{[]string{"Demon's Souls"}, "PS3", "http://openpak-leaderboards:20210/n/np/t/NPWR00881_00", []string{"NPWR00881_00"}},
 	{[]string{"LittleBigPlanet"}, "PS3", "http://openpak-leaderboards:20210/n/np/t/NPWR00160_00", []string{"NPWR00160_00"}},
