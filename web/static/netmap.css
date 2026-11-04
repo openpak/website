@@ -61,11 +61,11 @@
 .nm-node.st-idle rect.body, .nm-node.st-planned rect.body, .nm-node.st-unknown rect.body { stroke: var(--line-2); stroke-dasharray: 3 2; }
 .nm-node.st-degraded rect.body, .nm-node.st-down rect.body { stroke-width: 2.2; }
 .nm-node rect.stripe { fill: var(--fam); }
-.nm-node text { font-size: 12px; fill: var(--ink); pointer-events: none; }
-.nm-node text.sub { font-size: 10.5px; fill: var(--muted); }
+.nm-node text { font-size: 14px; fill: var(--ink); pointer-events: none; }
+.nm-node text.sub { font-size: 11px; fill: var(--muted); }
 .nm-node.console rect.body { fill: var(--paper-2); stroke-width: 2; }
 .nm-node.console.st-up rect.body, .nm-node.console.st-idle rect.body, .nm-node.console.st-planned rect.body, .nm-node.console.st-unknown rect.body { stroke: var(--fam); stroke-dasharray: none; }
-.nm-node.console text { font-size: 14px; font-weight: 700; }
+.nm-node.console text { font-size: 16px; font-weight: 700; }
 .nm-node.group rect.body { fill: var(--paper-2); }
 .nm-node.sel rect.body, .nm-node:focus-visible rect.body { stroke: var(--cursor); stroke-width: 3; stroke-dasharray: none; }
 .nm-node:focus { outline: none; }
@@ -76,7 +76,7 @@
 .has-focus .nm-node.faded { opacity: .35; }
 
 /* Side panel */
-.nm-panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(24rem, 100%); background: var(--raised); border-left: 1px solid var(--line-2);
+.nm-panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(21rem, 100%); background: var(--raised); border-left: 1px solid var(--line-2);
   box-shadow: var(--shadow-lg); overflow: auto; padding: 1rem 1.1rem 1.4rem; z-index: 3; transform: translateX(102%); transition: transform .16s ease-out; visibility: hidden; }
 .nm-panel.open { transform: none; visibility: visible; }
 @media (prefers-reduced-motion: reduce) { .nm-panel { transition: none; } }
@@ -127,5 +127,7 @@ button.nm-chip:hover { background: var(--accent-weak); }
 .nm-node .ic-g { fill: none; stroke: var(--g); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .nm-node.st-idle .ic-c, .nm-node.st-planned .ic-c, .nm-node.st-unknown .ic-c { stroke: var(--muted); stroke-width: 1.6; }
 
-/* The staff map breaks out of the page column: 240 nodes need the width. */
-.nm-wide { width: min(calc(100vw - 2.5rem), 1800px); position: relative; left: 50%; transform: translateX(-50%); margin-top: 1.5rem; }
+/* The staff map keeps its place beside the section nav and grows to the right edge of the
+   window: 240 nodes need the width. 74rem is the page column (.wrap). */
+.nm-wide { margin-top: 1.2rem; }
+@media (min-width: 48rem) { .nm-wide { margin-right: calc(-1 * max(0px, (100vw - 74rem) / 2 - 1.5rem)); } }

@@ -115,6 +115,10 @@
     this.bFit.addEventListener('click', function () { self.fit(); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && self.sel) self.select(null); });
     this.bindPanZoom();
+    if (window.ResizeObserver) {
+      var rt = null;
+      new ResizeObserver(function () { clearTimeout(rt); rt = setTimeout(function () { if (self.view === 'map' && self.data && !self.userMoved) self.render(true); }, 120); }).observe(this.stage);
+    }
     window.matchMedia('(max-width: 720px)').addEventListener('change', function (e) { self.setView(e.matches ? 'list' : 'map'); });
     this.setView(this.view, true);
   };
@@ -253,7 +257,7 @@
   };
 
   /* ---------- layout ---------- */
-  var W = 176, H = 30, GX = 8, GY = 8;
+  var W = 196, H = 34, GX = 8, GY = 8;
 
   // Returns {pos, lanes, labels, rep, items}: rep maps a folded member to its group node.
   NetMap.prototype.layout = function (vis) {
@@ -261,7 +265,7 @@
     // Lanes wrap into 3 to 8 columns; take the width that fills the stage best, so the
     // map is as large as it can be without scrolling.
     var r = this.svg.getBoundingClientRect(), best = null, bs = -1;
-    for (var c = 3; c <= 8; c++) {
+    for (var c = 2; c <= 8; c++) {
       var L = this.layoutAdmin(vis, c); this.L = L;
       var b = this.bounds(), sc = Math.min(r.width / b.w, r.height / b.h);
       if (sc > bs + 1e-6) { bs = sc; best = L; }
@@ -271,7 +275,7 @@
 
   NetMap.prototype.layoutAdmin = function (vis, cols) {
     var self = this, pos = {}, lanes = [], labels = [], rep = {}, pseudo = [];
-    var COLS = cols || 4, laneX = 200, y = 20;
+    var COLS = cols || 4, laneX = 215, y = 20;
     var hasQ = !!this.f.q, forceOpen = !!this.f.status;
     // lane membership by primary network
     var members = {};
@@ -288,22 +292,22 @@
       var cons = self.byId['console-' + netId];
       if (cons && !vis[cons.id]) cons = null;
       if (!ms.length && !cons) return;
-      var items = [], games = [];
+      var items = [], byKind = { adapter: [], vendor: [], game: [], service: [] };
       ms.sort(function (a, b) { return (KIND_ORDER[a.kind] - KIND_ORDER[b.kind]) || a.label.localeCompare(b.label); });
-      ms.forEach(function (n) { if (n.kind === 'game') games.push(n); else items.push(n); });
-      if (games.length) {
-        var gkey = 'games:' + netId, open = self.expanded[gkey] || forceOpen || games.length <= 6 ||
-          (hasQ && games.some(function (g) { return self.matchQ(g); }));
-        if (open) games.forEach(function (g) { items.push(g); });
-        else {
-          var worst = self.worst(games), ps = {
-            id: 'grp:' + gkey, label: net.label + ' games', kind: 'group', nets: [netId], fam: net.family, state: worst.state,
-            detail: worst.detail, desc: games.length + ' game servers on ' + net.label, members: games, gkey: gkey, pseudo: true
-          };
-          pseudo.push(ps); self.byId[ps.id] = ps; items.push(ps);
-          games.forEach(function (g) { rep[g.id] = ps.id; });
-        }
-      }
+      ms.forEach(function (n) { (byKind[n.kind] || byKind.service).push(n); });
+      var GL = { adapter: ' services', vendor: ' partner hosts', game: ' games', service: ' other services' };
+      ['adapter', 'vendor', 'game', 'service'].forEach(function (kind) {
+        var list = byKind[kind]; if (!list.length) return;
+        var gkey = kind + ':' + netId, open = self.expanded[gkey] || forceOpen || list.length <= 6 ||
+          (hasQ && list.some(function (g) { return self.matchQ(g); }));
+        if (open) { list.forEach(function (g) { items.push(g); }); return; }
+        var worst = self.worst(list), ps = {
+          id: 'grp:' + gkey, label: net.label + GL[kind], kind: 'group', nets: [netId], fam: net.family, state: worst.state,
+          detail: worst.detail, desc: list.length + ' ' + (kind === 'game' ? 'game servers' : 'units') + ' on ' + net.label, members: list, gkey: gkey, pseudo: true
+        };
+        pseudo.push(ps); self.byId[ps.id] = ps; items.push(ps);
+        list.forEach(function (g) { rep[g.id] = ps.id; });
+      });
       var rows = Math.max(1, Math.ceil(items.length / COLS));
       var laneH = Math.max(rows * (H + GY) + GY + 14, cons ? 62 : 0);
       var lane = { x: laneX - 10, y: y, w: COLS * (W + GX) + 2, h: laneH, fam: net.family || 0, label: net.label, net: netId };
@@ -311,12 +315,12 @@
       items.forEach(function (n, i) {
         pos[n.id] = { x: laneX + (i % COLS) * (W + GX), y: y + 16 + Math.floor(i / COLS) * (H + GY), w: W, h: H };
       });
-      if (cons) pos[cons.id] = { x: 0, y: y + laneH / 2 - 22, w: 150, h: 44 };
+      if (cons) pos[cons.id] = { x: 0, y: y + laneH / 2 - 22, w: 172, h: 44 };
       y += laneH + 16;
     });
     var bottom = y;
     // columns on the right
-    var coreX = laneX + COLS * (W + GX) + 150, infX = coreX + W + 150;
+    var coreX = laneX + COLS * (W + GX) + 90, infX = coreX + W + 80;
     function stack(kinds, x, y0, label) {
       var list = self.nodes.filter(function (n) { return vis[n.id] && kinds.indexOf(n.kind) >= 0; });
       list.sort(function (a, b) { return a.label.localeCompare(b.label); });
@@ -337,7 +341,7 @@
 
   NetMap.prototype.layoutPublic = function (vis) {
     var self = this, pos = {}, lanes = [], labels = [], y = 24;
-    var gx = 230, gw = 210, gh = 34, cx = gx + gw + 150, cw = 220, ch = 34;
+    var gx = 230, gw = 236, gh = 38, cx = gx + gw + 130, cw = 236, ch = 38;
     this.nets.forEach(function (net) {
       var cons = self.byId['c-' + net.id];
       if (!cons || !vis[cons.id]) return;
@@ -350,10 +354,12 @@
     });
     var core = this.nodes.filter(function (n) { return (n.kind === 'core' || n.kind === 'site') && vis[n.id]; });
     core.sort(function (a, b) { return (KIND_ORDER[a.kind] - KIND_ORDER[b.kind]) || a.label.localeCompare(b.label); });
-    // spread the shared services over the full height so their lines fan out
-    var total = Math.max(y, core.length * (ch + 8));
-    var step = core.length > 1 ? Math.max(ch + 8, (total - 40) / core.length) : ch + 8;
-    core.forEach(function (n, i) { pos[n.id] = { x: cx, y: 24 + i * step, w: cw, h: ch }; });
+    // two columns of shared services when there are many, centred against the consoles
+    var colsN = core.length > 12 ? 2 : 1, per = Math.ceil(core.length / colsN), stepY = ch + 8;
+    var offY = Math.max(0, (y - per * stepY) / 2);
+    core.forEach(function (n, i) {
+      pos[n.id] = { x: cx + Math.floor(i / per) * (cw + 16), y: 24 + offY + (i % per) * stepY, w: cw, h: ch };
+    });
     labels.push({ x: 0, y: 8, text: this.T.colConsoles });
     labels.push({ x: gx, y: 8, text: this.T.colUse });
     labels.push({ x: cx, y: 8, text: this.T.colShared });
@@ -411,7 +417,7 @@
       svgEl('title', {}, g, n.label + ' — ' + self.word(n.state));
       svgEl('rect', { 'class': 'body', width: p.w, height: p.h, rx: n.kind === 'console' ? 10 : 6 }, g);
       if (n.kind !== 'console') svgEl('rect', { 'class': 'stripe', x: 0, y: 0, width: 4, height: p.h, rx: 2 }, g);
-      var room = Math.floor((p.w - (n.kind === 'console' ? 50 : 40)) / (n.kind === 'console' ? 7.6 : 6.3));
+      var room = Math.floor((p.w - (n.kind === 'console' ? 50 : 46)) / (n.kind === 'console' ? 9.2 : 7.5));
       var lab = n.label.length > room ? n.label.slice(0, Math.max(1, room - 1)) + '…' : n.label;
       if (n.kind === 'console') {
         svgEl('text', { x: 14, y: 20 }, g, lab);
@@ -496,28 +502,39 @@
   NetMap.prototype.fit = function () {
     if (this.view !== 'map' || !this.L) return;
     var b = this.bounds(), r = this.svg.getBoundingClientRect();
-    var k = Math.min(r.width / b.w, r.height / b.h, 1.4);
-    this.t = { k: k, x: (r.width - b.w * k) / 2 - b.x * k, y: (r.height - b.h * k) / 2 - b.y * k };
-    if (b.w * k < r.width * .5 || true) { this.t.y = Math.max(8, this.t.y); }
+    // while the side panel is open on a wide screen the map is fitted into the part it does not cover
+    var aw = this.panel.classList.contains('open') && r.width > 760 ? r.width - Math.min(336, r.width) : r.width;
+    // ...unless that would make the text too small: then keep full size and pan to the node instead
+    this.fitCovered = false;
+    if (aw < r.width && Math.min(aw / b.w, r.height / b.h) < .62) { aw = r.width; this.fitCovered = true; }
+    var k = Math.min(aw / b.w, r.height / b.h, 1.6);
+    this.t = { k: k, x: (aw - b.w * k) / 2 - b.x * k, y: 8 - b.y * k };
+    this.userMoved = false;
     this.apply();
   };
   NetMap.prototype.zoomAt = function (f, cx, cy) {
     var k = Math.min(3, Math.max(.12, this.t.k * f)); f = k / this.t.k;
     this.t.x = cx - (cx - this.t.x) * f; this.t.y = cy - (cy - this.t.y) * f; this.t.k = k; this.apply();
   };
-  NetMap.prototype.zoomBy = function (f) { var r = this.svg.getBoundingClientRect(); this.zoomAt(f, r.width / 2, r.height / 2); };
-  NetMap.prototype.center = function (id) {
+  NetMap.prototype.zoomBy = function (f) { this.userMoved = true; var r = this.svg.getBoundingClientRect(); this.zoomAt(f, r.width / 2, r.height / 2); };
+  // reveal pans (never zooms) just enough to bring a node into the part of the stage the
+  // panel does not cover; a node already in view does not move the map.
+  NetMap.prototype.reveal = function (id) {
     var p = this.L && this.L.pos[this.L.rep[id] || id]; if (!p) return;
-    var r = this.svg.getBoundingClientRect(), k = Math.max(this.t.k, .8);
-    var shift = r.width > 760 ? -120 : 0;
-    this.t = { k: k, x: r.width / 2 + shift - (p.x + p.w / 2) * k, y: r.height / 2 - (p.y + p.h / 2) * k }; this.apply();
+    var r = this.svg.getBoundingClientRect(), k = this.t.k, pad = 24;
+    var free = r.width > 760 ? r.width - Math.min(336, r.width) : r.width;
+    var x0 = p.x * k + this.t.x, x1 = (p.x + p.w) * k + this.t.x, y0 = p.y * k + this.t.y, y1 = (p.y + p.h) * k + this.t.y;
+    var dx = 0, dy = 0;
+    if (x0 < pad) dx = pad - x0; else if (x1 > free - pad) dx = free - pad - x1;
+    if (y0 < pad) dy = pad - y0; else if (y1 > r.height - pad) dy = r.height - pad - y1;
+    if (dx || dy) { this.t.x += dx; this.t.y += dy; this.apply(); }
   };
   NetMap.prototype.bindPanZoom = function () {
     var self = this, svg = this.svg, ptrs = {}, start = null, pinch = null;
     svg.addEventListener('wheel', function (e) {
       e.preventDefault();
       var r = svg.getBoundingClientRect();
-      self.zoomAt(Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .0016)), e.clientX - r.left, e.clientY - r.top);
+      self.userMoved = true; self.zoomAt(Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .0016)), e.clientX - r.left, e.clientY - r.top);
     }, { passive: false });
     svg.addEventListener('pointerdown', function (e) {
       ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
@@ -538,7 +555,7 @@
       if (!start) return;
       var dx = e.clientX - start.x, dy = e.clientY - start.y;
       if (!self.moved && Math.hypot(dx, dy) < 5) return;
-      if (!self.moved) { self.moved = true; svg.classList.add('drag'); try { svg.setPointerCapture(e.pointerId); } catch (x) { } }
+      if (!self.moved) { self.moved = true; self.userMoved = true; svg.classList.add('drag'); try { svg.setPointerCapture(e.pointerId); } catch (x) { } }
       self.t.x = start.tx + dx; self.t.y = start.ty + dy; self.apply();
     });
     function end(e) {
@@ -554,10 +571,11 @@
   NetMap.prototype.select = function (id, center) {
     this.sel = id;
     var sn = id && this.byId[id];
-    if (sn && sn.group && !this.expanded[sn.group] && this.view === 'map') { this.expanded[sn.group] = true; this.render(true); }
+    if (sn && this.L && this.L.rep[id] && this.view === 'map') { this.expanded[this.L.rep[id].slice(4)] = true; this.render(true); }
     Object.keys(this.nodeEls || {}).forEach(function () { });
     if (this.nodeEls) for (var k in this.nodeEls) this.nodeEls[k].classList.toggle('sel', k === id);
-    if (id) { this.showPanel(id); if (center && this.view === 'map') this.center(id); } else this.panel.classList.remove('open');
+    if (id) { this.showPanel(id); } else this.panel.classList.remove('open');
+    if (this.view === 'map' && this.L) { if (!this.userMoved) this.fit(); if (id && (this.userMoved || this.fitCovered)) this.reveal(id); }
     if (history.replaceState) history.replaceState(null, '', id && id.indexOf('grp:') !== 0 ? '#n=' + encodeURIComponent(id) : location.pathname + location.search);
   };
 
@@ -608,12 +626,13 @@
       });
       if (n.pseudo) {
         var eb = el('button', { type: 'button', 'class': 'btn text-sm' }, P, T.expand);
-        eb.addEventListener('click', function () { self.expanded[n.gkey] = true; self.sel = n.members[0].id; self.render(); self.center(self.sel); });
+        eb.addEventListener('click', function () { self.expanded[n.gkey] = true; self.sel = n.members[0].id; self.render(true); self.reveal(self.sel); });
       }
     }
-    if (n.group && this.mode === 'admin' && this.groups[n.group] && this.groups[n.group].length > 6 && this.expanded[n.group]) {
+    var gk = this.mode === 'admin' && this.isLaneKind(n) ? n.kind + ':' + (n.nets[0] || 'unassigned') : null;
+    if (gk && this.expanded[gk] && this.nodes.filter(function (o) { return self.isLaneKind(o) && o.kind === n.kind && (o.nets[0] || 'unassigned') === (n.nets[0] || 'unassigned'); }).length > 6) {
       var cb = el('button', { type: 'button', 'class': 'btn text-sm' }, P, T.collapse);
-      cb.addEventListener('click', function () { delete self.expanded[n.group]; self.sel = null; self.render(); });
+      cb.addEventListener('click', function () { delete self.expanded[gk]; self.sel = null; self.render(true); });
     }
     // dependencies
     var outs = this.neighbours(n, 'out'), ins = this.neighbours(n, 'in');

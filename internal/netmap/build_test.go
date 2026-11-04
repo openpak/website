@@ -27,7 +27,7 @@ func fixture(t *testing.T) Input {
 	return Input{
 		Hosts:  []HostTopo{{Name: "prod", IP: "145.241.199.19", Raw: prod}, {Name: "draughts", IP: "145.241.228.207", Raw: dr}},
 		Status: &sp, LogsOn: true, Now: time.Unix(0, 0),
-		Stages: map[string]string{"Switch": "live", "Wii U": "beta", "PS3": "in-development", "PS4": "planned"},
+		Stages: map[string]string{"Switch": "live", "Wii U": "beta", "3DS": "beta", "Wii": "beta", "DS": "beta", "PS3": "in-development", "PS4": "in-development", "Xbox 360": "live", "Xbox": "in-development", "PS5": "planned"},
 	}
 }
 

@@ -34,7 +34,11 @@
   }
   function overflows(row) {
     var its = items(row), top = null, wrapped = false;
+    // A row laid out as a column (the admin section nav beside the page on desktop) stacks by
+    // design: items on different lines are not wrapping, only sideways overflow counts.
+    var column = /column/.test(getComputedStyle(row).flexDirection);
     its.forEach(function (el) {
+      if (column) { return; }
       if (!el.offsetParent) { return; }
       if (top === null) { top = el.offsetTop; } else if (Math.abs(el.offsetTop - top) > 4) { wrapped = true; }
     });

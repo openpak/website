@@ -11,6 +11,12 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.95.2 — 2026-11-04
+
+- Network map: fits to the stage on load and on resize (and refits when the panel opens, or pans just enough to reveal the selected node when shrinking would make the text too small); boxes and text are larger (14 px labels, about 12 px or more on screen at the default fit); large lanes fold into one group node per kind (services, partner hosts, games) that opens when searched, filtered or selected; the map sits inside the admin settings shell and stretches to the window's right edge.
+- `pillselect.js`: a row laid out as a column (the admin section nav beside the page on desktop) is no longer collapsed into a dropdown; only sideways overflow counts for it. This fixes the 160 px "Network map" box on every admin page at desktop width.
+- Console stages on the maps come from the `/features` rows and were already right in production (Wii and DS beta); the earlier "Planned" came from a stale test fixture.
+
 ## v0.95.1 — 2026-11-04
 
 - The public map is not drawn on `/status` for now (the page is being redesigned); the `netmapPublic` template and `/status/map.json` stay ready for the new design.

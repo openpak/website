@@ -7,9 +7,9 @@
   <h1>{{t .Lang "admin.network"}}</h1>
   <p>{{t .Lang "admin.network.help"}}</p>
 </div>
-{{template "adminend"}}
-{{/* Outside the settings shell on purpose: the map is wider than the shell's content column. */}}
+{{/* Inside the settings shell like every admin page; the map stretches to the right edge of the window. */}}
 <div class="nm nm-wide" data-netmap data-mode="admin" data-url="/admin/network/data"><noscript><p class="notice">The map needs scripting. The Services page lists the same units.</p></noscript></div>
 <link rel="stylesheet" href="/static/netmap.css?v={{.Asset}}">
 <script src="/static/netmap.js?v={{.Asset}}" defer></script>
+{{template "adminend"}}
 {{template "footer" .}}
