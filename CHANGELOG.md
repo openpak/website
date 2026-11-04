@@ -11,6 +11,9 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.94.1 — 2026-11-04
+
+- Console filter pills (titles, features): the marks are a 64x24 wordmark slot instead of an 18 px square, so 3DS, PS3, PSP and Xbox 360 read in dark and light. They use the lifted `-dark` files like every other mark; a selected pill (inverted colours) keeps a `--paper` tile behind its mark.
 ## v0.94.0 — 2026-11-04
 
 - Admin: Pakka posts (`/admin/pakka`), the staff queue for what Pakka's model drafted for OpenVerse and News. Staff publish a draft as written, edit the text and publish, or reject with a reason (required); each draft shows its audit history, and every decision is also written to the website audit log. A kill switch (with a confirmation box) stops all Pakka publishing. Needs `PAKKA_URL` and `PAKKA_PUBLISH_ADMIN_KEY`; without them the section is absent. Requires Pakka v0.12.0.

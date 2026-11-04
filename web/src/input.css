@@ -668,6 +668,9 @@
   .chips span { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 15px; border-radius: 999px; cursor: pointer;
                 background: var(--raised); box-shadow: var(--shadow-sm); font-family: var(--font-ui); font-size: .88rem; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
   .chips span > img { width: 30px; height: 20px; object-fit: contain; }
+  /* Wordmarks need width: a 64x24 slot, not a square. Selected pills invert, so the mark keeps a --paper tile there. */
+  .chips .console-mark { width: 64px; height: 24px; padding: 0 3px; border-radius: 6px; }
+  .chips input:checked + span .console-mark { background: var(--paper); }
   .chips input:checked + span { background: var(--ink); color: var(--paper); }
   .chips input:focus-visible + span, .seg input:focus-visible + span { box-shadow: 0 0 0 2px var(--paper), 0 0 0 5px var(--cursor); }
   .seg { display: flex; padding: 4px; border-radius: 999px; background: var(--sunk); overflow-x: auto; scrollbar-width: none; }
