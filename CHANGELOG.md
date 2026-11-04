@@ -11,6 +11,9 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.89.2 — 2026-11-04
+- Saves page: PS3 saves show the PS3 logo and the game's catalogue title (by the product code the save directory starts with) instead of the raw `ps3:folder` id; an unknown code shows the save directory name.
+
 ## v0.89.1 — 2026-11-03
 - One info line per request (`http method path status ms`) instead of a debug-only one. Never the query, headers, cookies or body; opaque path segments (24+ token characters) are masked as `{id}`; static files, health probes, metrics and the log ingest are left out (card #84).
 

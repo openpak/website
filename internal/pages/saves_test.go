@@ -1,9 +1,11 @@
 package pages
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
 
@@ -149,4 +151,56 @@ func TestSavesManageAndDelete(t *testing.T) {
 	if noCSRF.Code != http.StatusForbidden || len(calls) != 2 {
 		t.Fatalf("delete without CSRF: %d %v", noCSRF.Code, calls)
 	}
+}
+
+// A PS3 save reads as its game, from the catalogue entry of the product code its directory starts
+// with, and as the PS3 console; an unknown code shows the directory, not "ps3:".
+func TestPS3SaveTitle(t *testing.T) {
+	SaveCatalogue = func(context.Context) map[string]string { return map[string]string{"BLUS30443": "Demon's Souls"} }
+	catData = nil
+	defer func() { SaveCatalogue, catData = nil, nil }()
+	if n, icon := SaveTitle(context.Background(), "ps3", "ps3:BLUS30443-AUTOSAVE"); n != "Demon's Souls" || icon {
+		t.Fatalf("catalogue: %q %v", n, icon)
+	}
+	if n, _ := SaveTitle(context.Background(), "ps3", "ps3:BLES99999DATA00"); n != "BLES99999DATA00" {
+		t.Fatalf("unknown: %q", n)
+	}
+	if c := platformConsole("ps3"); c != "PS3" || consoleSlug(c) != "ps3" {
+		t.Fatalf("console %q", c)
+	}
+}
+
+// TestWritePreviewSaves renders the saves page with a Switch, a known PS3 and an unknown PS3 save,
+// for looking at: only when PREVIEW_DIR is set.
+//
+//	PREVIEW_DIR=$PWD/.preview GOWORK=off go test ./internal/pages -run PreviewSaves
+func TestWritePreviewSaves(t *testing.T) {
+	dir := os.Getenv("PREVIEW_DIR")
+	if dir == "" {
+		t.Skip("set PREVIEW_DIR to write the page previews")
+	}
+	SaveCatalogue = func(context.Context) map[string]string { return map[string]string{"BLUS30443": "Demon's Souls"} }
+	catData = nil
+	defer func() { SaveCatalogue, catData = nil, nil }()
+	s, fc, _ := newTestServer(t)
+	emailA, _ := seedTwoAccounts(fc)
+	stub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasSuffix(r.URL.Path, "/saves"):
+			v := `"versions":[{"id":7,"number":1,"size":2048000,"backend":"local","parts":1,"console":"PS3","created_at":"2026-11-01T10:00:00Z"}]`
+			w.Write([]byte(`{"saves":[{"platform":"ps3","title_id":"ps3:BLUS30443-AUTOSAVE",` + v + `},{"platform":"ps3","title_id":"ps3:BLES99999DATA00",` + v + `},{"platform":"wii","title_id":"RMCP01",` + v + `}],"usage":{"allowance_used":6144000,"allowance":268435456,"total":6144000}}`))
+		case strings.HasSuffix(r.URL.Path, "/storage"):
+			w.Write([]byte(`{"connected":false}`))
+		default:
+			w.WriteHeader(404)
+		}
+	}))
+	defer stub.Close()
+	s.Saves = saves.New(stub.URL, "k")
+	rec := login(t, s, emailA, "password-A-1")
+	page := authedRequest(s, rec, http.MethodGet, "/account/saves", nil)
+	if page.Code != 200 {
+		t.Fatalf("saves page: %d", page.Code)
+	}
+	WritePreviewFile(t, dir, "saves", page.Body.String())
 }

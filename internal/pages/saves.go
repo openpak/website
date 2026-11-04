@@ -7,9 +7,12 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/openpak/website/internal/accounts"
 	"github.com/openpak/website/internal/i18n"
@@ -151,7 +154,52 @@ func SaveTitle(ctx context.Context, platform, id string) (name string, icon bool
 			name = n
 		}
 	}
+	if name == id && platformConsole(platform) == "PS3" {
+		name = ps3SaveTitle(ctx, id)
+	}
 	return name, icon
+}
+
+// SaveCatalogue returns the titles catalogue (id to name); main sets it to the database's.
+var SaveCatalogue func(ctx context.Context) map[string]string
+
+var (
+	catMu   sync.Mutex
+	catAt   time.Time
+	catData map[string]string
+	// A PS3 product or NP id opens a save directory's name: BLUS30443-AUTOSAVE, NPUB30611DATA00.
+	ps3Code = regexp.MustCompile(`(?i)^[A-Z]{4}\d{5}`)
+)
+
+// saveCatalogue is SaveCatalogue cached for a minute, so one page of saves is one query.
+func saveCatalogue(ctx context.Context) map[string]string {
+	if SaveCatalogue == nil {
+		return nil
+	}
+	catMu.Lock()
+	defer catMu.Unlock()
+	if catData == nil || time.Since(catAt) > time.Minute {
+		if c := SaveCatalogue(ctx); c != nil {
+			catData, catAt = c, time.Now()
+		}
+	}
+	return catData
+}
+
+// ps3SaveTitle names a PS3 save ("<folder type>:<save directory>", e.g. "ps3:BLUS30443-AUTOSAVE")
+// by the catalogue entry of the product code the directory starts with. Without one it shows the
+// save directory, not the folder-type prefix.
+func ps3SaveTitle(ctx context.Context, id string) string {
+	dir := id
+	if _, after, ok := strings.Cut(id, ":"); ok {
+		dir = after
+	}
+	if code := ps3Code.FindString(dir); code != "" {
+		if n := CatalogueTitleName(saveCatalogue(ctx), code); n != "" {
+			return n
+		}
+	}
+	return dir
 }
 
 // platformConsole names the console behind a saves platform: the emulators' own names and the
@@ -164,6 +212,8 @@ func platformConsole(p string) string {
 		return "Wii"
 	case "ds":
 		return "DS"
+	case "ps3", "np":
+		return "PS3"
 	}
 	return p
 }

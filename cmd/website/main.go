@@ -196,6 +196,7 @@ func run(log *slog.Logger) error {
 	pageSrv.Supervision = sup
 	pageSrv.Parental = parentalCli
 	apiSrv.SaveTitle = pages.SaveTitle
+	pages.SaveCatalogue = func(ctx context.Context) map[string]string { return pages.TitleCatalogue(ctx, db) }
 	// Title companion pages and the play history: one service behind the site and the API.
 	comp := companion.New(db)
 	comp.History = coreGRPC
