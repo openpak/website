@@ -40,21 +40,19 @@ func TestStatusShowsDontStarveTogetherAndItsPlayers(t *testing.T) {
 		t.Fatalf("status: %d", rec.Code)
 	}
 	body := html.UnescapeString(rec.Body.String())
-	for _, panel := range []struct{ id, count string }{{"srv-h", "1 online"}, {"play-h", "1 player"}} {
-		_, section, ok := strings.Cut(body, `aria-labelledby="`+panel.id+`">`)
-		if !ok {
-			t.Fatalf("missing panel %s", panel.id)
-		}
-		section, _, _ = strings.Cut(section, "</section>")
-		row := regexp.MustCompile(`(?s)<li class="state-row ok">\s*<span class="name">Don't Starve Together</span>\s*<span class="pill">\s*` + regexp.QuoteMeta(panel.count))
-		if !row.MatchString(section) {
-			t.Errorf("%s should show Don't Starve Together with %s", panel.id, panel.count)
-		}
+	_, list, ok := strings.Cut(body, `id="sv-play"`)
+	if !ok {
+		t.Fatal("missing the playing-now list")
+	}
+	list, _, _ = strings.Cut(list, "</ul>")
+	row := regexp.MustCompile(`(?s)<b>Don't Starve Together</b>.*<b data-n="1">1</b> playing`)
+	if !row.MatchString(list) {
+		t.Errorf("playing now should show Don't Starve Together with 1 playing: %s", list)
 	}
 	if strings.Contains(strings.ToLower(body), "010025901a268000") {
 		t.Error("DBI must not appear as a game")
 	}
-	if !strings.Contains(body, "2 online") {
+	if !strings.Contains(body, `data-count="online">2<`) {
 		t.Error("both consoles must still count as online")
 	}
 }

@@ -1,133 +1,83 @@
 {{template "header" .}}
-{{/* A summary banner, then one panel per kind of thing. Every row keeps its
-     state class: the dot carries how it is and the pill says what it is.
-     Green is working, indigo is beta, amber is being built, red is not
-     answering, grey is nothing claimed — planned work, or a server this
-     deployment does not check. */}}
+{{/* The live overview. Status colour is reserved for status and always travels with an icon and a
+     word. Every service row lives on status.openpak.org; this page says whether each network is
+     working and who is playing, and status-live.js keeps it current. The server renders the state
+     itself, so the page is complete without scripting. */}}
+{{template "svIcons"}}
+<link rel="stylesheet" href="/static/statusview.css?v={{.Asset}}">
+<link rel="stylesheet" href="/static/status.css?v={{.Asset}}">
+
 <div class="page-head">
   <h1>{{t .Lang "status.title"}}</h1>
   <p class="lede">{{t .Lang "status.sub"}}</p>
 </div>
 
-<div class="banner {{if not .Operational}}bad{{end}}" role="status">
-  <div class="flex items-center gap-4">
-    <span class="big-ic"><svg class="ico" aria-hidden="true"><use href="{{if .Operational}}#i-check{{else}}#i-alert{{end}}"/></svg></span>
-    <h2>{{if .Operational}}{{t .Lang "status.all.ok"}}{{else}}{{t .Lang "status.all.bad"}}{{end}}</h2>
+<div id="sv-live" data-url="/status/live.json" data-lang="{{.Lang}}">
+<div id="sv-banner" class="sv-banner {{.State}}" role="status" aria-live="polite">
+  <svg class="sv-ic sv-big" aria-hidden="true"><use href="#sv-{{if eq .State "ok"}}ok{{else}}warn{{end}}"/></svg>
+  <div class="sv-bt">
+    <h2 data-headline>{{.Headline}}</h2>
+    <p data-sub>{{.Sub}}</p>
   </div>
-  {{/* Online, not playing: this counts everyone signed in, and the panel
-       further down counts who is actually in a game. */}}
-  {{if .CountsOK}}
-  <div class="kpis">
-    <div class="kpi"><b>{{.TotalPlayers}}</b><span>{{t .Lang "landing.live.online"}}</span></div>
-    <div class="kpi"><b>{{len .Titles}}</b><span>{{t .Lang "status.playing"}}</span></div>
-  </div>
-  {{end}}
+  <a class="sv-more link-arrow" data-details href="https://status.openpak.org" rel="noopener"{{if eq .State "ok"}} hidden{{end}}>{{t .Lang "status.v.details"}}</a>
 </div>
 
-<div class="panels">
-  <section class="card panel" aria-labelledby="srv-h">
-    <header><h2 id="srv-h">{{t .Lang "status.servers"}}</h2></header>
-    <ul>
-      {{range .Servers}}
-      <li class="state-row {{if not .Checkable}}idle{{else if .Up}}ok{{else}}bad{{end}}">
-        <span class="name">{{.Name}}</span>
-        <span class="pill">
-          {{if not .Checkable}}{{t $.Lang "status.unchecked"}}
-          {{else if not .Up}}{{t $.Lang "status.down"}}
-          {{else if eq .Players 1}}{{t $.Lang "status.pill.online.one"}}
-          {{else}}{{.Players}} {{t $.Lang "status.pill.online.many"}}{{end}}
-        </span>
-      </li>
-      {{end}}
-    </ul>
-  </section>
-
-  {{if .CountsOK}}
-  <section class="card panel" aria-labelledby="play-h">
-    <header><h2 id="play-h">{{t .Lang "status.playing"}}</h2></header>
-    <ul>
-      {{range .Titles}}
-      <li class="state-row ok">
-        <span class="name">{{.Name}}</span>
-        <span class="pill">{{if eq .Players 1}}{{t $.Lang "status.pill.one"}}{{else}}{{.Players}} {{t $.Lang "status.pill.many"}}{{end}}</span>
-      </li>
-      {{else}}
-      <li class="state-row idle"><span class="name font-normal text-muted">{{t .Lang "status.nobody"}}</span></li>
-      {{end}}
-    </ul>
-  </section>
-  {{end}}
-
-  <section class="card panel" aria-labelledby="net-h">
-    <header><h2 id="net-h">{{t .Lang "status.networks"}}</h2></header>
-    <ul>
-      {{range .Networks}}
-      <li class="state-row {{if eq .State "live"}}ok{{else if eq .State "beta"}}beta{{else if eq .State "building"}}warn{{else}}idle{{end}}">
-        <span class="name">{{.Name}}</span>
-        <span class="pill">
-          {{if eq .State "live"}}{{if eq .Players 1}}{{t $.Lang "status.pill.online.one"}}{{else}}{{.Players}} {{t $.Lang "status.pill.online.many"}}{{end}}
-          {{else if or (eq .State "beta") (eq .State "building")}}{{if $.CountsOK}}{{if eq .Players 1}}{{t $.Lang "status.pill.one"}}{{else}}{{.Players}} {{t $.Lang "status.pill.many"}}{{end}}{{else}}{{t $.Lang "status.unchecked"}}{{end}}
-          {{else}}{{t $.Lang "status.net.building"}}{{end}}
-        </span>
-      </li>
-      {{end}}
-    </ul>
-  </section>
-
-  <section class="card panel" aria-labelledby="svc-h">
-    <header><h2 id="svc-h">{{t .Lang "status.services"}}</h2></header>
-    <ul>
-      <li class="state-row {{if .CoreOK}}ok{{else}}bad{{end}}">
-        <span class="name">{{t .Lang "status.core"}}</span>
-        <span class="pill">{{if .CoreOK}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</span>
-      </li>
-      <li class="state-row {{if .DBOk}}ok{{else}}bad{{end}}">
-        <span class="name">{{t .Lang "status.db"}}</span>
-        <span class="pill">{{if .DBOk}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</span>
-      </li>
-      <li class="state-row {{if .StorageOK}}ok{{else}}bad{{end}}">
-        <span class="name">{{t .Lang "status.storage"}}</span>
-        <span class="pill">{{if .StorageOK}}{{t .Lang "status.ok"}}{{else}}{{t .Lang "status.down"}}{{end}}</span>
-      </li>
-    </ul>
-  </section>
+{{if .CountsOK}}
+<div class="kpis sv-kpis">
+  <div class="kpi"><b data-count="online">{{.Online}}</b><span>{{t .Lang "landing.live.online"}}</span></div>
+  <div class="kpi"><b data-count="playing">{{.Playing}}</b><span>{{t .Lang "status.playing"}}</span></div>
 </div>
-
-{{/* Everything status.openpak.org checks from another host, one panel per group. A long group folds
-     behind a summary unless something in it is down. */}}
-<div class="page-head mt-7">
-  <h2>{{t .Lang "status.ext.title"}}</h2>
-  <p class="lede">{{t .Lang "status.ext.sub"}}</p>
-</div>
-{{if .Ext.Reached}}
-<div class="panels">
-  {{range .Ext.Groups}}
-  <section class="card panel">
-    <header><h3>{{.Title}} <span class="text-sm font-normal text-muted">{{.Up}} {{t $.Lang "status.ext.of"}} {{.Total}} {{t $.Lang "status.ext.working"}}</span></h3></header>
-    {{if .Services}}<ul>
-      {{range .Services}}
-      <li class="state-row {{if .Up}}ok{{else}}bad{{end}}">
-        <span class="name">{{.Name}}</span>
-        <span class="pill">{{if .Up}}{{t $.Lang "status.ok"}}{{else}}{{t $.Lang "status.down"}}{{end}}</span>
-      </li>
-      {{end}}
-    </ul>{{end}}
-    {{if .Ports}}<details{{if not .Fold}} open{{end}}><summary>{{t $.Lang "status.ext.show"}} ({{len .Ports}})</summary>
-    <ul>
-      {{range .Ports}}
-      <li class="state-row {{if .Up}}ok{{else}}bad{{end}}">
-        <span class="name">{{.Name}}</span>
-        <span class="pill">{{if .Up}}{{t $.Lang "status.ok"}}{{else}}{{t $.Lang "status.down"}}{{end}}</span>
-      </li>
-      {{end}}
-    </ul></details>{{end}}
-  </section>
-  {{end}}
-</div>
-<p class="mt-5 text-sm"><a class="link-arrow" href="https://status.openpak.org" rel="noopener">{{t .Lang "status.ext.link"}}</a></p>
-{{else}}
-<div class="state-row idle"><span class="name font-normal text-muted">{{t .Lang "status.ext.unavailable"}}</span></div>
 {{end}}
 
-<p class="mt-7 max-w-prose text-sm text-muted">{{t .Lang "status.elsewhere"}}</p>
+{{if .MapOn}}
+<div class="sv-view js-only" role="group" aria-label="{{t .Lang "status.title"}}">
+  <button type="button" data-view="overview" aria-pressed="true">{{t .Lang "status.v.overview"}}</button>
+  <button type="button" data-view="map" aria-pressed="false">{{t .Lang "status.v.map"}}</button>
+</div>
+{{end}}
+
+<div id="sv-overview">
+  <section class="sv-sec" aria-labelledby="sv-nets-h">
+    <h2 id="sv-nets-h">{{t .Lang "status.v.networks"}}</h2>
+    <ul class="sv-grid" id="sv-nets">
+      {{range .Networks}}
+      <li class="sv-card sv-net" data-net="{{.ID}}" data-state="{{.State}}">
+        <div class="sv-net-h">
+          <span class="sv-net-n">{{.Name}}</span>
+          {{if .Stage}}<span class="sv-stage">{{.Stage}}</span>{{end}}
+        </div>
+        <span class="sv-badge {{if eq .State "ok"}}ok{{else if eq .State "partial"}}warn{{else if eq .State "down"}}bad{{else}}idle{{end}}"><svg class="sv-ic" aria-hidden="true"><use href="#sv-{{if eq .State "ok"}}ok{{else if eq .State "partial"}}warn{{else if eq .State "down"}}down{{else}}idle{{end}}"/></svg><span data-label>{{.Label}}</span></span>
+        <span class="sv-players" data-players{{if not .Counted}} hidden{{end}}>{{.Text}}</span>
+      </li>
+      {{end}}
+    </ul>
+  </section>
+
+  {{if .CountsOK}}
+  <section class="sv-sec" aria-labelledby="sv-play-h">
+    <h2 id="sv-play-h">{{t .Lang "status.playing"}}</h2>
+    <ul class="sv-play" id="sv-play">
+      {{range .Titles}}
+      <li class="sv-card sv-title" data-id="{{.ID}}">
+        <span class="sv-art">{{if .Art}}<img src="{{.Art}}" alt="" width="56" height="56" loading="lazy" data-art>{{end}}<picture class="sv-fb"{{if .Art}} hidden{{end}}><source srcset="/static/consoles/{{.Slug}}-dark.svg" media="(prefers-color-scheme: dark)"><img src="/static/consoles/{{.Slug}}.svg" alt="" width="40" height="28"></picture></span>
+        <span class="sv-tn"><b>{{.Name}}</b><small>{{.Console}}</small></span>
+        <span class="sv-tp"><b data-n="{{.Players}}">{{.Players}}</b> {{t $.Lang "status.v.playing"}}</span>
+      </li>
+      {{end}}
+    </ul>
+    <p class="sv-quiet" id="sv-quiet"{{if .Titles}} hidden{{end}}>{{.Quiet}}</p>
+  </section>
+  {{end}}
+</div>
+
+{{if .MapOn}}
+<div id="sv-map" hidden>
+  <div class="nm" data-netmap data-mode="public" data-url="/status/map.json" data-strings="{{netmapStrings .Lang}}"></div>
+</div>
+{{end}}
+</div>
+
+<p class="sv-foot"><a class="link-arrow" href="https://status.openpak.org" rel="noopener">{{t .Lang "status.v.full"}}</a></p>
+<p class="mt-5 max-w-prose text-sm text-muted">{{t .Lang "status.elsewhere"}} {{t .Lang "status.v.live"}}</p>
+<script src="/static/status-live.js?v={{.Asset}}" defer></script>
 {{template "footer" .}}

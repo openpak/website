@@ -56,7 +56,7 @@ func TestWebsiteUnknownTitlesCountOnlyAsOnline(t *testing.T) {
 					if known && !strings.Contains(body, "ARMS") {
 						t.Error("the homepage should show a catalogue title's name")
 					}
-				} else if !strings.Contains(body, fmt.Sprintf("%d online", fc.totalPlayers)) {
+				} else if !strings.Contains(body, fmt.Sprintf(`data-count="online">%d<`, fc.totalPlayers)) {
 					t.Error("unknown titles must still count toward the status online total")
 				}
 			}

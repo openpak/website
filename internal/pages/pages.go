@@ -103,6 +103,8 @@ type Server struct {
 	Chat *chat.Client
 	// Pakka connects to the assistant; nil hides every Pakka entry point.
 	Pakka *pakkachat.Bridge
+	live liveState // the /status overview, cached a few seconds
+
 	// StatusAPI is status.openpak.org/api/status, the checks run from another host; empty hides that part of /status.
 	StatusAPI string
 	// Support is the help-ticket service; nil says tickets are not available.
@@ -501,6 +503,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /downloads", s.handleDownloads)
 	mux.HandleFunc("GET /status", s.handleStatus)
 	mux.HandleFunc("GET /status/map.json", s.handleNetMapJSON)
+	mux.HandleFunc("GET /status/live.json", s.handleStatusLive)
 	mux.HandleFunc("GET /lang", s.handleLang)
 	mux.HandleFunc("GET /feed/news.xml", s.handleNewsFeed)
 	mux.HandleFunc("GET /feed/titles.xml", s.handleTitlesFeed)

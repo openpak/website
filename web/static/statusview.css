@@ -1,0 +1,32 @@
+/* Shared by status.openpak.org and openpak.org/status. Only the site's tokens are used
+   (--raised, --paper-2, --ink, --ink-2, --muted, --faint, --line, --ok/--warn/--bad and their
+   -weak/-line steps), so light, dark and an equipped theme restyle it. Status colour is
+   reserved for status and always travels with an icon and a word. */
+.sv-badge { display: inline-flex; align-items: center; gap: .35rem; padding: .12rem .6rem .12rem .45rem; border-radius: 999px;
+  border: 1px solid var(--line); background: transparent; color: var(--muted); font-size: .8rem; font-weight: 700; line-height: 1.5; white-space: nowrap; flex: none; }
+.sv-badge .sv-ic { width: 1rem; height: 1rem; flex: none; }
+.sv-badge.ok   { color: var(--ok);   border-color: var(--ok-line);   background: var(--ok-weak); }
+.sv-badge.warn { color: var(--warn); border-color: var(--warn-line); background: var(--warn-weak); }
+.sv-badge.bad  { color: var(--bad);  border-color: var(--bad-line);  background: var(--bad-weak); }
+.sv-badge.idle { color: var(--muted); }
+.sv-ic { display: inline-block; vertical-align: -.2em; }
+
+.sv-card { background: var(--raised); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow-sm, none); }
+.sv-banner { display: flex; align-items: center; gap: 1rem; padding: 1.1rem 1.4rem; border-radius: 16px; background: var(--ok-weak); box-shadow: inset 0 0 0 1px var(--ok-line); color: var(--ink); }
+.sv-banner.warn { background: var(--warn-weak); box-shadow: inset 0 0 0 1px var(--warn-line); }
+.sv-banner.bad { background: var(--bad-weak); box-shadow: inset 0 0 0 1px var(--bad-line); }
+.sv-banner .sv-big { width: 2.4rem; height: 2.4rem; flex: none; color: var(--ok); }
+.sv-banner.warn .sv-big { color: var(--warn); } .sv-banner.bad .sv-big { color: var(--bad); }
+.sv-banner h2 { margin: 0; font-size: clamp(1.15rem, 3vw, 1.45rem); line-height: 1.25; }
+.sv-banner p { margin: .15rem 0 0; color: var(--ink-2); font-size: .94rem; }
+
+/* Uptime strip: thin recessive marks with a 2px gap; the percentage beside it carries the number. */
+.sv-hist { display: inline-flex; gap: 2px; align-items: flex-end; height: 16px; cursor: default; }
+.sv-hist i { display: block; width: 3px; height: 100%; border-radius: 1.5px; background: var(--ok); opacity: .42; }
+.sv-hist i.d { background: var(--bad); opacity: 1; }
+.sv-hist:hover i, .sv-hist:focus i { opacity: .7; } .sv-hist:hover i.d, .sv-hist:focus i.d { opacity: 1; }
+.sv-tip { position: fixed; z-index: 50; pointer-events: none; padding: .3rem .55rem; border-radius: 8px; background: var(--ink); color: var(--paper-2);
+  font-size: .78rem; line-height: 1.35; box-shadow: var(--shadow); white-space: nowrap; }
+.sv-tip b { font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .sv-hist i { transition: none; } }
+.sv-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }

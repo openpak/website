@@ -1,0 +1,50 @@
+/* The live overview on /status. Components shared with status.openpak.org live in statusview.css. */
+.sv-sec { margin-top: 1.8rem; }
+.sv-sec h2 { margin: 0 0 .8rem; font-size: 1.1rem; }
+.sv-banner { margin-top: 1rem; }
+.sv-bt { flex: 1; min-width: 0; }
+.sv-more { white-space: nowrap; font-weight: 700; }
+@media (max-width: 40rem) { .sv-banner { flex-wrap: wrap; } .sv-more { flex-basis: 100%; } }
+.sv-kpis { margin-top: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-flow: row; }
+.sv-kpis .kpi { background: var(--raised); border: 1px solid var(--line); }
+.sv-kpis .kpi b { transition: opacity .25s; }
+.sv-kpis .kpi b.tick { opacity: .45; }
+
+.sv-view { display: inline-flex; margin: 1.4rem 0 1rem; border: 1px solid var(--line-2); border-radius: .6rem; overflow: hidden; background: var(--raised); }
+.js .sv-view.js-only { display: inline-flex; }
+.js-only { display: none; }
+.sv-view button { min-height: 0; border: 0; border-radius: 0; box-shadow: none; padding: .55rem 1.1rem; font-size: .88rem; color: var(--ink-2); background: transparent; cursor: pointer; }
+.sv-view button[aria-pressed="true"] { background: var(--accent-weak); color: var(--ink); font-weight: 700; box-shadow: inset 0 -2px 0 var(--cursor); }
+.sv-view button:focus-visible { outline: 2px solid var(--cursor); outline-offset: -2px; }
+
+.sv-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
+.sv-net { padding: 1rem 1.1rem; display: flex; flex-direction: column; align-items: flex-start; gap: .55rem; }
+.sv-net-h { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.sv-net-n { font-family: var(--font-ui); font-weight: 800; font-size: 1.05rem; }
+.sv-stage { font-size: .72rem; font-weight: 700; padding: .05rem .5rem; border-radius: 999px; border: 1px solid var(--accent-line); background: var(--accent-weak); color: var(--accent); }
+.sv-players { font-size: .9rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+.sv-play { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); }
+.sv-title { display: flex; align-items: center; gap: .8rem; padding: .7rem .9rem; }
+.sv-art { width: 56px; height: 56px; flex: none; border-radius: 12px; overflow: hidden; background: var(--paper-2); display: grid; place-items: center; }
+.sv-art img[data-art] { width: 100%; height: 100%; object-fit: cover; }
+.sv-fb img { width: 40px; height: 28px; object-fit: contain; }
+.sv-art [hidden] { display: none; }
+.sv-tn { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.sv-tn b { font-family: var(--font-ui); font-weight: 700; overflow-wrap: anywhere; line-height: 1.3; }
+.sv-tn small { color: var(--muted); font-size: .8rem; }
+.sv-tp { text-align: right; color: var(--ink-2); font-size: .85rem; white-space: nowrap; }
+.sv-tp b { font-family: var(--font-ui); font-size: 1.3rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.sv-quiet { margin: 0; padding: 1.6rem 1rem; text-align: center; color: var(--muted); border: 1px dashed var(--line-2); border-radius: 14px; }
+.sv-foot { margin-top: 1.8rem; font-weight: 700; }
+@media (prefers-reduced-motion: no-preference) {
+  .sv-title.new { animation: sv-in .35s ease-out; }
+  @keyframes sv-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+}
+@media (prefers-reduced-motion: reduce) { .sv-kpis .kpi b { transition: none; } }
+@media (max-width: 40rem) {
+  .sv-grid { gap: 8px; }
+  .sv-net { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: .15rem .6rem; padding: .75rem 1rem; }
+  .sv-net .sv-badge { grid-column: 2; grid-row: 1 / span 2; }
+  .sv-players { grid-column: 1; grid-row: 2; font-size: .84rem; }
+}

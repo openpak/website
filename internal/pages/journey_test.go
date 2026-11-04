@@ -85,7 +85,7 @@ func TestW1Journey(t *testing.T) {
 	// Status renders (the only page no other journey touches).
 	rec = httptest.NewRecorder()
 	mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/status", nil))
-	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "Account core") {
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "Network status") {
 		t.Fatalf("status: %d %s", rec.Code, rec.Body.String())
 	}
 
@@ -461,62 +461,29 @@ func TestStatusPageShowsWhoIsPlaying(t *testing.T) {
 	}
 	body := rec.Body.String()
 	if !strings.Contains(body, "Outbound") {
-		t.Error("a known title should read as its name")
+		t.Errorf("a known title should read as its name: %s", body)
 	}
-	if !strings.Contains(body, "ARMS") {
+	if !strings.Contains(body, "ARMS") || !strings.Contains(body, `<b data-n="1">1</b> playing`) {
 		t.Error("a catalogue title outside the static name map should be named")
 	}
 	if strings.Contains(strings.ToUpper(body), "010025901A268000") {
 		t.Error("an unknown title must not be listed")
 	}
-	if !strings.Contains(body, `<b>2</b><span>Being played right now</span>`) {
+	if !strings.Contains(body, `data-count="playing">2<`) {
 		t.Error("only catalogue titles should count as being played")
 	}
 	// The headline total is who is *online*, which includes anyone signed in
-	// with nothing running. Who is *playing* is the section further down, and
-	// calling both "players" would overstate the busier of the two every time.
-	if !strings.Contains(body, "4 online") {
+	// with nothing running; who is *playing* is the list below it.
+	if !strings.Contains(body, `data-count="online">4<`) {
 		t.Errorf("the online total is missing from the page")
 	}
-	if !strings.Contains(body, "players") {
-		t.Error("the titles being played should still count players")
-	}
-	// A game server is listed whether or not anybody is on it: "nobody is
-	// playing" and "it is not running" are different answers.
-	for _, want := range []string{"Outbound", "Stardew Valley", "Game servers", "Console networks"} {
-		if !strings.Contains(body, want) {
-			t.Errorf("%q missing from the status page", want)
-		}
-	}
-	// Networks nobody has written yet must not read as healthy: the row is
-	// amber or grey, never the green used for something that works.
+	// Networks nobody has written yet must not read as healthy.
 	if !strings.Contains(body, "In development") {
 		t.Error("unfinished networks should say so rather than show as online")
 	}
-	if !strings.Contains(body, "state-row idle") {
-		t.Error("planned should tint grey")
-	}
-	// Photon and Stardew are really checked, and unreachable in a test means
-	// "down" — which the banner must then admit, however healthy the core is.
-	// Every server has a health endpoint now (switch-nexd since v0.2.16), so every row is
-	// really checked.
-	if !strings.Contains(body, "Degraded") || !strings.Contains(body, "Some things are having trouble") {
-		t.Error("a game server that does not answer must show as down and flip the banner")
-	}
-	if strings.Contains(body, "Not checked") {
-		t.Error("every game server has a health endpoint and should be checked")
-	}
-}
-
-// A deployment that does not run one of the servers should say the row is not
-// checked, rather than report a server that was never there as down.
-func TestStatusPageSaysWhenAServerIsNotChecked(t *testing.T) {
-	t.Setenv("PHOTON_HEALTH_URL", "off")
-	s, _, _ := newTestServer(t)
-	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/status", nil))
-	if !strings.Contains(rec.Body.String(), "Not checked") {
-		t.Error("a server with no health endpoint should say it is not checked")
+	// Game servers are unreachable in a test, which the banner must admit, however healthy the core is.
+	if !strings.Contains(body, "Some things are having trouble") || !strings.Contains(body, "Switch: ") {
+		t.Error("a game server that does not answer must name itself in the banner")
 	}
 }
 
