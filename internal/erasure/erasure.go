@@ -15,6 +15,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"sync"
 	"time"
 )
 
@@ -48,6 +49,64 @@ type Finaliser struct {
 	Lock     Locker
 	Interval time.Duration // between runs; default one hour
 	Log      *slog.Logger
+	// Expected names every service that must have a step (ExpectedServices).
+	// One with no step is logged on each erasure and shown on the admin page.
+	Expected []string
+
+	mu   sync.Mutex
+	last map[string]StepReport
+}
+
+// StepReport is one service's standing, for the admin page.
+type StepReport struct {
+	Name       string
+	Configured bool
+	Ran        bool // has run since this process started
+	OK         bool
+	At         time.Time
+	Err        string
+}
+
+// Report lists every expected service, then any extra step, with the result
+// of its latest run.
+func (f *Finaliser) Report() []StepReport {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	have := map[string]bool{}
+	for _, st := range f.Steps {
+		have[st.Name] = true
+	}
+	var out []StepReport
+	add := func(n string) {
+		r := f.last[n]
+		r.Name, r.Configured = n, have[n]
+		out = append(out, r)
+	}
+	seen := map[string]bool{}
+	for _, n := range f.Expected {
+		seen[n] = true
+		add(n)
+	}
+	for _, st := range f.Steps {
+		if !seen[st.Name] {
+			seen[st.Name] = true
+			add(st.Name)
+		}
+	}
+	return out
+}
+
+func (f *Finaliser) record(name string, err error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.last == nil {
+		f.last = map[string]StepReport{}
+	}
+	r := StepReport{Ran: true, OK: err == nil, At: time.Now()}
+	if err != nil {
+		r.Err = err.Error()
+	}
+	f.last[name] = r
 }
 
 // Result counts one run.
@@ -97,10 +156,14 @@ func (f *Finaliser) RunOnce(ctx context.Context) (Result, error) {
 // erase runs every step for one account, then finalizes it if all succeeded.
 func (f *Finaliser) erase(ctx context.Context, id string) bool {
 	failed := 0
+	for _, m := range f.missing() {
+		f.log().Warn("erasure: service has no erase step configured; its data for this account is NOT erased", "account", id, "service", m)
+	}
 	for _, st := range f.Steps {
 		c, cancel := context.WithTimeout(ctx, 5*time.Minute)
 		err := st.Erase(c, id)
 		cancel()
+		f.record(st.Name, err)
 		if err != nil {
 			failed++
 			f.log().Warn("erasure: step failed; will retry", "account", id, "service", st.Name, "err", err)
@@ -149,4 +212,19 @@ func (f *Finaliser) log() *slog.Logger {
 		return f.Log
 	}
 	return slog.Default()
+}
+
+// missing lists expected services with no step.
+func (f *Finaliser) missing() []string {
+	have := map[string]bool{}
+	for _, st := range f.Steps {
+		have[st.Name] = true
+	}
+	var out []string
+	for _, n := range f.Expected {
+		if !have[n] {
+			out = append(out, n)
+		}
+	}
+	return out
 }

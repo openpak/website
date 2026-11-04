@@ -18,6 +18,7 @@ import (
 	"github.com/openpak/website/internal/attachments"
 	"github.com/openpak/website/internal/chat"
 	"github.com/openpak/website/internal/core"
+	"github.com/openpak/website/internal/erasure"
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/netmap"
 	newsv1 "github.com/openpak/website/internal/newspb"
@@ -39,11 +40,14 @@ type Server struct {
 	Moderation core.Moderation
 	// Erasure restores a closed account within its grace period and says
 	// when one will be erased; nil hides the restore button.
-	Erasure  ErasureCore
-	Core     core.Events
-	DB       store.Store
-	Sessions sessionView
-	AdminIDs []string
+	Erasure ErasureCore
+	// ErasureReport lists every service the erasure finaliser depends on and
+	// its latest result; nil leaves /admin/erasure empty.
+	ErasureReport func() []erasure.StepReport
+	Core          core.Events
+	DB            store.Store
+	Sessions      sessionView
+	AdminIDs      []string
 
 	// What the monitor reads. Every one is optional: nil (or an empty URL)
 	// renders as "not configured", never as an error page.
@@ -154,6 +158,7 @@ var adminNav = []struct{ href, key string }{
 	{"/admin/events", "admin.nav.events"},
 	{"/admin/logs", "admin.logs"},
 	{"/admin/users", "admin.nav.users"},
+	{"/admin/erasure", "admin.erasure"},
 	{"/admin/rewards", "admin.rewards"},
 	{"/admin/reports", "admin.reports"},
 	{"/admin/tickets", "admin.tickets"},
@@ -305,6 +310,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/config", s.handleConfig)
 	mux.HandleFunc("POST /admin/config", s.handleConfigSave)
 	mux.HandleFunc("GET /admin/events", s.handleEvents)
+	mux.HandleFunc("GET /admin/erasure", s.handleErasure)
 	mux.HandleFunc("GET /admin/logs", s.handleLogs)
 	mux.HandleFunc("GET /admin/logs/data", s.handleLogsData)
 	mux.HandleFunc("GET /admin/logs/download", s.handleLogsDownload)

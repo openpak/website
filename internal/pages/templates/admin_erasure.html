@@ -1,0 +1,16 @@
+{{template "header" .}}
+{{template "adminnav" .}}
+<div class="page-head"><h1>{{t .Lang "admin.erasure"}}</h1><p>{{t .Lang "admin.erasure.sub"}}</p></div>
+{{if .Missing}}<p class="notice bad mb-6" role="alert">{{.Missing}} {{t .Lang "admin.erasure.missing"}}</p>{{end}}
+<ul class="card list-none divide-y divide-line p-0">
+  {{range .Steps}}
+  <li class="flex flex-wrap items-center gap-3 p-4">
+    <span class="font-semibold break-anywhere">{{.Name}}</span>
+    {{if not .Configured}}<span class="badge bad">{{t $.Lang "admin.erasure.missing"}}</span>
+    {{else if not .Ran}}<span class="badge">{{t $.Lang "admin.erasure.idle"}}</span>
+    {{else if .OK}}<span class="badge ok">{{t $.Lang "admin.erasure.ok"}}</span>
+    {{else}}<span class="badge bad">{{t $.Lang "admin.erasure.failed"}}</span>{{end}}
+    {{if .Err}}<span class="block text-sm text-muted break-anywhere">{{.Err}}</span>{{end}}
+  </li>
+  {{end}}
+</ul>

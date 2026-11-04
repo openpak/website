@@ -11,6 +11,11 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.97.0 — 2026-11-04
+
+- Account erasure now reaches every service that keeps per-account data (card openpak/prds#120). `ERASURE_SERVICES` (name=url pairs, one per container; a name may repeat) and the shared `ACCOUNT_ERASE_KEY` add one finaliser step per service, calling `DELETE /internal/accounts/{id}/data`. Steps for nn-account and x360-xuacs run last because other services resolve ids through them.
+- `erasure.ExpectedServices` lists every service the chain depends on. One with no step is logged on every erasure and shown as "Not configured" on the new `/admin/erasure` page, next to the latest result of each step.
+
 ## v0.96.0 — 2026-11-04
 
 - `/status` is a live overview for players, one design with status.openpak.org: a banner (everything works, or the problem named, e.g. "Switch: eShop", with a link to the details), who is online and playing, a card per console network with its rolled-up status and players online, and "Being played right now" with each game's cover art, console and player count, busiest first (one friendly line when nobody is playing). It updates itself every 30 seconds from `/status/live.json` (numbers ease to their new value unless reduced motion is on) and is complete without scripting. Counts only, never names.

@@ -322,10 +322,24 @@ func run(log *slog.Logger) error {
 	if pakkaBridge != nil {
 		erasureSteps = append(erasureSteps, erasure.Step{Name: "pakka", Erase: pakkaBridge.EraseAccount})
 	}
+	// Every other service that keeps per-account data: ERASURE_SERVICES lists
+	// name=base-url pairs (comma or newline separated; a name may repeat for a
+	// game with several containers) and ACCOUNT_ERASE_KEY is the shared bearer.
+	// A service in erasure.ExpectedServices with no entry is logged on each
+	// erasure and shown on /admin/erasure.
+	var lastSteps []erasure.Step
+	if svcs, perr := erasure.ParseServices(os.Getenv("ERASURE_SERVICES")); perr != nil {
+		log.Error("erasure: ERASURE_SERVICES is invalid; no service steps added", "err", perr)
+	} else if len(svcs) > 0 {
+		var first []erasure.Step
+		first, lastSteps = erasure.ServiceSteps(svcs, os.Getenv("ACCOUNT_ERASE_KEY"), &http.Client{Timeout: time.Minute})
+		erasureSteps = append(erasureSteps, first...)
+	}
 	erasureSteps = append(erasureSteps,
 		erasure.ModsStep(os.Getenv("MODS_INTERNAL_URL"), os.Getenv("MODS_INTERNAL_KEY"), &http.Client{Timeout: time.Minute}),
 		erasure.WebsiteStep(db, files, mediaSvc, log))
-	finaliser := &erasure.Finaliser{Core: coreGRPC, Lock: db, Interval: cfg.ErasureInterval, Log: log, Steps: erasureSteps}
+	erasureSteps = append(erasureSteps, lastSteps...) // services whose ids other services resolve go last
+	finaliser := &erasure.Finaliser{Core: coreGRPC, Lock: db, Interval: cfg.ErasureInterval, Log: log, Steps: erasureSteps, Expected: erasure.ExpectedServices}
 	go finaliser.Run(ctx)
 	log.Info("erasure: finaliser started", "every", cfg.ErasureInterval)
 	if pakkaBridge != nil {
@@ -360,6 +374,7 @@ func run(log *slog.Logger) error {
 	adminSrv.Pakka = admin.NewPakkaAPI(os.Getenv("PAKKA_URL"), os.Getenv("PAKKA_PUBLISH_ADMIN_KEY"))
 	adminSrv.Rewards = pageSrv.Rewards // nil without REWARDS_URL: the section is left out
 	adminSrv.Erasure = coreGRPC
+	adminSrv.ErasureReport = finaliser.Report
 	// The monitor's sources. Each is optional and reads as "not configured"
 	// when absent; a typed nil must not reach an interface field, or it would
 	// read as configured and broken.
