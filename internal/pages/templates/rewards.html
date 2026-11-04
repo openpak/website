@@ -140,7 +140,7 @@
 <p class="hint mt-5 mb-0">{{.NextText}}</p>
 {{end}}
 
-<nav class="ctabs" aria-label="{{t $l "rewards.tabs"}}">
+<nav class="ctabs" aria-label="{{t $l "rewards.tabs"}}" data-pillselect>
   {{range .Tabs}}<a href="/account/rewards?tab={{.}}"{{if eq . $.Tab}} aria-current="page"{{end}}>{{t $l (printf "rewards.tab.%s" .)}}{{if and (eq . "missions") $.Ready}}<span class="ct">{{$.Ready}}</span>{{end}}</a>{{end}}
 </nav>
 
@@ -184,7 +184,7 @@
 <section aria-labelledby="shop-h">
   <div class="section-head"><h2 id="shop-h">{{t $l "rewards.tab.shop"}}</h2><p>{{t $l "rewards.shop.sub"}}</p></div>
   {{with .Chips}}
-  <ul class="board-pick" aria-label="{{t $l "rewards.filter"}}">
+  <ul class="board-pick" aria-label="{{t $l "rewards.filter"}}" data-pillselect>
     {{range .}}<li><a href="/account/rewards?tab=shop{{if .Kind}}&amp;kind={{.Kind}}{{end}}"{{if .Current}} aria-current="true"{{end}}>{{.Label}}</a></li>{{end}}
   </ul>
   {{end}}

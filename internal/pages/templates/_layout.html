@@ -18,12 +18,14 @@
 <title>{{.Title}} · OpenPak</title>
 <link rel="icon" href="/static/icon.svg?v={{.Asset}}" type="image/svg+xml">
 <link rel="stylesheet" href="/static/site.css?v={{.Asset}}">
+<link rel="stylesheet" href="/static/pillselect.css?v={{.Asset}}">
 {{/* The equipped Rewards theme: validated colours only (theme.go); its hash is in the CSP's style-src. */}}
 {{with .Theme}}<style>{{.CSS}}</style>
 {{end}}<script src="/static/themepreview.js?v={{.Asset}}"></script>
 <link rel="alternate" type="application/atom+xml" title="OpenPak news" href="/feed/news.xml">
 <link rel="alternate" type="application/atom+xml" title="OpenPak title status" href="/feed/titles.xml">
 <script src="/static/site.js?v={{.Asset}}" defer></script>
+<script src="/static/pillselect.js?v={{.Asset}}" defer></script>
 </head>
 <body class="min-h-screen flex flex-col">
 {{/* Icons, drawn once and used by id. */}}

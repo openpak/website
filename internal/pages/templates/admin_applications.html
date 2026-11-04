@@ -5,7 +5,7 @@
 {{if .Error}}<p class="notice bad mb-6" role="alert">{{.Error}}</p>{{end}}
 {{template "nodekey" .}}
 {{if .Key}}<p class="notice mb-6">{{t .Lang "admin.applications.next"}}</p>{{end}}
-<nav aria-label="{{t .Lang "admin.applications.filter"}}" class="mb-4 flex flex-wrap gap-2 text-sm">
+<nav aria-label="{{t .Lang "admin.applications.filter"}}" class="mb-4 flex flex-wrap gap-2 text-sm" data-pillselect>
   {{range arr "pending" "info" "approved" "rejected" "waitlist" ""}}<a class="btn text-sm {{if eq . $.Filter}}primary{{end}}" href="/admin/nodes/applications?status={{.}}">{{if .}}{{.}}{{else}}all{{end}}</a>{{end}}
 </nav>
 {{if .Apps}}

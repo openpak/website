@@ -5,7 +5,7 @@
   <p>{{t .Lang "admin.reports.help"}}</p>
 </div>
 
-<nav class="mb-4 flex flex-wrap gap-2" aria-label="{{t .Lang "admin.reports.filter"}}">
+<nav class="mb-4 flex flex-wrap gap-2" aria-label="{{t .Lang "admin.reports.filter"}}" data-pillselect>
   {{range .Filters}}<a class="btn text-sm {{if eq . $.Status}}primary{{end}}" href="/admin/reports?status={{.}}" {{if eq . $.Status}}aria-current="page"{{end}}>{{t $.Lang (printf "admin.reports.%s" .)}}</a>{{end}}
 </nav>
 

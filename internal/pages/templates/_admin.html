@@ -5,7 +5,7 @@
      sideways above the page. "adminnav" opens the shell, "adminend" closes it. */}}
 {{define "adminnav"}}
 <div class="settings">
-<nav aria-label="{{t .Lang "admin.nav"}}" class="settings-nav">
+<nav aria-label="{{t .Lang "admin.nav"}}" class="settings-nav" data-pillselect>
   {{range .Nav}}<a href="{{.Href}}" {{if .Current}}aria-current="page"{{end}}>{{.Label}}{{if and (eq .Href "/admin/services") $.Updates}} <span class="badge warn">{{$.Updates}} {{if eq $.Updates 1}}{{t $.Lang "admin.services.updates.one"}}{{else}}{{t $.Lang "admin.services.updates"}}{{end}}</span>{{end}}</a>{{end}}
 </nav>
 <div class="settings-main">

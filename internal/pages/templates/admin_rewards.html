@@ -19,7 +19,7 @@
 
 <h2 class="mb-3 text-base">{{t .Lang "admin.rewards.flags"}}</h2>
 <p class="mb-4 text-sm text-muted">{{t .Lang "admin.rewards.flags.help"}}</p>
-<nav class="mb-4 flex flex-wrap gap-2" aria-label="{{t .Lang "admin.rewards.filter"}}">
+<nav class="mb-4 flex flex-wrap gap-2" aria-label="{{t .Lang "admin.rewards.filter"}}" data-pillselect>
   <a class="btn text-sm {{if not .All}}primary{{end}}" href="/admin/rewards"{{if not .All}} aria-current="page"{{end}}>{{t .Lang "admin.rewards.open"}}</a>
   <a class="btn text-sm {{if .All}}primary{{end}}" href="/admin/rewards?all=1"{{if .All}} aria-current="page"{{end}}>{{t .Lang "admin.rewards.all"}}</a>
 </nav>

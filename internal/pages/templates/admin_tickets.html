@@ -4,7 +4,7 @@
   <h1>{{t .Lang "admin.tickets"}}</h1>
   <p>{{t .Lang "admin.tickets.help"}}</p>
 </div>
-<nav class="mb-4 flex flex-wrap gap-2" aria-label="{{t .Lang "admin.tickets.filter"}}">
+<nav class="mb-4 flex flex-wrap gap-2" aria-label="{{t .Lang "admin.tickets.filter"}}" data-pillselect>
   {{range .Filters}}<a class="btn text-sm {{if eq . $.Status}}primary{{end}}" href="/admin/tickets?status={{.}}{{if $.Mine}}&amp;mine=1{{end}}" {{if eq . $.Status}}aria-current="page"{{end}}>{{.}}</a>{{end}}
   <a class="btn text-sm {{if .Mine}}primary{{end}}" href="/admin/tickets?status={{.Status}}{{if not .Mine}}&amp;mine=1{{end}}">{{t .Lang "admin.tickets.mine"}}</a>
 </nav>

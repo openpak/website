@@ -9,14 +9,14 @@
       <input id="titles-q" type="search" autocomplete="off" class="field" placeholder="{{t .Lang "titles.search"}}">
     </label>
     {{if .Statuses}}
-    <div class="seg" role="radiogroup" aria-label="{{t .Lang "titles.status"}}">
+    <div class="seg" role="radiogroup" aria-label="{{t .Lang "titles.status"}}" data-pillselect>
       <label><input type="radio" name="status" value="" checked><span>{{t .Lang "titles.all"}}</span></label>
       {{range .Statuses}}<label><input type="radio" name="status" value="{{.}}"><span>{{.}}</span></label>{{end}}
     </div>
     {{end}}
   </div>
   {{if .Consoles}}
-  <div class="chips" role="radiogroup" aria-label="{{t .Lang "titles.console"}}">
+  <div class="chips" role="radiogroup" aria-label="{{t .Lang "titles.console"}}" data-pillselect>
     <label><input type="radio" name="console" value="" checked><span>{{t .Lang "titles.all"}}</span></label>
     {{range .Consoles}}<label><input type="radio" name="console" value="{{.}}"><span>{{if and (ne $.Path "/features") (ne . "Core services")}}<picture class="console-mark"><source srcset="/static/consoles/{{consoleSlug .}}-dark.svg" media="(prefers-color-scheme: dark)"><img src="/static/consoles/{{consoleSlug .}}.svg" alt="" width="18" height="18"></picture>{{end}}{{.}}</span></label>{{end}}
   </div>

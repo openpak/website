@@ -11,6 +11,10 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.92.1 — 2026-11-04
+
+- Phones: tab and filter rows that do not fit on one line become one native dropdown (titles and features console filter, rewards tabs and shop chips, title companion tabs and ranking boards, account section list, admin section list and filter rows). Pills stay on desktop, and without JavaScript. New `web/static/pillselect.js` and `pillselect.css`.
+
 ## v0.92.0 — 2026-11-04
 
 - Console marks no longer sit on a white chip. `.console-mark` is transparent, so a mark takes the tile it is on (`--paper`, `--paper-2` or `--raised`) in light and dark. Every `<picture class="console-mark">` (titles grid, filters, art placeholders, downloads, account friend codes and friends, saves, landing, the title page header) now carries a `<source srcset="…-dark.svg" media="(prefers-color-scheme: dark)">`.

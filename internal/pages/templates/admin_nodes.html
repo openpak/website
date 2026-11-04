@@ -1,5 +1,5 @@
 {{define "nodetabs"}}
-<nav aria-label="{{t .Lang "admin.nodes"}}" class="mb-6 flex flex-wrap gap-2">
+<nav aria-label="{{t .Lang "admin.nodes"}}" class="mb-6 flex flex-wrap gap-2" data-pillselect>
   <a class="btn text-sm {{if eq .Path "/admin/nodes"}}primary{{end}}" href="/admin/nodes">{{t .Lang "admin.nodes"}}</a>
   <a class="btn text-sm {{if eq .Path "/admin/nodes/applications"}}primary{{end}}" href="/admin/nodes/applications">{{t .Lang "admin.applications"}}</a>
   <a class="btn text-sm {{if eq .Path "/admin/nodes/locations"}}primary{{end}}" href="/admin/nodes/locations">{{t .Lang "admin.locations"}}</a>

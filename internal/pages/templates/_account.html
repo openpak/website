@@ -6,7 +6,7 @@
 {{$h := ""}}{{if ne .Path "/account"}}{{$h = "/account"}}{{end}}
 <div class="acct">
 <aside class="side">
-  <nav aria-label="{{t .Lang "nav.account"}}">
+  <nav aria-label="{{t .Lang "nav.account"}}" data-pillselect>
     <a href="{{if $h}}/account{{else}}#top{{end}}" {{if eq .Path "/account"}}aria-current="page"{{end}}><svg class="ico sm" aria-hidden="true"><use href="#i-home"/></svg>{{t .Lang "nav.account"}}</a>
     <a href="{{$h}}#friends"><svg class="ico sm" aria-hidden="true"><use href="#i-users"/></svg>{{t .Lang "friends.title"}}{{if eq .Path "/account"}}{{with .Incoming}}<span class="ct">{{len .}}</span>{{end}}{{end}}</a>
     <a href="{{$h}}#devices"><svg class="ico sm" aria-hidden="true"><use href="#i-gamepad"/></svg>{{t .Lang "account.links"}}</a>

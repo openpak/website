@@ -11,7 +11,7 @@
   </div>
 </header>
 
-<nav class="ctabs" aria-label="{{t .Lang "companion.nav"}}">
+<nav class="ctabs" aria-label="{{t .Lang "companion.nav"}}" data-pillselect>
   <a href="/titles/{{.Title.Slug}}"{{if eq .Tab "overview"}} aria-current="page"{{end}}>{{t .Lang "companion.tab.overview"}}</a>
   {{range .Title.Features}}<a href="/titles/{{$.Title.Slug}}/{{.}}"{{if eq (printf "%s" .) $.Tab}} aria-current="page"{{end}}>{{t $.Lang (printf "companion.tab.%s" .)}}</a>{{end}}
 </nav>

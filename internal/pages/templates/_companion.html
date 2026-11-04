@@ -6,7 +6,7 @@
 {{define "ranking-board"}}
 {{$l := .Lang}}
 {{if and (gt (len .R.Boards) 1) (not .R.NoScores)}}
-<ul class="board-pick" aria-label="{{t $l "companion.rankings.boards"}}">
+<ul class="board-pick" aria-label="{{t $l "companion.rankings.boards"}}" data-pillselect>
   {{range .R.Boards}}<li><a href="/titles/{{$.Slug}}/rankings?board={{.ID}}"{{if eq .ID $.R.Board}} aria-current="true"{{end}}>{{.Label}}</a></li>{{end}}
 </ul>
 {{end}}
