@@ -93,5 +93,34 @@
   </section>
 </div>
 
+{{/* Everything status.openpak.org checks from another host, one panel per group. A long group folds
+     behind a summary unless something in it is down. */}}
+<div class="page-head mt-7">
+  <h2>{{t .Lang "status.ext.title"}}</h2>
+  <p class="lede">{{t .Lang "status.ext.sub"}}</p>
+</div>
+{{if .Ext.Reached}}
+<div class="panels">
+  {{range .Ext.Groups}}
+  <section class="card panel">
+    <header><h3>{{.Title}} <span class="text-sm font-normal text-muted">{{.Up}} {{t $.Lang "status.ext.of"}} {{len .Services}} {{t $.Lang "status.ext.working"}}</span></h3></header>
+    {{if .Fold}}<details><summary>{{t $.Lang "status.ext.show"}}</summary>{{end}}
+    <ul>
+      {{range .Services}}
+      <li class="state-row {{if .Up}}ok{{else}}bad{{end}}">
+        <span class="name">{{.Name}}</span>
+        <span class="pill">{{if .Up}}{{t $.Lang "status.ok"}}{{else}}{{t $.Lang "status.down"}}{{end}}</span>
+      </li>
+      {{end}}
+    </ul>
+    {{if .Fold}}</details>{{end}}
+  </section>
+  {{end}}
+</div>
+<p class="mt-5 text-sm"><a class="link-arrow" href="https://status.openpak.org" rel="noopener">{{t .Lang "status.ext.link"}}</a></p>
+{{else}}
+<div class="state-row idle"><span class="name font-normal text-muted">{{t .Lang "status.ext.unavailable"}}</span></div>
+{{end}}
+
 <p class="mt-7 max-w-prose text-sm text-muted">{{t .Lang "status.elsewhere"}}</p>
 {{template "footer" .}}

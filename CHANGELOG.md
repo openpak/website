@@ -11,6 +11,12 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.93.0 — 2026-11-04
+
+- `/status` shows every check status.openpak.org runs from another host, grouped as that page groups them (web, companion sites, core services, each console network, game session ports). A long group folds behind "Show all" unless something in it is down; the banner counts those checks too. If the outside checker cannot be reached the page says so as its own line, not as an outage.
+- `GET /healthz/{service}` also answers for `mods`, `rewards`, `parental`, `pokemon-global-link`, `pokemon-home`, `pokemon-legality`, `voice`, `registry`, `pakka`, `wfc-api` and `nn-account` (each runs the service's own `/healthz`; a service whose URL is not set is a 404) and for `logs`, which is 503 when the newest stored log line is more than 15 minutes old.
+- `logstore.Store.Newest`.
+
 ## v0.92.1 — 2026-11-04
 
 - Phones: tab and filter rows that do not fit on one line become one native dropdown (titles and features console filter, rewards tabs and shop chips, title companion tabs and ranking boards, account section list, admin section list and filter rows). Pills stay on desktop, and without JavaScript. New `web/static/pillselect.js` and `pillselect.css`.

@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -363,6 +364,7 @@ func run(log *slog.Logger) error {
 	adminSrv.Chat = chatCli
 	adminSrv.PushOn = pushOn
 	adminSrv.StatusAPI = envOr("STATUS_API_URL", "https://status.openpak.org/api/status")
+	pageSrv.StatusAPI = adminSrv.StatusAPI
 	adminSrv.Mods = admin.NewModsAPI(os.Getenv("MODS_INTERNAL_URL"), os.Getenv("MODS_INTERNAL_KEY"))
 	adminSrv.Registry = admin.NewRegistryAPI(os.Getenv("REGISTRY_INTERNAL_URL"), os.Getenv("REGISTRY_ADMIN_KEY"))
 	adminSrv.Ops = admin.NewOpsAPI(os.Getenv("WEBSITE_OPSD_HOSTS"), os.Getenv("WEBSITE_OPSD_KEY"))
@@ -432,6 +434,30 @@ func run(log *slog.Logger) error {
 	}
 	// Postgres connection pressure: 503 from 240 open connections, 80% of max_connections=300.
 	behind["db-connections"] = connLoad{db, 240}
+	// Services with a plain GET /healthz, named by the same URLs the site already uses to reach
+	// them. A service whose URL is unset is left out (404), so a dev setup does not report them.
+	for name, base := range map[string]string{
+		"mods":                os.Getenv("MODS_URL"),
+		"rewards":             os.Getenv("REWARDS_URL"),
+		"parental":            os.Getenv("PARENTAL_HTTP_URL"),
+		"pokemon-global-link": os.Getenv("POKEMON_GLOBAL_LINK_URL"),
+		"pakka":               os.Getenv("PAKKA_URL"),
+		"registry":            os.Getenv("REGISTRY_INTERNAL_URL"),
+		"wfc-api":             os.Getenv("WFC_API_URL"),
+		"nn-account":          os.Getenv("NN_ACCOUNT_INTERNAL_URL"),
+		"pokemon-home":        os.Getenv("POKEMON_HOME_URL"),
+		"pokemon-legality":    os.Getenv("POKEMON_LEGALITY_URL"),
+		"voice":               os.Getenv("VOICE_URL"),
+	} {
+		if base != "" {
+			behind[name] = httpHealth{base}
+		}
+	}
+	// The log pipeline: the collector (openpak-logd) ships continuously, so a store whose newest
+	// line is old means the collector or the ingest route has stopped.
+	if logsStore != nil {
+		behind["logs"] = logsFresh{logsStore, 15 * time.Minute}
+	}
 	mux.HandleFunc("GET /healthz/{service}", healthzBehind(behind))
 
 	// Minimal metrics/pprof listener on the website block's +2 port.
@@ -488,9 +514,49 @@ func envOr(key, def string) string {
 
 type healthChecker interface{ Healthy(context.Context) error }
 
+// httpHealth is a service answering 200 to GET <base>/healthz.
+type httpHealth struct{ base string }
+
+func (h httpHealth) Healthy(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimRight(h.base, "/")+"/healthz", nil)
+	if err != nil {
+		return err
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("healthz: %s", resp.Status)
+	}
+	return nil
+}
+
+// logsFresh is unhealthy when the newest stored log line is older than max.
+type logsFresh struct {
+	s   *logstore.Store
+	max time.Duration
+}
+
+func (l logsFresh) Healthy(ctx context.Context) error {
+	t, err := l.s.Newest(ctx)
+	if err != nil {
+		return err
+	}
+	if age := time.Since(t); age > l.max {
+		return fmt.Errorf("newest log line is %s old", age.Round(time.Second))
+	}
+	return nil
+}
+
 // connLoad is unhealthy once the server holds max or more client connections.
 type connLoad struct {
-	db  interface{ Connections(context.Context) (int, error) }
+	db interface {
+		Connections(context.Context) (int, error)
+	}
 	max int
 }
 

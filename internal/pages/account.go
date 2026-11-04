@@ -794,6 +794,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		Titles                  []titleRow
 		TotalPlayers            int
 		CountsOK                bool
+		Ext                     extStatus
 	}
 	view := statusView{
 		baseData:  s.data(r, s.viewerOf(w, r), i18n.T(i18n.FromRequest(r), "status.title")),
@@ -840,7 +841,9 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	// The banner is the page's summary, so a game server that is not answering
 	// counts; one this deployment cannot check does not.
-	view.Operational = coreOK && dbOK && storeOK && serversOK
+	ext := s.externalStatus(ctx)
+	view.Ext = ext
+	view.Operational = coreOK && dbOK && storeOK && serversOK && ext.Down == 0
 
 	// Every network we intend to replace, with numbers only where something is
 	// actually deployed. A network still being written says so; showing it as

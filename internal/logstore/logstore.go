@@ -265,3 +265,13 @@ func (s *Store) Services(ctx context.Context, d time.Time) ([]ServiceCount, erro
 		return c, err
 	})
 }
+
+// Newest is the timestamp of the newest stored line from the last day; zero when there is none.
+func (s *Store) Newest(ctx context.Context) (time.Time, error) {
+	var ts *time.Time
+	err := s.pool.QueryRow(ctx, "SELECT max(ts) FROM log_lines WHERE ts > now() - interval '1 day'").Scan(&ts)
+	if err != nil || ts == nil {
+		return time.Time{}, err
+	}
+	return *ts, nil
+}
