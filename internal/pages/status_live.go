@@ -28,8 +28,8 @@ type liveNet struct {
 	Players  int
 	Counted  bool   // Players is a real number
 	Text     string // "12 online"
-	// Family is Nintendo, PlayStation or Xbox ("" for Shared services and Websites); NewFamily marks the
-	// first card of a family (or of the shared group, whose Family is empty), which the page draws a heading or a gap above.
+	// Family is the company: Nintendo, Sony, Microsoft or OpenPak; NewFamily marks the
+	// first card of a family (Nintendo, Sony, Microsoft, OpenPak), which the page draws a heading above.
 	Family    string
 	NewFamily bool
 }
@@ -239,7 +239,7 @@ func (s *Server) buildLive(ctx context.Context, lang string) *liveView {
 		if n.Counted {
 			n.Text = fmt.Sprintf("%d %s", n.Players, t("status.pill.online.many"))
 		}
-		n.NewFamily = len(v.Networks) > 0 && v.Networks[len(v.Networks)-1].Family != n.Family || len(v.Networks) == 0 && n.Family != ""
+		n.NewFamily = len(v.Networks) == 0 || v.Networks[len(v.Networks)-1].Family != n.Family
 		v.Networks = append(v.Networks, n)
 	}
 

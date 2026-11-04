@@ -37,7 +37,7 @@ var networks = []network{
 	{Name: "PSP", Consoles: []string{"PSP"}, State: "planned"},
 	{Name: "PlayStation 2", Consoles: []string{"PS2"}, State: "planned"},
 	{Name: "PS Vita", Consoles: []string{"Vita"}, State: "planned"},
-	{Name: "PlayStation 4", Consoles: []string{"PS4"}, State: "planned"},
+	{Name: "PlayStation 4", Namespaces: []string{"ps4"}, Consoles: []string{"PS4"}, State: "planned"},
 	{Name: "PlayStation 5", Consoles: []string{"PS5"}, State: "planned"},
 	{Name: "Xbox One", Consoles: []string{"Xbox One"}, State: "planned"},
 }

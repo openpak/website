@@ -1,15 +1,15 @@
 [
-  {"id": "wii-ds",    "title": "Wii / DS",        "family": "Nintendo",    "consoles": ["wii", "ds"],   "site": "Wii / DS"},
-  {"id": "wiiu-3ds",  "title": "Wii U / 3DS",     "family": "Nintendo",    "consoles": ["wiiu", "3ds"], "site": "Wii U / 3DS"},
-  {"id": "switch",    "title": "Switch",          "family": "Nintendo",    "consoles": ["switch"],      "site": "Switch"},
-  {"id": "ps3",       "title": "PlayStation 3",   "family": "PlayStation", "consoles": ["ps3"],         "site": "PlayStation 3"},
-  {"id": "psp",       "title": "PSP",             "family": "PlayStation", "consoles": ["psp"],         "site": "PSP"},
-  {"id": "vita",      "title": "PS Vita",         "family": "PlayStation", "consoles": ["vita"],        "site": "PS Vita"},
-  {"id": "ps4",       "title": "PlayStation 4",   "family": "PlayStation", "consoles": ["ps4"],         "site": "PlayStation 4"},
-  {"id": "ps5",       "title": "PlayStation 5",   "family": "PlayStation", "consoles": ["ps5"],         "site": "PlayStation 5"},
-  {"id": "xbox",      "title": "Original Xbox",   "family": "Xbox",        "consoles": ["xbox"],        "site": "Xbox"},
-  {"id": "xbox360",   "title": "Xbox 360",        "family": "Xbox",        "consoles": ["xbox360"],     "site": "Xbox 360"},
-  {"id": "xbox-one",  "title": "Xbox One",        "family": "Xbox",        "consoles": ["xboxone"],     "site": "Xbox One"},
-  {"id": "shared",    "title": "Shared services", "family": "",            "consoles": [],              "site": ""},
-  {"id": "websites",  "title": "Websites",        "family": "",            "consoles": [],              "site": ""}
+  {"id": "wii-ds", "title": "Wii / DS", "family": "Nintendo", "consoles": ["wii", "ds"], "site": "Wii / DS"},
+  {"id": "wiiu-3ds", "title": "Wii U / 3DS", "family": "Nintendo", "consoles": ["wiiu", "3ds"], "site": "Wii U / 3DS"},
+  {"id": "switch", "title": "Switch", "family": "Nintendo", "consoles": ["switch"], "site": "Switch"},
+  {"id": "ps3", "title": "PlayStation 3", "family": "Sony", "consoles": ["ps3"], "site": "PlayStation 3"},
+  {"id": "psp", "title": "PSP", "family": "Sony", "consoles": ["psp"], "site": "PSP"},
+  {"id": "vita", "title": "PS Vita", "family": "Sony", "consoles": ["vita"], "site": "PS Vita"},
+  {"id": "ps4", "title": "PlayStation 4", "family": "Sony", "consoles": ["ps4"], "site": "PlayStation 4"},
+  {"id": "ps5", "title": "PlayStation 5", "family": "Sony", "consoles": ["ps5"], "site": "PlayStation 5"},
+  {"id": "xbox", "title": "Original Xbox", "family": "Microsoft", "consoles": ["xbox"], "site": "Xbox"},
+  {"id": "xbox360", "title": "Xbox 360", "family": "Microsoft", "consoles": ["xbox360"], "site": "Xbox 360"},
+  {"id": "xbox-one", "title": "Xbox One", "family": "Microsoft", "consoles": ["xboxone"], "site": "Xbox One"},
+  {"id": "shared", "title": "Shared services", "family": "OpenPak", "consoles": [], "site": ""},
+  {"id": "websites", "title": "Websites", "family": "OpenPak", "consoles": [], "site": ""}
 ]

@@ -118,9 +118,15 @@ func TestOverviewCardsFollowTheNetworkOrder(t *testing.T) {
 		}
 		last = i
 	}
-	for _, fam := range []string{">Nintendo<", ">PlayStation<", ">Xbox<", " aria-hidden=\"true\"><"} {
+	for _, fam := range []string{">Nintendo<", ">Sony<", ">Microsoft<", ">OpenPak<"} {
 		if strings.Count(body, `class="sv-fam"`+fam) != 1 {
 			t.Errorf("one %s heading expected", fam)
 		}
+	}
+	// Every card that counts players says so, a quiet network included.
+	i := strings.Index(body, `data-net="ps4"`)
+	card, _, _ := strings.Cut(body[i:], "</li>")
+	if !strings.Contains(card, "0 online") {
+		t.Errorf("the PlayStation 4 card should say 0 online: %s", card)
 	}
 }
