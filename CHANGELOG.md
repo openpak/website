@@ -13,6 +13,7 @@ release, taken from git history. `git log` stays the source of truth.
 
 ## v0.95.1 — 2026-11-04
 
+- The public map is not drawn on `/status` for now (the page is being redesigned); the `netmapPublic` template and `/status/map.json` stay ready for the new design.
 - Network map: `NETMAP_HOST_IPS` defaults to the real agent names (`quilted-waffle`, `draughts`), and the first agent is labelled the primary server.
 
 ## v0.95.0 — 2026-11-04
