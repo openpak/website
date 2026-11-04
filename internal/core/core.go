@@ -229,6 +229,13 @@ type Identity interface {
 	RequestDeletion(ctx context.Context, accountID string) error
 }
 
+// MiiSource reads the account's primary Mii from the core: 96-byte Ver3 store
+// data. ErrNotFound when the account has none. The Mii is shared by every
+// console network; the website only displays it.
+type MiiSource interface {
+	PrimaryMii(ctx context.Context, accountID string) ([]byte, error)
+}
+
 // Erasure is the home-only side of account deletion: the finaliser's list of
 // accounts whose grace period is over, its last step, and the admin restore.
 type Erasure interface {

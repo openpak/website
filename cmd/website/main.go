@@ -121,6 +121,7 @@ func run(log *slog.Logger) error {
 	pageSrv := pages.New(tmpl, log)
 	pageSrv.Core = coreHTTPSync
 	pageSrv.Identity = coreGRPC
+	pageSrv.Mii = coreGRPC
 	pageSrv.Social = coreGRPC
 	pageSrv.Moderation = coreGRPC
 	pageSrv.Links = coreGRPC

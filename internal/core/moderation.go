@@ -84,6 +84,19 @@ func (g *GRPC) PutAvatar(ctx context.Context, accountID string, png256, png512 [
 	return mapGRPC(err)
 }
 
+// PrimaryMii is the account's Mii as Ver3 store data (ErrNotFound if it has none).
+func (g *GRPC) PrimaryMii(ctx context.Context, accountID string) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	r, err := accountv1.NewMiiClient(g.conn).GetMii(ctx, &accountv1.GetMiiRequest{
+		AccountId: accountID, Format: accountv1.MiiFormat_MII_FORMAT_VER3,
+	})
+	if err != nil {
+		return nil, mapGRPC(err)
+	}
+	return r.GetData(), nil
+}
+
 func unixOrZero(s int64) time.Time {
 	if s <= 0 {
 		return time.Time{}

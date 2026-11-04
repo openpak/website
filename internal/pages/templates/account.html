@@ -12,6 +12,7 @@
         {{if .AvatarURL}}<img class="avatar" src="{{.AvatarURL}}" alt="" width="80" height="80">
         {{else}}<span class="avatar blank" aria-hidden="true">{{printf "%.1s" $name}}</span>{{end}}
       </a>
+      {{if .MiiURL}}<img class="avatar" src="{{.MiiURL}}" alt="{{t .Lang "account.mii"}}" title="{{t .Lang "account.mii"}}" width="80" height="80">{{end}}
       <div>
         <h1>{{$name}}</h1>
         <p class="flex flex-wrap items-center gap-2">

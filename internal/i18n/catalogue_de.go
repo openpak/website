@@ -362,6 +362,7 @@ var catalogueDE = Catalogue{
 	"account.avatar.sub":                "Wähle einen von unseren oder lade über die letzte Kachel deinen eigenen hoch. Deine Konsole übernimmt die Änderung, wenn sie dein Konto das nächste Mal aktualisiert.",
 	"account.avatar.choose":             "Avatar auswählen",
 	"account.avatar.change":             "Avatar ändern",
+	"account.mii":                       "Dein Mii",
 	"account.avatar.save":               "Avatar speichern",
 	"modal.close":                       "Schließen",
 	"modal.cancel":                      "Abbrechen",

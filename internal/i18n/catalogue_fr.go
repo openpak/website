@@ -362,6 +362,7 @@ var catalogueFR = Catalogue{
 	"account.avatar.sub":                "Choisissez l'un des nôtres, ou utilisez la dernière case pour envoyer le vôtre. Votre console prend en compte le changement la prochaine fois qu'elle actualise votre compte.",
 	"account.avatar.choose":             "Choisir un avatar",
 	"account.avatar.change":             "Changer d'avatar",
+	"account.mii":                       "Votre Mii",
 	"account.avatar.save":               "Enregistrer l'avatar",
 	"modal.close":                       "Fermer",
 	"modal.cancel":                      "Annuler",

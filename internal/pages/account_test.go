@@ -1,6 +1,8 @@
 package pages
 
 import (
+	"context"
+	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -134,5 +136,41 @@ func TestChatSendRefusedWhenBlocked(t *testing.T) {
 	rec = authedRequest(s, a, http.MethodPost, "/account/chat/send", &url.Values{"peer": {idB}, "body": {"hi"}})
 	if rec.Code != http.StatusSeeOther || strings.Contains(rec.Header().Get("Location"), "m=") || sent != 1 {
 		t.Fatalf("unblocked: %d %s, %d sent", rec.Code, rec.Header().Get("Location"), sent)
+	}
+}
+
+type fakeMii struct{ ver3 []byte }
+
+func (f fakeMii) PrimaryMii(context.Context, string) ([]byte, error) {
+	if f.ver3 == nil {
+		return nil, core.ErrNotFound
+	}
+	return f.ver3, nil
+}
+
+// The profile shows the account's Mii as a Mii Studio image, and only then lets the page's CSP
+// reach Studio; an account with no Mii shows nothing and keeps the strict policy.
+func TestProfileShowsTheAccountMii(t *testing.T) {
+	s, fc, _ := newTestServer(t)
+	emailA, _ := seedTwoAccounts(fc)
+	a := login(t, s, emailA, "password-A-1")
+
+	rec := authedRequest(s, a, http.MethodGet, "/account", nil)
+	if strings.Contains(rec.Body.String(), "studio.mii.nintendo.com") || strings.Contains(rec.Header().Get("Content-Security-Policy"), "studio.mii") {
+		t.Fatal("no Mii configured, but Studio is referenced")
+	}
+
+	raw, _ := base64.StdEncoding.DecodeString("AwAAQOlVognnx0GC2/uogAOzuI0n2QAAAEBEAGUAZgBhAHUAbAB0AAAAAAAAAEBAAAAhAQJoRBgmNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGm9")
+	s.Mii = fakeMii{raw}
+	rec = authedRequest(s, a, http.MethodGet, "/account", nil)
+	if !strings.Contains(rec.Body.String(), "https://studio.mii.nintendo.com/miis/image.png?") ||
+		!strings.Contains(rec.Header().Get("Content-Security-Policy"), "img-src 'self' data: https://studio.mii.nintendo.com;") {
+		t.Fatalf("Mii not shown: csp %q", rec.Header().Get("Content-Security-Policy"))
+	}
+
+	s.Mii = fakeMii{}
+	rec = authedRequest(s, a, http.MethodGet, "/account", nil)
+	if strings.Contains(rec.Body.String(), "studio.mii.nintendo.com") {
+		t.Fatal("account without a Mii shows one")
 	}
 }

@@ -362,6 +362,7 @@ var cataloguePTBR = Catalogue{
 	"account.avatar.sub":                "Escolha um dos nossos ou use o último quadro para enviar o seu. Seu console recebe a mudança na próxima vez que atualizar sua conta.",
 	"account.avatar.choose":             "Escolher um avatar",
 	"account.avatar.change":             "Alterar avatar",
+	"account.mii":                       "Seu Mii",
 	"account.avatar.save":               "Salvar avatar",
 	"modal.close":                       "Fechar",
 	"modal.cancel":                      "Cancelar",

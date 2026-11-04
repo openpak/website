@@ -362,6 +362,7 @@ var catalogueIT = Catalogue{
 	"account.avatar.sub":                "Scegline uno dei nostri o usa l'ultima casella per caricarne uno tuo. La tua console recepisce la modifica al prossimo aggiornamento del tuo account.",
 	"account.avatar.choose":             "Scegli un avatar",
 	"account.avatar.change":             "Cambia avatar",
+	"account.mii":                       "Il tuo Mii",
 	"account.avatar.save":               "Salva avatar",
 	"modal.close":                       "Chiudi",
 	"modal.cancel":                      "Annulla",

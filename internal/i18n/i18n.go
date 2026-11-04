@@ -384,6 +384,7 @@ var languages = map[string]Catalogue{
 		"account.avatar.sub":                "Pick one of ours, or use the last tile to upload your own. Your console picks up the change the next time it refreshes your account.",
 		"account.avatar.choose":             "Choose an avatar",
 		"account.avatar.change":             "Change avatar",
+		"account.mii":                       "Your Mii",
 		"account.avatar.save":               "Save avatar",
 		"modal.close":                       "Close",
 		"modal.cancel":                      "Cancel",

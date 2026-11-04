@@ -14,6 +14,7 @@ import (
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/media"
+	"github.com/openpak/website/internal/miistudio"
 	"github.com/openpak/website/internal/store"
 	"github.com/openpak/website/internal/wfc"
 )
@@ -34,14 +35,16 @@ type accountView struct {
 	CurrentSession string
 	AvatarURL      string
 	AvatarPending  bool
-	Presets        []string
-	Bio            string
-	Motto          string
-	DisplayName    string
-	Country        string
-	Birthday       string
-	Countries      []country
-	MaxBirthday    string
+	// MiiURL is the account's Mii rendered by Mii Studio; empty when the account has none.
+	MiiURL      string
+	Presets     []string
+	Bio         string
+	Motto       string
+	DisplayName string
+	Country     string
+	Birthday    string
+	Countries   []country
+	MaxBirthday string
 	// Security: the address as the core has it, whether it is confirmed, and
 	// whether a second factor is on.
 	Email            string
@@ -50,6 +53,14 @@ type accountView struct {
 	friendsData
 	// Console is the Wii U / 3DS sign-in: the ID to type and where its password comes from.
 	Console consoleRow
+}
+
+// miiImageHost lets the page's CSP admit the Mii Studio image when one is shown.
+func (v accountView) miiImageHost() string {
+	if v.MiiURL != "" {
+		return "https://studio.mii.nintendo.com"
+	}
+	return ""
 }
 
 type consoleRow struct {
@@ -88,6 +99,14 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 	// browser's cache expires.
 	if rec, err := s.DB.GetMedia(ctx, v.AccountID, "avatar"); err == nil && !rec.UpdatedAt.IsZero() {
 		view.AvatarURL += "?v=" + strconv.FormatInt(rec.UpdatedAt.UnixNano(), 10)
+	}
+
+	if s.Mii != nil {
+		if raw, err := s.Mii.PrimaryMii(ctx, v.AccountID); err == nil {
+			if m, err := miistudio.Parse(raw); err == nil {
+				view.MiiURL = miistudio.URL(m, "normal")
+			}
+		}
 	}
 
 	// Every code people can add this account by, shared with the API's /me.

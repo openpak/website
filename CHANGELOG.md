@@ -11,6 +11,10 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.102.0 — 2026-11-04
+
+- The profile shows the account's Mii (board prds#123): read from the account core (`Mii.GetMii`, Ver3) and drawn as a Mii Studio link beside the avatar, with the avatar's existing style. The page's CSP admits `https://studio.mii.nintendo.com` for images only when a Mii is shown; the website never fetches or stores the image. New `internal/miistudio` (copy of nn-account's, same test vectors). Needs account core v0.20.0 and account-api v0.2.0.
+
 ## v0.101.0 — 2026-11-04
 
 - Database only (board prds#85): avatars (`media_objects`) and ticket/crash attachments (`attachment_files`) are stored in Postgres, not on the `openpak-media` and `openpak-attachments` volumes. At start-up any files still in `WEBSITE_MEDIA_DIR` / `WEBSITE_ATTACHMENTS_DIR` are imported once (keys already in the database are kept; counts are logged; the old files are never deleted). `/downloads` ordering from the unreleased commits rides in this tag.

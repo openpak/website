@@ -85,6 +85,8 @@ type Server struct {
 	Federation core.Federation
 	Operators  store.OperatorStore
 	Media      *media.Service
+	// Mii is the account's Mii from the core, shown beside the avatar as a Mii Studio link; nil hides it.
+	Mii core.MiiSource
 	// Adapter answers what only the Switch adapter knows: the friend code.
 	Adapter *adapter.Client
 	// WFC resolves Wii/DS friend codes for the link flow; nil hides the form.
@@ -317,7 +319,11 @@ func (s *Server) render(w http.ResponseWriter, status int, name string, data any
 	if h, ok := data.(interface{ styleHash() string }); ok && h.styleHash() != "" {
 		style += " " + h.styleHash() // the account's theme, as the layout prints it
 	}
-	csp := "default-src 'self'; img-src 'self' data:; style-src " + style + "; frame-ancestors 'none'"
+	img := "'self' data:"
+	if h, ok := data.(interface{ miiImageHost() string }); ok && h.miiImageHost() != "" {
+		img += " " + h.miiImageHost() // the account's Mii is a link to Mii Studio, which the browser follows
+	}
+	csp := "default-src 'self'; img-src " + img + "; style-src " + style + "; frame-ancestors 'none'"
 	if s.Turnstile != nil {
 		// The Turnstile widget is a script and an iframe from Cloudflare.
 		csp += "; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com"
