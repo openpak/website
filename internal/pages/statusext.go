@@ -22,7 +22,14 @@ type extStatus struct {
 	Reached  bool
 	Networks map[string]extNet
 	Problems []string
+	Issues   []extIssue
 	Down     int
+}
+
+// extIssue is one failing check as the checker reports it.
+type extIssue struct {
+	Network, Name string
+	Game          bool
 }
 
 // extCache keeps a reload storm off status.openpak.org; the checker itself only runs every minute or two.
@@ -54,10 +61,11 @@ func (s *Server) externalStatus(ctx context.Context) extStatus {
 			var page struct {
 				Networks []extNet
 				Problems []string
+				Issues   []extIssue
 				Down     int
 			}
 			if resp.StatusCode == http.StatusOK && json.NewDecoder(io.LimitReader(resp.Body, 8<<20)).Decode(&page) == nil && len(page.Networks) > 0 {
-				v = extStatus{Reached: true, Networks: map[string]extNet{}, Problems: page.Problems, Down: page.Down}
+				v = extStatus{Reached: true, Networks: map[string]extNet{}, Problems: page.Problems, Issues: page.Issues, Down: page.Down}
 				for _, n := range page.Networks {
 					v.Networks[n.ID] = n
 				}

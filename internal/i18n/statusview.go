@@ -4,6 +4,7 @@ package i18n
 func init() {
 	for lang, c := range map[string]Catalogue{
 		"en": {
+			"status.v.and":      "and",
 			"status.v.playing":  "playing",
 			"status.v.quiet":    "It is quiet right now. Start a game and you will show up here.",
 			"status.v.shared":   "Shared services",
@@ -21,6 +22,7 @@ func init() {
 			"status.v.live":     "This page updates itself every 30 seconds.",
 		},
 		"de": {
+			"status.v.and":      "und",
 			"status.v.playing":  "spielen",
 			"status.v.quiet":    "Gerade ist es ruhig. Starte ein Spiel, dann erscheinst du hier.",
 			"status.v.shared":   "Gemeinsame Dienste",
@@ -38,6 +40,7 @@ func init() {
 			"status.v.live":     "Diese Seite aktualisiert sich alle 30 Sekunden selbst.",
 		},
 		"fr": {
+			"status.v.and":      "et",
 			"status.v.playing":  "en jeu",
 			"status.v.quiet":    "C'est calme pour le moment. Lancez un jeu et vous apparaîtrez ici.",
 			"status.v.shared":   "Services partagés",
@@ -55,6 +58,7 @@ func init() {
 			"status.v.live":     "Cette page se met à jour toutes les 30 secondes.",
 		},
 		"pt-BR": {
+			"status.v.and":      "e",
 			"status.v.playing":  "jogando",
 			"status.v.quiet":    "Está tranquilo agora. Abra um jogo e você aparecerá aqui.",
 			"status.v.shared":   "Serviços compartilhados",
@@ -72,6 +76,7 @@ func init() {
 			"status.v.live":     "Esta página se atualiza sozinha a cada 30 segundos.",
 		},
 		"it": {
+			"status.v.and":      "e",
 			"status.v.playing":  "in gioco",
 			"status.v.quiet":    "Per ora è tutto tranquillo. Avvia un gioco e comparirai qui.",
 			"status.v.shared":   "Servizi condivisi",
@@ -89,6 +94,7 @@ func init() {
 			"status.v.live":     "Questa pagina si aggiorna da sola ogni 30 secondi.",
 		},
 		"es": {
+			"status.v.and":      "y",
 			"status.v.playing":  "jugando",
 			"status.v.quiet":    "Ahora mismo está tranquilo. Abre un juego y aparecerás aquí.",
 			"status.v.shared":   "Servicios compartidos",

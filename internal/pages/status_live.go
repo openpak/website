@@ -166,7 +166,7 @@ func (s *Server) buildLive(ctx context.Context, lang string) *liveView {
 	// What this site can see for itself: its own core, database and storage, and the Switch game
 	// servers it health-checks. They roll into the same cards as the outside checks.
 	local := map[string]string{} // network id -> worst local state
-	var problems []string
+	var issues []extIssue
 	worse := func(id, st string) {
 		if st == "down" || local[id] == "" {
 			local[id] = st
@@ -178,7 +178,7 @@ func (s *Server) buildLive(ctx context.Context, lang string) *liveView {
 	for _, g := range checkGameServers(ctx, catalogue) {
 		if g.Checkable && !g.Up {
 			worse("switch", "partial")
-			problems = append(problems, "Switch: "+g.Name)
+			issues = append(issues, extIssue{"Switch", g.Name, true})
 		}
 	}
 	for _, c := range []struct {
@@ -187,10 +187,13 @@ func (s *Server) buildLive(ctx context.Context, lang string) *liveView {
 	}{{coreOK, t("status.core")}, {dbOK, t("status.db")}, {storeOK, t("status.storage")}} {
 		if !c.ok {
 			worse("shared", "down")
-			problems = append(problems, t("status.v.shared")+": "+c.name)
+			issues = append(issues, extIssue{t("status.v.shared"), c.name, false})
 		}
 	}
-	problems = append(problems, ext.Problems...)
+	// The checker names games by their check ("Arms"); the catalogue is where a game's name is
+	// edited ("ARMS"), so a failing game is shown by that.
+	issues = append(issues, ext.Issues...)
+	issues = issueNames(issues, entries)
 
 	stages := s.consoleStages(ctx)
 	for _, sn := range statusNetworks {
@@ -208,12 +211,15 @@ func (s *Server) buildLive(ctx context.Context, lang string) *liveView {
 		}
 		if x, ok := ext.Networks[sn.ID]; ok {
 			n.State = x.State
+			if x.Title != "" && sn.Name != "" {
+				n.Name = x.Title // one name for a network on both pages
+			}
 		}
 		if l := local[sn.ID]; l != "" && (n.State == "idle" || n.State == "ok" || l == "down") {
 			n.State = l
 		}
 		if def != nil {
-			st := def.stateAt(stages)
+			st := liveStage(def, stages)
 			if st == "planned" && n.State == "idle" {
 				continue // nothing deployed and nothing checked: not a card yet
 			}
@@ -239,20 +245,30 @@ func (s *Server) buildLive(ctx context.Context, lang string) *liveView {
 		v.Networks = append(v.Networks, n)
 	}
 
-	v.Problems = problems
-	switch {
-	case len(problems) == 0:
+	v.Problems = nil
+	for _, i := range issues {
+		v.Problems = append(v.Problems, i.Network+": "+i.Name)
+	}
+	if len(issues) == 0 {
 		v.State, v.Headline = "ok", t("status.all.ok")
 		v.Sub = t("status.v.sub")
-	default:
+	} else {
 		v.State, v.Headline = "warn", t("status.all.bad")
-		if len(problems) > 3 {
-			v.Sub = strings.Join(problems[:3], ", ") + " " + strings.ReplaceAll(t("status.v.more"), "{n}", fmt.Sprint(len(problems)-3))
-		} else {
-			v.Sub = strings.Join(problems, ", ")
-		}
+		v.Sub = groupIssues(issues, t("status.v.and"), t("status.v.more"))
 	}
 	return v
+}
+
+// liveStage is a network's stage in the map's words and by the map's rule: the furthest stage any of
+// its consoles' /features rows reaches, and "planned" when none has a row (a row-less console claims
+// no progress). The map and this page read the same rows, so they cannot disagree.
+func liveStage(n *network, stages map[string]string) string {
+	for _, c := range n.Consoles {
+		if _, ok := stages[c]; ok {
+			return n.stateAt(stages)
+		}
+	}
+	return "planned"
 }
 
 // handleStatus is the public status page.
@@ -277,4 +293,68 @@ func (s *Server) handleStatusLive(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Vary", "Accept-Language, Cookie")
 	_ = json.NewEncoder(w).Encode(s.statusLive(r.Context(), i18n.FromRequest(r)))
+}
+
+// norm folds a name for comparison: lower case letters and digits, accents dropped.
+func norm(s string) string {
+	var b strings.Builder
+	for _, r := range strings.ToLower(s) {
+		switch {
+		case strings.ContainsRune("éèêë", r):
+			b.WriteByte('e')
+		case r >= 'a' && r <= 'z', r >= '0' && r <= '9':
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
+// issueNames swaps a failing game's check name for the catalogue's display name and drops
+// repeats (a game server this site checks and the outside checker also reports).
+func issueNames(in []extIssue, entries map[string]catEntry) []extIssue {
+	names := map[string]string{}
+	for _, e := range entries {
+		names[norm(e.Name)] = e.Name
+	}
+	seen := map[string]bool{}
+	var out []extIssue
+	for _, i := range in {
+		if n, ok := names[norm(i.Name)]; ok && i.Game {
+			i.Name = n
+		}
+		k := norm(i.Network) + "|" + norm(i.Name)
+		if seen[k] {
+			continue
+		}
+		seen[k] = true
+		out = append(out, i)
+	}
+	return out
+}
+
+// groupIssues reads failing checks as "Switch: eShop and ARMS; Wii U / 3DS: eShop", one clause per network.
+func groupIssues(is []extIssue, and, more string) string {
+	var order []string
+	by := map[string][]string{}
+	for _, i := range is {
+		if _, ok := by[i.Network]; !ok {
+			order = append(order, i.Network)
+		}
+		by[i.Network] = append(by[i.Network], i.Name)
+	}
+	var parts []string
+	for _, n := range order {
+		names := by[n]
+		var s string
+		switch {
+		case len(names) > 3:
+			s = strings.Join(names[:2], ", ") + " " + strings.ReplaceAll(more, "{n}", fmt.Sprint(len(names)-2))
+		case len(names) > 1:
+			s = strings.Join(names[:len(names)-1], ", ") + " " + and + " " + names[len(names)-1]
+		default:
+			s = names[0]
+		}
+		parts = append(parts, n+": "+s)
+	}
+	return strings.Join(parts, "; ")
 }

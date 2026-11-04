@@ -16,6 +16,8 @@ release, taken from git history. `git log` stays the source of truth.
 - `/status` is a live overview for players, one design with status.openpak.org: a banner (everything works, or the problem named, e.g. "Switch: eShop", with a link to the details), who is online and playing, a card per console network with its rolled-up status and players online, and "Being played right now" with each game's cover art, console and player count, busiest first (one friendly line when nobody is playing). It updates itself every 30 seconds from `/status/live.json` (numbers ease to their new value unless reduced motion is on) and is complete without scripting. Counts only, never names.
 - The old four panels and the "Checked from outside" section are gone; per-service rows live on status.openpak.org ("Full service status"). The public network map is an Overview / Map toggle on the same page.
 - The badge, banner and icon styles are shared with the status repository (`web/static/statusview.css`, `scripts/sync-status-shared.sh`, drift test).
+- The problem banner groups by network ("Switch: eShop and ARMS") and names games by the catalogue.
+- A network's stage label follows the map's rule and its /features rows (no row means planned); both read the same rows.
 - Needs status v0.3.0 (`/api/status` roll-ups).
 
 ## v0.95.2 — 2026-11-04

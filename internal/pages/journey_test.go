@@ -477,10 +477,6 @@ func TestStatusPageShowsWhoIsPlaying(t *testing.T) {
 	if !strings.Contains(body, `data-count="online">4<`) {
 		t.Errorf("the online total is missing from the page")
 	}
-	// Networks nobody has written yet must not read as healthy.
-	if !strings.Contains(body, "In development") {
-		t.Error("unfinished networks should say so rather than show as online")
-	}
 	// Game servers are unreachable in a test, which the banner must admit, however healthy the core is.
 	if !strings.Contains(body, "Some things are having trouble") || !strings.Contains(body, "Switch: ") {
 		t.Error("a game server that does not answer must name itself in the banner")

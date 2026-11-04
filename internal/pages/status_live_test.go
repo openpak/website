@@ -28,7 +28,7 @@ func withChecks(t *testing.T, s *Server, body string) {
 }
 
 const extOK = `{"Networks":[{"ID":"switch","Title":"Switch","State":"ok","Up":5,"Total":5},{"ID":"shared","Title":"Shared services","State":"ok","Up":3,"Total":3}],"Problems":null,"Down":0}`
-const extBad = `{"Networks":[{"ID":"switch","Title":"Switch","State":"partial","Up":4,"Total":5},{"ID":"shared","Title":"Shared services","State":"ok","Up":3,"Total":3}],"Problems":["Switch: eShop"],"Down":1}`
+const extBad = `{"Networks":[{"ID":"switch","Title":"Switch","State":"partial","Up":4,"Total":5},{"ID":"shared","Title":"Shared services","State":"ok","Up":3,"Total":3}],"Problems":["Switch: eShop","Switch: Arms"],"Issues":[{"Network":"Switch","Name":"eShop"},{"Network":"Switch","Name":"Arms","Game":true}],"Down":2}`
 
 func TestStatusOverviewNormalAndProblem(t *testing.T) {
 	s, fc, db := newTestServer(t)
@@ -49,7 +49,7 @@ func TestStatusOverviewNormalAndProblem(t *testing.T) {
 
 	withChecks(t, s, extBad)
 	body = get(t, s, "/status").Body.String()
-	if !strings.Contains(body, `class="sv-banner warn"`) || !strings.Contains(body, "Switch: eShop") || !strings.Contains(body, "Partly down") {
+	if !strings.Contains(body, `class="sv-banner warn"`) || !strings.Contains(body, "Switch: eShop and ARMS") || !strings.Contains(body, "Partly down") {
 		t.Errorf("a failing check must name itself in the banner and mark its network: %s", body)
 	}
 
@@ -89,4 +89,12 @@ var zeroTime time.Time
 
 func newExt(body string) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte(body)) }))
+}
+
+func TestGroupedProblemsUseCatalogueNames(t *testing.T) {
+	in := []extIssue{{"Switch", "eShop", false}, {"Switch", "Arms", true}, {"Wii U / 3DS", "eShop", false}, {"Switch", "ARMS", true}}
+	in = issueNames(in, map[string]catEntry{"X": {Name: "ARMS", Console: "Switch"}})
+	if got := groupIssues(in, "and", "and {n} more"); got != "Switch: eShop and ARMS; Wii U / 3DS: eShop" {
+		t.Errorf("grouped: %q", got)
+	}
 }
