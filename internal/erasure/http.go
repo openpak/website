@@ -17,7 +17,7 @@ import (
 // erasure and shown as "not configured"; it does not hold the account back
 // (a dev-only service must not block production erasure).
 var ExpectedServices = []string{
-	"saves", "chat", "leaderboards", "achievements", "title-storage", "pakka", "mods", "website",
+	"saves", "chat", "leaderboards", "achievements", "title-storage", "matchmaking", "pakka", "mods", "website",
 	"nex", "switch-nex", "nn-friends", "nn-juxtaposition", "nn-boss", "nn-account",
 	"np-community", "ps5-friends", "ps5-messaging", "xbl",
 	"xb-social", "xb-xmessaging", "xb-stfd", "xb-account",

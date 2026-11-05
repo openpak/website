@@ -31,6 +31,7 @@ import (
 	"github.com/openpak/website/internal/i18n"
 	"github.com/openpak/website/internal/leaderboards"
 	"github.com/openpak/website/internal/logstore"
+	"github.com/openpak/website/internal/matchmaking"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/metrics"
 	"github.com/openpak/website/internal/netmap"
@@ -302,6 +303,12 @@ func run(log *slog.Logger) error {
 	if tsCli == nil {
 		log.Info("title-storage: TITLE_STORAGE_URL not set; no health route and no erasure step")
 	}
+	// The neutral matchmaking core: only its health (/healthz/matchmaking) concerns the site (erasure goes through ERASURE_SERVICES
+	// like the other cores); console adapters (np-matching2) use it over gRPC.
+	mmCli := matchmaking.New(os.Getenv("MATCHMAKING_URL"), os.Getenv("MATCHMAKING_INTERNAL_KEY"))
+	if mmCli == nil {
+		log.Info("matchmaking: MATCHMAKING_URL not set; no health route")
+	}
 	supportSvc := &support.Service{DB: db, Files: files, Push: pushSender, Log: log}
 
 	// Account erasure: once a closed account's grace period is over, erase it
@@ -484,6 +491,9 @@ func run(log *slog.Logger) error {
 	}
 	if tsCli != nil {
 		behind["title-storage"] = tsCli
+	}
+	if mmCli != nil {
+		behind["matchmaking"] = mmCli
 	}
 	// Postgres connection pressure: 503 from 240 open connections, 80% of max_connections=300.
 	behind["db-connections"] = connLoad{db, 240}

@@ -76,6 +76,7 @@ var publicCore = map[string][2]string{
 	"rewards":         {"Rewards", "Points, missions and rewards you earn by playing."},
 	"achievements":    {"Achievements", "Trophies and achievements that follow you from one network to another."},
 	"title-storage":   {"Game data storage", "Online storage that games use for their own data."},
+	"matchmaking":     {"Game matchmaking", "Finds and fills the game rooms you join with friends and other players."},
 	"parental":        {"Parental controls", "Family supervision settings and play limits."},
 	"news-experiment": {"News", "News and announcements delivered to your console and the website."},
 	"bcat":            {"Game news and data", "Event and in-game news data that games download."},

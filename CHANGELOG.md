@@ -11,6 +11,10 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.108.0 - 2026-11-05
+
+- Matchmaking core (prds#28): `/healthz/matchmaking` (`MATCHMAKING_URL`), network-map labels, `matchmaking` in the expected erasure services (production wiring: `matchmaking=http://openpak-matchmaking:20240` in `ERASURE_SERVICES`).
+
 ## v0.107.0 - 2026-11-05
 
 - Account erasure chain (prds#120): `ExpectedServices` now lists nx-baas, splatnet, plants-vs-zombies and pokemon-global-link, and names the Among Us front `among-us` (it forwards to Impostor inside its container, so there is no separate `impostor` step). Production wiring: `ERASURE_SERVICES` and `ACCOUNT_ERASE_KEY` come from the `20-erase.conf` drop-in (`deploy/erasure-services.env`, `deploy/erase.env`).

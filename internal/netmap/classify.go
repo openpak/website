@@ -51,7 +51,7 @@ func idOf(unit string) string {
 var (
 	infraIDs = set("postgres", "redis", "mongo", "minio", "mailpit", "traefik", "edge", "switch-bridge", "status",
 		"nn-sssl-dns", "x360-dns", "xb-dns")
-	coreIDs = set("account", "chat", "saves", "mods", "leaderboards", "rewards", "achievements", "title-storage",
+	coreIDs = set("account", "chat", "saves", "mods", "leaderboards", "rewards", "achievements", "title-storage", "matchmaking",
 		"parental", "pokemon-legality", "news-experiment", "bcat", "voice", "turn", "pakka", "registry", "connectivity")
 	siteIDs   = set("website", "openverse", "mktv", "splatnet", "mario-maker")
 	vendorIDs = set("eos", "demonware", "photon", "playfab", "klei", "shiro", "t17", "ugs", "battlenet")
@@ -163,6 +163,7 @@ var gatusFor = map[string][]string{
 	"leaderboards":  {"Game leaderboards"},
 	"achievements":  {"Game achievements"},
 	"title-storage": {"Game title storage"},
+	"matchmaking":   {"Game matchmaking"},
 	"website":       {"Website", "Rankings", "Rankings API", "Console link page"},
 	"postgres":      {"Database connections"},
 	"app-api":       {"Accounts"},
@@ -191,7 +192,7 @@ func gatusGroupConsole(title string) string {
 // Names shown for the services whose id is not a good label.
 var coreLabels = map[string]string{
 	"account": "Account", "chat": "Chat", "saves": "Cloud saves", "mods": "Mods", "leaderboards": "Leaderboards",
-	"rewards": "Rewards", "achievements": "Achievements", "title-storage": "Title storage", "parental": "Parental controls",
+	"rewards": "Rewards", "achievements": "Achievements", "title-storage": "Title storage", "matchmaking": "Matchmaking", "parental": "Parental controls",
 	"news-experiment": "News", "bcat": "BCAT", "voice": "Voice", "turn": "TURN relay", "pakka": "Pakka",
 	"registry": "Network registry", "connectivity": "Connectivity", "website": "Website", "openverse": "OpenVerse",
 	"mktv": "OpenKart", "splatnet": "OpenSplat", "mario-maker": "OpenMaker", "postgres": "Postgres", "redis": "Redis",
