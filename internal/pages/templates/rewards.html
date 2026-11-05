@@ -279,10 +279,11 @@
       <span class="art">{{template "rw-art" .}}</span>
       <span class="cap"><span class="sub">{{.Name}}</span></span>
       <div class="foot">
+        {{if eq .Kind "game_cosmetic"}}<span class="hint">{{.Where}}</span>{{else}}
         <form method="post" action="/account/rewards/equip" data-once><input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="slot" value="{{.Kind}}">
           {{if .Equipped}}<input type="hidden" name="item" value=""><button type="submit" class="small" aria-pressed="true" title="{{t $l "rewards.unequip"}}">{{t $l "rewards.equipped"}}</button>
           {{else}}<input type="hidden" name="item" value="{{.ID}}"><button type="submit" class="small primary" aria-label="{{t $l "rewards.equip"}}: {{.Name}}"{{if $.Me.Account.Frozen}} disabled{{end}}>{{t $l "rewards.equip"}}</button>{{end}}
-        </form>
+        </form>{{end}}
         {{if eq .Kind "theme"}}<div class="mt-2">{{template "rw-preview" (arr $l .)}}</div>{{end}}
       </div>
     </li>

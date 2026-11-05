@@ -208,3 +208,45 @@ func TestTargetTextGroupsThousands(t *testing.T) {
 		t.Errorf("hours: %q", got)
 	}
 }
+
+// Game cosmetics are items of their own kind: listed in the shop and the collection under the game's name, with no
+// art of ours (the placeholder tile), and bought like any other item.
+func TestRewardsGameCosmetics(t *testing.T) {
+	s, fc, _ := newTestServer(t)
+	seedTwoAccounts(fc)
+	rec := login(t, s, "a@x.test", "password-A-1")
+	st := rewardstest.NewState()
+	st.Balance, st.Lifetime = 120, 120
+	st.Owned["dst-skin-wilson-formal"] = true
+	s.Rewards = rewardstest.New(t, st)
+	get := func(path string) string {
+		t.Helper()
+		w := authedRequest(s, rec, http.MethodGet, path, nil)
+		if w.Code != 200 {
+			t.Fatalf("%s: %d", path, w.Code)
+		}
+		return w.Body.String()
+	}
+	shop := get("/account/rewards?tab=shop&kind=game_cosmetic")
+	for _, want := range []string{"Festive Willow", "Blue Runner", "Don&#39;t Starve Together, Switch", "Stumble Guys, Switch", "Game item", "art-placeholder"} {
+		if !strings.Contains(shop, want) {
+			t.Errorf("shop lacks %q", want)
+		}
+	}
+	if strings.Contains(shop, "Formal Wilson") {
+		t.Error("an owned item is still for sale")
+	}
+	if strings.Contains(shop, "rewards.k") {
+		t.Error("raw translation key")
+	}
+	mine := get("/account/rewards?tab=collection")
+	if !strings.Contains(mine, "Formal Wilson") || !strings.Contains(mine, "Game items") {
+		t.Error("collection lacks the owned game item")
+	}
+	if strings.Contains(mine, `name="slot" value="game_cosmetic"`) {
+		t.Error("a game item has an Equip button: it is equipped in the game")
+	}
+	if !strings.Contains(mine, "Don&#39;t Starve Together, Switch") {
+		t.Error("collection does not say which game the item is for")
+	}
+}

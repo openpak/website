@@ -30,7 +30,13 @@ import (
 var rewardsTabs = []string{"missions", "shop", "collection", "settings"}
 
 // itemKinds is the order kinds are listed in: the ones people collect first.
-var itemKinds = []string{"badge", "profile_icon", "theme", "title", "switch_icon", "x360_gamerpic", "x360_theme", "ps3_avatar", "ps3_theme"}
+var itemKinds = []string{"badge", "profile_icon", "theme", "title", "switch_icon", "x360_gamerpic", "x360_theme", "ps3_avatar", "ps3_theme", "game_cosmetic"}
+
+// gameNames are the proper names a hosted game is shown under; none of them is translated. A game this site
+// has no name for is shown by its id, spaced.
+var gameNames = map[string]string{
+	"dst": "Don't Starve Together", "stumble-guys": "Stumble Guys", "fall-guys": "Fall Guys", "xbox360-avatar": "Xbox 360 avatar items",
+}
 
 // platformNames are the proper names a catalogue platform is shown under; none of them is translated.
 var platformNames = map[string]string{
@@ -373,6 +379,13 @@ func (s *Server) itemOf(lang string, me rewards.Me, it rewards.Item) itemView {
 			n = strings.ToUpper(p)
 		}
 		where = append(where, n)
+	}
+	if g := it.Game; g != nil {
+		n, ok := gameNames[g.GameID]
+		if !ok {
+			n = strings.ReplaceAll(g.GameID, "-", " ")
+		}
+		where = append([]string{n}, where...)
 	}
 	iv.Where = strings.Join(where, ", ")
 	// One key per rendered form: a double submit of the same form is charged once.

@@ -40,6 +40,7 @@ type Item struct {
 	Price                       *int
 	Platforms                   []string
 	Limited                     bool
+	GameID, GameSlot, Rarity    string // game cosmetics only
 }
 
 type Mission struct {
@@ -77,13 +78,14 @@ func (st *State) items(t testing.TB) []Item {
 		Price                       *int
 		Platforms                   []string
 		Limited                     bool
+		Game                        struct{ GameID, Slot, Rarity string }
 	}
 	if err := json.Unmarshal([]byte(itemsJSON), &raw); err != nil {
 		t.Fatal(err)
 	}
 	out := make([]Item, len(raw))
 	for i, r := range raw {
-		out[i] = Item{r.ID, r.Kind, r.Name, r.Description, r.Price, r.Platforms, r.Limited}
+		out[i] = Item{r.ID, r.Kind, r.Name, r.Description, r.Price, r.Platforms, r.Limited, r.Game.GameID, r.Game.Slot, r.Game.Rarity}
 	}
 	return out
 }
@@ -130,7 +132,10 @@ func New(t testing.TB, st *State) *rewards.Client {
 	mux := http.NewServeMux()
 	item := func(it Item, withOwn bool) map[string]any {
 		m := map[string]any{"id": it.ID, "kind": it.Kind, "name": it.Name, "description": it.Description, "price": it.Price,
-			"platforms": it.Platforms, "limited": it.Limited, "has_preview": it.Kind != "title"}
+			"platforms": it.Platforms, "limited": it.Limited, "has_preview": it.Kind != "title" && it.Kind != "game_cosmetic"}
+		if it.GameID != "" {
+			m["game"] = map[string]string{"game_id": it.GameID, "game_ref": it.ID, "slot": it.GameSlot, "rarity": it.Rarity}
+		}
 		if withOwn {
 			m["owned"] = st.Owned[it.ID]
 			m["affordable"] = it.Price != nil && st.Balance >= *it.Price

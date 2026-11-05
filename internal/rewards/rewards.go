@@ -116,9 +116,19 @@ type Item struct {
 	Affordable       bool     `json:"affordable"`
 	Equipped         bool     `json:"equipped"`
 	RedemptionSource string   `json:"source"`
+	// Game is set for game cosmetics (kind game_cosmetic): which hosted game the item belongs to.
+	Game *GameInfo `json:"game,omitempty"`
 	// AvailableFrom and AvailableUntil bound the sale; the upcoming list always has the first.
 	AvailableFrom  *time.Time `json:"available_from,omitempty"`
 	AvailableUntil *time.Time `json:"available_until,omitempty"`
+}
+
+// GameInfo is the game side of a game cosmetic.
+type GameInfo struct {
+	GameID  string `json:"game_id"`
+	GameRef string `json:"game_ref"`
+	Slot    string `json:"slot"`
+	Rarity  string `json:"rarity"`
 }
 
 // Flag is one entry of the admin abuse queue.
