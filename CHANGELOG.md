@@ -11,6 +11,13 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.110.0 - 2026-11-05
+
+- Wii/DS link-first (prds#139): `/link` takes the 8-symbol code (Mario Kart Wii) or the 5-digit error code (24000-29999) an unlinked Wii or DS shows; a number also needs the browser on the console's network (wfc-api compares keyed network tags from the browser's address) or the console's in-game name (new optional field). The confirm screen names "your Wii"/"your DS", the game and the name. wfc-api makes the core link (`/api/pair/approve` with the signed-in account), so the website no longer calls `Links.Link` for `wfc`.
+- Account page: one row per linked Wii or DS (games played, never the console id), unlink per console through wfc-api with an optional "also erase its online game data"; the friend-code link form and `POST /account/link/wfc` are gone.
+- API: `POST /api/v1/me/links/wfc {code, name}` (friend codes are no longer accepted; `friend_code` is read as the code), new `GET /api/v1/me/links/wfc`, `DELETE /api/v1/me/links/wfc?link_id=&erase=1`, `linked_platforms` lists each console with its `unit`; error codes `wfc_code_unknown`, `wfc_link_failed`, `wfc_choose_console`. OpenAPI updated.
+- SSO `wfc_user_id` reads the console id out of link-first subjects (`<user_id>.<n>`).
+
 ## v0.109.0 — 2026-11-05
 
 - Card #141: game cosmetics in Rewards. A "Game items" kind in the Shop and My items, drawn with the game's own title art (Switch games from the icon route, others from the cover tiles), a game chip and the console on every card, the item name once, no Equip button (the game equips them). Intro text mentions game items in all six languages. The app JSON carries the game art. Nothing is listed until the rewards service marks an item deliverable.

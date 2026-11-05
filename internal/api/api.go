@@ -86,7 +86,7 @@ type Server struct {
 	// game room of an account, nil when no title server is configured.
 	Voice      *voice.Hub
 	Gatherings *voice.Gatherings
-	WFC        *wfc.Client // resolves Wii/DS friend codes; nil answers 503 on /me/links/wfc
+	WFC        *wfc.Client // Wii/DS pairing (wfc-api); nil answers 503 on /me/links/wfc
 	// Crashes stores crash-report files; nil keeps reports without them.
 	Crashes    *attachments.Store
 	CrashLimit *ratelimit.Limiter // per client, public crash reports
@@ -184,6 +184,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	h("/me/profile", s.auth(s.handleUpdateProfile))
 	h("/me/password", s.auth(s.handleChangePassword))
 	h("/me/links/wfc", s.auth(s.handleLinkWFC))
+	g("/me/links/wfc", s.auth(s.handleListWFC))
 	d("/me/links/{namespace}", s.auth(s.handleUnlink))
 	// Public: signing up and asking for a reset mail are what someone without
 	// an account, or without its password, does.
@@ -266,27 +267,30 @@ var errorCodes = map[string]string{
 	"wrong password":                                "wrong_password",
 	"invalid code":                                  "wrong_code",
 	"wrong code":                                    "wrong_code",
-	"invalid code, or the challenge has expired; sign in again":           "challenge_expired",
-	"invalid or expired token":                                            "session_expired",
-	"bearer token required":                                               "session_expired",
-	"this account is suspended":                                           "account_suspended",
-	"registrations are closed":                                            "registrations_closed",
-	"the account service did not answer":                                  "service_unavailable",
-	"the account service is not answering; try again":                     "service_unavailable",
-	"cloud saves are not available on this deployment":                    "saves_unavailable",
-	"saves service error":                                                 "saves_unavailable",
-	"chat is not available on this deployment":                            "chat_unavailable",
-	"chat service error":                                                  "chat_unavailable",
-	"no voice room has that code":                                         "voice_room_unknown",
-	"the voice room is full":                                              "voice_room_full",
-	"avatars are not configured":                                          "avatars_unavailable",
-	"Wii/DS linking is not available":                                     "wfc_unavailable",
-	"could not reach the Wii/DS server":                                   "wfc_unavailable",
-	"no Wii/DS profile has that friend code":                              "wfc_not_found",
-	"that console is linked to another account":                           "console_taken",
-	"no account for that friend code":                                     "friend_code_unknown",
-	"cannot befriend yourself":                                            "friend_self",
-	"request exists or relationship conflicts":                            "friend_conflict",
+	"invalid code, or the challenge has expired; sign in again": "challenge_expired",
+	"invalid or expired token":                                  "session_expired",
+	"bearer token required":                                     "session_expired",
+	"this account is suspended":                                 "account_suspended",
+	"registrations are closed":                                  "registrations_closed",
+	"the account service did not answer":                        "service_unavailable",
+	"the account service is not answering; try again":           "service_unavailable",
+	"cloud saves are not available on this deployment":          "saves_unavailable",
+	"saves service error":                                       "saves_unavailable",
+	"chat is not available on this deployment":                  "chat_unavailable",
+	"chat service error":                                        "chat_unavailable",
+	"no voice room has that code":                               "voice_room_unknown",
+	"the voice room is full":                                    "voice_room_full",
+	"avatars are not configured":                                "avatars_unavailable",
+	"Wii/DS linking is not available":                           "wfc_unavailable",
+	"could not reach the Wii/DS server":                         "wfc_unavailable",
+	"that code is unknown or has expired; connect on the console again for a new one":              "wfc_code_unknown",
+	"that console is linked to another account, or this account has the most consoles it may link": "console_taken",
+	"the link could not be made; connect on the console again for a new code":                      "wfc_link_failed",
+	"several consoles are linked; name one with link_id":                                           "wfc_choose_console",
+	"no such console on this account":                                                              "wfc_not_found",
+	"no account for that friend code":                                                              "friend_code_unknown",
+	"cannot befriend yourself":                                                                     "friend_self",
+	"request exists or relationship conflicts":                                                     "friend_conflict",
 	"no pending request":                                                  "no_pending_request",
 	"you can only message friends":                                        "chat_not_friends",
 	"you cannot message this account":                                     "chat_blocked",
@@ -547,16 +551,19 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request, tok store.APIT
 		// from cache after a change.
 		resp["avatar_url"] = s.avatarURL(r.Context(), tok.AccountID)
 	}
-	// Linked consoles, every family the account reaches. A Wii/DS console is
-	// linked from the website by friend code (WFC has no login); its subject
-	// is the console-level user id, and per-title friend codes mean there is
-	// no single code to project here — the console being listed is the point.
+	// Linked consoles, every family the account reaches. Wii and DS consoles
+	// (several may be linked) come from wfc-api, which owns those links; the
+	// console id is never projected (a bearer value on the DS).
 	platforms := []map[string]string{}
 	if link, err := s.Links.ActiveLinkByAccount(r.Context(), "switch", tok.AccountID); err == nil {
 		platforms = append(platforms, map[string]string{"namespace": "switch", "link_id": link.LinkID})
 	}
-	if link, err := s.Links.ActiveLinkByAccount(r.Context(), "wfc", tok.AccountID); err == nil {
-		platforms = append(platforms, map[string]string{"namespace": "wfc", "link_id": link.LinkID})
+	if s.WFC != nil {
+		if consoles, err := s.WFC.Consoles(r.Context(), tok.AccountID); err == nil {
+			for _, c := range consoles {
+				platforms = append(platforms, map[string]string{"namespace": "wfc", "link_id": c.LinkID, "unit": c.Unit})
+			}
+		}
 	}
 	// Wii U and 3DS console accounts are listed as the website lists them but cannot be revoked here
 	// (they are nn-account's own accounts).

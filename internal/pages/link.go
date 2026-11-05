@@ -37,6 +37,9 @@ type linkView struct {
 	Error     string
 	ClientID  string
 	Kind      string // "wfc" for a Wii or DS pairing code, empty for a game device code
+	// ConsoleName is the in-game name typed with a 5-digit Wii/DS number (the second factor
+	// when the browser is not on the console's network).
+	ConsoleName string
 	TitleName string
 	Handle    string
 	Gamertag  string
@@ -165,12 +168,13 @@ func (s *Server) handleLinkCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	lang := i18n.FromRequest(r)
-	// A Wii or DS shows an eight-symbol pairing code; try the Wii/DS server first, and fall
-	// back to the game device codes when it does not know the code.
+	// A Wii or DS shows an eight-symbol pairing code or a six-digit link number; try the
+	// Wii/DS server first, and fall back to the game device codes when it does not know it.
 	if s.WFC != nil {
-		switch pairing, err := s.WFC.PairLookup(r.Context(), code); {
+		name := strings.TrimSpace(r.PostFormValue("console_name"))
+		switch pairing, err := s.WFC.PairPreview(r.Context(), code, clientKey(r), name); {
 		case err == nil:
-			s.linkConfirmWFC(w, r, v, code, pairing)
+			s.linkConfirmWFC(w, r, v, code, name, pairing)
 			return
 		case !errors.Is(err, wfc.ErrPairingCode):
 			s.log.Warn("link: wfc lookup", "err", err)
@@ -195,15 +199,15 @@ func (s *Server) handleLinkCheck(w http.ResponseWriter, r *http.Request) {
 }
 
 // linkConfirmWFC asks the player to confirm linking the console a pairing code names.
-func (s *Server) linkConfirmWFC(w http.ResponseWriter, r *http.Request, v *viewer, code string, p wfc.Pairing) {
+func (s *Server) linkConfirmWFC(w http.ResponseWriter, r *http.Request, v *viewer, code, name string, p wfc.Pairing) {
 	lang := i18n.FromRequest(r)
 	view := linkView{baseData: s.data(r, v, i18n.T(lang, "link.title")), Step: "confirm", Code: code,
-		Kind: "wfc", TitleName: i18n.T(lang, "link.wfc.title"), Handle: v.DisplayName}
+		Kind: "wfc", TitleName: wfcTitle(lang, p.Unit), Handle: v.DisplayName, ConsoleName: name}
 	if view.Handle == "" {
 		view.Handle = v.Email
 	}
-	if p.Name != "" {
-		view.TitleName += " (" + p.Name + ")"
+	if detail := wfcDetail(lang, p); detail != "" {
+		view.TitleName += " (" + detail + ")"
 	}
 	view.Question = strings.NewReplacer("{title}", view.TitleName, "{account}", view.Handle).Replace(i18n.T(lang, "link.confirm.q"))
 	view.Note = i18n.T(lang, "link.wfc.note")
@@ -250,25 +254,32 @@ func (s *Server) handleLinkApprove(w http.ResponseWriter, r *http.Request) {
 		Done: strings.NewReplacer("{title}", title, "{gamertag}", gamertag).Replace(i18n.T(lang, "link.done"))})
 }
 
-// linkApproveWFC makes the core link for the console the code names and spends the code.
+// linkApproveWFC links the console the code names to the signed-in account (wfc-api makes the
+// core link and spends the code).
 func (s *Server) linkApproveWFC(w http.ResponseWriter, r *http.Request, v *viewer, code string) {
-	err := accounts.LinkWFCCode(r.Context(), s.WFC, s.Links, v.AccountID, code)
+	p, err := accounts.ApproveWFC(r.Context(), s.WFC, v.AccountID, code, clientKey(r), strings.TrimSpace(r.PostFormValue("console_name")))
 	switch {
 	case err == nil:
 	case errors.Is(err, wfc.ErrPairingCode):
+		s.linkFail(w, r, v, code, xbl.ErrExpired)
+		return
+	case errors.Is(err, wfc.ErrConflict):
+		s.linkFail(w, r, v, code, core.ErrConflict)
+		return
+	case errors.Is(err, wfc.ErrApprovalFailed):
 		s.linkFail(w, r, v, code, xbl.ErrExpired)
 		return
 	default:
 		s.linkFail(w, r, v, code, err)
 		return
 	}
-	s.log.Info("link: wii/ds pairing code approved", "account", v.AccountID)
+	s.log.Info("link: wii/ds pairing code approved", "account", v.AccountID, "unit", p.Unit, "already", p.AlreadyLinked)
 	lang := i18n.FromRequest(r)
 	handle := v.DisplayName
 	if handle == "" {
 		handle = v.Email
 	}
-	title := i18n.T(lang, "link.wfc.title")
+	title := wfcTitle(lang, p.Unit)
 	w.Header().Set("Cache-Control", "no-store")
 	s.render(w, http.StatusOK, "link.html", linkView{baseData: s.data(r, v, i18n.T(lang, "link.title")),
 		Step: "done", TitleName: title,
@@ -281,4 +292,27 @@ func capitalize(s string) string {
 	}
 	r := []rune(s)
 	return strings.ToUpper(string(r[:1])) + string(r[1:])
+}
+
+// wfcTitle names the console on the confirm and done screens: "your Wii", "your DS".
+func wfcTitle(lang, unit string) string {
+	switch unit {
+	case "wii":
+		return i18n.T(lang, "link.wfc.title.wii")
+	case "ds":
+		return i18n.T(lang, "link.wfc.title.ds")
+	}
+	return i18n.T(lang, "link.wfc.title")
+}
+
+// wfcDetail is the game and in-game name the console showed, so the player can tell it is theirs.
+func wfcDetail(lang string, p wfc.Pairing) string {
+	parts := []string{}
+	if p.GameCode != "" {
+		parts = append(parts, p.GameCode)
+	}
+	if p.Name != "" {
+		parts = append(parts, "\u201c"+p.Name+"\u201d")
+	}
+	return strings.Join(parts, ", ")
 }

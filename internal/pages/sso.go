@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/openpak/website/internal/accounts"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/i18n"
 )
@@ -127,7 +128,7 @@ func (s *Server) handleSSOToken(w http.ResponseWriter, r *http.Request) {
 	}
 	if s.Links != nil {
 		if link, err := s.Links.ActiveLinkByAccount(r.Context(), "wfc", g.AccountID); err == nil && link.SubjectID != "" {
-			out["wfc_user_id"] = link.SubjectID
+			out["wfc_user_id"] = accounts.WFCUserID(link.SubjectID)
 		}
 	}
 	ssoJSON(w, http.StatusOK, out)

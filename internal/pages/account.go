@@ -30,7 +30,7 @@ type accountView struct {
 	Codes          []accounts.Code
 	Links          []linkRow
 	Discord        discordRow
-	CanLinkWFC     bool // a Wii/DS server is configured, so the friend-code form is shown
+	CanLinkWFC     bool // a Wii/DS server is configured, so the link hint is shown
 	Sessions       []core.Session
 	CurrentSession string
 	AvatarURL      string
@@ -82,6 +82,15 @@ type linkRow struct {
 	// Revocable is false for Wii U and 3DS: those links are nn-account's
 	// console accounts, and cutting one here would orphan it.
 	Revocable bool
+	// WFC rows are revoked through wfc-api and offer to erase the console's game data.
+	WFC bool
+}
+
+func wfcUnitName(unit string) string {
+	if unit == "ds" {
+		return "Nintendo DS"
+	}
+	return "Wii"
 }
 
 func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
@@ -127,10 +136,18 @@ func (s *Server) handleAccount(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Wii and DS cannot link themselves; the website did it from a friend code (handleLinkWFC).
-	// There is no one code to show for them: a Wii friend code belongs to a game, not the console.
-	if link, err := s.Links.ActiveLinkByAccount(ctx, "wfc", v.AccountID); err == nil {
-		view.Links = append(view.Links, linkRow{Namespace: "Wii / DS", Subject: link.SubjectID, LinkID: link.LinkID, Revocable: true})
+	// Wii and DS link through /link with the code the console shows when it is refused online.
+	// One account may hold several; each is listed with the games it has played, never its
+	// console id (a bearer value on the DS).
+	if s.WFC != nil {
+		if consoles, err := s.WFC.Consoles(ctx, v.AccountID); err == nil {
+			for _, c := range consoles {
+				view.Links = append(view.Links, linkRow{Namespace: wfcUnitName(c.Unit), Subject: strings.Join(c.Games, ", "),
+					LinkID: c.LinkID, Revocable: true, WFC: true})
+			}
+		} else {
+			s.log.Warn("wfc consoles", "err", err)
+		}
 	}
 	view.CanLinkWFC = s.WFC != nil
 	if s.NNAdapter != nil {
@@ -335,13 +352,25 @@ func (s *Server) handleUnlink(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "link required", http.StatusBadRequest)
 		return
 	}
+	// A Wii or DS: wfc-api checks it is one of the viewer's own consoles, revokes the core
+	// link, kicks the console and, if asked, erases its online game data.
+	if r.PostFormValue("kind") == "wfc" && s.WFC != nil {
+		switch err := s.WFC.Unlink(r.Context(), v.AccountID, linkID, r.PostFormValue("erase") == "1"); {
+		case err == nil:
+			redirectMsg(w, r, "/account", "saved")
+		case errors.Is(err, wfc.ErrNotFound):
+			http.Error(w, "link not found", http.StatusNotFound)
+		default:
+			s.log.Error("wfc unlink", "err", err)
+			http.Error(w, "could not revoke link", http.StatusInternalServerError)
+		}
+		return
+	}
 	// The form names a link id; only one of the viewer's own links may be revoked.
 	owned := false
-	var ownedLink core.Link
-	ownedNS := ""
-	for _, ns := range []string{"switch", "wfc"} {
+	for _, ns := range []string{"switch"} {
 		if l, err := s.Links.ActiveLinkByAccount(r.Context(), ns, v.AccountID); err == nil && l.LinkID == linkID {
-			owned, ownedLink, ownedNS = true, l, ns
+			owned = true
 		}
 	}
 	if !owned {
@@ -354,43 +383,7 @@ func (s *Server) handleUnlink(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not revoke link", http.StatusInternalServerError)
 		return
 	}
-	if ownedNS == "wfc" && s.WFC != nil {
-		// Offer the console a pairing code again; best effort, the friend code path still works.
-		if uid, err := strconv.ParseUint(ownedLink.SubjectID, 10, 64); err == nil {
-			if err := s.WFC.PairForget(r.Context(), uid); err != nil {
-				s.log.Warn("wfc forget", "err", err)
-			}
-		}
-	}
 	redirectMsg(w, r, "/account", "saved")
-}
-
-// handleLinkWFC links a Wii or DS from a friend code the player read off a game; the console
-// has no way to type a code itself.
-func (s *Server) handleLinkWFC(w http.ResponseWriter, r *http.Request) {
-	v, ok := s.postGuard(w, r)
-	if !ok {
-		return
-	}
-	if s.WFC == nil {
-		http.Error(w, "Wii/DS linking is not available", http.StatusServiceUnavailable)
-		return
-	}
-	err := accounts.LinkWFC(r.Context(), s.WFC, s.Links, v.AccountID, r.PostFormValue("friend_code"))
-	switch {
-	case err == nil:
-		redirectMsg(w, r, "/account", "wfc-linked")
-	case errors.Is(err, wfc.ErrNotFound):
-		redirectMsg(w, r, "/account", "wfc-notfound")
-	case errors.Is(err, accounts.ErrWFCUnreachable):
-		s.log.Error("wfc resolve", "err", err)
-		http.Error(w, "could not reach the Wii/DS server", http.StatusBadGateway)
-	case errors.Is(err, core.ErrConflict):
-		redirectMsg(w, r, "/account", "wfc-taken")
-	default:
-		s.log.Error("wfc link", "err", err)
-		http.Error(w, "could not link", http.StatusInternalServerError)
-	}
 }
 
 func (s *Server) handleAvatarUpload(w http.ResponseWriter, r *http.Request) {

@@ -15,6 +15,7 @@
     <input type="hidden" name="code" value="{{.Code}}">
     <input type="hidden" name="client_id" value="{{.ClientID}}">
     <input type="hidden" name="kind" value="{{.Kind}}">
+    {{with .ConsoleName}}<input type="hidden" name="console_name" value="{{.}}">{{end}}
     <button type="submit" class="btn primary">{{t .Lang "link.approve"}}</button>
     <a class="btn ghost" href="/link">{{t .Lang "link.cancel"}}</a>
   </form>
@@ -29,6 +30,9 @@
     <label for="code">{{t .Lang "link.code"}}</label>
     <input id="code" name="code" type="text" required value="{{.Code}}" maxlength="20" autocomplete="off" autocapitalize="characters" spellcheck="false" autofocus{{if .Error}} aria-invalid="true" aria-describedby="link-err"{{end}}>
     <p class="hint">{{t .Lang "link.code.hint"}}</p>
+    <label for="console_name">{{t .Lang "link.wfc.name"}}</label>
+    <input id="console_name" name="console_name" type="text" value="{{.ConsoleName}}" maxlength="20" autocomplete="off" spellcheck="false">
+    <p class="hint">{{t .Lang "link.wfc.name.hint"}}</p>
     <button type="submit" class="btn primary">{{t .Lang "link.continue"}}</button>
   </form>
   {{end}}

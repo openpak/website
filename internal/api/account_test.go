@@ -11,10 +11,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/openpak/website/internal/wfc/wfctest"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/ratelimit"
 	"github.com/openpak/website/internal/store"
-	"github.com/openpak/website/internal/wfc"
 )
 
 func signIn(t *testing.T, s *Server) string {
@@ -52,35 +52,35 @@ func TestChangePassword(t *testing.T) {
 	}
 }
 
-// Link a Wii by friend code, then unlink it by namespace; the Switch link another
+// Link a Wii by the code it showed, then unlink it by namespace; the Switch link another
 // account holds is out of reach.
 func TestLinkAndUnlinkWiiDS(t *testing.T) {
 	s, fc, _ := newTestAPI(t)
-	nwfc := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Query().Get("fc") != "1234-5678-9012" {
-			http.NotFound(w, r)
-			return
-		}
-		_, _ = w.Write([]byte(`{"user_id":42}`))
-	}))
-	defer nwfc.Close()
-	s.WFC = wfc.New(nwfc.URL, "")
+	f, cli := wfctest.New(t)
+	f.Codes["QXZP7K2M"] = wfctest.Code{Number: 24829, UserID: 42, Unit: "ds", Game: "AMCE",
+		Proof: func(ip, name string) bool { return name == "TOBAGIN" }}
+	s.WFC = cli
 	tok := signIn(t, s)
 
-	if rec := do(t, s, http.MethodPost, "/api/v1/me/links/wfc", tok, map[string]string{"friend_code": "0000-0000-0000"}); rec.Code != http.StatusNotFound {
-		t.Fatalf("unknown code: %d", rec.Code)
+	if rec := do(t, s, http.MethodPost, "/api/v1/me/links/wfc", tok, map[string]string{"code": "24829"}); rec.Code != http.StatusNotFound || !strings.Contains(rec.Body.String(), "wfc_code_unknown") {
+		t.Fatalf("number without proof: %d %s", rec.Code, rec.Body.String())
 	}
-	if rec := do(t, s, http.MethodPost, "/api/v1/me/links/wfc", tok, map[string]string{"friend_code": "1234-5678-9012"}); rec.Code != http.StatusCreated {
+	rec := do(t, s, http.MethodPost, "/api/v1/me/links/wfc", tok, map[string]string{"code": "24829", "name": "TOBAGIN"})
+	if rec.Code != http.StatusCreated || !strings.Contains(rec.Body.String(), `"unit":"ds"`) {
 		t.Fatalf("link: %d %s", rec.Code, rec.Body.String())
 	}
-	if fc.wfcLinks["acct-a@x.test"] != "42" {
-		t.Fatalf("core holds %v", fc.wfcLinks)
+	if f.Linked[42].Account != "acct-a@x.test" {
+		t.Fatalf("approve went out as %+v", f.Linked)
 	}
-	if rec := do(t, s, http.MethodDelete, "/api/v1/me/links/wfc", tok, nil); rec.Code != http.StatusOK {
-		t.Fatalf("unlink: %d", rec.Code)
+	rec = do(t, s, http.MethodGet, "/api/v1/me/links/wfc", tok, nil)
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `"unit":"ds"`) || strings.Contains(rec.Body.String(), "42") {
+		t.Fatalf("list: %d %s", rec.Code, rec.Body.String())
 	}
-	if _, ok := fc.wfcLinks["acct-a@x.test"]; ok {
-		t.Fatal("still linked")
+	if rec := do(t, s, http.MethodDelete, "/api/v1/me/links/wfc", tok, nil); rec.Code != http.StatusOK || len(f.Unlinked) != 1 {
+		t.Fatalf("unlink: %d %v", rec.Code, f.Unlinked)
+	}
+	if rec := do(t, s, http.MethodDelete, "/api/v1/me/links/wfc", tok, nil); rec.Code != http.StatusNotFound {
+		t.Fatalf("unlink twice: %d", rec.Code)
 	}
 	if rec := do(t, s, http.MethodDelete, "/api/v1/me/links/switch", tok, nil); rec.Code != http.StatusNotFound {
 		t.Fatalf("unlinking a console A never had: %d", rec.Code)
@@ -155,45 +155,29 @@ func TestDeleteAccount(t *testing.T) {
 	}
 }
 
-// The app takes a Wii/DS pairing code in the same field as a friend code; it links the console
-// the code names, spends the code and is rate limited per account.
+// The app's old field name still carries the code; several consoles need a link_id to unlink
+// one; attempts are rate limited per account.
 func TestLinkWiiDSByPairingCode(t *testing.T) {
-	s, fc, _ := newTestAPI(t)
-	var redeemed, forgotten int
-	nwfc := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var req struct{ Code string }
-		_ = json.NewDecoder(r.Body).Decode(&req)
-		switch r.URL.Path {
-		case "/api/pair/lookup", "/api/pair/redeem":
-			if strings.ToUpper(strings.ReplaceAll(req.Code, "-", "")) != "QXZP7K2M" {
-				http.Error(w, "{}", http.StatusNotFound)
-				return
-			}
-			if strings.HasSuffix(r.URL.Path, "redeem") {
-				redeemed++
-			}
-			_, _ = w.Write([]byte(`{"user_id":77}`))
-		case "/api/pair/forget":
-			forgotten++
-			w.WriteHeader(http.StatusNoContent)
-		}
-	}))
-	defer nwfc.Close()
-	s.WFC = wfc.New(nwfc.URL, "")
+	s, _, _ := newTestAPI(t)
+	f, cli := wfctest.New(t)
+	f.Codes["QXZP7K2M"] = wfctest.Code{Number: 24829, UserID: 77, Unit: "wii"}
+	f.Codes["ABCD2345"] = wfctest.Code{Number: 25222, UserID: 78, Unit: "ds"}
+	s.WFC = cli
 	s.PairLimit = ratelimit.New(3, time.Minute)
 	tok := signIn(t, s)
 
-	if rec := do(t, s, http.MethodPost, "/api/v1/me/links/wfc", tok, map[string]string{"code": "AAAA-BBBB"}); rec.Code != http.StatusNotFound {
-		t.Fatalf("unknown pairing code: %d", rec.Code)
-	}
 	if rec := do(t, s, http.MethodPost, "/api/v1/me/links/wfc", tok, map[string]string{"friend_code": "qxzp-7k2m"}); rec.Code != http.StatusCreated {
-		t.Fatalf("pairing code in the friend_code field: %d %s", rec.Code, rec.Body.String())
+		t.Fatalf("code in the friend_code field: %d %s", rec.Code, rec.Body.String())
 	}
-	if fc.wfcLinks["acct-a@x.test"] != "77" || redeemed != 1 {
-		t.Fatalf("link %v, redeemed %d", fc.wfcLinks, redeemed)
+	if rec := do(t, s, http.MethodPost, "/api/v1/me/links/wfc", tok, map[string]string{"code": "ABCD-2345"}); rec.Code != http.StatusCreated {
+		t.Fatalf("second console: %d %s", rec.Code, rec.Body.String())
 	}
-	if rec := do(t, s, http.MethodDelete, "/api/v1/me/links/wfc", tok, nil); rec.Code != http.StatusOK || forgotten != 1 {
-		t.Fatalf("unlink: %d, forgotten %d", rec.Code, forgotten)
+	if rec := do(t, s, http.MethodDelete, "/api/v1/me/links/wfc", tok, nil); rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), "wfc_choose_console") {
+		t.Fatalf("ambiguous unlink: %d %s", rec.Code, rec.Body.String())
+	}
+	link := f.Linked[78].LinkID
+	if rec := do(t, s, http.MethodDelete, "/api/v1/me/links/wfc?erase=1&link_id="+link, tok, nil); rec.Code != http.StatusOK || len(f.Erased) != 1 || f.Erased[0] != 78 {
+		t.Fatalf("unlink one: %d erased %v", rec.Code, f.Erased)
 	}
 	do(t, s, http.MethodPost, "/api/v1/me/links/wfc", tok, map[string]string{"code": "ZZZZ-ZZZZ"})
 	if rec := do(t, s, http.MethodPost, "/api/v1/me/links/wfc", tok, map[string]string{"code": "ZZZZ-ZZZZ"}); rec.Code != http.StatusTooManyRequests {

@@ -186,6 +186,8 @@
       {{if .Revocable}}<form method="post" action="/account/link/revoke" class="inline">
         <input type="hidden" name="csrf" value="{{$.CSRF}}">
         <input type="hidden" name="link_id" value="{{.LinkID}}">
+        {{if .WFC}}<input type="hidden" name="kind" value="wfc">
+        <label class="inline hint"><input type="checkbox" name="erase" value="1"> {{t $.Lang "account.links.wfc.erase"}}</label>{{end}}
         <button type="submit" class="small danger">{{t $.Lang "account.links.revoke"}}</button>
       </form>{{end}}</li>{{end}}
   </ul>
@@ -241,16 +243,11 @@
   </div>
   {{end}}
   {{if .CanLinkWFC}}
-  <form method="post" action="/account/link/wfc" class="form-stack max-w-md">
-    <input type="hidden" name="csrf" value="{{.CSRF}}">
-    <label for="friend_code">{{t .Lang "account.links.wfc"}}</label>
+  <div class="form-stack max-w-md" id="wfc">
+    <h3 class="mt-8">{{t .Lang "account.links.wfc"}}</h3>
     <p class="hint">{{t .Lang "account.links.wfc.help"}}</p>
-    <p class="hint">{{t .Lang "account.links.wfc.codehelp"}} <a href="/link">{{t .Lang "account.links.wfc.codelink"}}</a></p>
-    <div class="row">
-      <input id="friend_code" name="friend_code" inputmode="numeric" pattern="[0-9 -]{12,14}" placeholder="1234-5678-9012" required>
-      <button type="submit" class="small">{{t .Lang "account.links.wfc.submit"}}</button>
-    </div>
-  </form>
+    <p><a href="/link">{{t .Lang "account.links.wfc.codelink"}}</a></p>
+  </div>
   {{end}}
 </section>
 

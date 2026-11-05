@@ -667,25 +667,25 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
   /me/links/wfc:
     post:
-      summary: Link a Wii or DS by friend code or pairing code
+      summary: Link a Wii or DS by the code it showed
       description: |
-        WFC has no login, so a Wii or DS is linked from a friend code the
-        player reads off a game, or from the pairing code an unlinked console
-        is shown when it connects (Mario Kart Wii prints it in the Wi-Fi menu
-        message). Send the pairing code as `code`; a pairing code in
-        `friend_code` is also accepted. Pairing codes expire after 30 minutes,
-        work once and are rate limited per account (429). The console then
-        appears in `/me`'s `linked_platforms` under namespace `wfc`.
+        A Wii or DS that is not linked to an account is refused online and
+        shows a code: Mario Kart Wii an eight-character code (and a six-digit
+        number) in its error text, other games the six-digit link number as
+        their error code. Send either as `code` (`friend_code` is read as the
+        code too, for older apps; linking by friend code is gone). Codes
+        expire after 15 minutes, work once and are rate limited per account
+        (429). One account may link up to 8 consoles; they appear in `/me`'s
+        `linked_platforms` under namespace `wfc` and in `GET /me/links/wfc`.
+        The player then connects again on the console.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              description: Either `friend_code` or `code`.
               properties:
-                friend_code: { type: string, examples: ["1234-5678-9012"] }
-                code: { type: string, examples: ["QXZP-7K2M"] }
+                code: { type: string, examples: ["QXZP-7K2M", "482913"] }
       responses:
         "201":
           description: Linked
@@ -696,19 +696,47 @@ paths:
                 properties:
                   namespace: { type: string, examples: ["wfc"] }
                   linked: { type: boolean }
+                  unit: { type: string, enum: [wii, ds] }
+                  already_linked: { type: boolean }
         "401": { $ref: "#/components/responses/Unauthorized" }
-        "404": { description: No Wii/DS profile has that friend code. }
-        "409": { description: That console is linked to another account. }
+        "404": { description: "The code is unknown, expired or used (`wfc_code_unknown`)." }
+        "409": { description: "The console is linked to another account or this account has 8 consoles (`console_taken`), or the link could not be made (`wfc_link_failed`)." }
+        "429": { description: Too many codes tried. }
         "502": { description: The Wii/DS server did not answer. }
         "503": { description: Wii/DS linking is not configured on this deployment. }
+    get:
+      summary: The account's linked Wii and DS consoles
+      responses:
+        "200":
+          description: Consoles (never the console id)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  consoles:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        link_id: { type: string }
+                        unit: { type: string, enum: [wii, ds] }
+                        games: { type: array, items: { type: string } }
+                        linked_at: { type: string, format: date-time }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "502": { description: The Wii/DS server did not answer. }
   /me/links/{namespace}:
     delete:
       summary: Unlink the account's console in a namespace
       description: |
         Addressed by namespace (`switch`, `wfc`, as listed in `/me`'s
         `linked_platforms`), so only the caller's own link can be revoked.
+        For `wfc`, `link_id` picks one console (it may be left out when there
+        is just one) and `erase=1` also deletes that console's online game data.
       parameters:
         - { name: namespace, in: path, required: true, schema: { type: string, examples: ["wfc"] } }
+        - { name: link_id, in: query, required: false, schema: { type: string } }
+        - { name: erase, in: query, required: false, schema: { type: string, enum: ["1"] } }
       responses:
         "200":
           description: Unlinked
@@ -718,6 +746,7 @@ paths:
                 type: object
                 properties:
                   unlinked: { type: boolean }
+        "400": { description: "Several Wii/DS consoles are linked; name one with `link_id` (`wfc_choose_console`)." }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { description: "Wii U and 3DS console accounts are listed in `linked_platforms` (namespaces `wiiu`, `3ds`) but cannot be unlinked here, as on the website." }
         "404": { description: No console is linked in that namespace. }

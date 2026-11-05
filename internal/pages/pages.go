@@ -236,12 +236,6 @@ func flashText(lang, code string) string {
 		return i18n.T(lang, "friends.request.unknown")
 	case "fself":
 		return i18n.T(lang, "friends.request.self")
-	case "wfc-linked":
-		return i18n.T(lang, "account.links.wfc.ok")
-	case "wfc-notfound":
-		return i18n.T(lang, "account.links.wfc.notfound")
-	case "wfc-taken":
-		return i18n.T(lang, "account.links.wfc.taken")
 	case "console-saved":
 		return i18n.T(lang, "account.console.msg.saved")
 	case "console-mismatch":
@@ -454,7 +448,6 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /account/delete", s.handleDeleteAccount)
 	mux.HandleFunc("POST /account/sessions/revoke", s.handleRevokeSession)
 	mux.HandleFunc("POST /account/link/revoke", s.handleUnlink)
-	mux.HandleFunc("POST /account/link/wfc", s.handleLinkWFC)
 	mux.HandleFunc("POST /account/link/discord", s.handleDiscordStart)
 	mux.HandleFunc("GET /account/link/discord/callback", s.handleDiscordCallback)
 	mux.HandleFunc("POST /account/link/discord/revoke", s.handleDiscordRevoke)

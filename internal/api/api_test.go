@@ -18,6 +18,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/openpak/website/internal/wfc/wfctest"
 	"github.com/openpak/website/internal/core"
 	"github.com/openpak/website/internal/media"
 	"github.com/openpak/website/internal/session"
@@ -895,8 +896,10 @@ func TestMeListsWiiDSLink(t *testing.T) {
 		t.Fatalf("empty me: %d %s", rec.Code, rec.Body.String())
 	}
 
-	// Link a Wii by friend code; it appears beside nothing else.
-	fc.wfcLinks["acct-a@x.test"] = "123456789" // nn-wfc console-level user id
+	// Link a Wii; it appears beside nothing else.
+	f, cli := wfctest.New(t)
+	s.WFC = cli
+	f.Linked[123456789] = wfctest.Console{UserID: 123456789, Account: "acct-a@x.test", LinkID: "wfclink-1", Unit: "wii"}
 	rec = do(t, s, http.MethodGet, "/api/v1/me", minted.Token, nil)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("me: %d", rec.Code)

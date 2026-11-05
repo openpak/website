@@ -1,11 +1,9 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -211,12 +209,15 @@ func (s *Server) handleDeleteAccount(w http.ResponseWriter, r *http.Request, tok
 	}
 }
 
-// handleLinkWFC: POST /api/v1/me/links/wfc {"friend_code"}. A Wii or DS cannot sign in, so
-// it is linked from a friend code read off a game, as on the website.
+// handleLinkWFC: POST /api/v1/me/links/wfc {"code"}. A Wii or DS that is not linked is refused
+// online and shows a code (eight characters in Mario Kart Wii, a six-digit number as the error
+// code elsewhere); this links that console to the token's account. "friend_code" is read as the
+// code too, for apps from before link-first.
 func (s *Server) handleLinkWFC(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
 	var req struct {
+		Code       string `json:"code"`
 		FriendCode string `json:"friend_code"`
-		Code       string `json:"code"` // a pairing code the game showed (Mario Kart Wii: the Wi-Fi menu message)
+		Name       string `json:"name"` // the console's in-game name, with a 5-digit number off its network
 	}
 	if !decodeSmall(w, r, &req) {
 		return
@@ -225,38 +226,45 @@ func (s *Server) handleLinkWFC(w http.ResponseWriter, r *http.Request, tok store
 		writeError(w, http.StatusServiceUnavailable, "Wii/DS linking is not available")
 		return
 	}
-	// One field takes either: a pairing code has letters, a friend code is twelve digits.
-	if req.Code == "" && accounts.LooksLikeWFCPairingCode(req.FriendCode) {
-		req.Code, req.FriendCode = req.FriendCode, ""
+	if req.Code == "" {
+		req.Code = req.FriendCode
 	}
-	var err error
-	if req.Code != "" {
-		if !s.wfcPairAllowed(tok.AccountID) {
-			writeError(w, http.StatusTooManyRequests, "too many codes tried; wait a few minutes")
-			return
-		}
-		err = accounts.LinkWFCCode(r.Context(), s.WFC, s.Links, tok.AccountID, req.Code)
-		if errors.Is(err, wfc.ErrPairingCode) {
-			writeError(w, http.StatusNotFound, "that code is unknown or has expired; sign in on the console again for a new one")
-			return
-		}
-	} else {
-		err = accounts.LinkWFC(r.Context(), s.WFC, s.Links, tok.AccountID, req.FriendCode)
+	if !s.wfcPairAllowed(tok.AccountID) {
+		writeError(w, http.StatusTooManyRequests, "too many codes tried; wait a few minutes")
+		return
 	}
+	p, err := accounts.ApproveWFC(r.Context(), s.WFC, tok.AccountID, req.Code, clientKey(r), strings.TrimSpace(req.Name))
 	switch {
 	case err == nil:
-		writeJSON(w, http.StatusCreated, map[string]any{"namespace": "wfc", "linked": true})
-	case errors.Is(err, wfc.ErrNotFound):
-		writeError(w, http.StatusNotFound, "no Wii/DS profile has that friend code")
-	case errors.Is(err, accounts.ErrWFCUnreachable):
-		s.log.Error("api wfc resolve", "err", err)
-		writeError(w, http.StatusBadGateway, "could not reach the Wii/DS server")
-	case errors.Is(err, core.ErrConflict):
-		writeError(w, http.StatusConflict, "that console is linked to another account")
+		writeJSON(w, http.StatusCreated, map[string]any{"namespace": "wfc", "linked": true, "unit": p.Unit, "already_linked": p.AlreadyLinked})
+	case errors.Is(err, wfc.ErrPairingCode):
+		writeError(w, http.StatusNotFound, "that code is unknown or has expired; connect on the console again for a new one")
+	case errors.Is(err, wfc.ErrConflict):
+		writeError(w, http.StatusConflict, "that console is linked to another account, or this account has the most consoles it may link")
+	case errors.Is(err, wfc.ErrApprovalFailed):
+		writeError(w, http.StatusConflict, "the link could not be made; connect on the console again for a new code")
 	default:
-		s.log.Error("api wfc link", "err", err)
-		writeError(w, http.StatusInternalServerError, "internal error")
+		s.log.Error("api wfc approve", "err", err)
+		writeError(w, http.StatusBadGateway, "could not reach the Wii/DS server")
 	}
+}
+
+// handleListWFC: GET /api/v1/me/links/wfc -> the account's linked Wii and DS consoles.
+func (s *Server) handleListWFC(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
+	if s.WFC == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"consoles": []any{}})
+		return
+	}
+	consoles, err := s.WFC.Consoles(r.Context(), tok.AccountID)
+	if err != nil {
+		s.log.Error("api wfc consoles", "err", err)
+		writeError(w, http.StatusBadGateway, "could not reach the Wii/DS server")
+		return
+	}
+	if consoles == nil {
+		consoles = []wfc.Console{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"consoles": consoles})
 }
 
 // handleUnlink: DELETE /api/v1/me/links/{namespace}. Addressed by namespace, not link id, so
@@ -264,6 +272,10 @@ func (s *Server) handleLinkWFC(w http.ResponseWriter, r *http.Request, tok store
 func (s *Server) handleUnlink(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
 	if ns := r.PathValue("namespace"); ns == "wiiu" || ns == "3ds" {
 		writeError(w, http.StatusForbidden, "Wii U and 3DS console accounts cannot be unlinked here")
+		return
+	}
+	if r.PathValue("namespace") == "wfc" {
+		s.unlinkWFC(w, r, tok)
 		return
 	}
 	link, err := s.Links.ActiveLinkByAccount(r.Context(), r.PathValue("namespace"), tok.AccountID)
@@ -275,9 +287,6 @@ func (s *Server) handleUnlink(w http.ResponseWriter, r *http.Request, tok store.
 		s.log.Error("api unlink", "err", err)
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
-	}
-	if r.PathValue("namespace") == "wfc" {
-		s.forgetWFC(r.Context(), link)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"unlinked": true})
 }
@@ -320,17 +329,39 @@ func (s *Server) wfcPairAllowed(accountID string) bool {
 	return s.PairLimit == nil || s.PairLimit.Allow("pair:"+accountID)
 }
 
-// forgetWFC tells the Wii/DS server a console was unlinked, so it offers the console a code
-// again. Best effort: the friend-code path works whatever happens here.
-func (s *Server) forgetWFC(ctx context.Context, link core.Link) {
+// unlinkWFC: DELETE /api/v1/me/links/wfc[?link_id=&erase=1]. One account may hold several Wii
+// and DS consoles; link_id picks one, and may be left out when there is just one.
+func (s *Server) unlinkWFC(w http.ResponseWriter, r *http.Request, tok store.APIToken) {
 	if s.WFC == nil {
+		writeError(w, http.StatusServiceUnavailable, "Wii/DS linking is not available")
 		return
 	}
-	uid, err := strconv.ParseUint(link.SubjectID, 10, 64)
-	if err != nil {
-		return
+	linkID := r.URL.Query().Get("link_id")
+	if linkID == "" {
+		consoles, err := s.WFC.Consoles(r.Context(), tok.AccountID)
+		if err != nil {
+			s.log.Error("api wfc consoles", "err", err)
+			writeError(w, http.StatusBadGateway, "could not reach the Wii/DS server")
+			return
+		}
+		switch len(consoles) {
+		case 0:
+			writeError(w, http.StatusNotFound, "no console linked in that namespace")
+			return
+		case 1:
+			linkID = consoles[0].LinkID
+		default:
+			writeError(w, http.StatusBadRequest, "several consoles are linked; name one with link_id")
+			return
+		}
 	}
-	if err := s.WFC.PairForget(ctx, uid); err != nil {
-		s.log.Warn("api wfc forget", "err", err)
+	switch err := s.WFC.Unlink(r.Context(), tok.AccountID, linkID, r.URL.Query().Get("erase") == "1"); {
+	case err == nil:
+		writeJSON(w, http.StatusOK, map[string]any{"unlinked": true})
+	case errors.Is(err, wfc.ErrNotFound):
+		writeError(w, http.StatusNotFound, "no such console on this account")
+	default:
+		s.log.Error("api wfc unlink", "err", err)
+		writeError(w, http.StatusBadGateway, "could not reach the Wii/DS server")
 	}
 }

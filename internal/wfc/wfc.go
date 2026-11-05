@@ -1,7 +1,9 @@
-// Package wfc asks the Wii/DS server (nn-wfc) the one thing the website needs from it: which
-// console a friend code belongs to. WFC has no login, so a Wii or DS is linked here, from a
-// friend code the player reads off a game, and the core holds the link under the "wfc"
-// namespace with the console-level user id as subject.
+// Package wfc is the website's client of the Wii/DS server's pairing API (wfc-api). WFC has no
+// login: an unlinked Wii or DS is refused online and shown a pairing code (an 8-symbol code in
+// Mario Kart Wii, a 6-digit link number elsewhere); the player enters it at /link, and wfc-api
+// makes the account-core link (namespace "wfc") itself, as xb-account does for the Xbox
+// (prds repos/wfc-link-first-design.md). The website passes the signed-in account and never the
+// browser's word for it.
 package wfc
 
 import (
@@ -11,26 +13,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"time"
 )
 
-// ErrNotFound is a friend code no profile answers to.
-var ErrNotFound = errors.New("wfc: no profile for that friend code")
-
 type Client struct {
-	BaseURL string // e.g. http://openpak-nn-wfc:20120
-	Secret  string // nn-wfc's WFC_API_SECRET
+	BaseURL string // e.g. http://openpak-wfc-api:20209
+	Secret  string // wfc-api's WFC_API_SECRET
 	HTTP    *http.Client
-}
-
-// Profile is the console a friend code resolves to.
-type Profile struct {
-	ProfileID  uint32 `json:"pid"`
-	UserID     uint64 `json:"user_id"` // the console; every game profile hangs off it
-	GameCode   string `json:"gsbrcd"`
-	FriendCode string `json:"fc"`
-	Name       string `json:"name"`
 }
 
 func New(baseURL, secret string) *Client {
@@ -40,48 +29,34 @@ func New(baseURL, secret string) *Client {
 	return &Client{BaseURL: baseURL, Secret: secret, HTTP: &http.Client{Timeout: 3 * time.Second}}
 }
 
-// Resolve looks a typed friend code up. The server verifies the code against the profile's
-// own game, so a typo is ErrNotFound rather than somebody else's console.
-func (c *Client) Resolve(ctx context.Context, friendCode string) (Profile, error) {
-	if c == nil {
-		return Profile{}, errors.New("wfc: not configured")
-	}
-	q := url.Values{"fc": {friendCode}, "secret": {c.Secret}}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"/api/profile?"+q.Encode(), nil)
-	if err != nil {
-		return Profile{}, err
-	}
-	resp, err := c.HTTP.Do(req)
-	if err != nil {
-		return Profile{}, err
-	}
-	defer resp.Body.Close()
-	switch resp.StatusCode {
-	case http.StatusOK:
-	case http.StatusNotFound, http.StatusBadRequest:
-		return Profile{}, ErrNotFound
-	default:
-		return Profile{}, fmt.Errorf("wfc: %s", resp.Status)
-	}
-	var out Profile
-	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
-		return Profile{}, err
-	}
-	if out.UserID == 0 {
-		return Profile{}, ErrNotFound
-	}
-	return out, nil
-}
-
-// ErrPairingCode is a pairing code that is unknown, expired or already used.
-var ErrPairingCode = errors.New("wfc: pairing code unknown, expired or used")
+var (
+	// ErrPairingCode is a code or number that is unknown, expired, used, or being claimed by
+	// someone else (one answer on purpose).
+	ErrPairingCode = errors.New("wfc: pairing code unknown, expired or used")
+	// ErrConflict: the console is linked to another account, or this account holds the most
+	// consoles it may.
+	ErrConflict = errors.New("wfc: console linked elsewhere or console limit reached")
+	// ErrApprovalFailed: the account core refused the link; the console should connect again.
+	ErrApprovalFailed = errors.New("wfc: the account core refused the link")
+	// ErrNotFound: no such console on this account.
+	ErrNotFound = errors.New("wfc: no such console")
+)
 
 // Pairing is the console a live pairing code belongs to.
 type Pairing struct {
-	UserID    uint64    `json:"user_id"`
-	GameCode  string    `json:"gsbrcd"`
-	Name      string    `json:"name"` // the in-game name of the profile that signed in
-	ExpiresAt time.Time `json:"expires_at"`
+	Unit          string    `json:"unit"` // "wii" or "ds"
+	GameCode      string    `json:"gsbrcd"`
+	Name          string    `json:"name"` // in-game name as the console sent it
+	ExpiresAt     time.Time `json:"expires_at"`
+	AlreadyLinked bool      `json:"already_linked"`
+}
+
+// Console is one linked Wii or DS.
+type Console struct {
+	LinkID   string    `json:"link_id"`
+	Unit     string    `json:"unit"`
+	Games    []string  `json:"games"`
+	LinkedAt time.Time `json:"linked_at"`
 }
 
 func (c *Client) post(ctx context.Context, path string, body map[string]any, out any) error {
@@ -107,6 +82,10 @@ func (c *Client) post(ctx context.Context, path string, body map[string]any, out
 	case http.StatusOK, http.StatusNoContent:
 	case http.StatusNotFound:
 		return ErrPairingCode
+	case http.StatusConflict:
+		return ErrConflict
+	case http.StatusUnprocessableEntity:
+		return ErrApprovalFailed
 	default:
 		return fmt.Errorf("wfc: %s", resp.Status)
 	}
@@ -116,29 +95,47 @@ func (c *Client) post(ctx context.Context, path string, body map[string]any, out
 	return json.NewDecoder(resp.Body).Decode(out)
 }
 
-// PairLookup says which console a code a Wii or DS game showed belongs to, without spending it.
-func (c *Client) PairLookup(ctx context.Context, code string) (Pairing, error) {
+// PairPreview says which console a code or link number belongs to, without spending it.
+//
+// A 5-digit number (what most consoles show) resolves only when clientIP is on the console's
+// network or name is the console's in-game name; an 8-symbol code needs neither.
+func (c *Client) PairPreview(ctx context.Context, code, clientIP, name string) (Pairing, error) {
 	var p Pairing
-	if err := c.post(ctx, "/api/pair/lookup", map[string]any{"code": code}, &p); err != nil {
+	if err := c.post(ctx, "/api/pair/preview", map[string]any{"code": code, "client_ip": clientIP, "name": name}, &p); err != nil {
 		return Pairing{}, err
 	}
-	if p.UserID == 0 {
+	if p.Unit == "" {
 		return Pairing{}, ErrPairingCode
 	}
 	return p, nil
 }
 
-// PairRedeem spends the code for good, once the core link exists.
-func (c *Client) PairRedeem(ctx context.Context, code string) (uint64, error) {
+// PairApprove links the console behind a code to the signed-in account. accountID must come
+// from the server session.
+func (c *Client) PairApprove(ctx context.Context, code, accountID, clientIP, name string) (Pairing, error) {
 	var p Pairing
-	if err := c.post(ctx, "/api/pair/redeem", map[string]any{"code": code}, &p); err != nil {
-		return 0, err
+	if err := c.post(ctx, "/api/pair/approve", map[string]any{"code": code, "core_account_id": accountID, "client_ip": clientIP, "name": name}, &p); err != nil {
+		return Pairing{}, err
 	}
-	return p.UserID, nil
+	return p, nil
 }
 
-// PairForget tells the Wii/DS server a console was unlinked, so its next login is shown a
-// code again. Best effort: the friend-code path works regardless.
-func (c *Client) PairForget(ctx context.Context, userID uint64) error {
-	return c.post(ctx, "/api/pair/forget", map[string]any{"user_id": userID}, nil)
+// Consoles lists the account's linked Wii and DS consoles.
+func (c *Client) Consoles(ctx context.Context, accountID string) ([]Console, error) {
+	var out struct {
+		Consoles []Console `json:"consoles"`
+	}
+	if err := c.post(ctx, "/api/pair/consoles", map[string]any{"core_account_id": accountID}, &out); err != nil {
+		return nil, err
+	}
+	return out.Consoles, nil
+}
+
+// Unlink revokes one console of the account; erase also deletes the console's online game data.
+func (c *Client) Unlink(ctx context.Context, accountID, linkID string, erase bool) error {
+	err := c.post(ctx, "/api/pair/unlink", map[string]any{"core_account_id": accountID, "link_id": linkID, "erase": erase}, nil)
+	if errors.Is(err, ErrPairingCode) {
+		return ErrNotFound
+	}
+	return err
 }

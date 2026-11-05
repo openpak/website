@@ -19,58 +19,29 @@ import (
 	"github.com/openpak/website/internal/wfc"
 )
 
-// ErrWFCUnreachable is a friend code that could not be looked up at all, as
-// opposed to one nobody answers to (wfc.ErrNotFound).
+// ErrWFCUnreachable means the Wii/DS server did not answer.
 var ErrWFCUnreachable = errors.New("accounts: the Wii/DS server did not answer")
 
-// LinkWFC links a Wii or DS from a friend code the player read off a game. WFC has no login,
-// so this is the only link path; the core holds the link ("wfc", console user id) and nn-wfc
-// stores nothing. The errors a caller tells apart: wfc.ErrNotFound, ErrWFCUnreachable and
-// core.ErrConflict (the console is linked to another account).
-func LinkWFC(ctx context.Context, w *wfc.Client, links core.Links, accountID, friendCode string) error {
-	profile, err := w.Resolve(ctx, friendCode)
+// ApproveWFC links the console behind a pairing code or link number (what an unlinked Wii or
+// DS shows when it is refused online) to the signed-in account. wfc-api makes the core link
+// itself; the website only vouches for who is signed in. Errors a caller tells apart:
+// wfc.ErrPairingCode, wfc.ErrConflict, wfc.ErrApprovalFailed and ErrWFCUnreachable.
+func ApproveWFC(ctx context.Context, w *wfc.Client, accountID, code, clientIP, name string) (wfc.Pairing, error) {
+	p, err := w.PairApprove(ctx, code, accountID, clientIP, name)
 	switch {
-	case errors.Is(err, wfc.ErrNotFound):
-		return err
-	case err != nil:
-		return fmt.Errorf("%w: %v", ErrWFCUnreachable, err)
+	case err == nil, errors.Is(err, wfc.ErrPairingCode), errors.Is(err, wfc.ErrConflict), errors.Is(err, wfc.ErrApprovalFailed):
+		return p, err
 	}
-	subject := strconv.FormatUint(profile.UserID, 10)
-	return links.Link(ctx, accountID, "wfc", subject, "wfc:"+accountID+":"+subject)
+	return wfc.Pairing{}, fmt.Errorf("%w: %v", ErrWFCUnreachable, err)
 }
 
-// LooksLikeWFCPairingCode tells a pairing code (letters and digits) from a friend code (twelve
-// digits), so one field can take either.
-func LooksLikeWFCPairingCode(s string) bool {
-	for _, r := range s {
-		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') {
-			return true
-		}
+// WFCUserID is the console user id inside a "wfc" link subject ("<user_id>.<n>" since
+// link-first, the bare user id before).
+func WFCUserID(subject string) string {
+	if i := strings.IndexByte(subject, '.'); i >= 0 {
+		return subject[:i]
 	}
-	return false
-}
-
-// LinkWFCCode links the console a pairing code belongs to: the code a Wii or DS game showed
-// after it signed in (Mario Kart Wii prints it in the Wi-Fi menu message). The core link is
-// made first and the code spent after it, so a console already held by another account
-// (core.ErrConflict) leaves the code alone, and a failed spend does not undo a good link. Errors
-// as LinkWFC, with wfc.ErrPairingCode for a code that is unknown, expired or used.
-func LinkWFCCode(ctx context.Context, w *wfc.Client, links core.Links, accountID, code string) error {
-	p, err := w.PairLookup(ctx, code)
-	switch {
-	case errors.Is(err, wfc.ErrPairingCode):
-		return err
-	case err != nil:
-		return fmt.Errorf("%w: %v", ErrWFCUnreachable, err)
-	}
-	subject := strconv.FormatUint(p.UserID, 10)
-	if err := links.Link(ctx, accountID, "wfc", subject, "wfc:"+accountID+":"+subject); err != nil {
-		return err
-	}
-	// The link exists. If spending the code fails now, the code simply lives out its
-	// 30 minutes and still names a console that is linked to this same account.
-	_, _ = w.PairRedeem(ctx, code)
-	return nil
+	return subject
 }
 
 // StorageOAuthState binds a storage consent round trip to the account without a database row:
