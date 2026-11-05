@@ -23,8 +23,9 @@ var ExpectedServices = []string{
 	"xb-social", "xb-xmessaging", "xb-stfd", "xb-account",
 	"x360-profile", "x360-xmessaging", "x360-store", "x360-xstats", "x360-xarb", "x360-xpnfront", "x360-kdc", "x360-xuacs",
 	"eos", "klei", "playfab", "fall-guys", "stumble-guys", "ugs",
-	"demonware", "t17", "spelunky2", "battlenet", "npln", "impostor", "photon",
-	"mario-maker", "pokemon-home", "nx-shop", "nx-penne",
+	"demonware", "t17", "spelunky2", "battlenet", "npln", "among-us", "photon",
+	"nx-baas", "splatnet", "plants-vs-zombies",
+	"mario-maker", "pokemon-home", "pokemon-global-link", "nx-shop", "nx-penne",
 	"wfc",
 }
 

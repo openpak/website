@@ -11,6 +11,10 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.107.0 - 2026-11-05
+
+- Account erasure chain (prds#120): `ExpectedServices` now lists nx-baas, splatnet, plants-vs-zombies and pokemon-global-link, and names the Among Us front `among-us` (it forwards to Impostor inside its container, so there is no separate `impostor` step). Production wiring: `ERASURE_SERVICES` and `ACCOUNT_ERASE_KEY` come from the `20-erase.conf` drop-in (`deploy/erasure-services.env`, `deploy/erase.env`).
+
 ## v0.106.0
 
 - Data duplication audit phase 4 (openpak/prds#131): `web_sessions` keeps only `core_session_id`,
