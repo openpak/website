@@ -40,7 +40,7 @@ func adminMux(t *testing.T) (*Server, *store.Memory, *http.ServeMux) {
 	t.Helper()
 	s, db, _ := newAdmin(t)
 	_ = db.PutWebSession(context.Background(), store.WebSession{
-		CoreSessionID: "sess-admin", AccountID: "acct-admin", DisplayName: "Root",
+		CoreSessionID: "sess-admin", AccountID: "acct-admin",
 	})
 	mux := http.NewServeMux()
 	s.RegisterRoutes(mux)

@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"github.com/openpak/website/internal/profilecache"
 	"io"
 	"log/slog"
 	"net/http"
@@ -37,13 +38,16 @@ func newAdmin(t *testing.T) (*Server, *store.Memory, *fakeEvents) {
 	db := store.NewMemory()
 	ev := &fakeEvents{}
 	s := New(tpl, ev, db, &fakeSessions{id: "sess-admin"}, []string{"acct-admin"}, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	s.Profiles = profilecache.New(func(context.Context, string) (profilecache.Profile, error) {
+		return profilecache.Profile{DisplayName: "Root", Email: "root@x.test"}, nil
+	})
 	return s, db, ev
 }
 
 func TestAdminGateFailClosed(t *testing.T) {
 	s, db, _ := newAdmin(t)
 	_ = db.PutWebSession(context.Background(), store.WebSession{
-		CoreSessionID: "sess-admin", AccountID: "acct-normal", DisplayName: "Norm",
+		CoreSessionID: "sess-admin", AccountID: "acct-normal",
 	})
 	rec := httptest.NewRecorder()
 	s.RegisterRoutes(http.NewServeMux())
@@ -58,7 +62,7 @@ func TestAdminGateFailClosed(t *testing.T) {
 func TestAdminConfigAndEvents(t *testing.T) {
 	s, db, ev := newAdmin(t)
 	_ = db.PutWebSession(context.Background(), store.WebSession{
-		CoreSessionID: "sess-admin", AccountID: "acct-admin", DisplayName: "Root",
+		CoreSessionID: "sess-admin", AccountID: "acct-admin",
 	})
 	mux := http.NewServeMux()
 	s.RegisterRoutes(mux)

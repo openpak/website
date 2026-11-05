@@ -39,6 +39,7 @@ import (
 	"github.com/openpak/website/internal/pages"
 	"github.com/openpak/website/internal/pakkachat"
 	"github.com/openpak/website/internal/pctl"
+	"github.com/openpak/website/internal/profilecache"
 	"github.com/openpak/website/internal/push"
 	"github.com/openpak/website/internal/ratelimit"
 	"github.com/openpak/website/internal/rewards"
@@ -384,6 +385,10 @@ func run(log *slog.Logger) error {
 	// when absent; a typed nil must not reach an interface field, or it would
 	// read as configured and broken.
 	adminSrv.CoreHTTP = coreHTTP
+	adminSrv.Profiles = profilecache.New(func(ctx context.Context, id string) (profilecache.Profile, error) {
+		a, err := coreHTTP.Whoami(ctx, id)
+		return profilecache.Profile{DisplayName: a.DisplayName, Email: a.Email}, err
+	})
 	if mediaSvc != nil {
 		adminSrv.Media = mediaSvc
 	}

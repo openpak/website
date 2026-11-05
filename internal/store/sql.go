@@ -160,20 +160,19 @@ func (s *PG) Ping(ctx context.Context) error { return s.pool.Ping(ctx) }
 
 // PutWebSession upserts the session index row.
 func (s *PG) PutWebSession(ctx context.Context, ws WebSession) error {
-	_, err := s.pool.Exec(ctx, `INSERT INTO web_sessions(core_session_id, account_id, email, display_name)
-		VALUES($1,$2,$3,$4)
-		ON CONFLICT (core_session_id) DO UPDATE SET account_id=EXCLUDED.account_id,
-			email=EXCLUDED.email, display_name=EXCLUDED.display_name`,
-		ws.CoreSessionID, ws.AccountID, ws.Email, ws.DisplayName)
+	_, err := s.pool.Exec(ctx, `INSERT INTO web_sessions(core_session_id, account_id)
+		VALUES($1,$2)
+		ON CONFLICT (core_session_id) DO UPDATE SET account_id=EXCLUDED.account_id`,
+		ws.CoreSessionID, ws.AccountID)
 	return err
 }
 
 // GetWebSession resolves the session index row.
 func (s *PG) GetWebSession(ctx context.Context, coreSessionID string) (WebSession, error) {
 	var ws WebSession
-	err := s.pool.QueryRow(ctx, `SELECT core_session_id, account_id, email, display_name, created_at
+	err := s.pool.QueryRow(ctx, `SELECT core_session_id, account_id, created_at
 		FROM web_sessions WHERE core_session_id=$1`, coreSessionID).Scan(
-		&ws.CoreSessionID, &ws.AccountID, &ws.Email, &ws.DisplayName, &ws.CreatedAt)
+		&ws.CoreSessionID, &ws.AccountID, &ws.CreatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ws, ErrNotFound
 	}
@@ -387,4 +386,10 @@ func (s *PG) PushCursor(ctx context.Context) (uint64, error) {
 func (s *PG) SetPushCursor(ctx context.Context, version uint64) error {
 	_, err := s.pool.Exec(ctx, `UPDATE push_cursor SET version=$1 WHERE id=1`, version)
 	return err
+}
+
+// The account core is the only source of display name and email; the session
+// index keeps ids only.
+func init() {
+	migrations["0027_web_sessions_ids_only"] = `ALTER TABLE web_sessions DROP COLUMN IF EXISTS email, DROP COLUMN IF EXISTS display_name;`
 }

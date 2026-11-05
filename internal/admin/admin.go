@@ -23,6 +23,7 @@ import (
 	"github.com/openpak/website/internal/netmap"
 	newsv1 "github.com/openpak/website/internal/newspb"
 	"github.com/openpak/website/internal/pages"
+	"github.com/openpak/website/internal/profilecache"
 	"github.com/openpak/website/internal/rewards"
 	"github.com/openpak/website/internal/saves"
 	"github.com/openpak/website/internal/store"
@@ -45,9 +46,11 @@ type Server struct {
 	// its latest result; nil leaves /admin/erasure empty.
 	ErasureReport func() []erasure.StepReport
 	Core          core.Events
-	DB            store.Store
-	Sessions      sessionView
-	AdminIDs      []string
+	// Profiles is the core read-through cache for the header name and email; nil shows none.
+	Profiles *profilecache.Cache
+	DB       store.Store
+	Sessions sessionView
+	AdminIDs []string
 
 	// What the monitor reads. Every one is optional: nil (or an empty URL)
 	// renders as "not configured", never as an error page.
@@ -226,11 +229,17 @@ func (s *Server) authorize(w http.ResponseWriter, r *http.Request) (store.WebSes
 	return ws, true
 }
 
+// adminUser reads the admin's name and email through the core cache.
+func (s *Server) adminUser(r *http.Request, ws store.WebSession) adminUser {
+	p := s.Profiles.Get(r.Context(), ws.CoreSessionID)
+	return adminUser{DisplayName: p.DisplayName, Email: p.Email}
+}
+
 // page is the shared view base. CSRF is filled for every page so the admin
 // forms and the layout's sign-out form both carry a valid token.
 func (s *Server) page(r *http.Request, ws store.WebSession, title string) base {
 	return base{Asset: pages.AssetVersion(), Admin: true, Path: r.URL.Path, Lang: "en", Title: title,
-		User: adminUser{DisplayName: ws.DisplayName, Email: ws.Email}, CSRF: s.Sessions.CSRFToken(ws.CoreSessionID),
+		User: s.adminUser(r, ws), CSRF: s.Sessions.CSRFToken(ws.CoreSessionID),
 		Nav: navFor(r.URL.Path, s.hiddenSections()...), ShowConsoleNews: s.ConsoleNews != nil, ShowStore: s.Store != nil, ShowRewards: s.Rewards != nil, ShowLogs: s.Logs != nil, Updates: s.pendingUpdates(r.Context())}
 }
 

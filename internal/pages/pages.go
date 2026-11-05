@@ -39,6 +39,7 @@ import (
 	"github.com/openpak/website/internal/news"
 	"github.com/openpak/website/internal/pakkachat"
 	"github.com/openpak/website/internal/pctl"
+	"github.com/openpak/website/internal/profilecache"
 	"github.com/openpak/website/internal/ratelimit"
 	"github.com/openpak/website/internal/rewards"
 	"github.com/openpak/website/internal/saves"
@@ -66,8 +67,10 @@ type Server struct {
 	// Rewards is the points, missions and shop service; nil renders the page as "not available".
 	Rewards *rewards.Client
 	// NetMap builds the network graph behind the map on /status; nil leaves the section out.
-	NetMap *netmap.Service
-	themes themeCache // equipped themes and theme assets, kept briefly (theme.go)
+	NetMap    *netmap.Service
+	profs     *profilecache.Cache
+	profsOnce sync.Once
+	themes    themeCache // equipped themes and theme assets, kept briefly (theme.go)
 	// SSO signs subsites (splatnet.openpak.org, ...) in with this site's login; nil or with no
 	// client registered, the /account/sso routes are 404.
 	SSO *sso.Service
@@ -146,10 +149,24 @@ func New(tpl *template.Template, log *slog.Logger) *Server {
 		WFC:     wfc.New(os.Getenv("WFC_API_URL"), os.Getenv("WFC_API_SECRET"))}
 }
 
+// profiles is the 60 s read-through cache of name and email, built on the
+// core's Whoami the first time it is needed.
+func (s *Server) profiles() *profilecache.Cache {
+	s.profsOnce.Do(func() {
+		s.profs = profilecache.New(func(ctx context.Context, id string) (profilecache.Profile, error) {
+			a, err := s.Core.Whoami(ctx, id)
+			return profilecache.Profile{DisplayName: a.DisplayName, Email: a.Email}, err
+		})
+	})
+	return s.profs
+}
+
 // viewer is the signed-in identity for one request.
 type viewer struct {
 	CoreSessionID string
 	store.WebSession
+	// Email and DisplayName come from the core through the profile cache.
+	Email, DisplayName string
 }
 
 // baseData feeds the layout template.
@@ -352,7 +369,8 @@ func (s *Server) viewerOf(w http.ResponseWriter, r *http.Request) *viewer {
 		s.Sessions.ClearCookie(w)
 		return nil
 	}
-	return &viewer{CoreSessionID: id, WebSession: ws}
+	p := s.profiles().Get(r.Context(), id)
+	return &viewer{CoreSessionID: id, WebSession: ws, Email: p.Email, DisplayName: p.DisplayName}
 }
 
 // requireViewer redirects signed-out users to the login page.
@@ -1020,13 +1038,14 @@ func (s *Server) finishLogin(w http.ResponseWriter, r *http.Request, coreSession
 		return
 	}
 	if err := s.DB.PutWebSession(r.Context(), store.WebSession{
-		CoreSessionID: coreSession, AccountID: acct.ID, Email: acct.Email, DisplayName: acct.DisplayName,
+		CoreSessionID: coreSession, AccountID: acct.ID,
 	}); err != nil {
 		_ = s.Core.Logout(context.Background(), coreSession)
 		s.log.Error("put web session", "err", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
+	s.profiles().Put(coreSession, profilecache.Profile{DisplayName: acct.DisplayName, Email: acct.Email})
 	s.Sessions.SetCookie(w, coreSession)
 	http.Redirect(w, r, cmp.Or(linkNext(r.PostFormValue("next")), "/account"), http.StatusSeeOther)
 }

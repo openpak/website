@@ -11,6 +11,15 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.106.0
+
+- Data duplication audit phase 4 (openpak/prds#131): `web_sessions` keeps only `core_session_id`,
+  `account_id` and `created_at`. Display name and email are read from the account core (`Whoami`)
+  through a 60 s in-process cache (`internal/profilecache`): last cached value when the core is
+  unreachable, an empty name when there is none. Login seeds the cache; profile and email edits
+  drop the entry. Migration `0027_web_sessions_ids_only` drops the `email` and `display_name`
+  columns. Erasure still deletes `web_sessions` by `account_id`.
+
 ## v0.105.0
 
 - `GET /api/v1/clients/{client}/latest`, `latest.sig` and `download/{file}`: relay the newest GitHub

@@ -55,8 +55,6 @@ type MediaRecord struct {
 type WebSession struct {
 	CoreSessionID string
 	AccountID     string
-	Email         string
-	DisplayName   string
 	CreatedAt     time.Time
 }
 

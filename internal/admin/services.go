@@ -276,7 +276,7 @@ func (s *Server) handleServiceAction(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Minute) // an update pulls an image
 	defer cancel()
-	_, err := s.Ops.post(ctx, h, "/v1/services/"+url.PathEscape(name)+"/"+action, ws.Email)
+	_, err := s.Ops.post(ctx, h, "/v1/services/"+url.PathEscape(name)+"/"+action, s.adminUser(r, ws).Email)
 	detail := hostName + "/" + name
 	if err != nil {
 		_ = s.DB.AddAudit(r.Context(), ws.AccountID, "service."+action+".failed", detail+": "+err.Error())
@@ -303,7 +303,7 @@ func (s *Server) handleServicesCheck(w http.ResponseWriter, r *http.Request) {
 	}
 	var failed []string
 	for _, h := range s.Ops.Hosts {
-		if _, err := s.Ops.post(r.Context(), h, "/v1/updates/check", ws.Email); err != nil {
+		if _, err := s.Ops.post(r.Context(), h, "/v1/updates/check", s.adminUser(r, ws).Email); err != nil {
 			failed = append(failed, err.Error())
 		}
 	}

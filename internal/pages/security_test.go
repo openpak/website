@@ -39,7 +39,7 @@ func TestLoginWithTwoFactor(t *testing.T) {
 			t.Fatalf("code %q: %d %s", code, rec.Code, rec.Body.String())
 		}
 		ws, err := db.GetWebSession(t.Context(), "sess-"+emailA)
-		if err != nil || ws.AccountID != "acct-"+emailA || ws.Email != emailA {
+		if err != nil || ws.AccountID != "acct-"+emailA {
 			t.Fatalf("web session from whoami: %+v %v", ws, err)
 		}
 	}
@@ -124,7 +124,7 @@ func TestTwoFactorEnrolment(t *testing.T) {
 // The email change mails a link; the link lands on a page with a button (a
 // scanner fetching it changes nothing), and the button applies the change.
 func TestEmailChangeAndConfirm(t *testing.T) {
-	s, fc, db := newTestServer(t)
+	s, fc, _ := newTestServer(t)
 	emailA, _ := seedTwoAccounts(fc)
 	a := login(t, s, emailA, "password-A-1")
 
@@ -149,8 +149,8 @@ func TestEmailChangeAndConfirm(t *testing.T) {
 	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "has been changed") {
 		t.Fatalf("confirm: %d %s", rec.Code, rec.Body.String())
 	}
-	if ws, _ := db.GetWebSession(t.Context(), "sess-"+emailA); ws.Email != "new@x.test" {
-		t.Fatalf("the cached address was not refreshed: %q", ws.Email)
+	if p := s.profiles().Get(t.Context(), "sess-"+emailA); p.Email != "new@x.test" {
+		t.Fatalf("the cached address was not refreshed: %q", p.Email)
 	}
 }
 

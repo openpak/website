@@ -106,7 +106,7 @@ func (f *fakePakka) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func pakkaAdmin(t *testing.T) (*Server, *http.ServeMux, *fakePakka, *store.Memory) {
 	t.Helper()
 	s, db, _ := newAdmin(t)
-	_ = db.PutWebSession(context.Background(), store.WebSession{CoreSessionID: "sess-admin", AccountID: "acct-admin", DisplayName: "Root"})
+	_ = db.PutWebSession(context.Background(), store.WebSession{CoreSessionID: "sess-admin", AccountID: "acct-admin"})
 	mux := http.NewServeMux()
 	s.RegisterRoutes(mux)
 	return s, mux, newFakePakka(), db

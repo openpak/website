@@ -94,19 +94,11 @@ func (s *Server) handleEmailConfirmSubmit(w http.ResponseWriter, r *http.Request
 }
 
 // refreshSession re-reads the account behind the viewer's session into the
-// cached row (address and name shown in the header).
+// cache (address and name shown in the header).
 func (s *Server) refreshSession(r *http.Request, v *viewer) {
-	acct, err := s.Core.Whoami(r.Context(), v.CoreSessionID)
-	if err != nil {
-		return
-	}
-	if acct.Email == v.Email && acct.DisplayName == v.DisplayName {
-		return
-	}
-	v.WebSession.Email, v.WebSession.DisplayName = acct.Email, acct.DisplayName
-	if err := s.DB.PutWebSession(r.Context(), v.WebSession); err != nil {
-		s.log.Error("refresh session", "err", err)
-	}
+	s.profiles().Invalidate(v.CoreSessionID)
+	p := s.profiles().Get(r.Context(), v.CoreSessionID)
+	v.Email, v.DisplayName = p.Email, p.DisplayName
 }
 
 func (s *Server) renderMessage(w http.ResponseWriter, r *http.Request, v *viewer, status int, titleKey, msgKey string) {

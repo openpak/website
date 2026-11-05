@@ -292,7 +292,7 @@ func (s *Server) handlePakka(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	by := approverName(ws.DisplayName, ws.AccountID)
+	by := approverName(s.adminUser(r, ws).DisplayName, ws.AccountID)
 	v := pakkaView{base: s.page(r, ws, i18n.T("en", "admin.pakka")), All: r.URL.Query().Get("all") == "1"}
 	v.Flash = pakkaFlash(r.URL.Query().Get("m"))
 	st, err := s.Pakka.Status(r.Context(), by)
@@ -337,7 +337,7 @@ func (s *Server) handlePakkaDraft(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	by := approverName(ws.DisplayName, ws.AccountID)
+	by := approverName(s.adminUser(r, ws).DisplayName, ws.AccountID)
 	v := pakkaDraftView{base: s.page(r, ws, i18n.T("en", "admin.pakka"))}
 	v.Path = "/admin/pakka"
 	d, hist, err := s.Pakka.Draft(r.Context(), by, r.PathValue("id"))
@@ -370,7 +370,7 @@ func (s *Server) handlePakkaDecide(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := r.PathValue("id")
-	by := approverName(ws.DisplayName, ws.AccountID)
+	by := approverName(s.adminUser(r, ws).DisplayName, ws.AccountID)
 	back := "/admin/pakka/" + url.PathEscape(id)
 	switch r.PathValue("action") {
 	case "approve":
@@ -452,7 +452,7 @@ func (s *Server) handlePakkaKill(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, i18n.T("en", "admin.pakka.kill.confirm"), http.StatusBadRequest)
 		return
 	}
-	by := approverName(ws.DisplayName, ws.AccountID)
+	by := approverName(s.adminUser(r, ws).DisplayName, ws.AccountID)
 	if err := s.Pakka.Kill(r.Context(), by); err != nil {
 		s.log.Warn("pakka kill", "err", err)
 		http.Error(w, "Pakka did not answer", http.StatusBadGateway)

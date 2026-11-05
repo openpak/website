@@ -64,7 +64,7 @@ func newModerationAdmin(t *testing.T) (*http.ServeMux, *fakeModeration, *store.M
 	t.Helper()
 	s, db, _ := newAdmin(t)
 	_ = db.PutWebSession(context.Background(), store.WebSession{
-		CoreSessionID: "sess-admin", AccountID: "acct-admin", DisplayName: "Root",
+		CoreSessionID: "sess-admin", AccountID: "acct-admin",
 	})
 	fm := &fakeModeration{
 		accounts: []core.ModeratedAccount{

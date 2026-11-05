@@ -33,7 +33,7 @@ func fakeOpsd(t *testing.T, got *[]string) *httptest.Server {
 func TestServicesPage(t *testing.T) {
 	s, db, _ := newAdmin(t)
 	_ = db.PutWebSession(context.Background(), store.WebSession{
-		CoreSessionID: "sess-admin", AccountID: "acct-admin", DisplayName: "Root", Email: "root@x.test",
+		CoreSessionID: "sess-admin", AccountID: "acct-admin",
 	})
 	var posts []string
 	ops := fakeOpsd(t, &posts)

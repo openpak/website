@@ -21,7 +21,7 @@ func TestWritePreview(t *testing.T) {
 		t.Skip("set PREVIEW_DIR to write the page previews")
 	}
 	s, db, _ := newAdmin(t)
-	_ = db.PutWebSession(context.Background(), store.WebSession{CoreSessionID: "sess-admin", AccountID: "acct-admin", DisplayName: "Root"})
+	_ = db.PutWebSession(context.Background(), store.WebSession{CoreSessionID: "sess-admin", AccountID: "acct-admin"})
 	st := rewardstest.NewState()
 	s.Rewards = rewardstest.New(t, st)
 	s.Logs = sampleLogs()

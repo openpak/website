@@ -257,14 +257,9 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request) {
 		redirectMsg(w, r, "/account", "profile-failed")
 		return
 	}
-	// The header reads the name cached on the session row; refresh it from the core, which
-	// holds whatever it actually kept.
-	if acct, err := s.Identity.GetAccount(r.Context(), v.AccountID); err == nil {
-		v.WebSession.DisplayName = acct.DisplayName
-		if err := s.DB.PutWebSession(r.Context(), v.WebSession); err != nil {
-			s.log.Error("refresh session name", "err", err)
-		}
-	}
+	// The header reads the name through the profile cache; drop the entry so the next
+	// request reads what the core actually kept.
+	s.profiles().Invalidate(v.CoreSessionID)
 	redirectMsg(w, r, "/account", "profile-saved")
 }
 

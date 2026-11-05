@@ -36,7 +36,7 @@ func (f *fakeErasure) RestoreDeletion(_ context.Context, id string) error {
 func TestAdminRestoreClosedAccount(t *testing.T) {
 	s, db, _ := newAdmin(t)
 	ctx := context.Background()
-	_ = db.PutWebSession(ctx, store.WebSession{CoreSessionID: "sess-admin", AccountID: "acct-admin", DisplayName: "Root"})
+	_ = db.PutWebSession(ctx, store.WebSession{CoreSessionID: "sess-admin", AccountID: "acct-admin"})
 	s.Moderation = &fakeModeration{accounts: []core.ModeratedAccount{
 		{ID: "acct-3", Email: "luke@x.test", DisplayName: "Luke", Status: "deletion-pending"},
 	}, resolved: map[string]string{}}

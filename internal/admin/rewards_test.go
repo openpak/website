@@ -14,7 +14,7 @@ import (
 
 func TestAdminRewards(t *testing.T) {
 	s, db, _ := newAdmin(t)
-	_ = db.PutWebSession(context.Background(), store.WebSession{CoreSessionID: "sess-admin", AccountID: "acct-admin", DisplayName: "Root"})
+	_ = db.PutWebSession(context.Background(), store.WebSession{CoreSessionID: "sess-admin", AccountID: "acct-admin"})
 	mux := http.NewServeMux()
 	s.RegisterRoutes(mux)
 

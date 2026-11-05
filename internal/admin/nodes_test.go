@@ -56,7 +56,7 @@ func (f *adminFed) PutLocation(_ context.Context, l core.NodeLocation) error {
 func nodesAdmin(t *testing.T) (*http.ServeMux, *adminFed, *store.Memory, *store.MemoryOperators) {
 	t.Helper()
 	s, db, _ := newAdmin(t)
-	_ = db.PutWebSession(context.Background(), store.WebSession{CoreSessionID: "sess-admin", AccountID: "acct-admin", DisplayName: "Root"})
+	_ = db.PutWebSession(context.Background(), store.WebSession{CoreSessionID: "sess-admin", AccountID: "acct-admin"})
 	f := &adminFed{approved: map[string]bool{}, nodes: []core.Node{{
 		ID: "us-test", Name: "US test", Country: "US", Region: "us-east", Approved: true, InRotation: true,
 		WaiverReason: "owner test node", Waived: true, TotalCores: 1,
