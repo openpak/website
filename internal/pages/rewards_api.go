@@ -34,6 +34,11 @@ type RewardsTile struct {
 	Equipped    bool         `json:"equipped"`
 	EquipItem   string       `json:"equip_item,omitempty"`
 	Complete    bool         `json:"complete"`
+	// Ladders: the real value against the next tier (additive; older apps read progress).
+	CurrentValue  string `json:"current_value,omitempty"`
+	NextTierName  string `json:"next_tier_name,omitempty"`
+	NextThreshold string `json:"next_threshold,omitempty"`
+	MaxTier       bool   `json:"max_tier"`
 }
 
 // RewardTier is one rung of a ladder.
@@ -126,7 +131,8 @@ func tileJSON(t tileView) RewardsTile {
 	out := RewardsTile{Key: t.Key, Name: t.Name, Label: t.Label, Description: t.Description, Img: t.Img, State: t.State,
 		Percent: t.Percent, Progress: t.Progress, Reward: t.Reward, ClaimText: t.ClaimText, MissionID: t.MissionID,
 		Period: t.Period, Pips: t.Pips, Earned: t.Earned, Single: t.Single, Equipped: t.Equipped,
-		EquipItem: t.EquipItem, Complete: t.Complete}
+		EquipItem: t.EquipItem, Complete: t.Complete, CurrentValue: t.Value, NextTierName: t.NextTier,
+		NextThreshold: t.NextTarget, MaxTier: len(t.Tiers) > 0 && t.Complete}
 	for _, tr := range t.Tiers {
 		rt := RewardTier{Finish: tr.Finish, Target: tr.Target, Points: tr.Points, State: tr.State, Ready: tr.Ready}
 		if tr.Item != "" {

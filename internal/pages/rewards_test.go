@@ -169,7 +169,7 @@ func TestRewardsBadgeTiles(t *testing.T) {
 	}
 
 	my := get("/account/rewards?tab=collection")
-	for _, want := range []string{`href="#l-kart"`, "Kart Sessions · Bronze", "25 / 25", "Equipped", `href="#l-friends"`, "Completed", "Friends Played With · Diamond", "Equipped now"} {
+	for _, want := range []string{`href="#l-kart"`, "Kart Sessions · Bronze", "26 / 50", "Equipped", `href="#l-friends"`, "Completed", "Friends Played With · Diamond", "Max", "Equipped now"} {
 		if !strings.Contains(my, want) {
 			t.Errorf("my items lacks %q", want)
 		}

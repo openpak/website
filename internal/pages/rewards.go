@@ -77,6 +77,9 @@ type tileView struct {
 	Equipped    bool   // my items: this is what the badge slot holds
 	EquipItem   string // my items: the badge Equip puts in the slot (the highest tier earned)
 	Complete    bool   // every tier earned
+	Value       string // ladders: the player's real current value ("137 h"), uncapped
+	NextTier    string // ladders: the next finish ("Platinum"); empty at the top
+	NextTarget  string // ladders: the next tier's threshold ("250 h"); empty at the top
 }
 
 type tierView struct {
@@ -700,8 +703,27 @@ func tilesOf(lang string, ms []rewards.Mission, equippedBadge string) (work, own
 			o.Item, o.EquipItem = t.Tiers[best].Item, t.Tiers[best].Item
 			o.Img = previewURL(o.Item)
 			o.Label = t.Name + " · " + t.Tiers[best].Finish
-			o.Progress = fmt.Sprintf("%s / %s", t.Tiers[best].Target, t.Tiers[best].Target)
 			o.Percent, o.State = 100, "earned"
+			last := tiers[len(tiers)-1]
+			o.Value = valueText(lang, last, last.Progress)
+			if t.Complete { // top tier: the value alone, with Max
+				o.Progress = o.Value + " · " + i18n.T(lang, "rewards.max")
+			} else { // the real value against the next tier
+				nxi := cur // the first tier not claimed whose threshold is still ahead of the player
+				for i, m := range tiers {
+					if !m.Claimed && m.Progress < m.Target {
+						nxi = i
+						break
+					}
+				}
+				nx := tiers[nxi]
+				o.Value = valueText(lang, nx, nx.Progress)
+				o.NextTier, o.NextTarget = t.Tiers[nxi].Finish, t.Tiers[nxi].Target
+				o.Progress = progressText(lang, nx, nx.Progress)
+				if nx.Target > 0 {
+					o.Percent = int(min(nx.Progress, nx.Target) * 100 / nx.Target)
+				}
+			}
 			o.Equipped = equippedBadge == o.EquipItem
 			if o.Complete {
 				o.State = "done"
@@ -773,6 +795,19 @@ func targetText(lang string, m rewards.Mission) string {
 	return number(lang).Sprint(m.Target)
 }
 
+// valueText writes a value the way mission m counts: a duration for play time, else the number.
+func valueText(lang string, m rewards.Mission, v int64) string {
+	if strings.HasSuffix(m.Metric, "seconds") {
+		return playTime(lang, v)
+	}
+	return number(lang).Sprint(v)
+}
+
+// progressText is "value / target", the value capped at the target.
+func progressText(lang string, m rewards.Mission, v int64) string {
+	return valueText(lang, m, min(v, m.Target)) + " / " + targetText(lang, m)
+}
+
 // fillTile sets what a tile shows about the mission it is working on: the art, the progress and the reward.
 func fillTile(lang string, t *tileView, m rewards.Mission, item string) {
 	t.Item, t.MissionID, t.Period, t.State = item, m.ID, m.Period, "progress"
@@ -788,10 +823,7 @@ func fillTile(lang string, t *tileView, m rewards.Mission, item string) {
 	if m.Target > 0 {
 		t.Percent = int(min(m.Progress, m.Target) * 100 / m.Target)
 	}
-	t.Progress = fmt.Sprintf("%d / %d", min(m.Progress, m.Target), m.Target)
-	if strings.HasSuffix(m.Metric, "seconds") {
-		t.Progress = playTime(lang, min(m.Progress, m.Target)) + " / " + playTime(lang, m.Target)
-	}
+	t.Progress = progressText(lang, m, m.Progress)
 	t.TargetText = targetText(lang, m)
 	if m.RewardPoints > 0 {
 		t.Reward = fmt.Sprintf(i18n.T(lang, "rewards.tile.get"), m.RewardPoints)
