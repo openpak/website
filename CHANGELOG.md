@@ -11,6 +11,13 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.105.0
+
+- `GET /api/v1/clients/{client}/latest`, `latest.sig` and `download/{file}`: relay the newest GitHub
+  release of a console tool (`ps3-patcher` first) over plain HTTP, cached 10 minutes. The PS3's
+  4.93 TLS stack cannot reach modern TLS; the manifest is signed by the release-signing key the
+  client pins, so the transport is not the trust. No deploy per release.
+
 ## v0.104.0 — 2026-11-04
 
 - `/healthz/shop-core` (board prds#124): health of shop-core, the console-neutral shop catalog, for the status page. Set `SHOP_CORE_URL`; unset leaves the route out (404).

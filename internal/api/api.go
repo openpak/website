@@ -66,6 +66,8 @@ type Server struct {
 	// from the live Traefik routing. Set by main when NETPROFILE_TRAEFIK_FILE
 	// is configured; nil answers 503 on /api/v1/network/*.
 	Profiles *netprofile.Service
+	// ClientUpdates relays console-tool releases from GitHub (the PS3 patcher's self-update); nil answers 503.
+	ClientUpdates *ClientUpdates
 	// Ceiling serves the signed redirect ceiling file; nil answers 503.
 	Ceiling *netprofile.CeilingStore
 	// Adapter answers the console-shaped questions the core cannot: the friend
@@ -209,6 +211,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	// generated from the live Traefik routing. One conditional GET per launch,
 	// the same conditional GET the console itself already does for BCAT.
 	s.registerNetwork(mux)
+	s.registerClientUpdates(mux)
 	// The v2 bundle distribution (/api/v2/network/*) is not here: it is its
 	// own service, cmd/openpak-registry, so the website never holds the
 	// registry's signing key. See docs/registry.md.

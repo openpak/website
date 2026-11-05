@@ -249,6 +249,7 @@ func run(log *slog.Logger) error {
 	ceiling := netprofile.NewCeilingStore(cfg.NetProfileCeilingFile, nil, log)
 	ceiling.Current() // log the state at startup
 	apiSrv.Ceiling = ceiling
+	apiSrv.ClientUpdates = api.NewClientUpdates()
 	if cfg.NetProfileTraefikFile != "" {
 		np, err := netprofile.New(netprofile.Options{
 			Ceiling:     ceiling,
