@@ -11,6 +11,10 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.109.0 — 2026-11-05
+
+- Card #141: game cosmetics in Rewards. A "Game items" kind in the Shop and My items, drawn with the game's own title art (Switch games from the icon route, others from the cover tiles), a game chip and the console on every card, the item name once, no Equip button (the game equips them). Intro text mentions game items in all six languages. The app JSON carries the game art. Nothing is listed until the rewards service marks an item deliverable.
+
 ## v0.108.0 - 2026-11-05
 
 - Matchmaking core (prds#28): `/healthz/matchmaking` (`MATCHMAKING_URL`), network-map labels, `matchmaking` in the expected erasure services (production wiring: `matchmaking=http://openpak-matchmaking:20240` in `ERASURE_SERVICES`).
