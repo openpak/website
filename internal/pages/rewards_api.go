@@ -155,6 +155,9 @@ func itemJSON(it itemView) RewardsItem {
 	out := RewardsItem{ID: it.ID, Kind: it.Kind, KindLabel: it.KindLabel, Name: it.Name, Desc: it.Description,
 		Img: previewURL(it.ID), Wide: it.Wide, Price: it.Price, Need: it.Need, After: it.After, Affordable: it.Affordable,
 		Owned: it.Owned, Equipped: it.Equipped, Limited: it.Limited, Where: it.Where, Soon: it.Soon, When: it.When}
+	if !it.HasPreview && it.Art != "" {
+		out.Img = it.Art // a game item has no art of ours: the app draws the game's own title art
+	}
 	return out
 }
 

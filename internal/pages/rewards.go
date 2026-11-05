@@ -38,6 +38,17 @@ var gameNames = map[string]string{
 	"dst": "Don't Starve Together", "stumble-guys": "Stumble Guys", "fall-guys": "Fall Guys", "xbox360-avatar": "Xbox 360 avatar items",
 }
 
+// gameShort is the short name a tile's game chip carries (a chip does not wrap); the dialog and the facts use the full name.
+var gameShort = map[string]string{"dst": "Don't Starve", "xbox360-avatar": "Xbox 360 avatar"}
+
+// gameArtOf is where the site hosts a hosted game's own title art: a Switch game's icon route, any other game's
+// cover tile under /static/art/titles. "" when it has none, and the tile then draws the game's name.
+var gameArtOf = map[string]struct{ Console, Name, SwitchID string }{
+	"dst":            {"Switch", "Don't Starve Together", "010090100E334000"},
+	"stumble-guys":   {"Switch", "Stumble Guys", "0100A9E01AE9A000"},
+	"xbox360-avatar": {"Xbox 360", "Xbox 360 avatar items", ""},
+}
+
 // platformNames are the proper names a catalogue platform is shown under; none of them is translated.
 var platformNames = map[string]string{
 	"web": "Web", "app": "App", "switch": "Switch", "xbox360": "Xbox 360", "xbox": "Xbox", "ps3": "PS3",
@@ -54,7 +65,11 @@ type itemView struct {
 	After     int // the balance if it were bought now
 	Key       string
 	Wide      bool   // themes show a wide preview, everything else a square one
-	Where     string // "Web, App, Switch"
+	Where     string // "Web, App, Switch"; for a game item "Don't Starve Together, Switch"
+	GameName  string // game items: the game's name
+	GameChip  string // game items: a short form that fits a tile ("Don't Starve")
+	Consoles  string // game items: where it works, "Switch"
+	Art       string // game items: the game's own title art, "" when the site has none
 	Soon      bool   // not for sale yet: shown as a card with its date
 	When      string // "Coming 1 Dec"
 }
@@ -385,7 +400,19 @@ func (s *Server) itemOf(lang string, me rewards.Me, it rewards.Item) itemView {
 		if !ok {
 			n = strings.ReplaceAll(g.GameID, "-", " ")
 		}
+		iv.Consoles = strings.Join(where, ", ")
 		where = append([]string{n}, where...)
+		iv.GameName = n
+		if iv.GameChip = gameShort[g.GameID]; iv.GameChip == "" {
+			iv.GameChip = n
+		}
+		if a, ok := gameArtOf[g.GameID]; ok {
+			if a.SwitchID != "" {
+				iv.Art = "/titles/icon/" + a.SwitchID
+			} else {
+				iv.Art = artPath(a.Console, a.Name)
+			}
+		}
 	}
 	iv.Where = strings.Join(where, ", ")
 	// One key per rendered form: a double submit of the same form is charged once.

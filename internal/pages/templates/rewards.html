@@ -5,7 +5,7 @@
      details need titles.js. */}}
 
 {{/* The picture of an item: its preview, or its name for a text-only one. */}}
-{{define "rw-art"}}{{if .HasPreview}}<img src="/account/rewards/preview/{{.ID}}" alt="" width="256" height="256" loading="lazy">{{else}}<span class="art-placeholder txt"><b>{{.Name}}</b></span>{{end}}{{end}}
+{{define "rw-art"}}{{if .HasPreview}}<img src="/account/rewards/preview/{{.ID}}" alt="" width="256" height="256" loading="lazy">{{else if .Art}}<img src="{{.Art}}" alt="" width="256" height="256" loading="lazy">{{else if .GameName}}<span class="art-placeholder txt"><b>{{.GameName}}</b></span>{{else}}<span class="art-placeholder txt"><b>{{.Name}}</b></span>{{end}}{{end}}
 
 {{/* The Preview button of a theme (themepreview.js): it carries what the preview bar needs. */}}
 {{define "rw-preview"}}{{$l := index . 0}}{{with index . 1}}<button type="button" class="small" data-preview-id="{{.ID}}" data-preview-name="{{.Name}}" data-preview-price="{{.Cost}}" data-preview-owned="{{if .Owned}}1{{else}}0{{end}}" data-preview-equipped="{{if .Equipped}}1{{else}}0{{end}}" aria-label="{{t $l "rewards.preview"}}: {{.Name}}">{{t $l "rewards.preview"}}</button>{{end}}{{end}}
@@ -199,6 +199,7 @@
         <span class="cap"><span class="sub">{{.Name}}</span><span class="badge{{if .Affordable}} beta{{end}}">{{printf (t $l "rewards.pts") .Cost}}</span></span>
       </a>
       {{if eq .Kind "theme"}}<div class="foot">{{template "rw-preview" (arr $l .)}}</div>{{end}}
+      {{if .GameName}}<div class="foot"><span class="badge">{{.GameChip}}</span> <span class="hint">{{.Consoles}}</span></div>{{end}}
     </li>
     {{end}}
   </ul>
@@ -279,7 +280,7 @@
       <span class="art">{{template "rw-art" .}}</span>
       <span class="cap"><span class="sub">{{.Name}}</span></span>
       <div class="foot">
-        {{if eq .Kind "game_cosmetic"}}<span class="hint">{{.Where}}</span>{{else}}
+        {{if eq .Kind "game_cosmetic"}}<span class="badge">{{.GameChip}}</span> <span class="hint">{{.Consoles}}</span>{{else}}
         <form method="post" action="/account/rewards/equip" data-once><input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="slot" value="{{.Kind}}">
           {{if .Equipped}}<input type="hidden" name="item" value=""><button type="submit" class="small" aria-pressed="true" title="{{t $l "rewards.unequip"}}">{{t $l "rewards.equipped"}}</button>
           {{else}}<input type="hidden" name="item" value="{{.ID}}"><button type="submit" class="small primary" aria-label="{{t $l "rewards.equip"}}: {{.Name}}"{{if $.Me.Account.Frozen}} disabled{{end}}>{{t $l "rewards.equip"}}</button>{{end}}

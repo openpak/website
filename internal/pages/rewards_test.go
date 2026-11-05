@@ -60,7 +60,7 @@ func TestRewardsPage(t *testing.T) {
 	has("/account/rewards", ">120<", "3 of 8", "Rewards ready to claim: 1", "Claim 3 points", "Play for 30 minutes", "15 min / 30 min",
 		"Recent points", "Mission", "<b>Play for 30 minutes</b>", `class="lcard"`, "/static/rewards/act-daily-play.png", "/account/rewards/preview/badge-first-link", `aria-current="page"`, "rewards.js")
 	lacks("/account/rewards", "rewards.tab", "rewards.m.", "rewards.claim", "daily-play-30:") // no raw keys, no raw ids
-	lacks("/account/rewards", "cardrows") // no list rows for missions or the points history: everything is a card
+	lacks("/account/rewards", "cardrows")                                                     // no list rows for missions or the points history: everything is a card
 
 	// Every /account page is inside the account shell, with its own entry current.
 	for path, entry := range map[string]string{"/account/rewards": "/account/rewards", "/account/activity": "/account/activity", "/account/trophies": "/account/trophies",
@@ -228,16 +228,36 @@ func TestRewardsGameCosmetics(t *testing.T) {
 		return w.Body.String()
 	}
 	shop := get("/account/rewards?tab=shop&kind=game_cosmetic")
-	for _, want := range []string{"Festive Willow", "Blue Runner", "Don&#39;t Starve Together, Switch", "Stumble Guys, Switch", "Game item", "art-placeholder"} {
+	for _, want := range []string{"Festive Willow", "Blue Runner", "Don&#39;t Starve Together, Switch", "Stumble Guys, Switch", "Game item"} {
 		if !strings.Contains(shop, want) {
 			t.Errorf("shop lacks %q", want)
 		}
+	}
+	// The game's own art is the tile; the game and console are on the card; the item's name is printed once per tile.
+	for _, want := range []string{`src="/titles/icon/010090100E334000"`, `src="/titles/icon/0100A9E01AE9A000"`, `<span class="badge">Don&#39;t Starve</span> <span class="hint">Switch</span>`, `<span class="badge">Stumble Guys</span> <span class="hint">Switch</span>`} {
+		if !strings.Contains(shop, want) {
+			t.Errorf("shop lacks %q", want)
+		}
+	}
+	if strings.Contains(shop, "<b>Festive Willow</b>") {
+		t.Error("the item's name is drawn inside the tile art as well as in its caption")
+	}
+	if !strings.Contains(shop, "themes and game items") {
+		t.Error("the intro does not mention game items")
 	}
 	if strings.Contains(shop, "Formal Wilson") {
 		t.Error("an owned item is still for sale")
 	}
 	if strings.Contains(shop, "rewards.k") {
 		t.Error("raw translation key")
+	}
+	// A game the site has no art for falls back to the placeholder, named by the game.
+	iv := s.itemOf("en", rewards.Me{}, rewards.Item{ID: "x", Kind: "game_cosmetic", Name: "Thing", Game: &rewards.GameInfo{GameID: "some-new-game"}})
+	if iv.Art != "" || iv.GameName != "some new game" {
+		t.Errorf("fallback: art %q name %q", iv.Art, iv.GameName)
+	}
+	if got := itemJSON(s.itemOf("en", rewards.Me{}, rewards.Item{ID: "x", Kind: "game_cosmetic", Name: "T", Game: &rewards.GameInfo{GameID: "dst"}})).Img; got != "/titles/icon/010090100E334000" {
+		t.Errorf("app image: %q", got)
 	}
 	mine := get("/account/rewards?tab=collection")
 	if !strings.Contains(mine, "Formal Wilson") || !strings.Contains(mine, "Game items") {
@@ -246,7 +266,7 @@ func TestRewardsGameCosmetics(t *testing.T) {
 	if strings.Contains(mine, `name="slot" value="game_cosmetic"`) {
 		t.Error("a game item has an Equip button: it is equipped in the game")
 	}
-	if !strings.Contains(mine, "Don&#39;t Starve Together, Switch") {
+	if !strings.Contains(mine, `<span class="badge">Don&#39;t Starve</span> <span class="hint">Switch</span>`) {
 		t.Error("collection does not say which game the item is for")
 	}
 }
