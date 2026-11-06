@@ -234,9 +234,15 @@ func TestRewardsGameCosmetics(t *testing.T) {
 		}
 	}
 	// The game's own art is the tile; the game and console are on the card; the item's name is printed once per tile.
-	for _, want := range []string{`src="/titles/icon/010090100E334000"`, `src="/titles/icon/0100A9E01AE9A000"`, `<span class="badge">Don&#39;t Starve</span> <span class="hint">Switch</span>`, `<span class="badge">Stumble Guys</span> <span class="hint">Switch</span>`} {
+	for _, want := range []string{`src="/titles/icon/010090100E334000"`, `src="/titles/icon/0100A9E01AE9A000"`, `<span class="badge">Don&#39;t Starve Together</span> <span class="hint">Switch</span>`, `<span class="badge">Stumble Guys</span> <span class="hint">Switch</span>`} {
 		if !strings.Contains(shop, want) {
 			t.Errorf("shop lacks %q", want)
+		}
+	}
+	// One shelf per game, each headed by the game's icon and name.
+	for _, want := range []string{`<h3 class="rwgroup"><img class="gicon" src="/titles/icon/010090100E334000" alt="" width="32" height="32">Don&#39;t Starve Together `, `<h3 class="rwgroup"><img class="gicon" src="/titles/icon/0100A9E01AE9A000" alt="" width="32" height="32">Stumble Guys `} {
+		if !strings.Contains(shop, want) {
+			t.Errorf("shop lacks the game shelf %q", want)
 		}
 	}
 	if strings.Contains(shop, "<b>Festive Willow</b>") {
@@ -260,13 +266,13 @@ func TestRewardsGameCosmetics(t *testing.T) {
 		t.Errorf("app image: %q", got)
 	}
 	mine := get("/account/rewards?tab=collection")
-	if !strings.Contains(mine, "Formal Wilson") || !strings.Contains(mine, "Game items") {
+	if !strings.Contains(mine, "Formal Wilson") || !strings.Contains(mine, `<img class="gicon" src="/titles/icon/010090100E334000" alt="" width="32" height="32">Don&#39;t Starve Together`) {
 		t.Error("collection lacks the owned game item")
 	}
 	if strings.Contains(mine, `name="slot" value="game_cosmetic"`) {
 		t.Error("a game item has an Equip button: it is equipped in the game")
 	}
-	if !strings.Contains(mine, `<span class="badge">Don&#39;t Starve</span> <span class="hint">Switch</span>`) {
+	if !strings.Contains(mine, `<span class="badge">Don&#39;t Starve Together</span> <span class="hint">Switch</span>`) {
 		t.Error("collection does not say which game the item is for")
 	}
 }

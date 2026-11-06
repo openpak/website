@@ -11,6 +11,9 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.111.0 - 2026-11-06
+- Rewards (cards #141/#148): the game chip on a tile carries the full game name ("Don't Starve Together"), wrapped; game items are shown one shelf per game, each headed by the game's icon and name, in the Shop and My items; the app JSON groups carry `game` and `game_img`. Each item shows its own ledger picture.
+
 ## v0.110.0 - 2026-11-05
 
 - Wii/DS link-first (prds#139): `/link` takes the 8-symbol code (Mario Kart Wii) or the 5-digit error code (24000-29999) an unlinked Wii or DS shows; a number also needs the browser on the console's network (wfc-api compares keyed network tags from the browser's address) or the console's in-game name (new optional field). The confirm screen names "your Wii"/"your DS", the game and the name. wfc-api makes the core link (`/api/pair/approve` with the signed-in account), so the website no longer calls `Links.Link` for `wfc`.

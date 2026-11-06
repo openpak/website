@@ -190,7 +190,7 @@
   {{end}}
   {{if and (not .Shop) (not .Upcoming)}}<p class="empty">{{t $l "rewards.empty.shop"}}</p>{{else}}
   {{range .ShopGroups}}
-  <h3 class="rwgroup">{{.Label}} <span class="text-muted">{{len .Items}}</span></h3>
+  <h3 class="rwgroup">{{if .GameArt}}<img class="gicon" src="{{.GameArt}}" alt="" width="32" height="32">{{end}}{{.Label}} <span class="text-muted">{{len .Items}}</span></h3>
   <ul class="gtiles under{{if .Wide}} wide{{end}}">
     {{range .Items}}
     <li class="gtile">
@@ -271,8 +271,8 @@
 <p class="actions mt-4"><a class="btn" href="/account/rewards?tab=missions">{{t $l "rewards.tab.missions"}}</a><a class="btn primary" href="/account/rewards?tab=shop">{{t $l "rewards.tab.shop"}}</a></p>
 {{end}}
 {{range .Groups}}
-<section aria-labelledby="g-{{.Kind}}" class="mb-9">
-  <div class="section-head"><h2 id="g-{{.Kind}}">{{.Label}} <span class="text-muted">{{add (len .Tiles) (len .Items)}}</span></h2></div>
+<section aria-labelledby="g-{{.Kind}}{{with .Game}}-{{.}}{{end}}" class="mb-9">
+  <div class="section-head"><h2 id="g-{{.Kind}}{{with .Game}}-{{.}}{{end}}">{{if .GameArt}}<img class="gicon" src="{{.GameArt}}" alt="" width="32" height="32">{{end}}{{.Label}} <span class="text-muted">{{add (len .Tiles) (len .Items)}}</span></h2></div>
   <ul class="gtiles under{{if .Wide}} wide{{end}}">
     {{range .Tiles}}{{template "rw-tile" (arr $l $.CSRF . "mine" $.Me.Account.Frozen)}}{{end}}
     {{range .Items}}

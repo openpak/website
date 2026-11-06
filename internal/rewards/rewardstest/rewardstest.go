@@ -33,6 +33,7 @@ type State struct {
 	ThemeAssets         map[string]string // theme id -> asset body, instead of the stock theme
 	Upcoming            bool              // /v1/me/catalog?upcoming=1 lists the two winter badges, dated ahead
 	Bearer              string
+	Extra               []Item // more catalogue items than the stock set (page previews)
 }
 
 type Item struct {
@@ -87,7 +88,7 @@ func (st *State) items(t testing.TB) []Item {
 	for i, r := range raw {
 		out[i] = Item{r.ID, r.Kind, r.Name, r.Description, r.Price, r.Platforms, r.Limited, r.Game.GameID, r.Game.Slot, r.Game.Rarity}
 	}
-	return out
+	return append(out, st.Extra...)
 }
 
 // artFor is an item's preview: the real art from REWARDS_ART_DIR (research/rewards/art/export/preview) when
@@ -132,7 +133,7 @@ func New(t testing.TB, st *State) *rewards.Client {
 	mux := http.NewServeMux()
 	item := func(it Item, withOwn bool) map[string]any {
 		m := map[string]any{"id": it.ID, "kind": it.Kind, "name": it.Name, "description": it.Description, "price": it.Price,
-			"platforms": it.Platforms, "limited": it.Limited, "has_preview": it.Kind != "title" && it.Kind != "game_cosmetic"}
+			"platforms": it.Platforms, "limited": it.Limited, "has_preview": it.Kind != "title"}
 		if it.GameID != "" {
 			m["game"] = map[string]string{"game_id": it.GameID, "game_ref": it.ID, "slot": it.GameSlot, "rarity": it.Rarity}
 		}
