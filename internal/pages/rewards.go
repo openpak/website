@@ -113,6 +113,8 @@ type tierView struct {
 
 type kindGroup struct {
 	Kind, Label string
+	Game        string     // game items: one shelf per game; the game's id
+	GameArt     string     // game items: the game's own icon, shown in the shelf's header
 	Wide        bool       // themes: wide preview cards, in a grid of their own
 	Tiles       []tileView // My items, Badges: the earned ladder and single badges
 	Items       []itemView
@@ -299,15 +301,7 @@ func (s *Server) buildRewards(ctx context.Context, lang, sid, kindWant string, w
 			page.Shop = append(page.Shop, it)
 		}
 	}
-	for _, kind := range orderedKinds(page.Shop) {
-		g := kindGroup{Kind: kind, Label: kindName(lang, "rewards.k.", kind), Wide: kind == "theme"}
-		for _, it := range page.Shop {
-			if it.Kind == kind {
-				g.Items = append(g.Items, it)
-			}
-		}
-		page.ShopGroups = append(page.ShopGroups, g)
-	}
+	page.ShopGroups = shelvesOf(lang, page.Shop)
 	if up, err := s.Rewards.Upcoming(ctx, sid); err == nil {
 		now := time.Now()
 		for _, it := range up {
@@ -330,15 +324,7 @@ func (s *Server) buildRewards(ctx context.Context, lang, sid, kindWant string, w
 	}
 
 	// My items, grouped by kind; the earned badge tiles lead the Badges group.
-	for _, kind := range orderedKinds(mine) {
-		g := kindGroup{Kind: kind, Label: kindName(lang, "rewards.k.", kind), Wide: kind == "theme"}
-		for _, it := range mine {
-			if it.Kind == kind {
-				g.Items = append(g.Items, it)
-			}
-		}
-		page.Groups = append(page.Groups, g)
-	}
+	page.Groups = shelvesOf(lang, mine)
 	if len(own) > 0 {
 		i := slices.IndexFunc(page.Groups, func(g kindGroup) bool { return g.Kind == "badge" })
 		if i < 0 {
@@ -428,6 +414,39 @@ func kindName(lang, prefix, kind string) string {
 		return n
 	}
 	return strings.ReplaceAll(kind, "_", " ")
+}
+
+// shelvesOf groups items by kind. Game items get a shelf per game instead of one shared shelf, each headed by the
+// game's name and icon, in the order of the game names.
+func shelvesOf(lang string, in []itemView) []kindGroup {
+	var out []kindGroup
+	for _, kind := range orderedKinds(in) {
+		if kind != "game_cosmetic" {
+			g := kindGroup{Kind: kind, Label: kindName(lang, "rewards.k.", kind), Wide: kind == "theme"}
+			for _, it := range in {
+				if it.Kind == kind {
+					g.Items = append(g.Items, it)
+				}
+			}
+			out = append(out, g)
+			continue
+		}
+		var games []kindGroup
+		for _, it := range in {
+			if it.Kind != kind || it.Game == nil {
+				continue
+			}
+			i := slices.IndexFunc(games, func(g kindGroup) bool { return g.Game == it.Game.GameID })
+			if i < 0 {
+				games = append(games, kindGroup{Kind: kind, Game: it.Game.GameID, Label: it.GameName, GameArt: it.Art})
+				i = len(games) - 1
+			}
+			games[i].Items = append(games[i].Items, it)
+		}
+		sort.SliceStable(games, func(a, b int) bool { return games[a].Label < games[b].Label })
+		out = append(out, games...)
+	}
+	return out
 }
 
 // orderedKinds lists the kinds present, the usual ones first, in a fixed order.

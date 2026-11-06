@@ -1018,6 +1018,7 @@
   .gtiles.under .gtile .cap .sub { flex: 1 1 auto; white-space: normal; overflow: visible; }
   .rwgroup { margin: 28px 0 12px; font-size: 1.25rem; }
   .rwgroup:first-of-type { margin-top: 12px; }
+  .gicon { display: inline-block; width: 32px; height: 32px; border-radius: 8px; vertical-align: middle; margin-right: 10px; object-fit: cover; }
   .tdialog .tart.wide { width: 14rem; aspect-ratio: 2 / 1; }
   @media (max-width: 40rem) { .tdialog .tart.wide { width: 100%; max-width: 20rem; } }
   .art-placeholder.txt { padding: 14px; }

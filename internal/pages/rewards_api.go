@@ -77,6 +77,8 @@ type RewardsGroup struct {
 	Kind  string        `json:"kind"`
 	Label string        `json:"label"`
 	Wide  bool          `json:"wide"`
+	Game  string        `json:"game,omitempty"`     // game items: one shelf per game; the game's id
+	Img   string        `json:"game_img,omitempty"` // game items: the game's icon for the shelf's header
 	Tiles []RewardsTile `json:"tiles,omitempty"`
 	Items []RewardsItem `json:"items"`
 }
@@ -164,7 +166,7 @@ func itemJSON(it itemView) RewardsItem {
 func groupsJSON(in []kindGroup) []RewardsGroup {
 	out := make([]RewardsGroup, 0, len(in))
 	for _, g := range in {
-		rg := RewardsGroup{Kind: g.Kind, Label: g.Label, Wide: g.Wide, Tiles: tilesJSON(g.Tiles), Items: []RewardsItem{}}
+		rg := RewardsGroup{Kind: g.Kind, Label: g.Label, Wide: g.Wide, Game: g.Game, Img: g.GameArt, Tiles: tilesJSON(g.Tiles), Items: []RewardsItem{}}
 		for _, it := range g.Items {
 			rg.Items = append(rg.Items, itemJSON(it))
 		}
