@@ -11,6 +11,9 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.112.0 - 2026-11-06
+- Card #150: buying a Don't Starve Together chest the game would not sell yet (it holds skins for a character the player has not unlocked) says so, in all six languages, instead of "you already have that".
+
 ## v0.111.0 - 2026-11-06
 - Rewards (cards #141/#148): the game chip on a tile carries the full game name ("Don't Starve Together"), wrapped; game items are shown one shelf per game, each headed by the game's icon and name, in the Shop and My items; the app JSON groups carry `game` and `game_img`. Each item shows its own ledger picture.
 

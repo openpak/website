@@ -594,6 +594,8 @@ func rewardsNotice(lang string, q url.Values, names map[string]string) (string, 
 		return t("rewards.err.points"), true
 	case "owned":
 		return t("rewards.err.owned"), true
+	case "requires":
+		return t("rewards.err.requires"), true
 	case "frozen":
 		return t("rewards.err.frozen"), true
 	case "failed":
@@ -641,6 +643,9 @@ func (s *Server) rewardsAction(w http.ResponseWriter, r *http.Request, okTab, fa
 			msg = "nopoints"
 		case http.StatusConflict:
 			msg = "owned"
+			if strings.Contains(re.Message, "unlock something first") {
+				msg = "requires" // the game's own rule: a chest with a locked character's skins needs that character
+			}
 		case http.StatusForbidden:
 			msg = "frozen"
 		}
