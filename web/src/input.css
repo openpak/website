@@ -727,6 +727,7 @@
   .stile .sgames { color: var(--muted); font-size: .85rem; }
   .stile .sgames span { font-weight: 700; color: var(--ink-2); }
   .gtile .foot { margin-top: auto; padding: 0 12px 12px; }
+  .gtile .foot .badge { white-space: normal; text-align: start; line-height: 1.25; font-size: .72rem; }
   .gtile .foot form, .gtile .foot .btn, .gtile .foot button { width: 100%; }
   .gtile .foot .btn, .gtile .foot button { min-height: 38px; padding: 0 .8rem; font-size: .84rem; }
   .gtile .admin { display: flex; gap: 6px; padding: 0 12px 12px; }

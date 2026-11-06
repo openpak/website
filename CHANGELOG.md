@@ -11,8 +11,8 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
-## Unreleased
-- Rewards (cards #141/#148): game items are shown one shelf per game, each headed by the game's icon and name, in the Shop and My items; the app JSON groups carry `game` and `game_img`. Each item shows its own ledger picture.
+## v0.111.0 - 2026-11-06
+- Rewards (cards #141/#148): the game chip on a tile carries the full game name ("Don't Starve Together"), wrapped; game items are shown one shelf per game, each headed by the game's icon and name, in the Shop and My items; the app JSON groups carry `game` and `game_img`. Each item shows its own ledger picture.
 
 ## v0.110.0 - 2026-11-05
 

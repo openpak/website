@@ -38,8 +38,8 @@ var gameNames = map[string]string{
 	"dst": "Don't Starve Together", "stumble-guys": "Stumble Guys", "fall-guys": "Fall Guys", "xbox360-avatar": "Xbox 360 avatar items",
 }
 
-// gameShort is the short name a tile's game chip carries (a chip does not wrap); the dialog and the facts use the full name.
-var gameShort = map[string]string{"dst": "Don't Starve", "xbox360-avatar": "Xbox 360 avatar"}
+// gameShort is a shorter name for a tile's game chip; none today: a chip carries the game's full name and wraps.
+var gameShort = map[string]string{}
 
 // gameArtOf is where the site hosts a hosted game's own title art: a Switch game's icon route, any other game's
 // cover tile under /static/art/titles. "" when it has none, and the tile then draws the game's name.
@@ -67,7 +67,7 @@ type itemView struct {
 	Wide      bool   // themes show a wide preview, everything else a square one
 	Where     string // "Web, App, Switch"; for a game item "Don't Starve Together, Switch"
 	GameName  string // game items: the game's name
-	GameChip  string // game items: a short form that fits a tile ("Don't Starve")
+	GameChip  string // game items: the name on a tile's chip (the full name, wrapped)
 	Consoles  string // game items: where it works, "Switch"
 	Art       string // game items: the game's own title art, "" when the site has none
 	Soon      bool   // not for sale yet: shown as a card with its date
