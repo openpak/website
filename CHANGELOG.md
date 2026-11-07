@@ -11,6 +11,9 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.114.0 - 2026-11-07
+- `/healthz/terraria`: health of the Terraria service (common/terraria, the cross-play relay), read from `TERRARIA_URL` (prds#157).
+
 ## v0.112.0 - 2026-11-06
 - Card #150: buying a Don't Starve Together chest the game would not sell yet (it holds skins for a character the player has not unlocked) says so, in all six languages, instead of "you already have that".
 

@@ -512,6 +512,7 @@ func run(log *slog.Logger) error {
 		"pokemon-legality":    os.Getenv("POKEMON_LEGALITY_URL"),
 		"voice":               os.Getenv("VOICE_URL"),
 		"shop-core":           os.Getenv("SHOP_CORE_URL"),
+		"terraria":            os.Getenv("TERRARIA_URL"),
 	} {
 		if base != "" {
 			behind[name] = httpHealth{base}
