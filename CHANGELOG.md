@@ -11,6 +11,9 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.115.1 - 2026-11-09
+- Network profile: wiiu and 3ds send `nncs2.app.nintendowifi.net` to OpenPak's second address (145.241.228.207), like the Switch's nncs2. The NAT check needs nncs1 and nncs2 on two public addresses (prds#166).
+
 ## v0.115.0 - 2026-11-09
 - `/healthz/minecraft`: health of the Minecraft service (common/minecraft, Java world + Wii U adapter), read from `MINECRAFT_URL` (prds#162).
 

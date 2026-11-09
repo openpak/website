@@ -93,6 +93,10 @@ platforms:
   wiiu:
     families: [".nintendo.net", ".nintendowifi.net", ".openpak.org"]
     never: ["conntest.nintendowifi.net"]
+    # Wii U/3DS NAT check: nncs1 and nncs2 must be two public addresses (nn-nncs docs/protocol.md);
+    # the second responder is its own box, as for the Switch (prds#166).
+    overrides:
+      "nncs2.app.nintendowifi.net": "145.241.228.207"
     # Cemu addresses URLs, not names: the ten entries its OpenPakURLs struct
     # carries today (emulators/cemu src/config/NetworkSettings.h). The struct
     # stays as the compiled-in fallback; these replace it when a profile
@@ -112,6 +116,10 @@ platforms:
   3ds:
     families: [".nintendo.net", ".nintendowifi.net", ".openpak.org"]
     never: ["conntest.nintendowifi.net"]
+    # Wii U/3DS NAT check: nncs1 and nncs2 must be two public addresses (nn-nncs docs/protocol.md);
+    # the second responder is its own box, as for the Switch (prds#166).
+    overrides:
+      "nncs2.app.nintendowifi.net": "145.241.228.207"
     services: {}               # Azahar takes names from redirect.*, not URLs
 
   wii:
