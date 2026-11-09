@@ -513,6 +513,7 @@ func run(log *slog.Logger) error {
 		"voice":               os.Getenv("VOICE_URL"),
 		"shop-core":           os.Getenv("SHOP_CORE_URL"),
 		"terraria":            os.Getenv("TERRARIA_URL"),
+		"minecraft":           os.Getenv("MINECRAFT_URL"),
 	} {
 		if base != "" {
 			behind[name] = httpHealth{base}
