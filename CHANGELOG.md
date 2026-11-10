@@ -11,6 +11,9 @@
 Written by hand for recent releases; older entries are the commit subjects of each
 release, taken from git history. `git log` stays the source of truth.
 
+## v0.115.2 - 2026-11-10
+- Network profile: ps3 lists `b0.ww.np.dl.playstation.net` under `never`, so the patcher (v0.2.20) sends game-update packages (`/tppkg/`) console to Sony instead of through np-update. `a0` (patch list, `/tss/`, `/user_storage/`) stays caught (prds#176).
+
 ## v0.115.1 - 2026-11-09
 - Network profile: wiiu and 3ds send `nncs2.app.nintendowifi.net` to OpenPak's second address (145.241.228.207), like the Switch's nncs2. The NAT check needs nncs1 and nncs2 on two public addresses (prds#166).
 
