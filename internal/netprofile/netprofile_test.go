@@ -163,6 +163,15 @@ func TestUnionProfile(t *testing.T) {
 	}
 }
 
+// Game-update packages come straight from Sony (the patch list host a0 stays caught: no never entry).
+func TestPS3PackageHostIsNever(t *testing.T) {
+	s := newTestService(t, "testdata/traefik.yml", "", nil)
+	p := mustProfile(t, s, "ps3")
+	if strings.Join(p.Redirect.Never, ",") != "b0.ww.np.dl.playstation.net" {
+		t.Errorf("ps3 never holds %v", p.Redirect.Never)
+	}
+}
+
 // A Wii must not be told about a Switch's names.
 func TestWiiProfileIsNarrowedAwayFromTheSwitch(t *testing.T) {
 	s := newTestService(t, "testdata/traefik.yml", "", nil)

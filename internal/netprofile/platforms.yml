@@ -138,4 +138,7 @@ platforms:
     # PS3 firmware and games, real console or Pier: every Sony network name
     # goes to OpenPak (np-account behind Traefik's PS3 SNI passthrough).
     families: [".playstation.net", ".playstation.org", ".playstation.com", ".sonyentertainmentnetwork.com"]
+    # Game-update packages (/tppkg/, often >1 GB) go console to Sony directly;
+    # the patch list on a0 stays here (np-update passes it through).
+    never: ["b0.ww.np.dl.playstation.net"]
     services: {}
